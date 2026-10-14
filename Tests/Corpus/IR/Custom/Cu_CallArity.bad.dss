@@ -1,0 +1,22 @@
+// A call in a `@custom` body is matched against the HLSL its callee becomes: HLSL has no default arguments and a
+// `@custom` function no overloads, so another number of arguments is refused here, not by the shader compiler (DSH6265).
+
+/// @custom
+void Split(float3 Colour, out float Luma, out float3 Chroma)
+{
+    Luma = dot(Colour, float3(0.299, 0.587, 0.114));
+    Chroma = Colour - Luma;
+}
+
+/// @custom
+float Brightness(float3 Colour)
+{
+    float Luma;
+    Split(Colour, Luma);
+    return Luma;
+}
+
+export void M_CuCallArity(inout material m)
+{
+    m.Opacity = Brightness(float3(1, 0.5, 0.25));
+}

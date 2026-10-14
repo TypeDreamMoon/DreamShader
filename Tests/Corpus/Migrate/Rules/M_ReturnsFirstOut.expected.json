@@ -1,0 +1,5 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"text": "// Rule L9 from a graph: a Function of this file returns its first `out` once migrated, so a statement call that passes\n// it assigns it, a value call reads it, and a selection takes it from the call's own variable.\n/// @custom\nfloat MrRemap(float value, out float spare)\n{\r\n    float result = (float)0;\r\n    result = saturate(value * 0.5 + 0.5);\r\n    spare = value;\r\n    return result;\r\n}\n\n/// @custom\nfloat MrTwice(float value)\n{\r\n    float result = (float)0;\r\n    float r;\r\n    float s;\r\n    r = MrRemap(value, s);\r\n    result = r * 2.0;\r\n    return result;\r\n}\n\n/// @name DreamShaderTests/Migrate/M_MrReturnsFirstOut\nexport void M_MrReturnsFirstOut(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float Alpha = 0;\n    float First = 0;\n    float Spare = 0;\n    First = MrRemap(0.25, Spare);\n    float Second = MrTwice(First);\n    float MrRemap_spare;\n    float MrRemap_result = MrRemap(0.75, spare = MrRemap_spare);\n    Color = float3(First, Second, MrRemap_spare);\n    Alpha = Spare;\n    Base.EmissiveColor = Color;\n    Base.Opacity = Alpha;\n}\n"
+}

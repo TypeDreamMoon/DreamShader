@@ -38,6 +38,7 @@
 #include "Decompiler/DreamShaderGraphImport.h"
 #include "DreamShaderMaterialInstance.h"
 #include "IR/IRCompare.h"
+#include "IR/IRCustomHlsl.h"
 #include "Migrate/LangMigrate.h"
 #include "Tools/DreamShaderDecompileTools.h"
 
@@ -758,6 +759,18 @@ namespace UE::DreamShader::Editor::Private::Tests
 		{
 			Test.AddError(FString::Printf(TEXT("[%s] the migrated text does not build as 2.0 source: %s\n%s"), *Case.SourcePath, *Again.ErrorText(), *Outcome.Text));
 			return false;
+		}
+		// What `dsc migrate` proves of the bodies, which a header lowers nothing of (DreamShaderMigrate.cpp).
+		if (Again.Parse.Module.IsValid() && Again.Bind.Bound.IsValid())
+		{
+			FLangDiagnosticSink BodySink(MigratedPath);
+			if (!UE::DreamShader::IR::CheckDreamShaderCustomFunctionBodies(*Again.Bind.Bound, Again.Parse.Module.Get(), BodySink))
+			{
+				const FLangDiagnostic* FirstError = BodySink.FirstError();
+				Test.AddError(FString::Printf(TEXT("[%s] a call in a migrated '@custom' body does not match its callee: %s\n%s"),
+					*Case.SourcePath, FirstError ? *FLangDiagnosticSink::ToWireString(*FirstError) : TEXT("?"), *Outcome.Text));
+				return false;
+			}
 		}
 		if (bHeader || !Legacy.Module.IsValid())
 		{

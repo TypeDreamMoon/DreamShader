@@ -1,0 +1,35 @@
+// Rule L9: the HLSL of a 1.x function that returns nothing returns its first `out`, and a 1.x body calls it that way --
+// as a value, or passing that `out` as well. Migrated, such a function is declared returning it; a Namespace function,
+// a library's entry point, keeps its `out`s, and the body that read one as a value calls an adapter.
+
+Function MrHash(in float x, out float result) {
+    result = frac(sin(x) * 43758.5453);
+}
+
+// Two outputs: the first is returned, the second stays an `out`.
+Function MrCell(in float2 p, out float dist, out float2 id) {
+    id = floor(p);
+    dist = length(frac(p) - 0.5) + MrHash(id.x + id.y * 57.0) * 0.001;
+}
+
+Function MrSample(in Texture2D tex, in float2 uv, out float4 color) {
+    color = Texture2DSample(tex, texSampler, uv);
+}
+
+Function MrUse(in Texture2D tex, in float2 p, out float value) {
+    float d;
+    float2 cell;
+    // every output passed: d is what MrCell returns
+    MrCell(p, d, cell);
+    float4 c = MrSample(tex, p);
+    float w;
+    value = d + c.r + MrSpace::Tint(c.rgb, w).r * w;
+}
+
+Namespace(Name="MrSpace")
+{
+    Function Tint(in float3 color, out float3 tinted, out float weight) {
+        tinted = color * 0.5;
+        weight = 1.0;
+    }
+}

@@ -1,0 +1,32 @@
+// Rule L9 from a graph: a Function of this file returns its first `out` once migrated, so a statement call that passes
+// it assigns it, a value call reads it, and a selection takes it from the call's own variable.
+Function MrRemap(in float value, out float result, out float spare) {
+    result = saturate(value * 0.5 + 0.5);
+    spare = value;
+}
+
+Function MrTwice(in float value, out float result) {
+    float r;
+    float s;
+    MrRemap(value, r, s);
+    result = r * 2.0;
+}
+
+Shader(Name="DreamShaderTests/Migrate/M_MrReturnsFirstOut")
+{
+    Outputs = {
+        vec3 Color;
+        float Alpha;
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        float First;
+        float Spare;
+        MrRemap(0.25, First, Spare);
+        float Second = MrTwice(First);
+        Color = vec3(First, Second, MrRemap(0.75).spare);
+        Alpha = Spare;
+    }
+}
