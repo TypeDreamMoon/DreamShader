@@ -2149,5 +2149,9 @@
  "DreamShader.Pipeline|NoGenerationLeftAlone": "'{0}' 保持原样：'{1}' 将它标记为 NoGeneration，只有按名称编译该文件时才会构建它。",
  "DreamShader.Pipeline|NoGenerationNeverBuilt": "'{0}' 从未被构建过：'{1}' 将它标记为 NoGeneration，只有按名称编译该文件时才会构建它，而至今没有这样的编译。请按名称编译一次 '{1}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。",
  "DreamShader.Pipeline|NoGenerationParentMissing": "父项 '{0}' 来自 '{1}'，后者将它标记为 NoGeneration，且它从未被构建过，因此没有可用来构建此实例的父项。请按名称编译一次 '{1}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。",
- "DreamShader.Pipeline.References|NoGenerationReferenceMissing": "'{0}' 来自 '{1}'，后者将它标记为 NoGeneration，且它从未被构建过，因此没有可用来检查此引用的资产。请按名称编译一次 '{1}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。"
+ "DreamShader.Pipeline.References|NoGenerationReferenceMissing": "'{0}' 来自 '{1}'，后者将它标记为 NoGeneration，且它从未被构建过，因此没有可用来检查此引用的资产。请按名称编译一次 '{1}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。",
+ "DreamShader.CustomHlsl|CustomCallArityPlain": "'{0}' 生成的 HLSL 接受 {1} 个实参，但这次调用传入了 {2} 个。",
+ "DreamShader.CustomHlsl|CustomCallVoidValue": "'{0}' 生成的 HLSL 没有返回值，这次调用没有可读取的值；请为它的每个 'out' 参数传入一个变量，再读取这些变量。",
+ "DreamShaderLangMigrate|IncludedLegacyKeepsOuts": "'{0}' 是 '{1}' 中的 1.x 函数，那个文件迁移后它仍保留 'out' 参数，这次调用届时将没有值可读；请在迁移任一文件之前，像 1.x 文本允许的那样也为 '{2}' 传入一个变量。",
+ "DreamShaderLangMigrate|IncludedLegacyReturns": "'{0}' 是 '{1}' 中的 1.x 函数，那个文件迁移后它返回第一个 'out' 参数 '{2}'；这次调用是按它现在的样子写的。请先就地迁移 '{1}'，再迁移本文件。"
 }

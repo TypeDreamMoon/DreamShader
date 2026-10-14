@@ -4050,154 +4050,168 @@
   "key": "CustomBadFunctionIndex",
   "src": "Custom node code was asked for function {0}, but the bound module has {1}.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1949
+  "line": 2058
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomCallArity",
   "src": "'{0}' takes {1} argument(s) but this call passes {2}; a call that carries a texture cannot be matched up by position otherwise.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1622
+  "line": 1674
+ },
+ {
+  "ns": "DreamShader.CustomHlsl",
+  "key": "CustomCallArityPlain",
+  "src": "'{0}' takes {1} argument(s) in the HLSL it becomes, but this call passes {2}.",
+  "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
+  "line": 1686
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomCallCycle",
   "src": "The '@custom' functions {0} call each other in a cycle; HLSL has no recursion, so their bodies cannot be embedded in a custom node.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1365
+  "line": 1419
+ },
+ {
+  "ns": "DreamShader.CustomHlsl",
+  "key": "CustomCallVoidValue",
+  "src": "'{0}' returns nothing in the HLSL it becomes, so this call has no value to read; pass a variable for each of its 'out' parameters and read those.",
+  "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
+  "line": 1702
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomCallsGraphFunction",
   "src": "'{0}' is not a '@custom' function and cannot be called from the HLSL body of '{1}'; a custom node sees no graph values, so mark '{0}' '@custom' as well or move the call out of the body.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1311
+  "line": 1365
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomCallsHoistingFunction",
   "src": "'{0}' takes the 'UE.' calls lifted out of its body as inputs of its own custom node, so the HLSL body of '{1}' cannot call it; call it from a graph body instead.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1295
+  "line": 1349
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomCaseOnlyMatch",
   "src": "'{0}' differs from the function '{1}' only in case; HLSL is case-sensitive, so this call is left for the shader compiler. Did you mean '{1}'?",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1326
+  "line": 1380
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomDuplicateParameterName",
   "src": "'{0}' declares '{1}' twice in the HLSL it generates; a texture parameter also claims '{1}Sampler', which the engine declares alongside it.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1115
+  "line": 1169
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomEmptyInclude",
   "src": "'{0}' has an '#include' with an empty path; write the virtual shader path the header lives at, for example \"/Engine/Private/Common.ush\".",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 960
+  "line": 1013
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomHoistedRange",
   "src": "'{0}' lifts the call behind its input '{1}' out of a place its body does not have, so its custom node's code cannot be built.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1019
+  "line": 1072
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomInoutParameter",
   "src": "'{0}' declares '{1}' as 'inout', which a custom node cannot carry; split it into an 'in' parameter and an 'out' parameter.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1139
+  "line": 1193
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomMaterialInput",
   "src": "'{0}' takes the material '{1}' as an input; a custom node cannot accept material attributes on a pin, so read the fields the body needs and pass them as floats.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1176
+  "line": 1230
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomNeverReturns",
   "src": "'{0}' declares a return type but its body never returns a value; the node's first output will be 0.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1230
+  "line": 1284
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomNoVerbatimBody",
   "src": "'{0}' has no verbatim HLSL body, so it cannot become a custom node; only a '/// @custom' function can.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1098
+  "line": 1152
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomNotACustomFunction",
   "src": "'{0}' is not marked '/// @custom', so it has no custom node to build.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1961
+  "line": 2070
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomPrepareFailed",
   "src": "'{0}' could not be prepared for a custom node.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1972
+  "line": 2081
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomSelfContainedCall",
   "src": "'{0}' is 'selfcontained', so the '@custom' function '{1}' it calls is not embedded in its node; the call is left for the shader compiler to resolve out of this body's own includes.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1426
+  "line": 1480
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomSubstrateParameter",
   "src": "'{0}' uses Substrate on '{1}'; a custom node has no Substrate pins, so build that part of the material out of reflected Substrate nodes.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1150
+  "line": 1204
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomSubstrateReturn",
   "src": "'{0}' returns Substrate; a custom node has no Substrate pins, so build that part of the material out of reflected Substrate nodes.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1194
+  "line": 1248
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomTextureArgumentNotAName",
   "src": "The texture argument for '{0}' of '{1}' has to be a plain texture name, because the sampler that goes with it is named after it.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1657
+  "line": 1759
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomTextureOutput",
   "src": "'{0}' returns a texture through '{1}'; a custom node output carries float1..4 or material attributes, never a texture object.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1162
+  "line": 1216
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomTextureReturn",
   "src": "'{0}' returns a texture object; a custom node output carries float1..4 or material attributes, never a texture object.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1204
+  "line": 1258
  },
  {
   "ns": "DreamShader.CustomHlsl",
   "key": "CustomVoidBareReturn",
   "src": "'{0}' returns void but its body uses 'return;'; a custom node always returns its first output, so give the function a return type or restructure the body.",
   "file": "DreamShaderLang\\Private\\IR\\IRCustomHlsl.cpp",
-  "line": 1217
+  "line": 1271
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
@@ -9258,105 +9272,105 @@
   "key": "AssetMoves",
   "src": "'{0}' builds '{1}', and its migrated text would build '{2}': a new asset, with the old one left behind. Give the declaration a '/// @name {1}'.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 668
+  "line": 677
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "CatalogEmpty",
   "src": "The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound and nothing can be migrated.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 146
+  "line": 148
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "CommentsLost",
   "src": "{0} comment(s) of '{1}' would not be in the migrated file ({2}), so nothing was written; this is a fault of the migration, not of the source.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 602
+  "line": 610
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "ConditionalSource",
   "src": "'{0}' uses '#if' conditional compilation, and only the branch taken with today's defines would reach the migrated file; migrate it by hand, or remove the conditionals first.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 116
+  "line": 118
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "GraphDiffers",
   "src": "The migrated text of '{0}' does not build the graph the 1.x file builds: {1}",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 653
+  "line": 662
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "MigratedTextFails",
   "src": "The migrated text of '{0}' does not build as 2.0 source ({1}), so nothing was written; the text is in '{2}'.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 619
+  "line": 628
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "NotLegacySource",
   "src": "'{0}' is not a 1.x source; migrate takes '.dsm', '.dsf' and '.dsh' files.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 507
+  "line": 515
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "NothingToMigrate",
   "src": "'{0}' has no 1.x declaration left; there is nothing to migrate.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 541
+  "line": 549
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "OutputExists",
   "src": "'{0}' already exists and is not written over; move it away, or migrate into another folder with -Out.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 548
+  "line": 556
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "OutputUnmovable",
   "src": "'{0}' could not be written.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 742
+  "line": 751
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "OutputUnwritable",
   "src": "'{0}' could not be written.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 696
+  "line": 705
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "PreprocessFailed",
   "src": "'{0}' fails conditional compilation ({1}: {2}), and a source with '#if' lines is not migrated in any case.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 105
+  "line": 107
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "SourceUndeletable",
   "src": "'{0}' could not be deleted, so '{1}' was not written: the two would declare the same assets.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 712
+  "line": 721
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "SourceUnmovable",
   "src": "'{0}' could not be moved to '{1}', so '{2}' was not written: the two would declare the same assets.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 724
+  "line": 733
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "SourceUnreadable",
   "src": "'{0}' could not be read.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 515
+  "line": 523
  },
  {
   "ns": "DreamShader.Navigation",
@@ -11316,7 +11330,7 @@
   "key": "NoMaterialToCheck",
   "src": "'{0}' produced no material, so there are no shaders to compile; a function library is checked by the material that calls it.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderShaderCheck.cpp",
-  "line": 562
+  "line": 572
  },
  {
   "ns": "DreamShader.Tools",
@@ -11330,35 +11344,35 @@
   "key": "ShaderCompileError",
   "src": "[{0} / {1}] {2}",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderShaderCheck.cpp",
-  "line": 683
+  "line": 693
  },
  {
   "ns": "DreamShader.Tools",
   "key": "ShaderCompileTimedOut",
   "src": "Shader compilation for '{0}' did not finish within {1} seconds per material. A compile that never finishes is usually a dynamic loop or a texture read whose mip cannot be resolved in a divergent branch; move it into a '@custom' body with an explicit SampleLevel.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderShaderCheck.cpp",
-  "line": 782
+  "line": 792
  },
  {
   "ns": "DreamShader.Tools",
   "key": "ShaderErrorsUnreadable",
   "src": "Shader errors cannot be read in this configuration: '-nullrhi' switches the rendering shader maps off, and no cook target platform matched the requested platforms. Re-run without '-nullrhi', or pass a '-Platform=' an active target platform supports.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderShaderCheck.cpp",
-  "line": 790
+  "line": 800
  },
  {
   "ns": "DreamShader.Tools",
   "key": "UnknownQualityLevel",
   "src": "'{0}' is not a material quality level. Write Low, Medium, High or Epic.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderShaderCheck.cpp",
-  "line": 455
+  "line": 456
  },
  {
   "ns": "DreamShader.Tools",
   "key": "UnknownShaderPlatform",
   "src": "'{0}' is not a shader platform this engine knows. Write SM6, SM5, ES3_1, or a shader format name such as PCD3D_SM6.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderShaderCheck.cpp",
-  "line": 438
+  "line": 439
  },
  {
   "ns": "DreamShader.Tools",
@@ -13073,35 +13087,49 @@
   "key": "DocLineBreaksLost",
   "src": "'@{0}' held a text of several lines, which one '///' line cannot; it is written on one line, its line breaks as blanks.",
   "file": "DreamShaderLang\\Private\\Migrate\\LangMigrate.cpp",
-  "line": 558
+  "line": 610
+ },
+ {
+  "ns": "DreamShaderLangMigrate",
+  "key": "IncludedLegacyKeepsOuts",
+  "src": "'{0}' is a 1.x function of '{1}', which keeps its 'out' parameters once that file is migrated, so this call will have no value to read; pass a variable for '{2}' too, as the 1.x text may, before either file is migrated.",
+  "file": "DreamShaderLang\\Private\\Migrate\\LangMigrate.cpp",
+  "line": 927
+ },
+ {
+  "ns": "DreamShaderLangMigrate",
+  "key": "IncludedLegacyReturns",
+  "src": "'{0}' is a 1.x function of '{1}', which returns its first 'out', '{2}', once that file is migrated; this call is written for it as it is now. Migrate '{1}' first, in place, and then this file.",
+  "file": "DreamShaderLang\\Private\\Migrate\\LangMigrate.cpp",
+  "line": 917
  },
  {
   "ns": "DreamShaderLangMigrate",
   "key": "OptionalWithoutDefault",
   "src": "'{0}' of '{1}' was an optional input, and a {2} has no default the language can write; it is a required input in the migrated file.",
   "file": "DreamShaderLang\\Private\\Migrate\\LangMigrate.cpp",
-  "line": 433
+  "line": 484
  },
  {
   "ns": "DreamShaderLangMigrate",
   "key": "RootKept",
   "src": "'{0}' keeps its '/// @root', the 1.x spelling of where its asset goes, because the place the new file would put it could not be worked out; check the asset path the first build reports.",
   "file": "DreamShaderLang\\Private\\Migrate\\LangMigrate.cpp",
-  "line": 387
+  "line": 438
  },
  {
   "ns": "DreamShaderLangMigrate",
   "key": "RootQualifiedImport",
   "src": "'{0}' names a source root in front of the path, which '#include' cannot; write the path from the root's own folder (a leading '/') or relative to this file, then migrate again.",
   "file": "DreamShaderLang\\Private\\Migrate\\LangMigrate.cpp",
-  "line": 452
+  "line": 503
  },
  {
   "ns": "DreamShaderLangMigrate",
   "key": "SelectedOutputMissing",
   "src": "This reads output {0} of '{1}', which has no variable to be read from; the expression is replaced by '0.0'.",
   "file": "DreamShaderLang\\Private\\Migrate\\LangMigrate.cpp",
-  "line": 1637
+  "line": 2134
  },
  {
   "ns": "DreamShaderMaterialBrowser",

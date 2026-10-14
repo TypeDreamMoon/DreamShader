@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-2151
+2155
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -596,9 +596,11 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.CommandletRunner | FlagValueNotBoolean | '-{0}={1}' is neither on nor off. A flag takes true, 1, yes or on, or false, 0, no or off, and '-{0}' alone is on; the command did nothing. |
 | DreamShader.CustomHlsl | CustomBadFunctionIndex | Custom node code was asked for function {0}, but the bound module has {1}. |
 | DreamShader.CustomHlsl | CustomCallArity | '{0}' takes {1} argument(s) but this call passes {2}; a call that carries a texture cannot be matched up by position otherwise. |
+| DreamShader.CustomHlsl | CustomCallArityPlain | '{0}' takes {1} argument(s) in the HLSL it becomes, but this call passes {2}. |
 | DreamShader.CustomHlsl | CustomCallCycle | The '@custom' functions {0} call each other in a cycle; HLSL has no recursion, so their bodies cannot be embedded in a custom node. |
 | DreamShader.CustomHlsl | CustomCallsGraphFunction | '{0}' is not a '@custom' function and cannot be called from the HLSL body of '{1}'; a custom node sees no graph values, so mark '{0}' '@custom' as well or move the call out of the body. |
 | DreamShader.CustomHlsl | CustomCallsHoistingFunction | '{0}' takes the 'UE.' calls lifted out of its body as inputs of its own custom node, so the HLSL body of '{1}' cannot call it; call it from a graph body instead. |
+| DreamShader.CustomHlsl | CustomCallVoidValue | '{0}' returns nothing in the HLSL it becomes, so this call has no value to read; pass a variable for each of its 'out' parameters and read those. |
 | DreamShader.CustomHlsl | CustomCaseOnlyMatch | '{0}' differs from the function '{1}' only in case; HLSL is case-sensitive, so this call is left for the shader compiler. Did you mean '{1}'? |
 | DreamShader.CustomHlsl | CustomDuplicateParameterName | '{0}' declares '{1}' twice in the HLSL it generates; a texture parameter also claims '{1}Sampler', which the engine declares alongside it. |
 | DreamShader.CustomHlsl | CustomEmptyInclude | '{0}' has an '#include' with an empty path; write the virtual shader path the header lives at, for example "/Engine/Private/Common.ush". |
@@ -1884,6 +1886,8 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderIRToAstStatements | SinkAttributeUnnamed | '{0}' wires a material attribute '{1}' that is not a name the language has; the connection is dropped. |
 | DreamShaderIRToAstStatements | WriteAttributeUnnamed | {0} writes an attribute '{1}' that is not a name the language has; the write is dropped. |
 | DreamShaderLangMigrate | DocLineBreaksLost | '@{0}' held a text of several lines, which one '///' line cannot; it is written on one line, its line breaks as blanks. |
+| DreamShaderLangMigrate | IncludedLegacyKeepsOuts | '{0}' is a 1.x function of '{1}', which keeps its 'out' parameters once that file is migrated, so this call will have no value to read; pass a variable for '{2}' too, as the 1.x text may, before either file is migrated. |
+| DreamShaderLangMigrate | IncludedLegacyReturns | '{0}' is a 1.x function of '{1}', which returns its first 'out', '{2}', once that file is migrated; this call is written for it as it is now. Migrate '{1}' first, in place, and then this file. |
 | DreamShaderLangMigrate | OptionalWithoutDefault | '{0}' of '{1}' was an optional input, and a {2} has no default the language can write; it is a required input in the migrated file. |
 | DreamShaderLangMigrate | RootKept | '{0}' keeps its '/// @root', the 1.x spelling of where its asset goes, because the place the new file would put it could not be worked out; check the asset path the first build reports. |
 | DreamShaderLangMigrate | RootQualifiedImport | '{0}' names a source root in front of the path, which '#include' cannot; write the path from the root's own folder (a leading '/') or relative to this file, then migrate again. |
@@ -2175,3 +2179,4 @@ Use -IncludeDeferred to lint MaterialAssetGeneration/ and Decompiler/ in the nex
 
 ## Auto-gathered metadata
 Unreal will add any auto-gathered UPROPERTY metadata (for example DisplayName and ToolTip) on top of this compile-time baseline. This file intentionally counts only LOCTEXT/NSLOCTEXT entries.
+
