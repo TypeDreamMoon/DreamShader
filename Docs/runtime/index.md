@@ -160,79 +160,53 @@ still exports immediately after its pass.
 
 These links keep earlier documentation bookmarks useful. The pipeline language has its own reference.
 
-<a id="buffers"></a>
-
 ### Buffers
 
 See [the pipeline language reference](../language-v2/passes.md#buffers).
-
-<a id="clear-and-copy"></a>
 
 ### Clear and copy
 
 See [the pipeline language reference](../language-v2/passes.md#clear-and-copy).
 
-<a id="compute"></a>
-
 ### Compute
 
 See [the pipeline language reference](../language-v2/passes.md#compute).
 
-<a id="custom-pass-pipelines--dsp"></a>
-
-### Custom Pass pipelines (`.dsp`)
+### Custom Pass pipelines — `.dsp`
 
 See [the pipeline language reference](../language-v2/passes.md#custom-pass-pipelines--dsp).
-
-<a id="fullscreen"></a>
 
 ### Fullscreen
 
 See [the pipeline language reference](../language-v2/passes.md#fullscreen).
 
-<a id="injection-points"></a>
-
 ### Injection points
 
 See [the pipeline language reference](../language-v2/passes.md#injection-points).
-
-<a id="mesh"></a>
 
 ### Mesh
 
 See [the pipeline language reference](../language-v2/passes.md#mesh).
 
-<a id="passes"></a>
-
 ### Passes
 
 See [the pipeline language reference](../language-v2/passes.md#passes).
-
-<a id="pipeline-keys"></a>
 
 ### Pipeline keys
 
 See [the pipeline language reference](../language-v2/passes.md#pipeline-keys).
 
-<a id="references"></a>
-
 ### References
 
 See [the pipeline language reference](../language-v2/passes.md#references).
-
-<a id="the-file"></a>
 
 ### The file
 
 See [the pipeline language reference](../language-v2/passes.md#the-file).
 
-<a id="tools"></a>
-
 ### Tools
 
 See [the pipeline language reference](../language-v2/passes.md#tools).
-
-<a id="what-the-compiler-checks"></a>
 
 ### What the compiler checks
 
