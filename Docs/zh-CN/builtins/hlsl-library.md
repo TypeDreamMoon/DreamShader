@@ -1,235 +1,161 @@
 ---
-title: HLSL pass
-description: compute pass 和不带材质的 fullscreen pass 跑的 HLSL —— 写在 .dsp 的 hlsl 块里还是 .usf 里、绑定生成的名字、DreamPass.ush 的固定参数与辅助函数，以及代码怎样经过预检和快照进入引擎。需要 UE 5.8。
+title: "DreamShaderBuiltins.ush"
+description: "DreamShaderBuiltins.ush"
 ---
 
-`compute` pass，以及不带 `Material` 的 `fullscreen` pass，运行的是 HLSL。代码写在 `.dsp` 本身里 —— pass 的 `hlsl { }` 块，或者文件 `hlsl { }` 块里的一个入口 ——
-或者写在 pass 用 `Shader =` 指向的、工程里任意位置的 `.usf` 里。本页讲这段 HLSL 能用什么，以及它怎么进入引擎。
+<a id="dreamshaderbuiltinsush"></a>
 
-| 项目 | 值 |
+# DreamShaderBuiltins.ush
+
+> [DreamShader](../index.md) » [内置项](index.md) » **`DreamShaderBuiltins.ush`**
+
+随插件一起提供的 HLSL 头文件，定义了 `DS_*` 宏和函数，与材质翻译器为对应 `UE.*` 内置节点生成的 HLSL 保持一致。
+
+| | |
 | :-- | :-- |
-| 头文件 | `/Plugin/DreamShader/Pass/DreamPass.ush` —— 自动 include，再 include 一次也无妨 |
-| Shader 类型 | `FDreamPassCS`（compute）与 `FDreamPassPS`（像素），每个**槽位**一个排列 |
-| 槽位 | compute 32 个、像素 16 个（`DREAMSHADER_PASS_COMPUTE_SLOTS`、`DREAMSHADER_PASS_PIXEL_SLOTS`，可在 Target.cs 用 `GlobalDefinitions` 覆盖） |
-| 快照 | `<DShader>/.dreampass/` —— **和源码一起提交** |
-| 起始版本 | （自 2.1.0 起） |
+| 类型 | 随附的 HLSL 头文件 |
+| 磁盘位置 | `<Plugin>/Shaders/DreamShaderBuiltins.ush` |
+| 虚拟着色器路径 | `/Plugin/DreamShader/DreamShaderBuiltins.ush` |
+| 包含防护 | `DREAMSHADER_BUILTINS_USH` |
+| 定义 | 25 个 `DS_*` 符号 — 22 个宏和 3 个函数 |
+| 由插件生成 | **否** — 参见[可达性](#reachability) |
 
-<a id="代码写在哪"></a>
+<a id="synopsis"></a>
 
-## 代码写在哪
-
-每个 HLSL pass 的代码恰好在一处：
-
-| 位置 | pass 怎么写 | `Entry` |
-| :-- | :-- | :-- |
-| 自己的块 | pass 里的 `hlsl { ... }` | 整个函数时：要运行的函数，不写就是 `Main`；只有入口语句时：不写 |
-| 文件的块 | 只写 `Entry = <函数>;` | 必须：文件 `hlsl { }` 块里的一个函数 |
-| shader 文件 | `Shader = "<文件>.usf";` | 必须：文件里的一个函数 |
-
-一个块要么装**整个函数** —— 和 `.usf` 装的一样：函数、`groupshared`、`struct`、`#define`、`#include` —— 要么只装**入口的语句**，函数由编译器来写。
-是哪一种看块的顶层：出现函数定义、`groupshared` / `struct` / `cbuffer` 声明或 `[numthreads(...)]` 就是整个函数；
-其他情况 —— 语句、`if`、`for`、`[unroll]` —— 就是入口的语句。把一个 `.usf` 搬进 `.dsp`，就是把它的文本贴进一个块。
-
-<a id="整个函数"></a>
-
-### 整个函数
+## 概要
 
 ```hlsl
-pass TileLuma : compute
-{
-    Injection = BeforePostProcess;
-    Dispatch  = TileAverage * 16;
-    read  InColor = SceneColor;
-    write Result  = TileAverage;
-
-    hlsl
-    {
-        groupshared float Partial[256];
-
-        [numthreads(16, 16, 1)]
-        void Main(uint3 Id : SV_DispatchThreadID, uint3 Group : SV_GroupID, uint Index : SV_GroupIndex)
-        {
-            const float2 UV = (Id.xy + 0.5) / (ResultSize.xy * 16.0);
-            Partial[Index] = dot(DreamPassSample(InColor, UV).rgb, float3(0.2126, 0.7152, 0.0722));
-            GroupMemoryBarrierWithGroupSync();
-            for (uint Stride = 128; Stride > 0; Stride >>= 1)
-            {
-                if (Index < Stride)
-                {
-                    Partial[Index] += Partial[Index + Stride];
-                }
-                GroupMemoryBarrierWithGroupSync();
-            }
-            if (Index == 0)
-            {
-                Result[Group.xy] = Partial[0] / 256.0;
-            }
-        }
-    }
-}
+#include "/Plugin/DreamShader/DreamShaderBuiltins.ush"
 ```
 
-compute pass 的入口前面带 `[numthreads(x, y, z)]`，dispatch 就按这个组大小计数；只有组大小用宏写时才需要 `Threads = uint3(...)`。
+<a id="the-virtual-path"></a>
 
-<a id="入口的语句"></a>
+## 虚拟路径
 
-### 入口的语句
+在模块启动时，DreamShader 会从虚拟目录 `/Plugin/DreamShader` 到插件的 `Shaders` 文件夹注册一个着色器源码目录映射，除非该虚拟目录的映射已经存在。该映射是无条件的 —— 它不依赖任何工程设置、后端选择或引擎版本 —— 因此 `/Plugin/DreamShader/DreamShaderBuiltins.ush` 总是能被引擎的着色器预处理器解析。
 
-```hlsl
-pass Pulse : fullscreen
-{
-    Injection = BeforePostProcess;
-    read  InColor = SceneColor;
-    write Out     = SceneColor;
-    param PulseTint = PulseColor;
+这是与*生成的着色器虚拟目录* `/DreamShaderGenerated` 分开的一个映射，后者也是由模块注册的。自 2.0.0 起，DreamShader 不再在那里写入每个源码的辅助文件 `.ush`：`Function` 的 HLSL 被嵌入到其 Custom 节点的代码中。参见[生成的 HLSL](../generation/generated-hlsl.md)。
 
-    hlsl
-    {
-        const float3 Scene = DreamPassSample(InColor, UV).rgb;
-        const float  Depth = CalcSceneDepth(DreamPassSceneUV(UV));
-        Out = float4(Scene + PulseTint.rgb * saturate(1.0 - Depth / 4000.0) * DP_Weight, 1.0);
-    }
-}
-```
+<a id="reachability"></a>
 
-编译器把语句包进一个函数，函数里有这些名字：
+## 可达性
 
-| Pass | 函数 | 语句能用的名字 |
-| :-- | :-- | :-- |
-| `compute` | `[numthreads(...)]` 取自 `Threads`（不写时 `uint3(8, 8, 1)`）；超出 `DP_DispatchSize` 的线程在你的语句之前就返回 | `Id`（`SV_DispatchThreadID`）、`GroupId`（`SV_GroupID`）、`LocalId`（`SV_GroupThreadID`）、`LocalIndex`（`SV_GroupIndex`） |
-| `fullscreen` | 每个 `write` 一个以它命名、初始清零的 `out float4`，按 `write` 的顺序是 `SV_Target0`..`3` | `SvPosition`（`SV_POSITION`）、`Pixel`（从视图左上角数起的像素中心）、`UV`（在视图里的位置，0..1），以及那些 write |
+插件中没有任何地方会为此头文件发出 include，插件中也没有任何地方引用任何 `DS_*` 符号。该名称在文件自身之外唯一的出现是一处源码注释。
 
-`return;` 提前结束语句（像素 pass 的输出已经清零）。绑定不能用这些名字；语句里不能有函数、`groupshared` 或 `#include` ——
-它们放进文件的块，或者改让这个块装整个函数。
-
-<a id="文件的-hlsl-块"></a>
-
-### 文件的 hlsl 块
-
-```hlsl
-hlsl
-{
-    // 共享代码：编译进每一个代码写在 .dsp 里的 pass。
-    float GaussianWeight(int Offset, float Spread)
-    {
-        return exp(-float(Offset * Offset) / (2.0 * Spread * Spread));
-    }
-
-    // 入口：只为点名它的 pass 编译。
-    [numthreads(8, 8, 1)]
-    void BlurCS(uint3 Id : SV_DispatchThreadID)
-    {
-        if (any(Id.xy >= DP_DispatchSize.xy))
-        {
-            return;
-        }
-        float4 Sum = 0;
-        float Total = 0;
-        for (int i = -12; i <= 12; ++i)
-        {
-            const float W = GaussianWeight(i, SigmaTexels);
-            Sum   += W * Source.Load(int3(clamp(int2(Id.xy) + int2(Axis) * i, int2(0, 0), int2(SourceSize.xy) - 1), 0));
-            Total += W;
-        }
-        Result[Id.xy] = Sum / Total;
-    }
-}
-
-pass BlurH : compute
-{
-    Entry = BlurCS;
-    read  Source = Bright;
-    write Result = BlurX;
-    param SigmaTexels = Sigma;
-    param Axis        = float2(1, 0);
-}
-```
-
-一个 `.dsp` 只有一个。被 pass 用 `Entry` 点名的是**入口**；块里其余的都是**共享代码**，编译在每个代码写在 `.dsp` 里的 pass 的代码之前。
-由 pass 名字的生成方式（见下）得出两条规则：
-
-- **共享代码不用任何 pass 的名字** —— 不用 `read`、`write`、`param` 名，不用它们的 `Size`、`UVRect` 名，连作形参或局部变量都不行：
-  这些名字是它被编进的那个槽位的 `#define`。入口可以用：它只为点名它的 pass 编译，而这些 pass 都绑定了它用到的名字。
-- **不调用入口。** 在别的 pass 的槽位里它根本不存在。两个入口共用的东西，挪进一个单独的函数。
-
-两条都在编译管线时检查。pass 自己的块也看得见共享代码，可以随意调用其中的函数。
-
-<a id="pass-定义的名字"></a>
-
-## pass 定义的名字
-
-```hlsl
-pass Blur : compute
-{
-    Shader = "BoxBlur.usf";
-    Entry  = BlurCS;
-    read   Source = Mask;
-    write  Result = Blurred;
-    param  Radius = BlurRadius;
-}
-```
-
-`Source`、`Result`、`Radius` 之所以存在，是因为 pass 绑定了它们：在代码之前，每个绑定按书写顺序变成指向槽位固定参数的 `#define`。
-
-| 绑定 | 定义 | 含义 |
-| :-- | :-- | :-- |
-| 第 i 个 `read X = …` | `X`、`XSize`、`XUVRect` | `DP_Input<i>`（`Texture2D<float4>`）、它的尺寸（xy，zw 是倒数）、它的画面在纹理里的 UV 矩形 |
-| 第 j 个 `write Y = …` | `Y`、`YSize` | compute：`DP_Output<j>`（`RWTexture2D<float4>`）；像素：只有尺寸 —— 写 `SV_Target<j>` |
-| `param P = …` | `P` | `DP_Params[]` 的一部分：`float` 占一个分量，`float2` 对齐占半个，`float3` 占一个新向量的 xyz，`float4` 占整个；`int`、`bool` 用 `asint` / `asuint` 读回 |
-
-因为它们是宏，绑定名要挑不会和引擎标识符撞车的（`InMask`，而不是 `Texture`）。`Entry` 也同样被改名成槽位固定的入口点，所以它前面的 `[numthreads]` 就是 dispatch 用的组大小。
-
-<a id="固定参数"></a>
-
-## 固定参数
-
-| 名字 | 说明 |
+| 路径 | 是否包含此头文件？ |
 | :-- | :-- |
-| `DP_Input0`…`DP_Input7` | `read` 的纹理；没绑定的是黑的 |
-| `DP_InputSize[8]`、`DP_InputUVRect[8]` | 尺寸（xy）与尺寸倒数（zw）；画面的 UV 矩形（min xy、max zw）—— 管线自己的缓冲区是 (0, 0, 1, 1)，分屏时的场景颜色是一个子矩形 |
-| `DreamPassInputUV(i, uv)` | 第 i 个输入画面上的 `uv`，换算成它纹理里的 UV |
-| `DreamPassSample(Name, UV)` | 在视图上的 UV 处、在画面之内，对 `read` 的 Name 线性采样 |
-| `DreamPassLoad(Name, Pixel)` | `read` 的 Name 在某像素（从视图左上角数起）处的纹素 |
-| `DreamPassSceneUV(UV)` | 视图上的 UV 换成场景纹理的 UV，供 `CalcSceneDepth` 等使用；`BeginView` 不可用 |
-| `DP_PointClamp`、`DP_LinearClamp` | 采样器 |
-| `DP_Output0`…`DP_Output3` | 仅 compute：`write` 的 UAV |
-| `DP_OutputSize[4]` | 输出的尺寸 |
-| `DP_Params[16]` | 打包好的 `param` 值 |
-| `DP_Weight` | 管线在这个视图里的权重 |
-| `DP_ViewRect` | 输出 0 在这个视图里的矩形（min xy、max zw）。管线自己的缓冲区从 0 开始，分屏时某个视图的场景颜色不是 —— 写 `Out[DP_ViewRect.xy + Id.xy]` |
-| `DP_DispatchSize` | compute：请求的线程数；dispatch 会向上取整到整组，所以超出它要提前返回 |
-| `DP_Time` | 世界时间、世界帧间隔、真实时间（秒）、帧号 |
-| `View`、`SceneTexturesStruct` | 引擎的 view uniform buffer 与场景纹理 —— `CalcSceneDepth`、`CalcSceneCustomStencil` 以及 `SceneTexturesCommon.ush` 里的其他函数都能用 |
+| 由 `Function` 块创建的 `Custom` 节点 | 否 — 主体即节点代码，它调用的其他 `Function` 被嵌入为所生成包装结构的 `DreamShaderFn_*` 成员，节点的 include 列表只包含主体头部的那几行 `#include` *（自 2.0.0 起；1.x 会写入每个源码的辅助文件 `.ush`）* |
+| `Graph` 后端 | 否 — 它生成材质节点，而不是 HLSL |
+| `ThinCustom` 后端 | 否 |
+| [`Function`](../language/function.md) HLSL 主体中手写的 `#include` | 是 — 虚拟路径可被解析 |
 
-`DreamPassSample`、`DreamPassLoad`、`DreamPassSceneUV` 是宏 —— `DreamPassSample(InColor, UV)` 读的是绑定生成的 `InColorUVRect` —— 在 `.usf` 和块里都能用。
+该头文件自身的注释将其描述为被材质翻译单元内生成的 `DSI_*.ush` 文件所包含。那是 **Instance 后端**所使用的安排，而该后端已被弃用：当前解析出的后端集合是 `Graph` 和 `ThinCustom`，而 `Backend = "Instance"` 是 `ThinCustom` *（在 1.5.0 中弃用）* 的别名。不再生成任何 `DSI_*.ush` 文件，因此该注释描述的是一条不再运行的路径。参见[后端](../settings/backend.md)。
 
-`BeginView` 时 view uniform buffer 还不存在：在那里的 pass 里用 `View` 是编译错误，计时值用 `DP_Time` 代替；那里的场景纹理只是占位。
-文件块里的共享代码可以用 `View` —— 别的 pass 可能在帧里更晚运行 —— 但调用这种函数的 `BeginView` pass 在槽位预检时会被拒绝（`DSH8318`）。
+该头文件所暴露的每一种状态读取现在都在[`UE.*` 目录](ue.md)中有对应的材质节点，而在 `Graph` 块中的 `SampleTexture2D(tex, uv)` 会直接脱糖为一个 `TextureSample` 节点。因此，只有在手写 HLSL 中访问此头文件才有用。
 
-<a id="hlsl-怎么进入引擎"></a>
+<a id="symbols"></a>
 
-## HLSL 怎么进入引擎
+## 符号
 
-pass 不能有自己的全局 shader 类型：shader 类型在插件加载时注册。所以每个 HLSL pass 在它的管线编译时分到一个**槽位** —— `FDreamPassCS` 或 `FDreamPassPS` 的一个排列：
+`Parameters` 是在 include 处作用域内的材质参数结构；`Tex` 是纹理参数标识符，采样器名称通过记号粘贴（`Tex##Sampler`）从中派生。
 
-**预检。** 用你的代码、按工程的 shader 格式编译这个槽位。错误是带文件和行号的 DreamShader 诊断 —— 代码写在 `.dsp` 里时就是 `.dsp` 的行 —— 管线不会编译成功。
-文件块共享代码里的错误只报一次，并列出它让哪些 pass 失败。没有入口用到的代码根本不会被编译 —— 引擎在 shader 编译器读槽位之前就丢掉了 —— 所以还没人调用的辅助函数不检查，和 `.usf` 一样。
-**快照。** 代码的快照 —— `.usf` 以及它用相对路径 include 的每个文件；或者代码在 `.dsp` 里时，文件的块（别的 pass 的入口抹掉）、pass 自己的代码，以及它们相对 `.dsp` include 的每个文件 ——
-写进 `<DShader>/.dreampass/Slots/<C|P><NN>/`，注册表（`RegistryCompute.ush`、`RegistryPixel.ush`）把槽位映射过去。`Registry.json` 记录哪个 pass 占着哪个槽位。
-**两个 shader 类型**在编辑器里重新编译，pass 在下一帧运行。
+| 符号 | 类型 | 展开 | 等价节点 |
+| :-- | :-- | :-- | :-- |
+| `DS_TIME` | 宏 | `(View.GameTime)` | [`UE.Time()`](ue.md) |
+| `DS_REAL_TIME` | 宏 | `(View.RealTime)` | — |
+| `DS_DELTA_TIME` | 宏 | `(View.DeltaTime)` | — |
+| `DS_PERIODIC_TIME(Period)` | 宏 | `(fmod(View.GameTime, (Period)))` | [`UE.Time(Period=…)`](ue.md) |
+| `DS_TexCoord(Parameters, CoordinateIndex)` | `float2` 函数 | `Parameters.TexCoords[CoordinateIndex].xy`，当 `NUM_TEX_COORD_INTERPOLATORS` 为 0 时为 `float2(0, 0)` | [`UE.TexCoord`](ue.md) |
+| `DS_VertexColor(Parameters)` | `float4` 函数 | `Parameters.VertexColor` | [`UE.VertexColor`](ue.md) |
+| `DS_CameraVector(Parameters)` | 宏 | `((Parameters).CameraVector)` | [`UE.CameraVector`](ue.md) |
+| `DS_ReflectionVector(Parameters)` | 宏 | `((Parameters).ReflectionVector)` | [`UE.ReflectionVector`](ue.md) |
+| `DS_PixelNormalWS(Parameters)` | 宏 | `((Parameters).WorldNormal)` | [`UE.PixelNormalWS`](ue.md) |
+| `DS_VertexNormalWS(Parameters)` | 宏 | `((Parameters).TangentToWorld[2])` | [`UE.VertexNormalWS`](ue.md) |
+| `DS_TwoSidedSign(Parameters)` | 宏 | `((Parameters).TwoSidedSign)` | [`UE.TwoSidedSign`](ue.md) |
+| `DS_ViewportUV(Parameters)` | 宏 | `(GetViewportUV(Parameters))` | [`UE.ViewportUV`](ue.md) |
+| `DS_PixelDepth(Parameters)` | 宏 | `(GetPixelDepth(Parameters))` | [`UE.PixelDepth`](ue.md) |
+| `DS_WorldPosition(Parameters)` | 宏 | `(WSDemote(GetWorldPosition(Parameters)))` | [`UE.WorldPosition`](ue.md) |
+| `DS_TranslatedWorldPosition(Parameters)` | 宏 | `(GetTranslatedWorldPosition(Parameters))` | [`UE.TranslatedWorldPosition`](ue.md) |
+| `DS_ObjectPosition(Parameters)` | 宏 | `(WSDemote(GetObjectWorldPosition(Parameters)))` | [`UE.ObjectPosition`](ue.md) |
+| `DS_ObjectRadius(Parameters)` | 宏 | `(GetPrimitiveData(Parameters).ObjectRadius)` | [`UE.ObjectRadius`](ue.md) |
+| `DS_ObjectBounds(Parameters)` | 宏 | `(float3(GetPrimitiveData(Parameters).ObjectBoundsX, …ObjectBoundsY, …ObjectBoundsZ))` | [`UE.ObjectBounds`](ue.md) |
+| `DS_CameraPosition(Parameters)` | 宏 | `(WSDemote(GetWorldCameraOrigin(Parameters)))` | [`UE.CameraPosition`](ue.md) |
+| `DS_PerInstanceRandom(Parameters)` | 宏 | `(GetPerInstanceRandom(Parameters))` | [`UE.PerInstanceRandom`](ue.md) |
+| `DS_PerInstanceFadeAmount(Parameters)` | 宏 | `(GetPerInstanceFadeAmount(Parameters))` | [`UE.PerInstanceFadeAmount`](ue.md) |
+| `DS_Panner(UV, Time, Speed)` | `float2` 函数 | `UV + float2(frac(Time * Speed.x), frac(Time * Speed.y))` | [`UE.Panner`](ue.md) |
+| `DS_SampleTexture2D(Tex, UV)` | 宏 | `Texture2DSample(Tex, Tex##Sampler, UV)` | `Graph` 块中的 `SampleTexture2D(tex, uv)` |
+| `DS_SampleTexture2DLod(Tex, UV, Lod)` | 宏 | `Texture2DSampleLevel(Tex, Tex##Sampler, UV, Lod)` | — |
+| `DS_SampleTexture2DBias(Tex, UV, Bias)` | 宏 | `Texture2DSampleBias(Tex, Tex##Sampler, UV, Bias)` | — |
 
-全局 shader 从快照构建，从不直接用你正在编辑的文件。这很重要，因为全局 shader 的编译错误是致命的：直接编你写了一半的代码，编辑器或 cook 会停下。
-有了快照，拉到你改动的队友拿到的是通过了你预检的那份，cook 也一样。在 `.dsp` 里块的上方加一行注释不会挪动快照的任何一行 —— 快照里不含 `.dsp` 的行号 —— 所以不会重编任何全局 shader。
+`WSDemote` 调用将引擎的大世界坐标向量降为 `float3`。已翻译的（相机相对）位置形式已经是 `float3`，并在相机附近保持精度。
 
-- 槽位是稳定的：pass 跨编译保持自己的槽位；新 pass 拿最小的空闲槽位；删掉的 pass 在它的管线再次编译时释放槽位；`dsc pass-registry -Gc` 释放已不存在的管线的槽位。槽位用完是编译错误，并告诉你要调大哪个数。
-- 没用到的槽位编译成空入口，所以每次构建的排列列表都一样 —— cook 出的构建要求这一点。
-- 全局 shader 被 cook 进基础游戏的全局 shader 缓存：**HLSL pass 不能放进 DLC。**
-- 块在与它的 `{` 配对的 `}` 处结束；注释、字符串和 `#` 行里的花括号不算。块里不支持含花括号的多行宏（行尾 `\`）。
+该头文件的注释指出，DSL 过去用于书写不带前缀的拼写 `SampleTexture2D` / `SampleTexture2DLod` / `SampleTexture2DBias`，并由生成器将它们降为这些宏。今天不再执行这样的重写。`SampleTexture2D` 在 `Graph` 块中仍是保留名称，它会脱糖为一个 `TextureSample` 节点 —— 参见 [`UE.Expression`](ue-expression.md#sampletexture2d) —— 但 `Lod` 和 `Bias` 拼写没有 `Graph` 等价物。
 
-<a id="接下来"></a>
+<a id="notes"></a>
 
-## 接下来
+## 注意事项
 
-- [Custom Pass 管线](../language-v2/passes.md) — .dsp 的写法：缓冲区、pass、注入点、参数。
-  - [Custom Pass 运行时](../runtime/index.md) — 激活、注入点、内置与导出的缓冲区、视图、调试、限制。
-  - [Custom Pass 示例](../examples/custom-pass.md) — 三种写 HLSL 的方式都有完整示例。
+> [!NOTE]
+> **将 `#include` 放在最前面。** 写在 `Function` 主体顶部的 `#include`（其前只有空白和注释）会从主体中取出并放到 Custom 节点的 include 列表中，引擎会在所生成函数之外包含它 —— 参见[函数 ▸ 包含](../language/function.md#includes) —— 因此该头文件的函数定义可以正常编译。而在某条语句之后、或任何其他 `#` 行之后出现的 `#include`，会留在主体内，引擎会将其粘贴到某个函数内部；在那里 22 个宏仍然可用（`#define` 在任何位置都合法），但三个函数定义（`DS_TexCoord`、`DS_VertexColor`、`DS_Panner`）在另一个函数体内不合法。
+
+> [!WARNING]
+> **`DS_TexCoord` 和 `DS_VertexColor` 依赖翻译器副作用，而现在已经没有任何东西安排这些副作用了。** `DS_TexCoord` 读取 `Parameters.TexCoords[…]`，后者仅在材质翻译期间分配了至少一个插值器槽位时才存在
+> （`NUM_TEX_COORD_INTERPOLATORS` > 0）；没有分配槽位时，该函数可以编译并返回
+> `float2(0, 0)`。`DS_VertexColor` 读取 `Parameters.VertexColor`，而后者仅在材质以顶点色用法设置进行翻译时才会被写入。已退役的 Instance 后端通过
+> 编译匹配的 dummy 输入块来安排这两者。在 `Graph` 和 `ThinCustom` 后端下没有任何东西这样做，因此
+> 请改用 [`UE.TexCoord`](ue.md) 和 [`UE.VertexColor`](ue.md) —— 或者一个连线的 `Function` 输入 —— 而不是
+> 这两个。
+
+- 其余的读取都是无副作用的。它们接触的每个字段和 `Get*(Parameters)` 辅助函数都在
+  像素入口处无条件填充，因此它们可以在任何不透明 Surface 像素求值中编译，无需使用标志或插值器请求。
+- `DS_PerInstanceRandom` 和 `DS_PerInstanceFadeAmount` 仅对实例化或
+  GPU 剔除的绘制有意义。在普通网格体上，它们会读回安全常量（分别为 `0` 和 `1`），且不会
+  产生编译错误。
+- 该头文件由 `DREAMSHADER_BUILTINS_USH` 保护，因此在同一
+  翻译单元中包含多次是无害的。
+- 在 `Function` 主体内部，GLSL 别名处理会在主体生成之前重写整个标识符
+  —— `vec3` → `float3`、`mix` → `lerp`、`fract` → `frac`、`mod` → `fmod`，等等。它会跳过字符串
+  字面量和注释，因此 `#include "…"` 中的 include 路径永远不会被重写。
+
+<a id="example"></a>
+
+## 示例
+
+一个顶层 `Function`，其 HLSL 主体只使用该头文件的宏部分：
+
+```c
+Function vec2 Wobble(in vec2 uv, in float speed)
+{
+    #include "/Plugin/DreamShader/DreamShaderBuiltins.ush"
+    float t = DS_TIME * speed;
+    return uv + float2(sin(t), cos(t)) * 0.02;
+}
+```
+
+该 include 通过注册的虚拟目录解析，并且 `DS_TIME` 展开为
+`(View.GameTime)`。
+
+基于节点的等价写法，完全不需要 include，也不需要任何 HLSL 辅助函数：
+
+```c
+GraphFunction vec2 Wobble(in vec2 uv, in float speed)
+{
+    float t = UE.Time() * speed;
+    return uv + vec2(sin(t), cos(t)) * 0.02;
+}
+```
+
+<a id="see-also"></a>
+
+## 另请参阅
+
+- [内置函数](index.md) —— `Graph` 内可用的调用接口
+- [`UE.*` 目录](ue.md) —— 本页每个符号对应的节点等价物
+- [`UE.Expression`](ue-expression.md) —— 访问任何其他 `UMaterialExpression`
+- [数学内置函数](math.md) —— `Graph` 中无前缀的数值调用接口
+- [变换内置函数](transform.md) —— `UE.TransformVector` / `UE.TransformPosition`
+- [`Function`](../language/function.md) —— HLSL 主体及其生成方式
+- [`GraphFunction`](../language/graph-function.md) —— HLSL 主体的基于节点的替代方案
+- [生成的 HLSL](../generation/generated-hlsl.md) —— 插件确实会生成的每个源文件的 `.ush`
+- [后端](../settings/backend.md) —— `Graph`、`ThinCustom`，以及已退役的 `Instance` 后端
+- [贡献](../contributing/index.md) —— 插件的源码与内容布局
