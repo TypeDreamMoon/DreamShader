@@ -343,6 +343,10 @@ namespace UE::DreamShader::Editor::Compiler
 			SkippedSourceCurrent,
 			/** Another editor owns writing this project's generated assets: DSH8209. */
 			DeferredToWriteOwner,
+			/** NoGeneration, and the compile did not name the source: DSH8277. The asset on disk stands. */
+			SkippedNoGeneration,
+			/** The same, and there is no asset on disk: DSH8278. */
+			SkippedNoGenerationMissing,
 		};
 
 		/**
@@ -380,6 +384,38 @@ namespace UE::DreamShader::Editor::Compiler
 			}
 
 			return EDreamShaderLang2EmitOutcome::Built;
+		}
+
+		/**
+		 * The same question asked of a whole run: a NoGeneration product the run left alone is recorded on the run itself,
+		 * because the pipeline skips it before the emitter is reached, and a diagnostic the source disabled could not carry it.
+		 */
+		EDreamShaderLang2EmitOutcome ClassifyLang2ProductEmitOutcome(const FDreamShaderLang2PipelineResult& Run, const int32 ProductIndex)
+		{
+			if (Run.NoGenerationMissingProducts.Contains(ProductIndex))
+			{
+				return EDreamShaderLang2EmitOutcome::SkippedNoGenerationMissing;
+			}
+			if (Run.NoGenerationProducts.Contains(ProductIndex))
+			{
+				return EDreamShaderLang2EmitOutcome::SkippedNoGeneration;
+			}
+			return Run.IR.IsValid() && Run.IR->Products.IsValidIndex(ProductIndex)
+				? ClassifyLang2ProductEmitOutcome(Run.Diagnostics, Run.IR->Products[ProductIndex])
+				: EDreamShaderLang2EmitOutcome::Built;
+		}
+
+		/** The asset at ObjectPath, loaded if it is only on disk, or null; never a load of a package that does not exist. */
+		template <typename AssetType>
+		AssetType* FindOrLoadDreamShaderPipelineAsset(const FString& ObjectPath)
+		{
+			if (AssetType* Found = FindObject<AssetType>(nullptr, *ObjectPath))
+			{
+				return Found;
+			}
+			return FPackageName::DoesPackageExist(FPackageName::ObjectPathToPackageName(ObjectPath))
+				? LoadObject<AssetType>(nullptr, *ObjectPath)
+				: nullptr;
 		}
 
 		/** How far RunDreamShaderPipelineStages goes. */
@@ -528,13 +564,33 @@ namespace UE::DreamShader::Editor::Compiler
 					return;
 				}
 
-				IR::BuildParameterSchemaFromIR(*ParentRun.IR, ParentProductIndex, ParentRun.Bound.Get(), *Schema);
+				// A NoGeneration parent is not rebuilt for its instances; they are built against the asset that is there,
+				// which is what they will be parented to, and not against a source the asset may be behind.
+				UMaterialInterface* const NoGenerationParent = ParentRun.IR->Products[ParentProductIndex].bNoGeneration
+					? FindOrLoadDreamShaderPipelineAsset<UMaterialInterface>(ParentObjectPath)
+					: nullptr;
+				if (ParentRun.IR->Products[ParentProductIndex].bNoGeneration && !NoGenerationParent && bCompileStaleParent)
+				{
+					OutResult.Diagnostics.Error(TEXT("DSH8279"), ParentArgument->Span, FText::Format(
+						LOCTEXT("NoGenerationParentMissing", "The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is nothing to build this instance against. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`."),
+						FText::FromString(ParentObjectPath),
+						FText::FromString(FPaths::GetCleanFilename(ParentRun.SourceFilePath))));
+					return;
+				}
+				if (NoGenerationParent)
+				{
+					BuildParameterSchemaFromAsset(NoGenerationParent, *Schema);
+				}
+				else
+				{
+					IR::BuildParameterSchemaFromIR(*ParentRun.IR, ParentProductIndex, ParentRun.Bound.Get(), *Schema);
+				}
 				Schema->ParentObjectPath = ParentObjectPath;
 
 				// Keep the informational notice specific to a parent that was actually built. Current parents
 				// and a second editor's deferred writes do not claim that an asset was regenerated.
 				if (bCompileStaleParent
-					&& ClassifyLang2ProductEmitOutcome(ParentRun.Diagnostics, ParentRun.IR->Products[ParentProductIndex]) == EDreamShaderLang2EmitOutcome::Built)
+					&& ClassifyLang2ProductEmitOutcome(ParentRun, ParentProductIndex) == EDreamShaderLang2EmitOutcome::Built)
 				{
 					OutResult.Diagnostics.Info(TEXT("DSH8264"), ParentArgument->Span, FText::Format(
 						LOCTEXT("ParentCompiledFirst", "'{0}' was missing or older than its source, so '{1}' was compiled first."),
@@ -1089,6 +1145,63 @@ namespace UE::DreamShader::Editor::Compiler
 					return ReportCancelled();
 				}
 
+				const FIRProduct& Product = OutResult.IR->Products[ProductIndex];
+
+				// NoGeneration: only a compile that names the source builds the asset. Any other leaves it as it is on disk,
+				// and a same-file caller emitted after it references that asset, through the table the emit below fills.
+				if (Product.bNoGeneration && !Options.bIncludeNoGeneration)
+				{
+					FString PackageName;
+					FString ObjectPath;
+					FString LeafName;
+					FDreamShaderError DestinationError;
+					UObject* Existing = ResolveIRProductObjectPath(Product, SourceFilePath, PackageName, ObjectPath, LeafName, DestinationError)
+						? FindOrLoadDreamShaderPipelineAsset<UObject>(ObjectPath)
+						: nullptr;
+					const FString DisplayPath = ObjectPath.IsEmpty() ? Product.Name : ObjectPath;
+
+					OutResult.NoGenerationProducts.Add(ProductIndex);
+					if (Existing)
+					{
+						OutResult.Diagnostics.Info(TEXT("DSH8277"), Product.Source.Span, FText::Format(
+							LOCTEXT("NoGenerationLeftAlone", "'{0}' was left alone: '{1}' marks it NoGeneration, and only a compile that names the file builds it."),
+							FText::FromString(DisplayPath),
+							FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
+					}
+					else
+					{
+						OutResult.NoGenerationMissingProducts.Add(ProductIndex);
+						OutResult.Diagnostics.Warning(TEXT("DSH8278"), Product.Source.Span, FText::Format(
+							LOCTEXT("NoGenerationNeverBuilt", "'{0}' has never been built: '{1}' marks it NoGeneration, so only a compile that names the file builds it, and none has. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`."),
+							FText::FromString(DisplayPath),
+							FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
+					}
+
+					const FString ExistingPath = Existing ? Existing->GetPathName() : FString();
+					EmitContext.EmittedProductAssetPaths.Add(ProductIndex, ExistingPath);
+					OutResult.ProductAssets.Add(Existing);
+					OutResult.ProductAssetPaths.Add(Existing ? ExistingPath : DisplayPath);
+					OutResult.ProductOrder.Add(ProductIndex);
+					continue;
+				}
+
+				// A caller of a NoGeneration export that has no asset has nothing to call. Said here, by name, rather than
+				// as the emitter's "not emitted yet", which would blame the product order.
+				for (const FIRNode& Node : Product.Graph.Nodes)
+				{
+					const FIRProperty* LocalFunction = Node.FindProperty(Prop::LocalFunction);
+					const int32 CalleeIndex = LocalFunction ? static_cast<int32>(LocalFunction->Value.I) : INDEX_NONE;
+					if (CalleeIndex != INDEX_NONE && OutResult.NoGenerationMissingProducts.Contains(CalleeIndex))
+					{
+						OutResult.Diagnostics.Error(TEXT("DSH8279"), Product.Source.Span, FText::Format(
+							LOCTEXT("NoGenerationCalleeMissing", "'{0}' calls '{1}', which '{2}' marks NoGeneration and which has never been built, so there is nothing to call. Compile '{2}' by name once: Compile in the Material Content Browser, or `compile -Source`."),
+							FText::FromString(Product.Name),
+							FText::FromString(OutResult.IR->Products[CalleeIndex].Name),
+							FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
+						return false;
+					}
+				}
+
 				UObject* Asset = nullptr;
 				if (!EmitDreamShaderIRProduct(*OutResult.IR, ProductIndex, EmitContext, Asset, OutResult.Diagnostics))
 				{
@@ -1267,11 +1380,23 @@ namespace UE::DreamShader::Editor::Compiler
 				: nullptr;
 			const FString& AssetPath = Result.ProductAssetPaths[Slot];
 
-			const EDreamShaderLang2EmitOutcome Outcome = Product
-				? ClassifyLang2ProductEmitOutcome(Result.Diagnostics, *Product)
-				: EDreamShaderLang2EmitOutcome::Built;
+			const EDreamShaderLang2EmitOutcome Outcome = ClassifyLang2ProductEmitOutcome(Result, ProductIndex);
 			switch (Outcome)
 			{
+			case EDreamShaderLang2EmitOutcome::SkippedNoGeneration:
+				Lines.Add(FString::Printf( /* I18N-EXEMPT: wire form, beside the hash-skip line */
+					TEXT("Skipped %s from %s; the source marks it NoGeneration, and only a compile that names the source builds it."),
+					*AssetPath,
+					*Result.SourceFilePath));
+				break;
+
+			case EDreamShaderLang2EmitOutcome::SkippedNoGenerationMissing:
+				Lines.Add(FString::Printf( /* I18N-EXEMPT: wire form, beside the hash-skip line */
+					TEXT("Skipped %s from %s; the source marks it NoGeneration, and it has never been built."),
+					*AssetPath,
+					*Result.SourceFilePath));
+				break;
+
 			case EDreamShaderLang2EmitOutcome::SkippedSourceCurrent:
 				// The 1.x hash skip (the Graph and ThinCustom paths of the 1.x generator).
 				Lines.Add(FString::Printf( /* I18N-EXEMPT: wire form, mirrors the 1.x hash-skip line */

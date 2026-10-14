@@ -39,6 +39,7 @@ namespace UE::DreamShader::Editor::Compiler
 	 * Returns true when every product is current afterwards. OutError always holds the report; on failure its
 	 * Code is the first error's. A parent-chain caller may retain the completed run to build its schema without
 	 * parsing the chain a second time. RequiredParentObjectPath checks that parent product before emitting this file.
+	 * bIncludeNoGeneration is FDreamShaderCompileRequest's: a source compiled first for another is never named.
 	 */
 	bool CompileDreamShaderSourceFile(
 		const FString& SourceFilePath,
@@ -46,7 +47,8 @@ namespace UE::DreamShader::Editor::Compiler
 		::UE::DreamShader::EThinCustomPersistence Persistence,
 		::UE::DreamShader::FDreamShaderError& OutError,
 		FDreamShaderLang2PipelineResult* OutPipelineResult = nullptr,
-		const FString& RequiredParentObjectPath = FString());
+		const FString& RequiredParentObjectPath = FString(),
+		bool bIncludeNoGeneration = false);
 
 	/** The lines RaiseGenerationWarning collected since the current outermost compile began, in raise order, without duplicates. */
 	const TArray<FString>& GetDreamShaderCollectedGenerationWarnings();

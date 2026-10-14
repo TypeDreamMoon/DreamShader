@@ -176,7 +176,8 @@ namespace UE::DreamShader::Editor::Compiler
 		const ::UE::DreamShader::EThinCustomPersistence Persistence,
 		::UE::DreamShader::FDreamShaderError& OutError,
 		FDreamShaderLang2PipelineResult* OutPipelineResult,
-		const FString& RequiredParentObjectPath)
+		const FString& RequiredParentObjectPath,
+		const bool bIncludeNoGeneration)
 	{
 		::UE::DreamShader::Editor::DreamShaderCompilerServiceDetail::FScopedDreamShaderCompileNotice Notice(SourceFilePath);
 
@@ -184,6 +185,7 @@ namespace UE::DreamShader::Editor::Compiler
 		Options.bForce = bForce;
 		Options.bEmitAssets = true;
 		Options.ThinCustomPersistence = Persistence;
+		Options.bIncludeNoGeneration = bIncludeNoGeneration;
 
 		bool bSucceeded = false;
 		{
@@ -293,7 +295,9 @@ namespace UE::DreamShader::Editor::Compiler
 			::UE::DreamShader::FDreamShaderError Error;
 
 			::UE::DreamShader::FDreamShaderCompileResult Result;
-			Result.bSucceeded = CompileDreamShaderSourceFile(Request.SourceFilePath, Request.bForce, Request.ThinCustomPersistence, Error);
+			Result.bSucceeded = CompileDreamShaderSourceFile(
+				Request.SourceFilePath, Request.bForce, Request.ThinCustomPersistence, Error,
+				/*OutPipelineResult*/ nullptr, /*RequiredParentObjectPath*/ FString(), Request.bIncludeNoGeneration);
 			Result.Message = FText::FromString(Error.Message);
 			if (!Result.bSucceeded)
 			{
@@ -359,6 +363,8 @@ namespace UE::DreamShader::Editor::Private
 		Request.SourceFilePath = DreamInstance->SourceFilePath;
 		Request.bForce = true;
 		Request.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Materialized;
+		// Asked for on this material by name.
+		Request.bIncludeNoGeneration = true;
 
 		const ::UE::DreamShader::FDreamShaderCompileResult Result =
 			::UE::DreamShader::Editor::Compiler::FDreamShaderCompilerService::Get().CompileAssets(Request);
