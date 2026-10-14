@@ -46,7 +46,47 @@ namespace UE::DreamShader::Editor::Private
 		// stamped it, and a team with editors in two languages saw each other's layers and blends as hand-edited.
 		// An instance parameter's ExpressionGUID is left out without a new tag (ExportInstanceParameterValues): every DSD4
 		// stamp was written with the GUID empty, and the text with it cleared is that text byte for byte.
-		constexpr const TCHAR* DigestFormatVersion = TEXT("DSD4");
+		// DSD5: every name is digested in lower case -- an FName value, alone or inside an array or a struct, an input's
+		// name, an object path. FName compares without case and a package keeps one spelling per name: a function output
+		// generated as `result` beside something else spelled `Result` loads back as `Result`, so a DSD4 stamp read every
+		// such asset as hand-edited the first time a new session compiled it again.
+		constexpr const TCHAR* DigestFormatVersion = TEXT("DSD5");
+
+		/** Whether a property's value holds an FName anywhere: itself, or an element, field, key or value of it. */
+		bool DigestPropertyHoldsName(const FProperty* Property, const int32 Depth = 0)
+		{
+			if (!Property || Depth > 8)
+			{
+				return false;
+			}
+			if (Property->IsA<FNameProperty>())
+			{
+				return true;
+			}
+			if (const FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property))
+			{
+				return DigestPropertyHoldsName(ArrayProperty->Inner, Depth + 1);
+			}
+			if (const FSetProperty* SetProperty = CastField<FSetProperty>(Property))
+			{
+				return DigestPropertyHoldsName(SetProperty->ElementProp, Depth + 1);
+			}
+			if (const FMapProperty* MapProperty = CastField<FMapProperty>(Property))
+			{
+				return DigestPropertyHoldsName(MapProperty->KeyProp, Depth + 1) || DigestPropertyHoldsName(MapProperty->ValueProp, Depth + 1);
+			}
+			if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
+			{
+				for (TFieldIterator<FProperty> It(StructProperty->Struct, EFieldIteratorFlags::IncludeSuper); It; ++It)
+				{
+					if (DigestPropertyHoldsName(*It, Depth + 1))
+					{
+						return true;
+					}
+				}
+			}
+			return false;
+		}
 
 		// One override array as digest text, exported from a copy with every row's ExpressionGUID cleared. Regeneration
 		// writes each override with an empty GUID (UMaterialInstance's setters invalidate it) and UE resolves it against
@@ -215,12 +255,19 @@ namespace UE::DreamShader::Editor::Private
 			if (const FObjectPropertyBase* ObjectProperty = CastField<FObjectPropertyBase>(Property))
 			{
 				const UObject* Referenced = ObjectProperty->GetObjectPropertyValue(ValuePtr);
-				OutValue = Referenced ? Referenced->GetPathName() : TEXT("None");
+				// A path is names too (DSD5).
+				OutValue = Referenced ? Referenced->GetPathName().ToLower() : TEXT("None");
 				return true;
 			}
 
 			OutValue.Reset();
 			Property->ExportTextItem_Direct(OutValue, ValuePtr, nullptr, nullptr, PPF_None);
+			// The spelling of a name is whichever one its package kept (DSD5); only what it says counts. A value that holds
+			// a name -- a Custom node's output list, say -- is compared without case as a whole.
+			if (DigestPropertyHoldsName(Property))
+			{
+				OutValue.ToLowerInline();
+			}
 			return true;
 		}
 
@@ -319,7 +366,7 @@ namespace UE::DreamShader::Editor::Private
 					InOutText += FString::Printf(
 						TEXT(" IN %d %s=%s\n"),
 						InputIndex,
-						InputName.IsNone() ? TEXT("-") : *InputName.ToString(),
+						InputName.IsNone() ? TEXT("-") : *InputName.ToString().ToLower(),
 						*MakeConnectionText(Input, IndexByExpression));
 				}
 			}
@@ -697,7 +744,8 @@ namespace UE::DreamShader::Editor::Private
 					continue;
 				}
 
-				FString Value = ExportInstanceParameterValues(CastFieldChecked<FArrayProperty>(Property), ValuePtr);
+				// Rows name their parameters and reference their textures: compared without case (DSD5).
+				FString Value = ExportInstanceParameterValues(CastFieldChecked<FArrayProperty>(Property), ValuePtr).ToLower();
 				ParameterValues.Emplace(Property->GetName(), MoveTemp(Value));
 			}
 
@@ -715,7 +763,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				Text += FString::Printf(
 					TEXT("MI Switch %s=%d/%d\n"),
-					*Switch.ParameterInfo.Name.ToString(),
+					*Switch.ParameterInfo.Name.ToString().ToLower(),
 					Switch.Value ? 1 : 0,
 					Switch.bOverride ? 1 : 0);
 			}
@@ -723,7 +771,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				Text += FString::Printf(
 					TEXT("MI Mask %s=%d%d%d%d/%d\n"),
-					*Mask.ParameterInfo.Name.ToString(),
+					*Mask.ParameterInfo.Name.ToString().ToLower(),
 					Mask.R ? 1 : 0,
 					Mask.G ? 1 : 0,
 					Mask.B ? 1 : 0,

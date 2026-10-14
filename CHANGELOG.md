@@ -44,6 +44,13 @@
 
 ### Fixed
 
+- **A generated asset whose names differ only in case from another name read as hand-edited.** Unreal
+  compares names without case, and a package keeps one spelling per name, so a material function output
+  generated as `result` loaded back as `Result` when the same package held a `Result`. The digest compared
+  the spelling, and the next session's compile refused the asset (`DSH8115`) though nobody had touched it:
+  six of the 67 dreamshader-blender material functions on every second compile. The digest compares names
+  without case now; its format moved to `DSD5`, so every asset reads as `Unstamped` once and is restamped by
+  its next rebuild. See [Divergence](Docs/generation/divergence.md#what-counts-as-a-hand-edit).
 - **A `.dss` calls a 1.x `Namespace` member as `Ns::Fn(...)`.** A library header such as dreamshader-blender
   declares its functions in `Namespace(Name = "BL")` and its Graphs call them `BL::TexNoise3D(...)`, but in a
   `.dss` that included it the same call was `DSH2154` at the second `:` ("Expected ';' after an expression
