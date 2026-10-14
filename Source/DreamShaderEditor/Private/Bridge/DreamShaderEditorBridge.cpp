@@ -848,6 +848,7 @@ namespace UE::DreamShader::Editor::Private
 
 		PendingFiles.Reset();
 		ForcedPendingFiles.Reset();
+		NamedPendingFiles.Reset();
 		DiagnosticsStore.Reset();
 	}
 
@@ -1060,13 +1061,17 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
-	void FDreamShaderEditorBridge::QueueSourceFile(const FString& SourceFilePath, const bool bForce)
+	void FDreamShaderEditorBridge::QueueSourceFile(const FString& SourceFilePath, const bool bForce, const bool bNamed)
 	{
 		const FString Normalized = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
 		PendingFiles.Add(Normalized, FPlatformTime::Seconds());
 		if (bForce)
 		{
 			ForcedPendingFiles.Add(Normalized);
+		}
+		if (bNamed)
+		{
+			NamedPendingFiles.Add(Normalized);
 		}
 	}
 
@@ -1437,6 +1442,7 @@ namespace UE::DreamShader::Editor::Private
 						{
 							Bridge->PendingFiles.Remove(SourceFile);
 							Bridge->ForcedPendingFiles.Remove(SourceFile);
+							Bridge->NamedPendingFiles.Remove(SourceFile);
 						}
 						// The file owns nothing any more; the dependents queued above refile what they filed against it.
 						Bridge->ClearDiagnostics(SourceFile);
@@ -1451,6 +1457,7 @@ namespace UE::DreamShader::Editor::Private
 					{
 						Bridge->PendingFiles.Remove(SourceFile);
 						Bridge->ForcedPendingFiles.Remove(SourceFile);
+						Bridge->NamedPendingFiles.Remove(SourceFile);
 						Bridge->ClearDiagnostics(SourceFile);
 						Bridge->RebuildDependencyGraph();
 						Bridge->UpdateDiagnosticsFile();
@@ -1676,8 +1683,9 @@ namespace UE::DreamShader::Editor::Private
 					FString SourceFilePath;
 					if (RequestObject->TryGetStringField(TEXT("sourceFile"), SourceFilePath) && !SourceFilePath.IsEmpty())
 					{
-						// An explicit request means "rebuild": the hash skip is for saves the watcher sees.
-						QueueSourceFile(SourceFilePath, /*bForce*/ true);
+						// An explicit request means "rebuild": the hash skip is for saves the watcher sees. It names the file, so
+						// its NoGeneration products are built too.
+						QueueSourceFile(SourceFilePath, /*bForce*/ true, /*bNamed*/ true);
 						// Parked, not answered: the compile happens a few ticks later, after
 						// the debounce window. Answering now would report success before
 						// anything had been attempted.
@@ -2029,12 +2037,14 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderEditorBridge::ProcessSourceFile(const FString& SourceFilePath)
 	{
-		const bool bForce = ForcedPendingFiles.Remove(UE::DreamShader::NormalizeSourceFilePath(SourceFilePath)) > 0;
+		const FString Normalized = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		const bool bForce = ForcedPendingFiles.Remove(Normalized) > 0;
+		const bool bNamed = NamedPendingFiles.Remove(Normalized) > 0;
 		FString Message;
-		CompileSourceFile(SourceFilePath, bForce, Message);
+		CompileSourceFile(SourceFilePath, bForce, Message, bNamed);
 	}
 
-	bool FDreamShaderEditorBridge::CompileSourceFile(const FString& InSourceFilePath, const bool bForce, FString& OutMessage)
+	bool FDreamShaderEditorBridge::CompileSourceFile(const FString& InSourceFilePath, const bool bForce, FString& OutMessage, const bool bIncludeNoGeneration)
 	{
 		const FString SourceFilePath = UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath);
 
@@ -2053,6 +2063,7 @@ namespace UE::DreamShader::Editor::Private
 			Request.SourceFilePath = SourceFilePath;
 			Request.bForce = bForce;
 			Request.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Ephemeral;
+			Request.bIncludeNoGeneration = bIncludeNoGeneration;
 			Result = Compiler->CompileAssets(Request);
 			bCompilerRan = true;
 		}

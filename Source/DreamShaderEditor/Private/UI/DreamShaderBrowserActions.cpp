@@ -26,12 +26,12 @@ namespace UE::DreamShader::Editor::Private
 		// Through the bridge when there is one, so the result lands in the diagnostics store (and from
 		// there in diagnostics.json and the VSCode extension) and a previous error on the file is
 		// cleared on success. A direct generator call does neither. Forced, and a ThinCustom product
-		// stays Ephemeral, like the buttons always were.
-		bool CompileSource(const FString& SourceFilePath, FString& OutMessage)
+		// stays Ephemeral, like the buttons always were. bNamed: a source the user picked, whose NoGeneration assets are built.
+		bool CompileSource(const FString& SourceFilePath, FString& OutMessage, const bool bNamed)
 		{
 			if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge())
 			{
-				return Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, OutMessage);
+				return Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, OutMessage, bNamed);
 			}
 			::UE::DreamShader::IDreamShaderCompiler* const Compiler = ::UE::DreamShader::GetDreamShaderCompiler();
 			if (!Compiler)
@@ -42,6 +42,7 @@ namespace UE::DreamShader::Editor::Private
 			::UE::DreamShader::FDreamShaderCompileRequest Request;
 			Request.SourceFilePath = SourceFilePath;
 			Request.bForce = true;
+			Request.bIncludeNoGeneration = bNamed;
 			Request.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Ephemeral;
 			const ::UE::DreamShader::FDreamShaderCompileResult Result = Compiler->CompileAssets(Request);
 			OutMessage = Result.Message.ToString();
@@ -61,7 +62,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
-	bool FDreamShaderBrowserActions::Compile(FDreamShaderBrowserModel& Model, const TSharedPtr<FBrowserEntry>& Entry)
+	bool FDreamShaderBrowserActions::Compile(FDreamShaderBrowserModel& Model, const TSharedPtr<FBrowserEntry>& Entry, const bool bNamed)
 	{
 		if (!Entry.IsValid() || !Entry->Source.IsSet())
 		{
@@ -69,7 +70,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		FString Message;
-		const bool bSuccess = CompileSource(Entry->Source->FilePath, Message);
+		const bool bSuccess = CompileSource(Entry->Source->FilePath, Message, bNamed);
 
 		Notify(
 			FText::Format(
@@ -106,7 +107,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			SlowTask.EnterProgressFrame(1.0f, FText::FromString(Entry->Source->DisplayName));
 			FString Message;
-			if (CompileSource(Entry->Source->FilePath, Message))
+			if (CompileSource(Entry->Source->FilePath, Message, /*bNamed*/ false))
 			{
 				Model.RefreshEntry(Entry);
 			}
@@ -156,7 +157,7 @@ namespace UE::DreamShader::Editor::Private
 		if (!Material && Entry->Source.IsSet())
 		{
 			FString Message;
-			if (CompileSource(Entry->Source->FilePath, Message))
+			if (CompileSource(Entry->Source->FilePath, Message, /*bNamed*/ true))
 			{
 				Model.RefreshEntry(Entry);
 				Material = Entry->ResolveMaterial();

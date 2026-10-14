@@ -79,7 +79,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge())
 			{
-				return Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, OutMessage);
+				return Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, OutMessage, /*bIncludeNoGeneration*/ true);
 			}
 			::UE::DreamShader::IDreamShaderCompiler* const Compiler = ::UE::DreamShader::GetDreamShaderCompiler();
 			if (!Compiler)
@@ -90,6 +90,8 @@ namespace UE::DreamShader::Editor::Private
 			::UE::DreamShader::FDreamShaderCompileRequest Request;
 			Request.SourceFilePath = SourceFilePath;
 			Request.bForce = true;
+			// Asked for by name: a NoGeneration product is built too.
+			Request.bIncludeNoGeneration = true;
 			// A `.dsi` instance always saves; a memory-only parent is materialized by the compile itself (DSH8244).
 			Request.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Ephemeral;
 			const ::UE::DreamShader::FDreamShaderCompileResult Result = Compiler->CompileAssets(Request);

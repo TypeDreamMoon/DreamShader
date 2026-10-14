@@ -507,6 +507,10 @@ namespace UE::DreamShader::Editor::Private
 		::UE::DreamShader::FDreamShaderCompileRequest RequestTemplate;
 		RequestTemplate.bForce = bForce;
 		RequestTemplate.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Materialized;
+		// `-Source` names the file, so its NoGeneration products are built; `-All` names none.
+		FString NamedSource;
+		RequestTemplate.bIncludeNoGeneration = TryGetCommandletParam(Tokens, Switches, Params, TEXT("Source"), NamedSource)
+			|| TryGetCommandletParam(Tokens, Switches, Params, TEXT("File"), NamedSource);
 		const int32 FailureCount = CompileDreamShaderSourcesInBatch(*Compiler, CompileUnits, RequestTemplate,
 			[](const FDreamShaderBatchCompileEntry& Entry)
 			{

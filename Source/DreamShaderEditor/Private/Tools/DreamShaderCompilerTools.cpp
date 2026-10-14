@@ -365,6 +365,8 @@ namespace UE::DreamShader::Editor::Compiler
 		FLangDiagnosticSink FlagSink;
 		TArray<FString> SourceFiles;
 		const bool bSelected = ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles, FlagSink);
+		FString NamedSource;
+		const bool bNamedSource = TryGetExplicitSourceFile(Tokens, Switches, Params, NamedSource);
 		const bool bShaders = Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("Shaders"), FlagSink);
 		const bool bForce = Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("Force"), FlagSink);
 		if (ReportFlagErrors(FlagSink, TEXT("check")))
@@ -438,6 +440,8 @@ namespace UE::DreamShader::Editor::Compiler
 			// run against a tree you do not want touched.
 			Options.bEmitAssets = bShaders;
 			Options.bForce = bForce;
+			// `-Source` names the file, so a NoGeneration product is built for its shaders; `-All` leaves it as it is.
+			Options.bIncludeNoGeneration = bNamedSource;
 
 			FDreamShaderLang2PipelineResult Result;
 			const bool bPipelineOk = RunDreamShaderLang2Pipeline(SourceFile, Options, Result);

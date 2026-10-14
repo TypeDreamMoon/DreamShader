@@ -37,8 +37,11 @@ namespace UE::DreamShader::Editor::Private
 		 * request parked on this file, and OnDiagnosticsChanged all follow from it -- which a direct
 		 * FMaterialGenerator call bypasses, leaving the VSCode extension and the Material Content
 		 * Browser looking at the previous result. The watcher's own compiles go through here too.
+		 *
+		 * bIncludeNoGeneration says someone named the file (FDreamShaderCompileRequest): a button, a menu item, a bridge
+		 * request for it. The watcher's compiles never do.
 		 */
-		bool CompileSourceFile(const FString& SourceFilePath, bool bForce, FString& OutMessage);
+		bool CompileSourceFile(const FString& SourceFilePath, bool bForce, FString& OutMessage, bool bIncludeNoGeneration = false);
 
 		/**
 		 * Queue a rebuild for source files whose TEXT a plugin tool just rewrote on disk (the asset
@@ -154,7 +157,8 @@ namespace UE::DreamShader::Editor::Private
 		void HandleSettingsPropertyChanged(UObject* Object, struct FPropertyChangedEvent& Event);
 		/** Compile every project source file. Never forces -- see the definition for why. */
 		void GenerateAllSources();
-		void QueueSourceFile(const FString& SourceFilePath, bool bForce = false);
+		/** bNamed: a request for this file by name, which builds its NoGeneration products too (CompileSourceFile). */
+		void QueueSourceFile(const FString& SourceFilePath, bool bForce = false, bool bNamed = false);
 		void QueueDependentSourcesForImport(const FString& ImportFilePath);
 		/**
 		 * After a source compiled, the sources that read what it builds, never the source itself:
@@ -269,6 +273,8 @@ namespace UE::DreamShader::Editor::Private
 		TMap<FString, double> PendingFiles;
 		/** The subset of PendingFiles queued with force; consumed when the file is compiled. */
 		TSet<FString> ForcedPendingFiles;
+		/** The subset of PendingFiles queued by name (QueueSourceFile's bNamed); consumed when the file is compiled. */
+		TSet<FString> NamedPendingFiles;
 		/**
 		 * Requests waiting on a compile, keyed by the normalized source path.
 		 *

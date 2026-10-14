@@ -81,7 +81,7 @@ namespace UE::DreamShader::Editor::Private
 			if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge())
 			{
 				// The bridge is always the interactive path, which leaves a ThinCustom product Ephemeral.
-				return Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, OutMessage);
+				return Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, OutMessage, /*bIncludeNoGeneration*/ true);
 			}
 			::UE::DreamShader::IDreamShaderCompiler* const Compiler = ::UE::DreamShader::GetDreamShaderCompiler();
 			if (!Compiler)
@@ -92,6 +92,8 @@ namespace UE::DreamShader::Editor::Private
 			::UE::DreamShader::FDreamShaderCompileRequest Request;
 			Request.SourceFilePath = SourceFilePath;
 			Request.bForce = true;
+			// Asked for by name: a NoGeneration product is built too.
+			Request.bIncludeNoGeneration = true;
 			Request.ThinCustomPersistence = bAllowEphemeralThinCustom
 				? ::UE::DreamShader::EThinCustomPersistence::Ephemeral
 				: ::UE::DreamShader::EThinCustomPersistence::Materialized;
