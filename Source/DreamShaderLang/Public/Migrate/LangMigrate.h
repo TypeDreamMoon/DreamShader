@@ -31,6 +31,14 @@
 //   a function of a Namespace block       -> `/// @name N::F` (its node's title), body re-indented
 //   Description = "a\r\nb"                -> the doc block's free text, line for line
 //   T x = UE.Expression(.., OutputType=T) -> x declared with the type the node really makes
+//   Function F(in a, out r, out o)        -> T F(a, out o), `T r = (T)0;` first, `return r;` last      (rule L9)
+//   F(a, r, o), in a body or a graph      -> r = F(a, o), for such an F                                (rule L9)
+//   N::F(a, o) read as a value in a body  -> N_F_r(a, o), a function that returns N::F's first `out`   (rule L9)
+//
+// Rule L9 is the one 1.x applied to every function that returns nothing: its HLSL returns its first `out`, so a body
+// reads it as a value. A `.dss` function is emitted as declared, so such a function is declared returning it -- except
+// a function of a `Namespace` block, a library's public entry point, whose `out`s are its node's pins and its material
+// function's outputs: it keeps them, and a body of this file that read its value calls an adapter instead.
 //
 // The bound module says what each 1.x spelling resolved to. Nothing here decides whether the result means the same:
 // the host builds the printed text with the 2.0 front end and compares (Editor: Commandlet/DreamShaderMigrate.cpp).
