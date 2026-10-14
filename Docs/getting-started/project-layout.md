@@ -177,25 +177,26 @@ invalidates every file that includes it.
 
 ## What is compiled, and what is not
 
-The plugin has two enumerators, and they exclude different things.
+Every build path takes the same files *(after 2.1.2)* — the startup sweep, a save and the dependents it
+queues, *Recompile All*, the commandlet's `compile -All`, the cook and the Material Content Browser:
 
-| Enumerator | Extensions | Excludes | Used by |
-| --- | --- | --- | --- |
-| full source enumeration | `.dsm`, `.dsh`, `.dsf`, `.dss`, `.dsi`, `.dsp` | **everything** under any root's `Packages` | startup Ephemeral generation, the commandlet's `compile -All`, cook, the Material Content Browser list, VirtualFunction sync |
-| material source enumeration | `.dsm`, `.dsf`, `.dss`, `.dsi`, `.dsp` | only `.dsm` under `Packages` | *Recompile DSM*, the auto-compile queue, the dependency graph |
+| Where | What is built |
+| --- | --- |
+| a source root, outside its `Packages` | every `.dss`, `.dsi`, `.dsp`, `.dsm` and `.dsf`; a `.dsh` only through the sources that include it |
+| a package's `Assets/` folder | its `.dss`, `.dsf` and `.dsi`, into the package's asset root (`/Game/DreamShaderPackages/<scope>/<name>`) |
+| a package header that asks for material functions — `/// @generate`, `#pragma generate`, a 1.x `Generate =` | those material functions |
+| anything else in a package — `Examples/`, a `.dss` or `.dsf` outside `Assets` | nothing, on any path |
 
-**Warning:**
+To use an example, copy it from `DShader/Packages` to somewhere under `DShader/`. Through 2.1.2 a package's
+`.dsf`, `.dss`, `.dsi` or `.dsp` outside `Assets` was compiled by the file watcher and *Recompile DSM* but by none
+of `compile -All`, the cook and the Material Content Browser; move such sources under `Assets`. See
+[Packages ▸ Package assets](../tools/packages.md#package-assets).
 
-The `Packages` exclusion is complete for `.dsm` and partial for every other kind that builds something. A `.dsf`,
-`.dss`, `.dsi` or `.dsp` in a package **is** compiled in an interactive editor session — the file watcher and
-*Recompile DSM* both pick it up — but `compile -All`, cook and the Material Content Browser **do not** see it. So such
-a package works locally and silently generates nothing in a headless build. Ship library code as `.dsh` headers, or
-copy the sources out of `Packages` into your own tree. See [Packages ▸ Source-file enumeration](../tools/packages.md#source-file-enumeration).
+**Note:**
 
-**Warning:**
-
-`Examples/**/*.dsm` inside a package is never compiled on any path and never appears in the Material Content Browser.
-To use an example, copy it from `DShader/Packages` to somewhere under `DShader/`.
+A source marked `NoGeneration` (`#pragma nogeneration`, `/// @nogeneration`, a 1.x `NoGeneration = true`) is
+enumerated like any other, but only a compile that names it builds its assets — see
+[NoGeneration](../generation/no-generation.md).
 
 A package `.dsh` header can be imported, but it never takes part in the `VirtualFunction` declaration scan — a
 `VirtualFunction` shipped in a package is never checked against its asset.

@@ -61,6 +61,12 @@ plugin source root; the full path grammar is in [Asset Paths](../generation/asse
   `DSH2243`). Two commas in a row, a missing key, `=` or value are still `DSH2243`.
 - No `{` after the header, or a section missing its name or its `{`, is `DSH2257`; a file that ends
   inside a block is `DSH2150`.
+- `NoGeneration = true` on a `Shader`, `ShaderFunction`, `ShaderLayer` or `ShaderLayerBlend` (after 2.1.2):
+  only a compile that names the file builds the block's asset; a value other than `true`, `false`, `1` or
+  `0` is `DSH2260`. See [NoGeneration](../generation/no-generation.md).
+- A 1.x file also takes `#pragma nogeneration` (every block of the file), `#pragma disable_warning(...)` and
+  `#pragma disable_error(...)` at its top level (after 2.1.2) — see
+  [Disabling diagnostics](../language-v2/disable-diagnostics.md).
 
 ## `Shader`
 

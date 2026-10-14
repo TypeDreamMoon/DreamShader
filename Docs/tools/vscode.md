@@ -33,7 +33,7 @@ Neither extension ships inside the plugin. Install one separately.
 
 | Editor | Repository | Provides |
 | :-- | :-- | :-- |
-| VSCode | [TypeDreamMoon/dreamshader-language-support](https://github.com/TypeDreamMoon/dreamshader-language-support) | Syntax highlighting, snippets, completion, Go to Definition, Find References, Hover, Signature Help, local diagnostics, Unreal bridge diagnostics, package commands, quick templates, the material preview panel; currently 2.1.0, with `.dsp` support |
+| VSCode | [TypeDreamMoon/dreamshader-language-support](https://github.com/TypeDreamMoon/dreamshader-language-support) | Syntax highlighting, snippets, completion, Go to Definition, Find References, Hover, Signature Help, local diagnostics, Unreal bridge diagnostics, package commands, quick templates, the material preview panel; `.dsp` support since 2.1.0, 2.0 headers, `#include` and `BL::` completion since 2.2.0 |
 | JetBrains Rider | [tsdaer/dreamshader-language-support](https://github.com/tsdaer/dreamshader-language-support) | `.dsm` / `.dsf` / `.dsh` file types, grammar and PSI parsing, highlighting, completion, navigation, diagnostics, Unreal Bridge integration, semantic tokens, inlay hints, package tools |
 
 | Capability | VSCode | Rider |
@@ -464,12 +464,20 @@ exactly the places that matter. So the editor asks the compiler:
 | :-- | :-- |
 | Go to Definition · Find References · Hover · Outline · Signature Help · Rename | the **symbol index** the plugin writes after every compile: `Saved/DreamShader/Index/<root>/<file>.index.json` |
 | completion and hover for `UE.` and `Substrate.` — node names, pins, properties, the Substrate sugar arguments | the **builtin catalog** the plugin exports once the editor has loaded: `Saved/DreamShader/Bridge/dreamshader-builtin-catalog.json` |
+| `#include "` paths; `BL::` and the other header namespaces; the functions the included headers declare, with hover, definition and signature help, in a file not compiled yet (extension 2.2.0) | the **text of the headers**, 1.x and 2.0 alike; the index answers first where it has an answer |
 | diagnostics | the bridge, as for 1.x |
 
 Answers are as fresh as the last compile, and the plugin compiles on save. A position the text no longer
 matches is dropped rather than shown, and a rename refuses and asks for a compile. The index lists what a
 file declares at file scope, not the locals of a body, and records mentions by name — so only a name
 that is unique at file scope is renamed.
+
+A `.dsh` header is shared by both languages. One written in 2.0 — `#include`, `/// @custom`, `T Name(...)`
+and no 1.x block — opens as DreamShader 2.0 (extension 2.2.0); a header with any 1.x block stays
+`dreamshaderlang`, as the plugin reads a mixed header. The file-level forms of the plugin after 2.1.2 —
+`#pragma generate` / `/// @generate`, `#pragma nogeneration` / `/// @nogeneration`, `#pragma disable_warning(...)`
+/ `disable_error(...)` and `// disable_warning DSHnnnn` — complete and are coloured in both languages, and
+the diagnostics the extension finds itself honour the disable lists.
 
 **Reveal in Material Editor** sends the bridge's `reveal-node` request for the current line: the running
 editor opens the owning asset's material editor and selects the node that line became. The other

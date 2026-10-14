@@ -22,8 +22,10 @@ No shared `.ush` include is written any more: each node's `Code` carries all the
 ## Synopsis
 
 ```c
-Function      [ { Inline | SelfContained } ] [ <return-type> ] <name> ( [ <parameter-list> ] ) { <hlsl> }
-GraphFunction                                [ <return-type> ] <name> ( [ <parameter-list> ] ) { <hlsl> }
+Function      [ ( <attributes> ) ] [ { Inline | SelfContained } ] [ <return-type> ] <name> ( [ <parameter-list> ] ) { <hlsl> }
+GraphFunction [ ( <attributes> ) ]                                [ <return-type> ] <name> ( [ <parameter-list> ] ) { <hlsl> }
+
+<attributes>     := Generate = <string> [ , Library = <string> ] [ , Description = <string> ]
 
 <parameter-list> := <parameter> [ , <parameter> ] …
 <parameter>      := [ { in | out } ] <type-token> <parameter-name>
@@ -36,7 +38,11 @@ GraphFunction                                [ <return-type> ] <name> ( [ <param
 | `{ a \| b }` | Choice — take exactly one of the alternatives separated by \|. | `{ Node( … ) \| Comment( … ) }` |
 | `…` | Repetition — the preceding item may appear any number of times. | `<property-declaration> …` |
 
-There is no `(Key = Value)` header, no `Settings` and no sections. The `{ … }` after the parameter list
+The only `(Key = Value)` header is the optional one after the keyword (after 2.1.2): `Generate`, `Library` and
+`Description`, which mean something in a package's header only — the material function the package
+generates from the function; `Generate = ""` opts the function out of its namespace's template. Another key
+is `DSH6331`, a `{...}` other than `{Name}` in a template `DSH6332`. See
+[Packages ▸ Asset headers](../tools/packages.md#asset-headers). There are no `Settings` and no sections. The `{ … }` after the parameter list
 is raw HLSL, kept verbatim: only its braces are read, and a brace inside a string or a comment does
 not count.
 
@@ -392,6 +398,8 @@ member's `Custom` node is `Common::ApplyTint`, as in 1.x.
 | Lookup | The qualified name, or its flattened spelling `Common_ApplyTint`. There is no `using` and no unqualified fallback: a bare `ApplyTint(…)` is `DSH4208`. |
 | Case | Names are case-sensitive (since 2.0.0). `common::applytint(…)` still resolves when it matches one function, with the warning `DSH5275`. |
 | Missing name | `Common::` with nothing after it is `DSH5260`. |
+| `Generate`, `Library`, `Description` | (after 2.1.2) In a package's header: every member generates a material function named by the `Generate` template (`MF_BL_{Name}`), with `Library` and `Description` as defaults. See [Packages ▸ Asset headers](../tools/packages.md#asset-headers). |
+| From a `.dss` | (after 2.1.2) A `.dss` that includes the header calls a member as `Common::ApplyTint(…)` too. |
 
 ```c
 Namespace(Name="Common")
