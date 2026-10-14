@@ -160,54 +160,80 @@ still exports immediately after its pass.
 
 These links keep earlier documentation bookmarks useful. The pipeline language has its own reference.
 
-### Buffers [#buffers]
+<a id="buffers"></a>
+
+### Buffers
 
 See [the pipeline language reference](../language-v2/passes.md#buffers).
 
-### Clear and copy [#clear-and-copy]
+<a id="clear-and-copy"></a>
+
+### Clear and copy
 
 See [the pipeline language reference](../language-v2/passes.md#clear-and-copy).
 
-### Compute [#compute]
+<a id="compute"></a>
+
+### Compute
 
 See [the pipeline language reference](../language-v2/passes.md#compute).
 
-### Custom pass pipelines  dsp [#custom-pass-pipelines--dsp]
+<a id="custom-pass-pipelines--dsp"></a>
+
+### Custom Pass pipelines (`.dsp`)
 
 See [the pipeline language reference](../language-v2/passes.md#custom-pass-pipelines--dsp).
 
-### Fullscreen [#fullscreen]
+<a id="fullscreen"></a>
+
+### Fullscreen
 
 See [the pipeline language reference](../language-v2/passes.md#fullscreen).
 
-### Injection points [#injection-points]
+<a id="injection-points"></a>
+
+### Injection points
 
 See [the pipeline language reference](../language-v2/passes.md#injection-points).
 
-### Mesh [#mesh]
+<a id="mesh"></a>
+
+### Mesh
 
 See [the pipeline language reference](../language-v2/passes.md#mesh).
 
-### Passes [#passes]
+<a id="passes"></a>
+
+### Passes
 
 See [the pipeline language reference](../language-v2/passes.md#passes).
 
-### Pipeline keys [#pipeline-keys]
+<a id="pipeline-keys"></a>
+
+### Pipeline keys
 
 See [the pipeline language reference](../language-v2/passes.md#pipeline-keys).
 
-### References [#references]
+<a id="references"></a>
+
+### References
 
 See [the pipeline language reference](../language-v2/passes.md#references).
 
-### The file [#the-file]
+<a id="the-file"></a>
+
+### The file
 
 See [the pipeline language reference](../language-v2/passes.md#the-file).
 
-### Tools [#tools]
+<a id="tools"></a>
+
+### Tools
 
 See [the pipeline language reference](../language-v2/passes.md#tools).
 
-### What the compiler checks [#what-the-compiler-checks]
+<a id="what-the-compiler-checks"></a>
+
+### What the compiler checks
 
 See [the pipeline language reference](../language-v2/passes.md#what-the-compiler-checks).
