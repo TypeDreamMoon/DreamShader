@@ -756,6 +756,26 @@ namespace UE::DreamShader::Lang::Private
 		const FLangSpan NameValueSpan = NameAttribute->Span;
 		const FPragmaArgument* RootAttribute = LegacyParser::FindLegacyAttribute(Attributes, TEXT("Root"));
 
+		// `NoGeneration = true` (after 2.1.2): the 2.0 `/// @nogeneration` of the asset this block builds.
+		bool bNoGeneration = false;
+		if (const FPragmaArgument* NoGenerationAttribute = LegacyParser::FindLegacyAttribute(Attributes, TEXT("NoGeneration")))
+		{
+			const FString Value = NoGenerationAttribute->Value.TrimStartAndEnd();
+			if (Value.Equals(TEXT("true"), ESearchCase::IgnoreCase) || Value.Equals(TEXT("1"), ESearchCase::CaseSensitive))
+			{
+				bNoGeneration = true;
+			}
+			else if (!Value.Equals(TEXT("false"), ESearchCase::IgnoreCase) && !Value.Equals(TEXT("0"), ESearchCase::CaseSensitive))
+			{
+				Diagnostics.Warning(
+					TEXT("DSH2260"),
+					NoGenerationAttribute->Span,
+					FText::Format(
+						LOCTEXT("NoGenerationValue", "'{0}' is not a value of NoGeneration, which is true or false; the block is built as if it were false."),
+						FText::FromString(Value)));
+			}
+		}
+
 		if (!Check(ELangTokenKind::LeftBrace))
 		{
 			return Diagnostics.Error(
@@ -1080,6 +1100,10 @@ namespace UE::DreamShader::Lang::Private
 			{
 				LegacyParser::AddLegacyBlockDirective(LegacyInfo, *Entry, TEXT("root"), Block.Root);
 			}
+			if (bNoGeneration)
+			{
+				LegacyParser::AddLegacyBlockDirective(LegacyInfo, *Entry, TEXT("nogeneration"), FString());
+			}
 
 			MainDecl = Entry.Get();
 			OutDecls.Add(MoveTemp(Entry));
@@ -1310,6 +1334,10 @@ namespace UE::DreamShader::Lang::Private
 			if (Block.bHasRoot)
 			{
 				LegacyParser::AddLegacyBlockDirective(LegacyInfo, *Function, TEXT("root"), Block.Root);
+			}
+			if (bNoGeneration)
+			{
+				LegacyParser::AddLegacyBlockDirective(LegacyInfo, *Function, TEXT("nogeneration"), FString());
 			}
 			if (bLayer)
 			{

@@ -681,6 +681,22 @@ namespace UE::DreamShader::Lang::Private
 			Pragma->Text = Arguments;
 			return Pragma;
 		}
+		if (Name.Equals(TEXT("nogeneration"), ESearchCase::CaseSensitive))
+		{
+			Pragma->PragmaKind = EPragmaKind::NoGeneration;
+			// It takes nothing. Said rather than ignored: `#pragma nogeneration(false)` reads like a way to turn it off, and
+			// the file would stay marked all the same.
+			if (!Arguments.TrimStartAndEnd().IsEmpty())
+			{
+				Diagnostics.Warning(
+					TEXT("DSH3219"),
+					Span,
+					FText::Format(
+						LOCTEXT("NoGenerationArguments", "'#pragma nogeneration' takes no arguments, and '{0}' was ignored: the file is still marked. Remove the line to have it built automatically again."),
+						FText::FromString(Arguments.TrimStartAndEnd())));
+			}
+			return Pragma;
+		}
 
 		// `#pragma instance(...)` (a `.dsi` header) and `#pragma pipeline(...)` (a `.dsp` header) read exactly like
 		// `#pragma material(...)`: keys with values, no positional selector -- a pipeline value may be a dotted name

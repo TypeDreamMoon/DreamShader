@@ -327,6 +327,11 @@ namespace UE::DreamShader::Lang::Private
 		void BindInstancePragma(const FPragmaDecl& Pragma);
 		/** DSH7255: `#pragma instance` in a file that is not a `.dsi`. */
 		void ReportInstancePragmaOutsideDsi(const FPragmaDecl& Pragma);
+		/**
+		 * `#pragma nogeneration`: FBoundModule::bNoGeneration when bInRootFile, else DSH7235 -- a header builds nothing,
+		 * and the files that include it are not marked by it.
+		 */
+		void BindNoGenerationPragma(const FPragmaDecl& Pragma, bool bInRootFile);
 		/** One `uniform` of a `.dsi`: its parameter kind from the spelled type and `@static`, its shape, its directives. */
 		void DeclareInstanceOverride(const FVariableDecl& Decl);
 		/** The directives an override may carry (`@name`, `@default`, `@static`, `@page`); DSH7262 for the rest. */

@@ -628,6 +628,12 @@ namespace UE::DreamShader::Lang
 		 * compiler's package pass reads it; `/// @generate` on one function overrides it, `@generate none` opts out).
 		 */
 		Generate,
+		/**
+		 * `#pragma nogeneration` -- no arguments. Every asset the file builds is left alone by the compiles nobody asked for
+		 * by name: the editor's startup sweep, a save, a dependency's rebuild, `compile -All`, a cook. Naming the file
+		 * (*Compile* in the Material Content Browser, `compile -Source`) still builds it. `/// @nogeneration` marks one export.
+		 */
+		NoGeneration,
 		/** Any other `#pragma`; kept for the printer, ignored by everything else. */
 		Unknown,
 	};

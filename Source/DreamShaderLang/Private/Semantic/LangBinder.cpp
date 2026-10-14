@@ -368,6 +368,7 @@ namespace UE::DreamShader::Lang::Private
 				case EPragmaKind::Pipeline:  ReportPipelinePragmaOutsideDsp(Pragma); break;
 				// Read by the compiler's package pass over an asset header; nothing to bind.
 				case EPragmaKind::Generate:  break;
+				case EPragmaKind::NoGeneration: BindNoGenerationPragma(Pragma, &InModule == &RootModule); break;
 				case EPragmaKind::Unknown:   break;
 				}
 				break;
@@ -913,7 +914,8 @@ namespace UE::DreamShader::Lang::Private
 		{
 			const bool bAsset = Entry.Key.Equals(Directive::Asset, ESearchCase::CaseSensitive);
 			const bool bExportOnly = (Entry.Key.Equals(Directive::Library, ESearchCase::CaseSensitive) && !bGenerated)
-				|| (Entry.Key.Equals(Directive::Name, ESearchCase::CaseSensitive) && !bCustomFunction);
+				|| (Entry.Key.Equals(Directive::Name, ESearchCase::CaseSensitive) && !bCustomFunction)
+				|| Entry.Key.Equals(Directive::NoGeneration, ESearchCase::CaseSensitive);
 			// `@root` (legacy rule L10) is the Root= of a 1.x block that produces an asset, and describes nothing else.
 			const bool bRoot = Entry.Key.Equals(Directive::Root, ESearchCase::CaseSensitive);
 			const bool bMisplaced = (bAsset && Decl.Linkage != EFunctionLinkage::Extern)
@@ -1340,6 +1342,23 @@ namespace UE::DreamShader::Lang::Private
 		CurrentFile = RootModule.FilePath;
 	}
 
+	void FLangBinder::BindNoGenerationPragma(const FPragmaDecl& Pragma, const bool bInRootFile)
+	{
+		if (bInRootFile)
+		{
+			Bound.bNoGeneration = true;
+			return;
+		}
+
+		Diagnostics.Warning(
+			TEXT("DSH7235"),
+			CurrentFile,
+			Pragma.Span,
+			FText::Format(
+				LOCTEXT("NoGenerationInHeader", "'#pragma nogeneration' in '{0}' was ignored: it marks the file it is written in, a header builds nothing, and the files that include it are not marked by it. Write it in each of those files instead."),
+				FText::FromString(FPaths::GetCleanFilename(CurrentFile))));
+	}
+
 	void FLangBinder::BuildProducts()
 	{
 		if (bHasMaterialPragma && Bound.FindEntryFunction() == INDEX_NONE)
@@ -1382,6 +1401,7 @@ namespace UE::DreamShader::Lang::Private
 			Product.Backend = ResolvedBackend;
 			Product.SubstrateMode = Kind == IR::EIRProductKind::Material ? ResolvedSubstrateMode : IR::EIRSubstrateMode::Legacy;
 			Product.AssetName = Function.Name;
+			Product.bNoGeneration = Bound.bNoGeneration || Function.Directives.bNoGeneration;
 
 			const FString& NameDirective = Function.Directives.Name;
 			if (Function.Decl && Function.Decl->bLegacy)

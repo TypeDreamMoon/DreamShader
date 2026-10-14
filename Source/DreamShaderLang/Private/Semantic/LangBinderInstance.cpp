@@ -230,6 +230,9 @@ namespace UE::DreamShader::Lang::Private
 				case EPragmaKind::Pipeline:
 					ReportPipelinePragmaOutsideDsp(Pragma);
 					break;
+				case EPragmaKind::NoGeneration:
+					BindNoGenerationPragma(Pragma, /*bInRootFile*/ true);
+					break;
 				case EPragmaKind::Generate:
 				case EPragmaKind::Unknown:
 					break;
@@ -953,6 +956,7 @@ namespace UE::DreamShader::Lang::Private
 		// An instance has no backend of its own (DSH4335 otherwise): it is a plain MaterialInstanceConstant.
 		Product.Backend = IR::EIRBackend::Graph;
 		Product.AssetName = FPaths::GetBaseFilename(RootModule.FilePath);
+		Product.bNoGeneration = Bound.bNoGeneration;
 
 		// The `.dss` rule (LangBinder.cpp BuildProducts): a full path overrides the destination, a bare name
 		// replaces the leaf and lets the root rules place it.

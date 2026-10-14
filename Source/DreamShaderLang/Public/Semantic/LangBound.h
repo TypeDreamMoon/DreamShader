@@ -48,6 +48,7 @@ namespace UE::DreamShader::Lang
 		inline const TCHAR* const Pin = TEXT("pin");             // "<ParamName> <engine pin name...>"
 		inline const TCHAR* const Root = TEXT("root");           // 1.x Root= spelling: Game | Engine | Plugin.Name | Plugins/Name | /Mount
 		inline const TCHAR* const Generate = TEXT("generate");   // in a package header: the material function asset to generate for this function; "none" opts out
+		inline const TCHAR* const NoGeneration = TEXT("nogeneration"); // on an export: only a compile that names the file builds its asset
 	}
 
 	/** Every directive on one declaration, parsed. Unknown keys sit in Passthrough. */
@@ -85,6 +86,8 @@ namespace UE::DreamShader::Lang
 		/** `@root`: the 1.x Root= spelling of a legacy product's destination (FBoundProduct::AssetRoot). */
 		FString Root;
 		bool bHasRoot = false;
+		/** `@nogeneration` (or a 1.x block's `NoGeneration = true`): FBoundProduct::bNoGeneration. */
+		bool bNoGeneration = false;
 
 		const FString* FindParamDoc(const FString& ParamName) const;
 		/** The `@pin` engine name given for a parameter, or null. */
@@ -217,6 +220,12 @@ namespace UE::DreamShader::Lang
 		/** 1.x destination: AssetName may carry folders, AssetRoot is the Root= spelling (empty: the 1.x default root), and the source folder is not mirrored. */
 		bool bLegacyAssetPath = false;
 		FString AssetRoot;
+		/**
+		 * `#pragma nogeneration` over the file, or `/// @nogeneration` on the export: only a compile that names the file
+		 * builds this asset. Every other -- the startup sweep, a save, a dependency's rebuild, `compile -All`, a cook --
+		 * leaves it as it is on disk, and whatever uses it uses that.
+		 */
+		bool bNoGeneration = false;
 	};
 
 	// ------------------------------------------------------------------------- expressions
@@ -457,6 +466,8 @@ namespace UE::DreamShader::Lang
 
 		/** `#pragma material(...)`, merged across lines; Backend removed into the product. */
 		TMap<FString, FString> MaterialSettings;
+		/** `#pragma nogeneration` in the file being compiled: every product is FBoundProduct::bNoGeneration. */
+		bool bNoGeneration = false;
 		/** `#pragma region` / `#pragma endregion` at file scope and inside bodies, as a tree. */
 		TArray<IR::FIRRegion> Regions;
 		TArray<IR::FIRLayoutHint> LayoutHints;

@@ -130,6 +130,7 @@ namespace UE::DreamShader::Lang
 			case EPragmaKind::Instance:  return TEXT("instance");
 			case EPragmaKind::Pipeline:  return TEXT("pipeline");
 			case EPragmaKind::Generate:  return TEXT("generate");
+			case EPragmaKind::NoGeneration: return TEXT("nogeneration");
 			case EPragmaKind::Unknown:
 			default:                     return TEXT("");
 			}
@@ -1137,10 +1138,11 @@ namespace UE::DreamShader::Lang
 
 			case EPragmaKind::Region:
 			case EPragmaKind::EndRegion:
+			case EPragmaKind::NoGeneration:
 			case EPragmaKind::Unknown:
 			default:
 			{
-				// Region: the title. Unknown: the rest of the line, kept as it was written.
+				// Region: the title. Unknown: the rest of the line, kept as it was written. NoGeneration: nothing.
 				const FString Text = Decl.Text.TrimStartAndEnd();
 				if (!Text.IsEmpty())
 				{

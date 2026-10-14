@@ -646,6 +646,8 @@ namespace UE::DreamShader::IR
 		bool bLegacyAssetPath = false;
 		/** See FBoundProduct::AssetRoot: the 1.x Root= spelling; empty is the 1.x default root. */
 		FString AssetRoot;
+		/** See FBoundProduct::bNoGeneration: only a compile that names the source builds this asset. */
+		bool bNoGeneration = false;
 		/** MaterialInstance only. */
 		FIRInstance Instance;
 		/** PassPipeline only. */

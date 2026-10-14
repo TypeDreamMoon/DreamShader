@@ -439,6 +439,15 @@ namespace UE::DreamShader::Lang::Private
 					Out.bHasRoot = true;
 				}
 			}
+			else if (Key.Equals(Directive::NoGeneration, ESearchCase::CaseSensitive))
+			{
+				// On an export only; on any other function DeclareFunction says so with the linkage.
+				if (!bOnFunction)
+				{
+					WrongTarget(LOCTEXT("TargetFunctionNoGeneration", "an exported function"));
+				}
+				Out.bNoGeneration = true;
+			}
 			else if (Key.Equals(Directive::Custom, ESearchCase::CaseSensitive))
 			{
 				if (!bOnFunction)
