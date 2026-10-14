@@ -107,6 +107,10 @@ Precedence: `-Source` is looked up first, then `-File`; `-All` is consulted only
 a value. `-Source` and `-All` together silently compiles only the one file. With none of the three,
 the usage banner is logged at `Error` and the run exits `1`.
 
+*(after 2.1.2)* `-Source` / `-File` names the file, so its [NoGeneration](../generation/no-generation.md)
+assets are built too; `-All` names none, and leaves them as they are on disk. `check -Shaders` follows
+the same rule.
+
 ### `-Source` path resolution
 
 Tried in this order; the first that applies wins.
@@ -196,6 +200,8 @@ one file produces several assets, the messages are joined with newlines.
 | `Generated {Kind} {AssetPath} from {SourceFile}.` | one product built. `{Kind}` is `Material`, `MaterialFunction`, `MaterialLayer`, `MaterialLayerBlend`, `MaterialInstance` or `PassPipeline` *(2.1.0)* — for every source language and both backends; a ThinCustom material is `Material` with the instance's path *(since 2.0.0)* |
 | `Generated RenderTarget {ObjectPath} from {SourceFile}.` | the render target of an exported buffer, made or reused by its pipeline's build and saved with it *(2.1.0)*; follows its pipeline's line |
 | `Skipped {AssetPath} from {SourceFile}; source hash is unchanged (build key {BuildKey}).` | hash match — pass `-Force` to regenerate |
+| `Skipped {AssetPath} from {SourceFile}; the source marks it NoGeneration, and only a compile that names the source builds it.` | *(after 2.1.2)* a [NoGeneration](../generation/no-generation.md) asset, left as it is — compile with `-Source` to build it |
+| `Skipped {AssetPath} from {SourceFile}; the source marks it NoGeneration, and it has never been built.` | *(after 2.1.2)* the same, with no asset on disk |
 | `Compiled {SourceFile}; it declares no material and no exported function, so no asset was written.` | success, nothing to write — a file of helpers, `VirtualFunction` or `GraphFunction` declarations only *(since 2.0.0)* |
 | `Warnings:` followed by one diagnostic per line | appended to a success message when the compile raised warnings |
 | one diagnostic per line, `<file>(<line>,<col>): DSHnnnn: <message>` | **failure**: the first error first, then the other errors, warnings and infos. See [Diagnostics](../diagnostics/index.md) |

@@ -55,6 +55,7 @@ case-insensitively.
 | :-- | :-- | :-- | :-- |
 | **`Name`** | yes | string | The asset's logical path. The last `/`-separated segment is the asset name; preceding segments become folders. |
 | `Root` | no | string | The package root the folders hang off. Defaults to `/Game` when absent or empty. |
+| `NoGeneration` | no | `true` \| `false` | *(after 2.1.2)* Only a compile that names the file builds this block's asset; see [NoGeneration](../generation/no-generation.md). Another value is [`DSH2260`](../diagnostics/DSH2xxx.md#dsh2260). |
 
 Attribute keys are matched case-insensitively. Values may be quoted or bare; a bare value runs to the
 next `,` or `)` outside parentheses. A key written twice is a warning

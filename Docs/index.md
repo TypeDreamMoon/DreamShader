@@ -152,6 +152,7 @@ screen-space effects, compute shaders writing data textures.
 | [Graph layout](generation/graph-layout.md) | Automatic placement and its limits |
 | [Regeneration](generation/regeneration.md) | What survives a rebuild and what does not |
 | [Divergence](generation/divergence.md) | Hand-edited assets: detection, and the three ways out |
+| [NoGeneration](generation/no-generation.md) | Sources only a compile that names them builds |
 | [Generated HLSL](generation/generated-hlsl.md) | The emitted `.ush` include |
 
 ---
@@ -192,6 +193,7 @@ screen-space effects, compute shaders writing data textures.
 | | |
 | :-- | :-- |
 | [Diagnostics index](diagnostics/index.md) | Every error and warning, with cause and fix |
+| [Disabling diagnostics](language-v2/disable-diagnostics.md) | `disable_warning` / `disable_error`, for a file or a line |
 | [Examples](examples/index.md) | Complete, copy-pasteable sources |
 | [Contributing](contributing/index.md) | Building the plugin |
 | [Testing](contributing/testing.md) | Automation suite and the fixture corpus |

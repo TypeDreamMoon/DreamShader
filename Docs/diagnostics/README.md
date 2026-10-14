@@ -98,6 +98,7 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH2257](DSH2xxx.md#dsh2257) | error | Expected '`{' to open the '{0}' block, found {1}. |
 | [DSH2258](DSH2xxx.md#dsh2258) | warning | The section '{0}' is written twice; the later one wins, as it did in 1.x. |
 | [DSH2259](DSH2xxx.md#dsh2259) | error | Expected ShaderFunction, ShaderLayer and ShaderLayerBlend blocks in a '.dsf' file, found a Shader block, wh... |
+| [DSH2260](DSH2xxx.md#dsh2260) | warning | '{0}' is not a value of NoGeneration, which is true or false; the block is built as if it were false. |
 | [DSH2300](DSH2xxx.md#dsh2300) | error | Expected '`{' to open the block of pass '{0}', found {1}. |
 | [DSH2301](DSH2xxx.md#dsh2301) | error | Expected a setting ('Key = Value;'), a 'read', 'write' or 'param' line or an 'hlsl' block in a pass block, ... |
 | [DSH2302](DSH2xxx.md#dsh2302) | error | Expected '=' after the key '{0}', found {1}. |
@@ -130,6 +131,7 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH3216](DSH3xxx.md#dsh3216) | error | Expected ';' after the import path, found {1}. |
 | [DSH3217](DSH3xxx.md#dsh3217) | error | Expected '{' after the struct name, found {1}. |
 | [DSH3218](DSH3xxx.md#dsh3218) | error | Expected ')' to close the parameter list, found {1}. |
+| [DSH3219](DSH3xxx.md#dsh3219) | warning | '#pragma nogeneration' takes no arguments, and '{0}' was ignored: the file is still marked. Remove the line... |
 | [DSH3220](DSH3xxx.md#dsh3220) | warning | A '@' in a '///' line must be followed by a directive name; the text is kept as description. |
 | [DSH3221](DSH3xxx.md#dsh3221) | warning | This '///' block is not followed by a field and is ignored. |
 | [DSH3222](DSH3xxx.md#dsh3222) | error | Expected a 2.0 declaration, found the 1.x declaration '{0}'; 1.x declarations belong in a .dsh header or in... |
@@ -495,6 +497,8 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH7232](DSH7xxx.md#dsh7232) | error | 'Substrate = {0}' is not a Substrate mode; the modes are 'Legacy', 'Bridge' and 'Native'. |
 | [DSH7233](DSH7xxx.md#dsh7233) | warning | A slider range ('@slider', or 'Slider(min, max)' in a 1.x property) is for a scalar parameter; this one is ... |
 | [DSH7234](DSH7xxx.md#dsh7234) | warning | '{0}' asks to generate '{1}', and only a package's header generates material functions; this file is not in... |
+| [DSH7235](DSH7xxx.md#dsh7235) | warning | '#pragma nogeneration' in '{0}' was ignored: it marks the file it is written in, a header builds nothing, a... |
+| [DSH7236](DSH7xxx.md#dsh7236) | warning | A 'disable_warning' or 'disable_error' list names no code, and disables nothing; write the codes after it, ... |
 | [DSH7250](DSH7xxx.md#dsh7250) | error | A '.dsi' needs one '#pragma instance(Parent = "...")' naming the material it is an instance of, and this fi... |
 | [DSH7251](DSH7xxx.md#dsh7251) | error | '#pragma instance' is written a second time, and one '.dsi' is one material instance; the line {0} already ... |
 | [DSH7252](DSH7xxx.md#dsh7252) | error | 'Parent' in '#pragma instance' names the material this is an instance of, and it is empty. |
@@ -692,6 +696,9 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH8274](DSH8xxx.md#dsh8274) | error | '{0}' cannot be generated as the material function '{1}': {2}. |
 | [DSH8275](DSH8xxx.md#dsh8275) | error | '{0}' is generated a second time here; the line {1} already generates it from another function. |
 | [DSH8276](DSH8xxx.md#dsh8276) | warning | '{0}' is not a key of '#pragma generate', and was ignored; it takes Functions, Library and Desc. |
+| [DSH8277](DSH8xxx.md#dsh8277) | info | '{0}' was left alone: '{1}' marks it NoGeneration, and only a compile that names the file builds it. |
+| [DSH8278](DSH8xxx.md#dsh8278) | warning | '{0}' has never been built: '{1}' marks it NoGeneration, so only a compile that names the file builds it, a... |
+| [DSH8279](DSH8xxx.md#dsh8279) | error | The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is no... |
 | [DSH8290](DSH8xxx.md#dsh8290) | error | '{0}' could not be read. |
 | [DSH8291](DSH8xxx.md#dsh8291) | error | '{0}' failed conditional compilation: {1}: {2} |
 | [DSH8292](DSH8xxx.md#dsh8292) | error | '{0}', included from '{1}', could not be resolved: {2}. |

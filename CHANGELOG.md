@@ -20,6 +20,20 @@
   (`DSH8133`): its files are the installer's. `list-generated -All` names what is left under a package asset root
   that no source builds any more (`DSH9111`), and deletes nothing. New diagnostics: `DSH6331`, `DSH6332`, `DSH7234`,
   `DSH8273`–`DSH8276`. See [Packages ▸ Package assets](Docs/tools/packages.md#package-assets).
+- **NoGeneration: sources only a compile that names them builds.** `#pragma nogeneration` marks every asset of a
+  file, `/// @nogeneration` one export, `NoGeneration = true` a 1.x block. The startup sweep, a save, a dependency's
+  rebuild, *Recompile All*, *Compile all* / *Compile stale* in the Material Content Browser, `compile -All` and the
+  cook leave such an asset as it is on disk (`DSH8277`; `DSH8278` while it has never been built); *Compile* on the
+  selection, *Revert to Source*, a bridge request for the file and `compile -Source` build it. Whatever uses it —
+  a same-file caller, a `.dsi`'s parent, a `.dsp`'s material — uses the asset on disk, and is `DSH8279` while there
+  is none. New diagnostics: `DSH2260`, `DSH3219`, `DSH7235`. See [NoGeneration](Docs/generation/no-generation.md).
+- **A source can disable warnings and errors by code.** `#pragma disable_warning(DSH7224, ...)` and
+  `#pragma disable_error(...)` for the whole file — and, in the file being compiled, for everything the compile
+  reports — and `// disable_warning DSH7224` for one line (the line itself after code, the next line when alone on
+  its own). A disabled error does not fail the compile; when the compile cannot go on without it, it is reported
+  after all. A 1.x file takes the same spellings: its top level now accepts `#pragma nogeneration`,
+  `disable_warning` and `disable_error`. A word in a list that is not a code is `DSH7236`. See
+  [Disabling diagnostics](Docs/language-v2/disable-diagnostics.md).
 
 ### Changed
 
