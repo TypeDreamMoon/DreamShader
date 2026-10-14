@@ -1,156 +1,251 @@
 ---
-title: 概览
-description: DreamShaderLang 是虚幻引擎材质的文本化语言，由 DreamShader 插件编译成标准材质资产；在 UE 5.8 上还能用 .dsp 写自己的渲染 pass。
+title: "DreamShader 参考"
+description: "DreamShader 参考"
 ---
 
-DreamShaderLang 是虚幻引擎材质的文本化语言。你写源文件，**DreamShader** 插件在编辑器里编译它们，生成标准 Unreal 资产 ——
-`UMaterial`、`UMaterialFunction`、`UMaterialFunctionMaterialLayer`、`UMaterialFunctionMaterialLayerBlend` 和
-`UMaterialInstanceConstant`；在 Unreal Engine 5.8 上，`.dsp` [Custom Pass](#custom-pass) 管线还会编译成
-`UDreamPassPipeline`，加上你自己的渲染 pass。
+<a id="dreamshader-reference"></a>
 
-源文件才是你维护的东西。资产是生成产物，随时可以删掉重新生成。
+# DreamShader 参考
 
-两种语法，一个编译器 （自 2.0.0 起）：新源文件写 `.dss` —— 带声明的 HLSL —— 和 `.dsi` 材质实例，见
-[DreamShaderLang 2.0](language-v2/index.md)；1.x 的 `.dsm` / `.dsf` / `.dsh` 照样编译，「语言核心」和「Graph 语言」两部分讲的就是
-1.x 语法，[`dsc migrate`](tools/migrate.md) 可以一个文件一个文件地把它们改写成 `.dss`。
+如需教程和面向任务的阅读，请从[文档概览](README.md)开始。
+
+DreamShader 将 **DreamShaderLang** 源文件——`.dsm`、`.dsf`、`.dsh`，以及在 2.0 系列上的
+`.dss`——编译为标准 Unreal Engine 材质资产：`UMaterial`、`UMaterialFunction`、
+`UMaterialFunctionMaterialLayer` 和 `UMaterialFunctionMaterialLayerBlend`——并且在 Unreal Engine 5.8 上，将
+`.dsp` [Custom Pass](#custom-pass) 管线编译为 `UDreamPassPipeline` 资产，从而添加你自己的渲染 pass。
+源文件是创作表面；资产是构建产物，随时可以重新生成。
 
 | | |
-| --- | --- |
-| 插件版本 | `2.1.2` |
-| 引擎 | Unreal Engine `5.3` – `5.8`，Win64；Custom Pass 需要 `5.8` |
-| 模块 | `DreamShaderLang`、`DreamShader`、`DreamShaderPass`（Runtime），`DreamShaderCompiler`、`DreamShaderEditor`（Editor） |
-| 源文件扩展名 | `.dss` · `.dsi` （自 2.0.0 起） · `.dsp` （自 2.1.0 起） · `.dsm` · `.dsf` · `.dsh` |
+| :-- | :-- |
+| 版本 | `2.1.2` |
+| 引擎 | Unreal Engine `5.3` – `5.8`（Win64 已验证）；Custom Pass 需要 `5.8` |
+| 模块 | `DreamShaderLang` (Runtime)、`DreamShader` (Runtime)、`DreamShaderPass` (Runtime)、`DreamShaderCompiler` (Editor)、`DreamShaderEditor` (Editor) |
+| 源文件扩展名 | `.dsm` 材质 · `.dsf` 函数 · `.dsh` 头文件 · `.dss` 2.0 编译单元 · `.dsi` 材质实例 · `.dsp` Custom Pass 管线 |
 | 项目设置 | *Project Settings ▸ DreamPlugin ▸ Dream Shader* |
-| VS Code 扩展 | `2.1.0` |
 | 许可证 | MIT |
 
-<a id="六种源文件"></a>
+初次接触？请从 **[快速开始](getting-started.md)** 开始，然后是 **[示例](examples/index.md)**。
 
-## 六种源文件
+---
 
-| 扩展名 | 是什么 | 生成什么 |
-| --- | --- | --- |
-| `.dss` | DreamShaderLang 2.0 编译单元：`uniform`、`#pragma material`、`export` 函数 | 每个 `export` 一个资产 —— 一个材质，或者一组材质函数 / layer / blend |
-| `.dsi` | 材质实例：父材质和覆盖项 | 一个 `UMaterialInstanceConstant` |
-| `.dsp` | Custom Pass 管线：缓冲区和按顺序排列的 pass（UE 5.8） | 一个 `UDreamPassPipeline` |
-| `.dsm` | 1.x 材质：最多一个 `Shader`，以及函数、Layer、Namespace、VirtualFunction 块 | 材质本体，加上同文件中声明的所有函数资产 |
-| `.dsf` | 1.x 函数文件：`ShaderFunction`、`ShaderLayer`、`ShaderLayerBlend` 和 helper 块，不能写 `Shader` | 它声明的函数资产 |
-| `.dsh` | header：helper、`VirtualFunction` / `extern` 声明；两种方言都能放 | 不直接生成资产，通过 `import` / `#include` 被使用 |
+<a id="dreamshaderlang"></a>
 
-每个文件单独解析；被 import 的 header 也单独解析，它的声明成为导入它的文件里的名字 （自 2.0.0 起）。参见
-[文件模型](language/source-files.md)和[项目结构](getting-started/project-layout.md)。
+## DreamShaderLang
 
-<a id="各个块生成什么"></a>
+> [!NOTE]
+> 两套语法，一个编译器。下面记录的 **1.x** 语法（`.dsm` / `.dsf` / `.dsh`）是
+> 已发布的语法。**2.0** 语法——`.dss`，用声明代替 Section 块的 HLSL——
+> 在 `2.0` 系列上通过新的 binder/IR/emitter 管线编译，并有自己的页面：
+> **[DreamShaderLang 2.0](language-v2/index.md)**。
 
-## 各个块生成什么
+<a id="language-referencelanguageindexmd"></a>
 
-| `.dss` | 1.x 块 | Unreal 资产 |
-| --- | --- | --- |
-| `export void M(inout material m)` | `Shader` | `UDreamShaderMaterialInstance` 加一个隐藏的 `UMaterial` base（`ThinCustom`，默认），或一个普通 `UMaterial`（`Graph` backend） |
-| 其他 `export` 函数 | `ShaderFunction` | `UMaterialFunction` |
-| `/// @layer` / `/// @layerblend` 的 `export` | `ShaderLayer` / `ShaderLayerBlend` | `UMaterialFunctionMaterialLayer` / `UMaterialFunctionMaterialLayerBlend` |
-| `/// @asset` 的 `extern` 原型 | `VirtualFunction` | 不生成资产 —— 只是声明一个已有的 `UMaterialFunction`，让材质可以调用 |
-| `/// @custom` 函数 | `Function` / `GraphFunction` | `Custom` 节点代码 |
-| `.dsi` | —— | `UMaterialInstanceConstant` |
+### [语言参考](language/index.md)
 
-<a id="最小材质"></a>
+声明语法：源文件、块和 Section。
 
-## 最小材质
+| | |
+| :-- | :-- |
+| [源文件](language/source-files.md) | `.dsm` / `.dsf` / `.dsh` 以及各自可包含的内容 |
+| [词法元素](language/lexical.md) | 注释、标识符、大小写敏感性、字面量、后缀 |
+| [关键字索引](language/keywords.md) | 每个保留字和别名，附链接 |
+| [`import`](language/import.md) | 引入头文件、函数和包 |
+| [预处理器](language/preprocessor.md) | `#if` 和 define 表——条件编译 |
+| [类型](language/types.md) | 类型标记、GLSL 别名、各上下文有效性 |
 
-```hlsl
-// DShader/Materials/M_Minimal.dss
-#pragma material(Domain = UI, ShadingModel = Unlit)
+**顶层块**
 
-uniform float3 Tint = float3(1.0, 0.2, 0.2);
+| | |
+| :-- | :-- |
+| [`Shader`](language/shader.md) | 生成一个 `UMaterial` |
+| [`ShaderFunction`](language/shader-function.md) | 生成一个 `UMaterialFunction` |
+| [`ShaderLayer` / `ShaderLayerBlend`](language/shader-layer.md) | 生成原生材质层函数 |
+| [`VirtualFunction`](language/virtual-function.md) | 声明一个已有的 `UMaterialFunction` |
+| [`Function`](language/function.md) | 可复用的 HLSL 辅助函数 |
+| [`GraphFunction`](language/graph-function.md) | 可将 `UE.*` 节点引入其输入的 HLSL 辅助函数 |
+| [`Namespace`](language/namespace.md) | 将辅助函数归组到 `Ns::Name` 下 |
 
-export void M_Minimal(inout material m)
-{
-    m.EmissiveColor = Tint;
-}
-```
+**Section**
 
-同一个材质的 1.x 写法：
+| | |
+| :-- | :-- |
+| [`Properties`](language/properties.md) | 参数声明和组作用域 |
+| [`Inputs` / `Outputs`](language/inputs-outputs.md) | 函数签名和材质输出 |
+| [输出绑定](language/output-bindings.md) | `Base.<Target> = <value>;` |
+| [`Settings`](../settings/index.md) | 材质和函数设置 |
+| [`Options`](language/options.md) | `VirtualFunction` 资产绑定 |
+| [`Layout`](language/layout.md) | 节点放置、注释框、`#Region` |
 
-```c
-// DShader/Materials/M_Minimal.dsm
-Shader(Name="Materials/M_Minimal")
-{
-    Properties = {
-        vec3 Tint = vec3(1.0, 0.2, 0.2);
-    }
+<a id="graph-languagegraphindexmd"></a>
 
-    Settings = {
-        Domain = "UI";
-        ShadingModel = "Unlit";
-    }
+### [Graph 语言](graph/index.md)
 
-    Outputs = {
-        vec3 Color;
-        Base.EmissiveColor = Color;
-    }
+`Graph = { ... }` 内部的语句和表达式语言，用于具现化材质节点。
 
-    Graph = {
-        Color = Tint;
-    }
-}
-```
+| | |
+| :-- | :-- |
+| [语句](graph/statements.md) | 每种语句形式 |
+| [声明](graph/declarations.md) | 变量、初始化器、作用域 |
+| [表达式和运算符](graph/expressions.md) | 优先级、操作数规则、整数除法 |
+| [字面量](graph/literals.md) | 数值、布尔值、后缀 |
+| [构造函数](graph/constructors.md) | `float3(...)`、`vec4(...)`、整数构造函数 |
+| [Swizzle](graph/swizzle.md) | 通道掩码、重排、重复 |
+| [类型转换](graph/conversions.md) | 拓宽、收窄、分量数量规则 |
+| [`if` / `else`](graph/if.md) | 条件、真值性、分支选择 |
+| [`MaterialAttributes`](graph/material-attributes.md) | 类结构体成员写入 |
+| [调用](graph/calls.md) | 调用函数和参数引脚 |
+| [名称解析](graph/name-resolution.md) | 查找顺序和遮蔽 |
+| [节点复用](graph/node-reuse.md) | 公共子表达式去重 |
+| [不支持的写法](graph/unsupported.md) | 循环、`return`、`%`、索引——以及取而代之的行为 |
 
-两个文件都生成 `/Game/Materials/M_Minimal` —— 留一个就够了。
+---
 
-**提示：**
+<a id="node-library"></a>
 
-在默认的 `ThinCustom` backend 下，生成的材质是 **Ephemeral** 的 —— 只存在于内存中，不会出现在 Content Browser 里。
-  这是刻意设计的，有三种方式可以找到它 —— 见[第一个材质](getting-started/first-material.md)。
+## 节点库
+
+<a id="builtinsbuiltinsindexmd"></a>
+
+### [内置节点](builtins/index.md)
+
+| | |
+| :-- | :-- |
+| [`UE.*` 目录](builtins/ue.md) | 每个具名材质节点内置 |
+| [`UE.Expression`](builtins/ue-expression.md) | 通用反射节点逃生舱 |
+| [`OutputType` 值](builtins/output-type.md) | 每个可接受的输出类型标记 |
+| [数学内置](builtins/math.md) | `lerp`、`saturate`、`frac`…… |
+| [变换内置](builtins/transform.md) | `UE.TransformVector` / `UE.TransformPosition` 坐标基 |
+| [`Substrate.*`](builtins/substrate.md) | Substrate 节点（UE 5.4+） |
+| [Custom Pass 节点](builtins/dream-pass.md) | `UE.DreamPassOutput`、`UE.DreamPassBuffer`（UE 5.8） |
+| [`DreamShaderBuiltins.ush`](builtins/hlsl-library.md) | 随附的 HLSL 辅助头文件 |
+
+<a id="parametersparametersindexmd"></a>
+
+### [参数](../parameters/index.md)
+
+| | |
+| :-- | :-- |
+| [紧凑类型](parameters/compact-types.md) | `float`、`float3`、`Texture2D`…… |
+| [参数节点](../parameters/parameter-nodes.md) | `ScalarParameter`、`StaticSwitchParameter`…… |
+| [元数据块](parameters/metadata.md) | `Group`、`SortPriority`、`Slider`、反射属性 |
+| [`SamplerType`](../parameters/sampler-type.md) | 纹理采样器配置 |
+| [在 `Graph` 中使用参数](../parameters/graph-usage.md) | 值读取和引脚调用形式 |
+| [`Path(...)`](parameters/path.md) | 资产引用 |
+
+---
 
 <a id="custom-pass"></a>
 
 ## Custom Pass
 
-（自 2.1.0 起）
+在 Unreal Engine 5.8 上添加你自己的渲染 pass，无需修改引擎：遮罩和自定义缓冲区、
+屏幕空间效果、写入数据纹理的 compute shader。
 
-在 Unreal Engine 5.8 上，一个 [`.dsp` 管线](language-v2/passes.md)不改引擎就能加上你自己的渲染 pass：选中物体的遮罩、模糊、
-屏幕空间效果、写数据纹理的 compute shader。它的 pass 运行在各自选择的注入点 —— base pass 之前、不透明光照之后、后处理链之前或
-之中 —— 可以是 Post Process 材质、项目的 HLSL，或者把选中的网格再画一遍；它的缓冲区任何材质都能读。
+| | |
+| :-- | :-- |
+| [管线——`.dsp`](language-v2/passes.md) | 缓冲区、pass、注入点、绑定、网格选择、编译器检查的内容 |
+| [运行时](runtime/index.md) | 什么使管线生效、pass 何时运行、内置和导出的缓冲区、视图、调试、限制 |
+| [HLSL pass](../runtime/hlsl.md) | 固定参数、槽位、快照和预检查 |
+| [材质节点](builtins/dream-pass.md) | 用于网格 pass 的 `UE.DreamPassOutput`，用于读取导出缓冲区的 `UE.DreamPassBuffer` |
+| [示例](examples/custom-pass.md) | 高亮描边、UI 毛玻璃、透视、风场 |
+| [`DreamShaderPass`](api/pass-module.md) | 该模块的 C++ 和蓝图 API |
 
-- [管线（.dsp）](language-v2/passes.md) — 缓冲区、pass、注入点、绑定、网格选择，以及编译器检查什么。
-  - [运行时](runtime/index.md) — 什么让管线生效、pass 何时运行、内置与导出的缓冲区、调试、限制。
-  - [Custom Pass 示例](examples/custom-pass.md) — 高亮描边、UI 毛玻璃、透视、风场。
+---
 
-<a id="dreamshader-做什么不做什么"></a>
+<a id="build-and-output"></a>
 
-## DreamShader 做什么，不做什么
+## 构建与输出
 
-它在 Unreal 编辑器里生成材质资产，范围仅此而已。具体来说：
+<a id="settingssettingsindexmd"></a>
 
-- **1.x 的 `Graph` 是节点图构建器，不是着色器编译器。** 它只有四个算术运算符和 `if` / `else`：没有循环、没有三元运算符、没有
-  `%`、`if` 条件之外没有比较和位运算、没有矩阵、没有下标、没有复合赋值。（自 2.0.0 起） 起这些写法都会带码报错，不再被
-  静默截断 —— 见[不支持的写法](graph/unsupported.md)。`.dss` 有循环和完整的运算符；真正命令式的代码写进 `/// @custom`
-  函数或 1.x 的 `Function`，它的函数体是真正的 HLSL。
-- **生成只发生在编辑器里。** 没有任何运行时路径能从 DreamShaderLang 构建材质，打包后的游戏里也不存在这些工具；唯一的运行时
-  部分是执行已编译管线的 Custom Pass 模块。
-- **生成的资产是产物，不是文档。** 重新生成会拆掉整张图再重建，手动改动会丢失；生成实例上的参数覆盖按名字放回。自
-  （自 1.8.0 起） 起，会毁掉手改的那次重建**不会发生** —— 资产带指纹，对不上就拒绝编译，并让你在 Revert / Adopt /
-  Detach 里选一个。见[重新生成](generation/regeneration.md)。
-- **`Substrate.*` 需要 （自 UE 5.4 起），Custom Pass 需要 （自 UE 5.8 起）。** 节点目录跟着运行中的引擎走，引擎没有的东西
-  会明确报错。
-- **有些写法已经废弃。** 包括 `Backend = Instance`，以及 `MaterialLayer` / `MaterialLayerBlend` 这两种块写法 —— 都还能用，
-  带警告。
+### [设置](../settings/index.md)
 
-<a id="从哪里开始"></a>
+| | |
+| :-- | :-- |
+| [材质设置](settings/material.md) | 特殊键加上反射的 `UMaterial` 属性 |
+| [枚举取值](settings/material-enums.md) | 每一个 `ShadingModel`、`BlendMode`、`Domain` |
+| [`Backend`](settings/backend.md) | `ThinCustom` 对比 `Graph` |
+| [函数设置](../settings/function.md) | 材质函数支持的键 |
+| [项目设置](settings/project.md) | *DreamPlugin ▸ Dream Shader* |
 
-## 从哪里开始
+<a id="generationgenerationindexmd"></a>
 
-- [快速开始](getting-started/installation.md) — 安装插件、生成第一个材质，并理解日常的保存 - 编译循环。
-  - [DreamShaderLang 2.0](language-v2/index.md) — `.dss`、`.dsi` 与 `.dsp`：带声明的 HLSL、Substrate 语法糖、材质实例、Custom Pass、从 1.x 迁移。
-  - [Custom Pass 运行时](runtime/index.md) — UE 5.8 上的渲染 pass：管线怎么生效、何时运行、缓冲区与调试。
-  - [语言核心（1.x）](language/source-files.md) — 源文件、词法规则、预处理器、顶层块、Section、类型、函数、import、布局。
-  - [Graph 语言（1.x）](graph/index.md) — 语句、表达式、类型转换、`if` / `else`、调用，以及 Graph 不能做什么。
-  - [内置节点](builtins/ue.md) — `UE.*` 目录、通用逃生舱 `UE.Expression`、数学内置、`Substrate.*`、Custom Pass 节点。
-  - [参数](language/properties.md) — Properties 类型、参数节点、元数据与分组、资产引用。
-  - [设置](settings/material.md) — 材质 Settings 与枚举取值、Backend，以及全部 17 项项目设置。
-  - [生成与产物](generation/index.md) — 生成流程、资产路径、内存材质、输出绑定、重新生成、版本控制。
-  - [工具链](tools/editor-integration.md) — 编辑器工具、反编译导出、VSCode 与 Rider、命令行 commandlet、Package。
-  - [诊断](diagnostics/index.md) — 诊断出现在哪里、`DSHnnnn` 码怎么读，以及当前限制。
-  - [示例](examples/patterns.md) — 常用写法、完整示例和 Custom Pass 示例，每个都有 `.dss` 与 1.x 两种写法。
-  - [HLSL / GLSL 背景](https://shader.toolchain.64hz.cn/docs/shader-languages/hlsl) — DreamShaderLang 借鉴的两种着色语言的背景知识。
-  - [更新日志](https://shader.toolchain.64hz.cn/docs/changelog) — 插件、VSCode 扩展和网站的版本记录。
+### [生成](generation/index.md)
+
+| | |
+| :-- | :-- |
+| [资产路径](generation/asset-paths.md) | `Name=` 和 `Root=` 到包路径与磁盘路径 |
+| [瞬时材质](generation/ephemeral.md) | 薄实例、隐藏基础、烹饪行为 |
+| [缓存](generation/caching.md) | 源哈希与跳过的重建 |
+| [图表布局](generation/graph-layout.md) | 自动放置及其限制 |
+| [重新生成](generation/regeneration.md) | 重建后什么保留、什么不保留 |
+| [分歧](generation/divergence.md) | 手改过的资产：检测，以及三种出路 |
+| [NoGeneration](generation/no-generation.md) | 只有指名它们的那次编译才会构建的源文件 |
+| [生成的 HLSL](generation/generated-hlsl.md) | 生成的 `.ush` include |
+
+---
+
+<a id="tooling"></a>
+
+## 工具链
+
+<a id="editor-toolstoolsindexmd"></a>
+
+### [编辑器工具](../tools/index.md)
+
+| | |
+| :-- | :-- |
+| [编辑器集成](tools/editor-integration.md) | 菜单、工具栏、上下文菜单 |
+| [材质 Content Browser](../tools/material-browser.md) | 浏览、筛选、实例化、实体化 |
+| [预览](../tools/preview.md) | 缩略图和流式预览 |
+| [反编译器](tools/decompiler.md) | 把已有的材质、实例和 Custom Pass 管线导出为源文件 |
+| [VirtualFunction 工具](../tools/virtual-function-tools.md) | 声明并同步已有的函数 |
+| [工作区与编辑器扩展](../tools/workspace.md) | VSCode 工作区、VSCode 与 Rider 插件 |
+| [Package](tools/packages.md) | `DShader/Packages` 共享库 |
+| [Commandlet](tools/commandlet.md) | 无头编译与反编译 |
+| [编辑器 bridge](../tools/bridge.md) | 请求文件、WebSocket 协议、产物 |
+
+<a id="c-apiapiindexmd"></a>
+
+### [C++ API](api/index.md)
+
+| | |
+| :-- | :-- |
+| [`DreamShaderModule.h`](api/dreamshader-module.md) | 模块、日志类别、导出的函数 |
+| [`DreamShaderTypes.h`](api/types.md) | 解析后的源数据模型 |
+| [`DreamShaderParser.h`](api/parser.md) | 2.0 中已退役 —— 取代 1.x 解析器入口点的是什么 |
+| [`DreamShaderSettings.h`](api/settings.md) | `UDreamShaderSettings` |
+| [`DreamShaderMaterialInstance.h`](api/material-instance.md) | 生成的实例类 |
+| [`DreamShaderVersionCompat.h`](api/version-compat.md) | 引擎版本宏 |
+| [`DreamShaderCompiler`](api/compiler-module.md) | 编译器接口与服务 |
+| [`DreamShaderPass`](api/pass-module.md) | Custom Pass：管线资产、设置、子系统、体积与组件 |
+
+---
+
+<a id="reference"></a>
+
+## 参考
+
+| | |
+| :-- | :-- |
+| [诊断索引](diagnostics/index.md) | 每一个错误和警告，附原因与修复方法 |
+| [禁用诊断](language-v2/disable-diagnostics.md) | `disable_warning` / `disable_error`，针对一个文件或一行 |
+| [示例](examples/index.md) | 完整、可直接复制粘贴的源文件 |
+| [贡献](contributing/index.md) | 构建插件 |
+| [测试](contributing/testing.md) | 自动化测试套件与固定样本集 |
+| [发布](contributing/release.md) | 打标签与打包 |
+
+---
+
+<a id="external-links"></a>
+
+## 外部链接
+
+| | |
+| :-- | :-- |
+| 仓库 | <https://github.com/TypeDreamMoon/DreamShader> |
+| Issues | <https://github.com/TypeDreamMoon/DreamShader/issues> |
+| 文档站点 | <https://shader.toolchain.64hz.cn/> |
+| VSCode 扩展 | <https://github.com/TypeDreamMoon/dreamshader-language-support> |
+| Rider 插件 | <https://github.com/tsdaer/dreamshader-language-support> |
+| 更新日志 | [../CHANGELOG.md](../../CHANGELOG.md) |
