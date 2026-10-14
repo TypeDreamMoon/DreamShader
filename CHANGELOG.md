@@ -51,6 +51,10 @@
   six of the 67 dreamshader-blender material functions on every second compile. The digest compares names
   without case now; its format moved to `DSD5`, so every asset reads as `Unstamped` once and is restamped by
   its next rebuild. See [Divergence](Docs/generation/divergence.md#what-counts-as-a-hand-edit).
+- **`check -Shaders` compiled no shader of a ThinCustom material.** It collected the `UMaterial`s a source
+  built, and a ThinCustom product is the instance in front of its hidden base, so a `.dss` on the default
+  backend was reported as `DSH9037` ("produced no material") and passed whatever its HLSL said. The base
+  material is compiled now.
 - **A `.dss` calls a 1.x `Namespace` member as `Ns::Fn(...)`.** A library header such as dreamshader-blender
   declares its functions in `Namespace(Name = "BL")` and its Graphs call them `BL::TexNoise3D(...)`, but in a
   `.dss` that included it the same call was `DSH2154` at the second `:` ("Expected ';' after an expression

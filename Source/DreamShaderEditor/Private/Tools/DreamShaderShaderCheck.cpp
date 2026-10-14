@@ -40,6 +40,7 @@
 // reader of that JSON is a second place for them to drift.
 #include "Navigation/DreamShaderSourceNavigation.h"
 
+#include "DreamShaderMaterialInstance.h"
 #include "DreamShaderModule.h"
 // CheckDreamShaderPipelineSlots: a `.dsp`'s HLSL passes, which compile in global shader slots rather than in a material.
 #include "DreamShaderPassPipelines.h"
@@ -552,7 +553,16 @@ namespace UE::DreamShader::Editor::Compiler
 		{
 			if (UMaterial* Material = Cast<UMaterial>(Weak.Get()))
 			{
-				Materials.Add(Material);
+				Materials.AddUnique(Material);
+			}
+			// A ThinCustom product is the instance; its shaders are its hidden base material's. Without this a `.dss` on
+			// the default backend had "no material" and its shaders were never compiled.
+			else if (UDreamShaderMaterialInstance* ThinCustom = Cast<UDreamShaderMaterialInstance>(Weak.Get()))
+			{
+				if (UMaterial* Base = ThinCustom->GetMaterial())
+				{
+					Materials.AddUnique(Base);
+				}
 			}
 		}
 

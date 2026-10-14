@@ -198,7 +198,7 @@ The cause is the same as DSH8297's: reflection found no `UMaterialExpression` su
 '{0}' is not a shader platform this engine knows. Write SM6, SM5, ES3_1, or a shader format name such as PCD3D_SM6.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:437`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:438`
 <!-- generated:end DSH9026 -->
 
 **Cause.** `-Platform=` named something this engine has no shader platform for. The accepted
@@ -221,7 +221,7 @@ separated: `-Platform=SM6,SM5`.
 '{0}' is not a material quality level. Write Low, Medium, High or Epic.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:454`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:455`
 <!-- generated:end DSH9027 -->
 
 **Cause.** `-Quality=` named something that is not a material quality level. There are four: `Low`,
@@ -241,7 +241,7 @@ current scalability level, which is what an editor shows.
 Shader compilation for '{0}' did not finish within {1} seconds per material. A compile that never finishes is usually a dynamic loop or a texture read whose mip cannot be resolved in a divergent branch; move it into a '@custom' body with an explicit SampleLevel.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:781`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:791`
 <!-- generated:end DSH9028 -->
 
 **Cause.** Shader compilation did not finish within the timeout — 120 seconds per material by
@@ -268,7 +268,7 @@ rather than `Tex.Sample(UV)`.
 [{0} / {1}] {2}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:682`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:692`
 <!-- generated:end DSH9029 -->
 
 **Cause.** The shader compiler rejected the generated HLSL. The message is the compiler's own text,
@@ -442,7 +442,7 @@ each does not overwrite the last.
 '{0}' produced no material, so there are no shaders to compile; a function library is checked by the material that calls it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:561`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:571`
 <!-- generated:end DSH9037 -->
 
 **Cause.** Informational. `check -Shaders` was run on a source that produces no material — a file of
@@ -462,7 +462,7 @@ of its own, it is compiled as part of every material that calls it.
 Shader errors cannot be read in this configuration: '-nullrhi' switches the rendering shader maps off, and no cook target platform matched the requested platforms. Re-run without '-nullrhi', or pass a '-Platform=' an active target platform supports.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:790`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:800`
 <!-- generated:end DSH9038 -->
 
 **Cause.** `check -Shaders` ran in a configuration where no compile error can be read. `-nullrhi`
