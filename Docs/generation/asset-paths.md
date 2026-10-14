@@ -91,6 +91,23 @@ its `Shader` block to the default and pin one `ShaderFunction` to `/Game`.
 > silent: nothing is logged. An unresolvable inferred `Root` is never emitted as an error, because
 > the author never wrote one.
 
+#### The package asset root
+
+*(after 2.1.2)* A source a package builds — one under its `Assets` folder, or an asset header — defaults
+to the package's **asset root**, whichever source root holds the package, and the plugin default above
+does not apply to it:
+
+| Source file | `Root` | `Name` / export | Package |
+| :-- | :-- | :-- | :-- |
+| `DShader/Packages/@scope/lib/Assets/MF_A.dss` | *(omitted)* | `MF_A` | `/Game/DreamShaderPackages/scope/lib/MF_A` |
+| `DShader/Packages/@scope/lib/Assets/Noise/MF_B.dss` | *(omitted)* | `MF_B` | `/Game/DreamShaderPackages/scope/lib/Noise/MF_B` |
+| `DShader/Packages/lib/Assets/MF_C.dsf` | *(omitted)* | `MF_C` | `/Game/DreamShaderPackages/lib/MF_C` |
+| `Plugins/MoonToon/DShader/Packages/lib/Assets/MF_D.dss` | *(omitted)* | `MF_D` | `/MoonToon/DreamShaderPackages/lib/MF_D` |
+
+A 2.0 source adds its folder under `Assets`, as a project source adds its folder under the source root;
+a 1.x `Name=` says every folder it wants. An explicit `Root` still wins. See
+[Packages ▸ Package assets](../tools/packages.md#package-assets).
+
 The default is applied in the one place a product becomes an asset path, so the compile, product
 resolution (the Material Content Browser, `dsc list-generated`) and the preview renderer all name the
 same asset.

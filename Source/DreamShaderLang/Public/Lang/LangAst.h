@@ -286,6 +286,12 @@ namespace UE::DreamShader::Lang
 		FIdentifierExpr() : FExpr(StaticKind) {}
 
 		FString Name;
+
+		/**
+		 * `Ns::Fn` as a `.dss` wrote it, when Name is the flattened `Ns_Fn` a 1.x `Namespace` member is declared under;
+		 * empty when Name is what was written. Only the printer and diagnostics read it.
+		 */
+		FString WrittenName;
 	};
 
 	/** A type in expression position: the callee of a constructor call `float3(...)`, or a cast target. */
@@ -616,6 +622,18 @@ namespace UE::DreamShader::Lang
 		 * arguments like `material`, and a value may also be a dotted name or a `|` list of words (FPragmaArgument::Value).
 		 */
 		Pipeline,
+		/**
+		 * `#pragma generate(Functions = "MF_{Name}", Library = "Cat|Sub", Desc = "...")` -- in a package's asset header:
+		 * every function declared after it, with a body and no linkage keyword, generates a material function (the
+		 * compiler's package pass reads it; `/// @generate` on one function overrides it, `@generate none` opts out).
+		 */
+		Generate,
+		/**
+		 * `#pragma nogeneration` -- no arguments. Every asset the file builds is left alone by the compiles nobody asked for
+		 * by name: the editor's startup sweep, a save, a dependency's rebuild, `compile -All`, a cook. Naming the file
+		 * (*Compile* in the Material Content Browser, `compile -Source`) still builds it. `/// @nogeneration` marks one export.
+		 */
+		NoGeneration,
 		/** Any other `#pragma`; kept for the printer, ignored by everything else. */
 		Unknown,
 	};

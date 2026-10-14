@@ -76,8 +76,11 @@
 
 #include "DreamShaderDefineResolution.h"
 #include "DreamShaderModule.h"
+#include "DreamShaderSourceFileUtils.h"
+#include "Pipeline/DreamShaderPackageAssets.h"
 #include "DreamShaderPreprocessor.h"
 #include "DreamShaderSettings.h"
+#include "Lang/LangDiagnosticSuppression.h"
 #include "Lang/LangParser.h"
 #include "DreamShaderGenerationProgress.h"
 #include "DreamShaderGeneratedAssets.h"
@@ -98,8 +101,9 @@ namespace UE::DreamShader::Editor::Compiler
 
 	bool IsDreamShaderLang2Source(const FString& SourceFilePath)
 	{
-		// `.dsh` answers false on purpose: a header is compiled only as part of the source that includes it, and
-		// handing one to this pipeline directly would produce no product at all. This is the one place it is decided.
+		// A `.dsh` is compiled only as part of the source that includes it -- handing one to this pipeline directly would
+		// produce no product at all -- except a package's asset header, which is compiled as the wrappers of the material
+		// functions it asks for (Pipeline/DreamShaderPackageAssets.h). This is the one place it is decided.
 		switch (Lang::GetLangFileKindFromPath(SourceFilePath))
 		{
 		case Lang::ELangFileKind::Dss:
@@ -110,6 +114,8 @@ namespace UE::DreamShader::Editor::Compiler
 			return true;
 
 		case Lang::ELangFileKind::Dsh:
+			return ::UE::DreamShader::Editor::Private::FDreamShaderSourceFileUtils::IsPackageAssetHeader(SourceFilePath);
+
 		case Lang::ELangFileKind::Unknown:
 			return false;
 		}
@@ -338,6 +344,10 @@ namespace UE::DreamShader::Editor::Compiler
 			SkippedSourceCurrent,
 			/** Another editor owns writing this project's generated assets: DSH8209. */
 			DeferredToWriteOwner,
+			/** NoGeneration, and the compile did not name the source: DSH8277. The asset on disk stands. */
+			SkippedNoGeneration,
+			/** The same, and there is no asset on disk: DSH8278. */
+			SkippedNoGenerationMissing,
 		};
 
 		/**
@@ -375,6 +385,38 @@ namespace UE::DreamShader::Editor::Compiler
 			}
 
 			return EDreamShaderLang2EmitOutcome::Built;
+		}
+
+		/**
+		 * The same question asked of a whole run: a NoGeneration product the run left alone is recorded on the run itself,
+		 * because the pipeline skips it before the emitter is reached, and a diagnostic the source disabled could not carry it.
+		 */
+		EDreamShaderLang2EmitOutcome ClassifyLang2ProductEmitOutcome(const FDreamShaderLang2PipelineResult& Run, const int32 ProductIndex)
+		{
+			if (Run.NoGenerationMissingProducts.Contains(ProductIndex))
+			{
+				return EDreamShaderLang2EmitOutcome::SkippedNoGenerationMissing;
+			}
+			if (Run.NoGenerationProducts.Contains(ProductIndex))
+			{
+				return EDreamShaderLang2EmitOutcome::SkippedNoGeneration;
+			}
+			return Run.IR.IsValid() && Run.IR->Products.IsValidIndex(ProductIndex)
+				? ClassifyLang2ProductEmitOutcome(Run.Diagnostics, Run.IR->Products[ProductIndex])
+				: EDreamShaderLang2EmitOutcome::Built;
+		}
+
+		/** The asset at ObjectPath, loaded if it is only on disk, or null; never a load of a package that does not exist. */
+		template <typename AssetType>
+		AssetType* FindOrLoadDreamShaderPipelineAsset(const FString& ObjectPath)
+		{
+			if (AssetType* Found = FindObject<AssetType>(nullptr, *ObjectPath))
+			{
+				return Found;
+			}
+			return FPackageName::DoesPackageExist(FPackageName::ObjectPathToPackageName(ObjectPath))
+				? LoadObject<AssetType>(nullptr, *ObjectPath)
+				: nullptr;
 		}
 
 		/** How far RunDreamShaderPipelineStages goes. */
@@ -523,13 +565,33 @@ namespace UE::DreamShader::Editor::Compiler
 					return;
 				}
 
-				IR::BuildParameterSchemaFromIR(*ParentRun.IR, ParentProductIndex, ParentRun.Bound.Get(), *Schema);
+				// A NoGeneration parent is not rebuilt for its instances; they are built against the asset that is there,
+				// which is what they will be parented to, and not against a source the asset may be behind.
+				UMaterialInterface* const NoGenerationParent = ParentRun.IR->Products[ParentProductIndex].bNoGeneration
+					? FindOrLoadDreamShaderPipelineAsset<UMaterialInterface>(ParentObjectPath)
+					: nullptr;
+				if (ParentRun.IR->Products[ParentProductIndex].bNoGeneration && !NoGenerationParent && bCompileStaleParent)
+				{
+					OutResult.Diagnostics.Error(TEXT("DSH8279"), ParentArgument->Span, FText::Format(
+						LOCTEXT("NoGenerationParentMissing", "The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is nothing to build this instance against. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`."),
+						FText::FromString(ParentObjectPath),
+						FText::FromString(FPaths::GetCleanFilename(ParentRun.SourceFilePath))));
+					return;
+				}
+				if (NoGenerationParent)
+				{
+					BuildParameterSchemaFromAsset(NoGenerationParent, *Schema);
+				}
+				else
+				{
+					IR::BuildParameterSchemaFromIR(*ParentRun.IR, ParentProductIndex, ParentRun.Bound.Get(), *Schema);
+				}
 				Schema->ParentObjectPath = ParentObjectPath;
 
 				// Keep the informational notice specific to a parent that was actually built. Current parents
 				// and a second editor's deferred writes do not claim that an asset was regenerated.
 				if (bCompileStaleParent
-					&& ClassifyLang2ProductEmitOutcome(ParentRun.Diagnostics, ParentRun.IR->Products[ParentProductIndex]) == EDreamShaderLang2EmitOutcome::Built)
+					&& ClassifyLang2ProductEmitOutcome(ParentRun, ParentProductIndex) == EDreamShaderLang2EmitOutcome::Built)
 				{
 					OutResult.Diagnostics.Info(TEXT("DSH8264"), ParentArgument->Span, FText::Format(
 						LOCTEXT("ParentCompiledFirst", "'{0}' was missing or older than its source, so '{1}' was compiled first."),
@@ -581,7 +643,7 @@ namespace UE::DreamShader::Editor::Compiler
 			if (!IsDreamShaderLang2Source(SourceFilePath))
 			{
 				OutResult.Diagnostics.Error(TEXT("DSH8296"), FileSpan, FText::Format(
-					LOCTEXT("NotACompilableSource", "'{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it."),
+					LOCTEXT("NotACompilableSource", "'{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it, unless it is a package's asset header."),
 					FText::FromString(SourceFilePath)));
 				return false;
 			}
@@ -649,15 +711,49 @@ namespace UE::DreamShader::Editor::Compiler
 			// different define sets, with nothing downstream able to tell.
 			OutResult.Defines = MakeUnique<UE::DreamShader::FDreamShaderDefineTable>(UE::DreamShader::ResolveDreamShaderDefines());
 
+			// A package's asset header (see IsDreamShaderLang2Source): its requests are collected here, and the `.dss` of
+			// their wrappers takes the header's place for every later stage under a path beside it, so its `#include` of
+			// the header resolves. The products still name the header as their source.
+			FString UnitPath = SourceFilePath;
+			if (GetLangFileKindFromPath(SourceFilePath) == ELangFileKind::Dsh)
+			{
+				FString UnitText;
+				if (!BuildDreamShaderPackageAssetUnit(SourceFilePath, RawText, *OutResult.Defines, UnitText, OutResult.Diagnostics))
+				{
+					return false;
+				}
+				RawText = MoveTemp(UnitText);
+				UnitPath = GetDreamShaderPackageAssetUnitPath(SourceFilePath);
+			}
+
+			// The warnings and errors the source disables (`#pragma disable_warning(...)`, `// disable_error DSH...`; see
+			// Lang/LangDiagnosticSuppression.h), in force from here to the end of the run on every sink it raises into. An
+			// asset header's lists are the header's, not those of the unit that stands in for it.
+			FLangDiagnosticSuppressionScope Suppression(UnitPath, RawText);
+			Suppression.AddRootFile(SourceFilePath);
+			for (const FLangDisabledDiagnostics::FMalformed& Malformed : Suppression.GetRootLists().Malformed)
+			{
+				FLangSpan MalformedSpan;
+				MalformedSpan.Offset = Malformed.Offset;
+				MalformedSpan.Length = FMath::Max(1, Malformed.Length);
+				MalformedSpan.Line = Malformed.Line;
+				MalformedSpan.Column = Malformed.Column;
+				OutResult.Diagnostics.Warning(TEXT("DSH7236"), MalformedSpan, Malformed.Text.IsEmpty()
+					? LOCTEXT("DisableListEmpty", "A 'disable_warning' or 'disable_error' list names no code, and disables nothing; write the codes after it, such as 'DSH7224'.")
+					: FText::Format(
+						LOCTEXT("DisableListMalformed", "'{0}' is not a diagnostic code, and was ignored; a 'disable_warning' or 'disable_error' list takes codes such as 'DSH7224'."),
+						FText::FromString(Malformed.Text)));
+			}
+
 			UE::DreamShader::FDreamShaderPreprocessResult PreprocessResult;
 			UE::DreamShader::FDreamShaderTextError PreprocessError;
 			if (!UE::DreamShader::PreprocessDreamShaderSource(
 				RawText,
-				SourceFilePath,
+				UnitPath,
 				*OutResult.Defines,
 				PreprocessResult,
 				PreprocessError,
-				GetDreamShaderPreprocessDialectForFile(SourceFilePath)))
+				GetDreamShaderPreprocessDialectForFile(UnitPath)))
 			{
 				OutResult.Diagnostics.Error(TEXT("DSH8291"), FileSpan, FText::Format(
 					LOCTEXT("SourcePreprocessFailed", "'{0}' failed conditional compilation: {1}: {2}"),
@@ -696,7 +792,7 @@ namespace UE::DreamShader::Editor::Compiler
 				return ReportCancelled();
 			}
 
-			OutResult.Source = MakeUnique<FLangSourceText>(SourceFilePath, PreprocessResult.Text);
+			OutResult.Source = MakeUnique<FLangSourceText>(UnitPath, PreprocessResult.Text);
 
 			// Auto: the front end follows the file kind -- legacy for `.dsm` / `.dsf`, 2.0 for `.dss` / `.dsi` -- the same
 			// decision GetDreamShaderPreprocessDialectForFile made above for the preprocessor (A4).
@@ -792,6 +888,11 @@ namespace UE::DreamShader::Editor::Compiler
 			BindOptions.ParentObjectPath = OutResult.ParentObjectPath;
 			// `.dsp` only: the materials, shader files and layers resolved above (null for every other kind).
 			BindOptions.PipelineReferences = OutResult.PipelineReferences.Get();
+			// `@generate` means something in a package's header only (DSH7234 anywhere else).
+			BindOptions.IsGenerateAllowedInFile = [](const FString& File)
+			{
+				return UE::DreamShader::IsPackageFilePath(File);
+			};
 
 			FLangBindResult BindResult = BindDreamShaderLang(*OutResult.Module, BindOptions);
 			const bool bBound = BindResult.Succeeded();
@@ -1064,6 +1165,63 @@ namespace UE::DreamShader::Editor::Compiler
 					return ReportCancelled();
 				}
 
+				const FIRProduct& Product = OutResult.IR->Products[ProductIndex];
+
+				// NoGeneration: only a compile that names the source builds the asset. Any other leaves it as it is on disk,
+				// and a same-file caller emitted after it references that asset, through the table the emit below fills.
+				if (Product.bNoGeneration && !Options.bIncludeNoGeneration)
+				{
+					FString PackageName;
+					FString ObjectPath;
+					FString LeafName;
+					FDreamShaderError DestinationError;
+					UObject* Existing = ResolveIRProductObjectPath(Product, SourceFilePath, PackageName, ObjectPath, LeafName, DestinationError)
+						? FindOrLoadDreamShaderPipelineAsset<UObject>(ObjectPath)
+						: nullptr;
+					const FString DisplayPath = ObjectPath.IsEmpty() ? Product.Name : ObjectPath;
+
+					OutResult.NoGenerationProducts.Add(ProductIndex);
+					if (Existing)
+					{
+						OutResult.Diagnostics.Info(TEXT("DSH8277"), Product.Source.Span, FText::Format(
+							LOCTEXT("NoGenerationLeftAlone", "'{0}' was left alone: '{1}' marks it NoGeneration, and only a compile that names the file builds it."),
+							FText::FromString(DisplayPath),
+							FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
+					}
+					else
+					{
+						OutResult.NoGenerationMissingProducts.Add(ProductIndex);
+						OutResult.Diagnostics.Warning(TEXT("DSH8278"), Product.Source.Span, FText::Format(
+							LOCTEXT("NoGenerationNeverBuilt", "'{0}' has never been built: '{1}' marks it NoGeneration, so only a compile that names the file builds it, and none has. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`."),
+							FText::FromString(DisplayPath),
+							FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
+					}
+
+					const FString ExistingPath = Existing ? Existing->GetPathName() : FString();
+					EmitContext.EmittedProductAssetPaths.Add(ProductIndex, ExistingPath);
+					OutResult.ProductAssets.Add(Existing);
+					OutResult.ProductAssetPaths.Add(Existing ? ExistingPath : DisplayPath);
+					OutResult.ProductOrder.Add(ProductIndex);
+					continue;
+				}
+
+				// A caller of a NoGeneration export that has no asset has nothing to call. Said here, by name, rather than
+				// as the emitter's "not emitted yet", which would blame the product order.
+				for (const FIRNode& Node : Product.Graph.Nodes)
+				{
+					const FIRProperty* LocalFunction = Node.FindProperty(Prop::LocalFunction);
+					const int32 CalleeIndex = LocalFunction ? static_cast<int32>(LocalFunction->Value.I) : INDEX_NONE;
+					if (CalleeIndex != INDEX_NONE && OutResult.NoGenerationMissingProducts.Contains(CalleeIndex))
+					{
+						OutResult.Diagnostics.Error(TEXT("DSH8279"), Product.Source.Span, FText::Format(
+							LOCTEXT("NoGenerationCalleeMissing", "'{0}' calls '{1}', which '{2}' marks NoGeneration and which has never been built, so there is nothing to call. Compile '{2}' by name once: Compile in the Material Content Browser, or `compile -Source`."),
+							FText::FromString(Product.Name),
+							FText::FromString(OutResult.IR->Products[CalleeIndex].Name),
+							FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
+						return false;
+					}
+				}
+
 				UObject* Asset = nullptr;
 				if (!EmitDreamShaderIRProduct(*OutResult.IR, ProductIndex, EmitContext, Asset, OutResult.Diagnostics))
 				{
@@ -1215,6 +1373,21 @@ namespace UE::DreamShader::Editor::Compiler
 		{
 			if (!BuildLang2CompileError(Result.Diagnostics, Result.SourceFilePath, OutError))
 			{
+				// The source disabled the error that stopped the compile, and nothing after it said why. The one place a
+				// disabled error is reported after all: a failure with no reason reads as a fault of the compiler.
+				for (const FLangDiagnostic& Hidden : Result.Diagnostics.GetSuppressedDiagnostics())
+				{
+					if (Hidden.Severity == ELangSeverity::Error)
+					{
+						OutError.Code = Hidden.Code;
+						OutError.Message = FString::Printf( /* I18N-EXEMPT: wire form, a quoted diagnostic and its note */
+							TEXT("%s\n(The source disables %s, but the compile could not go on past it.)"),
+							*FormatLang2DiagnosticWireLine(Hidden, Result.SourceFilePath),
+							*Hidden.Code);
+						return false;
+					}
+				}
+
 				// A false return with no error in the sink is an internal fault, not a source problem: some stage
 				// refused without saying why. Naming it as such beats reporting an empty message, which reads as a
 				// success to every caller that only prints OutError. DSH9039 rather than an 829x: the 1.x convention
@@ -1242,11 +1415,23 @@ namespace UE::DreamShader::Editor::Compiler
 				: nullptr;
 			const FString& AssetPath = Result.ProductAssetPaths[Slot];
 
-			const EDreamShaderLang2EmitOutcome Outcome = Product
-				? ClassifyLang2ProductEmitOutcome(Result.Diagnostics, *Product)
-				: EDreamShaderLang2EmitOutcome::Built;
+			const EDreamShaderLang2EmitOutcome Outcome = ClassifyLang2ProductEmitOutcome(Result, ProductIndex);
 			switch (Outcome)
 			{
+			case EDreamShaderLang2EmitOutcome::SkippedNoGeneration:
+				Lines.Add(FString::Printf( /* I18N-EXEMPT: wire form, beside the hash-skip line */
+					TEXT("Skipped %s from %s; the source marks it NoGeneration, and only a compile that names the source builds it."),
+					*AssetPath,
+					*Result.SourceFilePath));
+				break;
+
+			case EDreamShaderLang2EmitOutcome::SkippedNoGenerationMissing:
+				Lines.Add(FString::Printf( /* I18N-EXEMPT: wire form, beside the hash-skip line */
+					TEXT("Skipped %s from %s; the source marks it NoGeneration, and it has never been built."),
+					*AssetPath,
+					*Result.SourceFilePath));
+				break;
+
 			case EDreamShaderLang2EmitOutcome::SkippedSourceCurrent:
 				// The 1.x hash skip (the Graph and ThinCustom paths of the 1.x generator).
 				Lines.Add(FString::Printf( /* I18N-EXEMPT: wire form, mirrors the 1.x hash-skip line */

@@ -221,19 +221,38 @@ namespace UE::DreamShader::Editor::Private
 			OutFallbackReason->Reset();
 		}
 
-		const UE::DreamShader::FDreamShaderSourceRoot* SourceRoot =
-			UE::DreamShader::FindSourceRootForFile(SourceFilePath);
-		if (SourceRoot == nullptr || SourceRoot->PluginName.IsEmpty())
-		{
-			return;
-		}
-
 		auto DeclaresNoRoot = [](const FString& Root)
 		{
 			// Only an absent (or whitespace-only) Root counts. `Root="/"` resolves to /Game just as
 			// well and is the documented way for a plugin-root file to opt back out of the default.
 			return Root.TrimStartAndEnd().IsEmpty();
 		};
+
+		// A package's sources build into the package's own asset root, whichever root holds the package: a package is
+		// installed into a project, and what it builds must not mix with the project's assets (Docs/tools/packages.md).
+		const FString PackageAssetRoot = UE::DreamShader::GetPackageAssetRoot(SourceFilePath);
+		if (!PackageAssetRoot.IsEmpty())
+		{
+			if (DeclaresNoRoot(Definition.Root))
+			{
+				Definition.Root = PackageAssetRoot;
+			}
+			for (FTextShaderMaterialFunctionDefinition& FunctionDefinition : Definition.MaterialFunctions)
+			{
+				if (DeclaresNoRoot(FunctionDefinition.Root))
+				{
+					FunctionDefinition.Root = PackageAssetRoot;
+				}
+			}
+			return;
+		}
+
+		const UE::DreamShader::FDreamShaderSourceRoot* SourceRoot =
+			UE::DreamShader::FindSourceRootForFile(SourceFilePath);
+		if (SourceRoot == nullptr || SourceRoot->PluginName.IsEmpty())
+		{
+			return;
+		}
 
 		const bool bNeedsDefault = DeclaresNoRoot(Definition.Root)
 			|| Definition.MaterialFunctions.ContainsByPredicate(

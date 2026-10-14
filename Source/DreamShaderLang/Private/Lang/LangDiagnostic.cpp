@@ -15,6 +15,7 @@
 // Keep the two in step if either changes.
 
 #include "Lang/LangDiagnostic.h"
+#include "Lang/LangDiagnosticSuppression.h"
 
 #include "Internationalization/Internationalization.h"
 #include "Internationalization/Text.h"
@@ -176,9 +177,12 @@ namespace UE::DreamShader::Lang
 			Diagnostics.Add(MoveTemp(Diagnostic));
 		}
 
+		SuppressedDiagnostics.Append(MoveTemp(Other.SuppressedDiagnostics));
+
 		// Leave the source empty rather than merely moved-from-but-populated: a sink that was
 		// appended has handed its contents over, and its counters must say so.
 		Other.Diagnostics.Reset();
+		Other.SuppressedDiagnostics.Reset();
 		Other.ErrorCount = 0;
 	}
 
@@ -212,6 +216,15 @@ namespace UE::DreamShader::Lang
 		Diagnostic.Message = Message;
 		Diagnostic.Span = Span;
 		Diagnostic.FilePath = InFilePath;
+
+		// Disabled by the source being compiled: kept aside, uncounted. A default span (offset 0, nothing covered) is a
+		// diagnostic about the file and not about its first line, so only the file-wide lists can disable it.
+		const int32 Line = (Span.Offset == 0 && Span.Length == 0) ? 0 : Span.Line;
+		if (ShouldSuppressLangDiagnostic(Severity, Diagnostic.Code, InFilePath, Line))
+		{
+			SuppressedDiagnostics.Add(MoveTemp(Diagnostic));
+			return;
+		}
 
 		if (Severity == ELangSeverity::Error)
 		{

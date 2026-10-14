@@ -450,6 +450,33 @@ namespace UE::DreamShader::Editor::Compiler
 				return true;
 			}
 
+			// A NoGeneration product is not compiled first for anyone: the asset that is there is used, stale or not, and
+			// one that is not there is said to be missing by name.
+			if (bLowered && Run.IR.IsValid())
+			{
+				for (const IR::FIRProduct& Product : Run.IR->Products)
+				{
+					FString PackageName;
+					FString ProductObjectPath;
+					FString LeafName;
+					FDreamShaderError DestinationError;
+					if (!Product.bNoGeneration
+						|| !ResolveIRProductObjectPath(Product, Run.SourceFilePath, PackageName, ProductObjectPath, LeafName, DestinationError)
+						|| !ProductObjectPath.Equals(ObjectPath, ESearchCase::IgnoreCase))
+					{
+						continue;
+					}
+					if (Asset)
+					{
+						return true;
+					}
+					return Diagnostics.Error(TEXT("DSH8279"), Span, FText::Format(
+						LOCTEXT("NoGenerationReferenceMissing", "'{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is nothing to check this reference against. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`."),
+						FText::FromString(Reference),
+						FText::FromString(FPaths::GetCleanFilename(SourceFile))));
+				}
+			}
+
 			// One pair of codes per stage, so a material's and a pipeline's compile-first read apart.
 			if (bMaterial)
 			{

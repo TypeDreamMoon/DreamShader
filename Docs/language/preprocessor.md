@@ -127,6 +127,7 @@ after the `#`** — matched against a closed list, with nothing waved through on
 | inside a `Function` / `GraphFunction` body (and, in a `.dss` or `.dsh`, a `/// @custom` function body) | anything at all | **passed through verbatim** — not recognized, not paired, not counted toward nesting, never in the touched set |
 | outside | `region` or `endregion`, in **any** case | **passed through** to the parser |
 | outside, in a `.dss` or `.dsh` | `pragma` or `include` | **passed through** to the 2.0 parser, whose lines they are |
+| outside, in a `.dsm` or `.dsf` | `pragma nogeneration`, `pragma disable_warning`, `pragma disable_error` | *(after 2.1.2)* **passed through** to the legacy parser, which takes these three at its top level; see [NoGeneration](../generation/no-generation.md) and [Disabling diagnostics](../language-v2/disable-diagnostics.md) |
 | outside | one of the eight keywords, in **lowercase** | a directive |
 | outside | anything else | `DSH1035` |
 
@@ -730,7 +731,7 @@ offending directive. The preprocessor stops at its first error.
 | `DSH1032` | `#elif` or `#else` with no matching `#if` |
 | `DSH1033` | `#elif` or a second `#else` after an `#else` |
 | `DSH1034` | the conditional expression is **incomplete or malformed** |
-| `DSH1035` | a `#` line outside a `Function` body that is neither one of the eight lowercase keywords nor `#Region` / `#EndRegion` — in a `.dsm` / `.dsf` `#include` and `#pragma` too — `#endfi`, and mis-cased spellings such as `#IF` |
+| `DSH1035` | a `#` line outside a `Function` body that is neither one of the eight lowercase keywords nor `#Region` / `#EndRegion` — in a `.dsm` / `.dsf` `#include` and `#pragma` too, but for the three file-level pragmas *(after 2.1.2)* — `#endfi`, and mis-cased spellings such as `#IF` |
 | `DSH1036` | `#if` or `#elif` with no expression after it |
 | `DSH1037` | nesting deeper than 64 levels — the 65th `#if` is the one that fails |
 | `DSH1038` | `#define` or `#undef` with a missing name, or one that is not `[A-Za-z_][A-Za-z0-9_]*` |

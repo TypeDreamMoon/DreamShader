@@ -972,7 +972,8 @@ namespace UE::DreamShader::Editor::Private
 			const EBrowserSourceStatus Status = Entry->Source->Status;
 			if (Status == EBrowserSourceStatus::Stale || Status == EBrowserSourceStatus::NotCompiled || Status == EBrowserSourceStatus::Error)
 			{
-				FDreamShaderBrowserActions::Compile(*Model, Entry);
+				// Picked by their state, not by the user: a NoGeneration asset among them is left alone.
+				FDreamShaderBrowserActions::Compile(*Model, Entry, /*bNamed*/ false);
 				++Compiled;
 			}
 		}

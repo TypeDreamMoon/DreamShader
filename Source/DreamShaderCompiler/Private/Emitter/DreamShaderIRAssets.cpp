@@ -65,6 +65,13 @@ namespace UE::DreamShader::Editor::Compiler
 		 */
 		FString GetSourceRootRelativeDirectory(const FString& SourceFilePath)
 		{
+			// A package's source is placed relative to the package's `Assets` folder, under the package's asset root
+			// (ApplyDefaultRootFromSourceFile); an asset header, which is not under `Assets`, places its products flat.
+			if (UE::DreamShader::IsPackageFilePath(SourceFilePath))
+			{
+				return UE::DreamShader::GetPackageAssetsRelativeDirectory(SourceFilePath);
+			}
+
 			const UE::DreamShader::FDreamShaderSourceRoot* SourceRoot = UE::DreamShader::FindSourceRootForFile(SourceFilePath);
 			if (!SourceRoot)
 			{

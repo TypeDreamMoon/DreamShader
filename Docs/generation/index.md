@@ -131,6 +131,8 @@ One line per product, in the order the products were emitted. The lines are a wi
 | `Generated RenderTarget {ObjectPath} from {File}.` | the render target of each exported buffer of a `.dsp` *(since 2.1.0)* |
 | `Skipped {ObjectPath} from {File}; source hash is unchanged (build key {BuildKey}).` | a product the hash short circuit skipped, of any kind — see [Caching](caching.md) |
 | `Skipped {ObjectPath}; another editor owns this project's DreamShader bridge, and only that one writes generated assets to disk.` | a product another editor owns the writing of (`DSH8209`) |
+| `Skipped {ObjectPath} from {File}; the source marks it NoGeneration, and only a compile that names the source builds it.` | *(after 2.1.2)* a [NoGeneration](no-generation.md) product a compile that did not name the file left alone (`DSH8277`) |
+| `Skipped {ObjectPath} from {File}; the source marks it NoGeneration, and it has never been built.` | *(after 2.1.2)* the same, with no asset on disk (`DSH8278`) |
 | `Compiled {File}; it declares no material and no exported function, so no asset was written.` | a source with no product |
 
 `{File}` is the full, normalized source path. Under them, a `Warnings:` header lists every warning of

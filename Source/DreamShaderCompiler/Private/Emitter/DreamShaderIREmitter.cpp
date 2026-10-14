@@ -1156,7 +1156,10 @@ namespace UE::DreamShader::Editor::Compiler
 			{
 				Lang::FLangDiagnosticSink ScratchDiagnostics(Context.SourceFilePath);
 				UMaterialInstanceConstant* Scratch = NewObject<UMaterialInstanceConstant>(GetTransientPackage(), NAME_None, RF_Transient);
-				FMaterialInstanceBasePropertyOverrides ScratchBase;
+				// Copied from the class default, never constructed on the stack: the struct's constructor leaves the fields 5.8.3
+				// added (TranslucencySectionPriority and its override bit) uninitialized, and a stack copy turned whatever was
+				// there into an override. The default object lives in zeroed memory.
+				FMaterialInstanceBasePropertyOverrides ScratchBase = GetDefault<UMaterialInstanceConstant>()->BasePropertyOverrides;
 				const bool bKeysOk = ApplyInstanceSettings(Scratch, InstanceData.Settings, ScratchBase, Product.Source, ScratchDiagnostics);
 				Scratch->MarkAsGarbage();
 				if (!bKeysOk)
@@ -1181,7 +1184,7 @@ namespace UE::DreamShader::Editor::Compiler
 					Update.SetParameterValueEditorOnly(Value.Key, Value.Value);
 				}
 
-				FMaterialInstanceBasePropertyOverrides BaseOverrides;
+				FMaterialInstanceBasePropertyOverrides BaseOverrides = GetDefault<UMaterialInstanceConstant>()->BasePropertyOverrides;
 				Lang::FLangDiagnosticSink KeyDiagnostics(Context.SourceFilePath);
 				ApplyInstanceSettings(Instance, InstanceData.Settings, BaseOverrides, Product.Source, KeyDiagnostics);
 				Update.SetBasePropertyOverrides(BaseOverrides);

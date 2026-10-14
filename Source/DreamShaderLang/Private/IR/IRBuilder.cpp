@@ -151,6 +151,7 @@ namespace UE::DreamShader::IR::Private
 		// 1.x destination (legacy rule L10): carried as the binder decided it.
 		OutProduct.bLegacyAssetPath = BoundProduct.bLegacyAssetPath;
 		OutProduct.AssetRoot = BoundProduct.AssetRoot;
+		OutProduct.bNoGeneration = BoundProduct.bNoGeneration;
 
 		if (BoundProduct.Kind == EIRProductKind::MaterialInstance)
 		{

@@ -38,7 +38,7 @@ question the source hash cannot — *has somebody been working in here?*
 `Unstamped` covers two cases, both benign: an asset generated before digests existed, and one whose
 stamp carries a different schema tag. The tag is the digest format version, the engine version, and a
 fingerprint of the reflected layout of every expression class the asset uses
-(`DSD4-5.8-1a2b3c4d`), because the property set the digest walks is the engine's. Without the
+(`DSD5-5.8-1a2b3c4d`), because the property set the digest walks is the engine's. Without the
 version, upgrading the engine would re-fingerprint every asset in the project at once and report the
 whole library as hand-edited; without the layout fingerprint, a source-built engine that adds a pin
 to one expression class between two sessions did the same to every asset using that class *(since
@@ -74,6 +74,7 @@ protect something that was never in danger.
 | a named reroute's display colour | no |
 | a material property outside the reset list — preview mesh, thumbnail, physical material | no |
 | pin `Id` GUIDs and named-reroute variable GUIDs | no — these are identity, deliberately carried across a rebuild |
+| only the case of a name — a pin, a parameter, an output, a referenced asset | no *(after 2.1.2)* — see the note below |
 
 > [!NOTE]
 > A named reroute seeds its display colour from its own object path name, which changes every time
@@ -87,6 +88,14 @@ protect something that was never in danger.
 > so through 1.9 a layer stamped by an English editor read as `Diverged` in a Chinese one. Those
 > inputs are named by the attribute itself now. The format tag moved from `DSD3` to `DSD4` with
 > that, so every asset reads as `Unstamped` once after the upgrade.
+
+> [!NOTE]
+> Names are compared without case *(after 2.1.2)*: an `FName` value, alone or inside an array or a
+> struct, an input's name, an object path. Unreal compares names that way, and a package keeps one
+> spelling per name: a function output generated as `result` in a package that also holds a `Result`
+> loads back as `Result`. Through 2.1.2 such an asset read as `Diverged` the first time a new session
+> compiled it again, and the rebuild was refused. The format tag moved from `DSD4` to `DSD5`, so every
+> asset reads as `Unstamped` once after the upgrade.
 
 ## Parameter overrides on a generated ThinCustom instance
 

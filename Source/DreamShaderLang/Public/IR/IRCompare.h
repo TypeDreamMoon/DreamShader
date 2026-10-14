@@ -33,7 +33,10 @@ namespace UE::DreamShader::IR
 		bool bCompareDebugNames = false;
 		/** The region a node sits in, by title. */
 		bool bCompareRegions = false;
-		/** The file and line comments the Custom code builder writes around a body. Off, `Code` is compared without them. */
+		/**
+		 * The file and line comments the Custom code builder writes around a body. Off, `Code` is compared without them --
+		 * where they stand included -- and with the function names they carry, in order.
+		 */
 		bool bCompareCustomMarkers = false;
 		/**
 		 * The blanks of Custom `Code`. Off, a line is compared trimmed and with every run of blanks as one, and a blank

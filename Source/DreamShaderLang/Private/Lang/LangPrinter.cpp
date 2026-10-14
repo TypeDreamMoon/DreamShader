@@ -129,6 +129,8 @@ namespace UE::DreamShader::Lang
 			case EPragmaKind::EndRegion: return TEXT("endregion");
 			case EPragmaKind::Instance:  return TEXT("instance");
 			case EPragmaKind::Pipeline:  return TEXT("pipeline");
+			case EPragmaKind::Generate:  return TEXT("generate");
+			case EPragmaKind::NoGeneration: return TEXT("nogeneration");
 			case EPragmaKind::Unknown:
 			default:                     return TEXT("");
 			}
@@ -372,7 +374,10 @@ namespace UE::DreamShader::Lang
 				return PrintLiteral(static_cast<const FLiteralExpr&>(Expr));
 
 			case ENodeKind::IdentifierExpr:
-				return static_cast<const FIdentifierExpr&>(Expr).Name;
+			{
+				const FIdentifierExpr& Identifier = static_cast<const FIdentifierExpr&>(Expr);
+				return Identifier.WrittenName.IsEmpty() ? Identifier.Name : Identifier.WrittenName;
+			}
 
 			case ENodeKind::TypeExpr:
 				return PrintType(static_cast<const FTypeExpr&>(Expr).Type);
@@ -1116,6 +1121,7 @@ namespace UE::DreamShader::Lang
 			case EPragmaKind::Layout:
 			case EPragmaKind::Instance:
 			case EPragmaKind::Pipeline:
+			case EPragmaKind::Generate:
 			{
 				Line += TEXT("(");
 				for (int32 ArgumentIndex = 0; ArgumentIndex < Decl.Arguments.Num(); ++ArgumentIndex)
@@ -1132,14 +1138,19 @@ namespace UE::DreamShader::Lang
 
 			case EPragmaKind::Region:
 			case EPragmaKind::EndRegion:
+			case EPragmaKind::NoGeneration:
 			case EPragmaKind::Unknown:
 			default:
 			{
-				// Region: the title. Unknown: the rest of the line, kept as it was written.
+				// Region: the title. Unknown: the rest of the line, kept as it was written. NoGeneration: nothing.
 				const FString Text = Decl.Text.TrimStartAndEnd();
 				if (!Text.IsEmpty())
 				{
-					Line += TEXT(" ");
+					// `#pragma disable_warning(DSH7224)`: an argument list stays against its name, as it was written.
+					if (!Text.StartsWith(TEXT("("), ESearchCase::CaseSensitive) || Name.IsEmpty())
+					{
+						Line += TEXT(" ");
+					}
 					Line += Text;
 				}
 				break;

@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-2116
+2155
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -28,6 +28,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder | EntryAndExports | '{0}' is exported from a file whose entry is '{1}'; a file makes a material or it makes functions, not both. Move it to its own file, or drop 'export' to make it a helper. |
 | DreamShader.Binder | ExternWithoutAsset | 'extern {0}' has nothing to bind to; add '/// @asset /Game/.../MF_Name' above it. |
 | DreamShader.Binder | FunctionShadowsBuiltin | '{0}' is a builtin operation and cannot be redeclared; rename the function. |
+| DreamShader.Binder | GenerateOutsidePackage | '{0}' asks to generate '{1}', and only a package's header generates material functions; this file is not in one, so nothing is generated. Write an 'export' function (or a 1.x ShaderFunction) to make a material function of your own. |
 | DreamShader.Binder | GlobalStorage | '{0}' is a file-scope variable with no storage class; write 'uniform' for a material parameter or 'static const' for a compile-time constant. |
 | DreamShader.Binder | GlobalTypeUnsupported | A file-scope variable of type {0} has no node; a 'uniform' or 'static const' must be numeric, bool, a texture or a sampler. |
 | DreamShader.Binder | HoistedCallRecursion | '{0}' reaches itself through the 'UE.' calls lifted out of its body, and each call makes a new custom node, so the graph would never end. |
@@ -43,6 +44,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder | LinkageTargetLegacyExport | a block of a 1.x source that produces an asset |
 | DreamShader.Binder | MaterialPragmaWithoutEntry | '#pragma material' configures a material, and this file has no 'export void Name(inout material m)' entry to configure. |
 | DreamShader.Binder | MultiDimensionalArray | A multi-dimensional array has no graph form; declare one dimension, or move the code into a '/// @custom' function. |
+| DreamShader.Binder | NoGenerationInHeader | '#pragma nogeneration' in '{0}' was ignored: it marks the file it is written in, a header builds nothing, and the files that include it are not marked by it. Write it in each of those files instead. |
 | DreamShader.Binder | ParamDocUnknown | '@param {0}' does not name a parameter of '{1}'. |
 | DreamShader.Binder | PinDocUnknown | '@pin {0}' does not name a parameter of '{1}'. |
 | DreamShader.Binder | PrototypeWithoutExtern | '{0}' has no body; a prototype has to be 'extern' and carry '/// @asset'. |
@@ -96,6 +98,8 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Directives | TargetFunction3 | a function |
 | DreamShader.Binder.Directives | TargetFunction4 | an exported function |
 | DreamShader.Binder.Directives | TargetFunction5 | an exported function |
+| DreamShader.Binder.Directives | TargetFunctionGenerate | a function |
+| DreamShader.Binder.Directives | TargetFunctionNoGeneration | an exported function |
 | DreamShader.Binder.Directives | TargetFunctionPin | a function |
 | DreamShader.Binder.Directives | TargetFunctionRoot | an exported function |
 | DreamShader.Binder.Directives | TargetTextureUniform | a texture 'uniform' |
@@ -415,7 +419,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Pipeline | MeshWriteInteger | Mesh pass '{0}' writes '{1}', a {2} buffer, and a mesh pass writes the float4 outputs of UE.DreamPassOutput, which an integer target would take as raw bits; write a float buffer. |
 | DreamShader.Binder.Pipeline | MeshWrites | Mesh pass '{0}' writes {1} buffers, and a mesh pass writes one to four, 'write Output0 = Buffer;' for each output of UE.DreamPassOutput it fills. |
 | DreamShader.Binder.Pipeline | MeshWriteSlot | A mesh pass names the output of UE.DreamPassOutput each write takes: 'write Output0 = {0};' (Output0 to Output3). |
-| DreamShader.Binder.Pipeline | MipsRange | 'Mips' of buffer '{0}' is {1}, and a buffer has 1 to 14 mips. |
+| DreamShader.Binder.Pipeline | MipsUnsupported | 'Mips' of buffer '{0}' is {1}; only 1 is supported because passes cannot initialize or update a mip chain. |
 | DreamShader.Binder.Pipeline | Numbers | numbers |
 | DreamShader.Binder.Pipeline | Numbers2 | numbers |
 | DreamShader.Binder.Pipeline | ParameterNameCaseClash | The parameter '{0}' differs from '{1}', declared on line {2}, in case only; the pipeline asset keeps parameter names as Unreal names, which compare ignoring case, so the two would be one parameter there. Rename one. |
@@ -592,9 +596,11 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.CommandletRunner | FlagValueNotBoolean | '-{0}={1}' is neither on nor off. A flag takes true, 1, yes or on, or false, 0, no or off, and '-{0}' alone is on; the command did nothing. |
 | DreamShader.CustomHlsl | CustomBadFunctionIndex | Custom node code was asked for function {0}, but the bound module has {1}. |
 | DreamShader.CustomHlsl | CustomCallArity | '{0}' takes {1} argument(s) but this call passes {2}; a call that carries a texture cannot be matched up by position otherwise. |
+| DreamShader.CustomHlsl | CustomCallArityPlain | '{0}' takes {1} argument(s) in the HLSL it becomes, but this call passes {2}. |
 | DreamShader.CustomHlsl | CustomCallCycle | The '@custom' functions {0} call each other in a cycle; HLSL has no recursion, so their bodies cannot be embedded in a custom node. |
 | DreamShader.CustomHlsl | CustomCallsGraphFunction | '{0}' is not a '@custom' function and cannot be called from the HLSL body of '{1}'; a custom node sees no graph values, so mark '{0}' '@custom' as well or move the call out of the body. |
 | DreamShader.CustomHlsl | CustomCallsHoistingFunction | '{0}' takes the 'UE.' calls lifted out of its body as inputs of its own custom node, so the HLSL body of '{1}' cannot call it; call it from a graph body instead. |
+| DreamShader.CustomHlsl | CustomCallVoidValue | '{0}' returns nothing in the HLSL it becomes, so this call has no value to read; pass a variable for each of its 'out' parameters and read those. |
 | DreamShader.CustomHlsl | CustomCaseOnlyMatch | '{0}' differs from the function '{1}' only in case; HLSL is case-sensitive, so this call is left for the shader compiler. Did you mean '{1}'? |
 | DreamShader.CustomHlsl | CustomDuplicateParameterName | '{0}' declares '{1}' twice in the HLSL it generates; a texture parameter also claims '{1}Sampler', which the engine declares alongside it. |
 | DreamShader.CustomHlsl | CustomEmptyInclude | '{0}' has an '#include' with an empty path; write the virtual shader path the header lives at, for example "/Engine/Private/Common.ush". |
@@ -801,6 +807,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Emitter | RefractFailed | Failed to create the nodes refract lowers to. |
 | DreamShader.Emitter | RollbackNotArmed | '{0}' could not be snapshotted before rebuilding it, so a failed rebuild will not be rolled back. |
 | DreamShader.Emitter | RollbackNotArmedFunction | '{0}' could not be snapshotted before rebuilding it, so a failed rebuild will not be rolled back. |
+| DreamShader.Emitter | RoundFailed | Failed to create the Custom node a nearest-even round lowers to. |
 | DreamShader.Emitter | RsqrtFailed | Failed to create the nodes an inverse square root lowers to. |
 | DreamShader.Emitter | SaveFunctionFailed | '{0}' was built but could not be saved. {1} |
 | DreamShader.Emitter | SaveInstanceFailed | '{0}' was built but could not be saved. {1} |
@@ -849,7 +856,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Emitter.PassPipeline | PayloadUnmapped | '{1}' is not a {0} the Custom Pass runtime knows; the pipeline was not built. This is a compiler gap: the binder should have refused it. |
 | DreamShader.Emitter.PassPipeline | PipelineDestinationFailed | '{0}' does not resolve to a valid asset path. {1} |
 | DreamShader.Emitter.PassPipeline | PipelineEmitCancelled | Building '{0}' was cancelled; the pipeline, its slots and its render targets are as they were before this compile. |
-| DreamShader.Emitter.PassPipeline | SavePipelineFailedSaveOrForce | '{0}' was built but could not be saved with its render targets; its slots are already in the registry. In this session the pipeline in memory is current, so a plain compile of its source skips it: save it, or compile the source again with -Force. {1} |
+| DreamShader.Emitter.PassPipeline | SavePipelineFailedRetry | '{0}' was built but could not be saved with its render targets; its slots are already in the registry. Make the packages writable and compile the source again to retry saving. {1} |
 | DreamShader.Emitter.PassPipeline | WhatBlend | blend mode |
 | DreamShader.Emitter.PassPipeline | WhatConstantType | param constant type |
 | DreamShader.Emitter.PassPipeline | WhatCull | cull mode |
@@ -971,6 +978,11 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.IRBuilder | IRBuilderAppendTooWide | This builds a {0}-component value, but a material graph carries at most four components. |
 | DreamShader.IRBuilder | IRBuilderAttributeNotSet | '{0}' is read before anything wrote it; a material attribute has no value until this function assigns one. |
 | DreamShader.IRBuilder | IRBuilderCallEntry | '{0}' is this file's material entry and is called by the engine, not by the shader. |
+| DreamShader.IRBuilder | IRBuilderCustomDefaultOut | A default of '{0}' initializes its 'out' parameter '{1}', but a Custom output has no input pin to carry that value; pass the initial value through a separate input and assign the output in the body. |
+| DreamShader.IRBuilder | IRBuilderDefaultCallCycle | Resolving the defaults of '{0}' calls that function with omitted arguments again; pass explicit values to break the default call cycle. |
+| DreamShader.IRBuilder | IRBuilderDefaultCycle | The default value of '{0}' in '{1}' depends on itself; pass an explicit value for a parameter in the cycle. |
+| DreamShader.IRBuilder | IRBuilderDefaultDepth | Resolving the defaults of '{0}' would go {1} calls deep, past the limit of {2}; pass explicit values or flatten the default call chain. |
+| DreamShader.IRBuilder | IRBuilderDefaultHasNoValue | The default value of '{0}' in '{1}' reads a parameter that has no value; pass that input explicitly or initialize its default. |
 | DreamShader.IRBuilder | IRBuilderDiscard | 'discard' has no material-graph form; set the material's OpacityMask to zero instead, or move the branch into a '/// @custom' function. |
 | DreamShader.IRBuilder | IRBuilderFieldOfNonMaterial | The IR builder cannot read '{0}' here: the binder typed what it is read from as a material, but that did not lower to one. |
 | DreamShader.IRBuilder | IRBuilderInlineDepth | Inlining '{0}' would go {1} calls deep, past the limit of {2}; flatten the call chain or move part of it into a '/// @custom' function. |
@@ -1036,6 +1048,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.Declarations | MalformedDocDirective | A '@' in a '///' line must be followed by a directive name; the text is kept as description. |
 | DreamShader.Lang.Declarations | MalformedInclude | '#include' needs a quoted path: #include "/Game/Shared/Common.dsh". |
 | DreamShader.Lang.Declarations | MalformedPragma | Malformed '#pragma {0}': {1} |
+| DreamShader.Lang.Declarations | NoGenerationArguments | '#pragma nogeneration' takes no arguments, and '{0}' was ignored: the file is still marked. Remove the line to have it built automatically again. |
 | DreamShader.Lang.Declarations | OrphanDocBlock | This '///' block is not followed by a declaration and is ignored. |
 | DreamShader.Lang.Declarations | OrphanDocBlockInStruct | This '///' block is not followed by a field and is ignored. |
 | DreamShader.Lang.Declarations | PragmaExpectedKey | expected a key or a value. |
@@ -1072,6 +1085,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.InstanceSource | OverlappingEdits | Expected every change to this file to touch its own stretch of text, found an edit at line {0} that overlaps another or runs past the end; the file was left unchanged. |
 | DreamShader.Lang.InstanceSource | SharedStatement | Expected '{0}' to be declared alone to rewrite its value, found it in a declaration shared with other names; split the declaration first. |
 | DreamShader.Lang.InstanceSource | UniformKindMismatch | Expected '{0}' to be declared as a {1} parameter to take this default, found a declaration of another kind; no default was written. |
+| DreamShader.Lang.InstanceSource | UniformScalarValueNeedsTypeChange | The scalar value for '{0}' cannot be stated by its declared type; changing a .dss uniform's type can change its callers, so no default was written. Change the source type explicitly or extract the tweak to a .dsi. |
 | DreamShader.Lang.LegacyExpressions | CustomOutputType | Expected 'OutputType' of a Custom expression to be float1 to float4 or MaterialAttributes, found '{0}'. |
 | DreamShader.Lang.LegacyExpressions | IgnoredNamedArgument | '{0}' is not an argument '{1}' reads; 1.x ignored it, so it is dropped. |
 | DreamShader.Lang.LegacyExpressions | IgnoredPositionalArgument | '{0}' takes no positional argument here; 1.x ignored it, so it is dropped. |
@@ -1104,10 +1118,12 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.LegacyParser | CodeSection | Expected 'Graph' as the body section of '{0}', found 'Code', which 1.x accepted only inside a Function. |
 | DreamShader.Lang.LegacyParser | ExposeNotBool | Expected 'true' or 'false' for 'ExposeToLibrary', found '{0}'; 1.x ignored the setting and so does this front end. |
 | DreamShader.Lang.LegacyParser | FunctionBodyOpen | Expected '`{' to open the body of '{0}', found {1}. |
+| DreamShader.Lang.LegacyParser | FunctionHeaderKey | '{0}' is not an attribute of a '{1}' block, and was ignored; the header takes Generate, Library and Description. |
 | DreamShader.Lang.LegacyParser | FunctionName | Expected a function name after '{0}', found {1}. |
 | DreamShader.Lang.LegacyParser | FunctionNameOrParen | Expected '(' or a function name after '{0}', found {1}. |
 | DreamShader.Lang.LegacyParser | FunctionParamsOpen | Expected '(' to open the parameter list of '{0}', found {1}. |
 | DreamShader.Lang.LegacyParser | FunctionSettingIgnored | '{0}' is not a setting of '{1}'; 1.x ignored it and so does this front end. |
+| DreamShader.Lang.LegacyParser | GenerateTemplatePlaceholder | '{0}' holds a placeholder other than '`{Name`}', the only one a Generate template has. |
 | DreamShader.Lang.LegacyParser | GraphModifier | Expected a return type or a name after 'GraphFunction', found the modifier '{0}', which only a Function takes. |
 | DreamShader.Lang.LegacyParser | GraphRepeated | The section '{0}' is written twice; the later one wins, as it did in 1.x. |
 | DreamShader.Lang.LegacyParser | HoistUnterminated | Expected a ')' to close the 'UE.' call in the body of '{0}', found the end of the body. |
@@ -1124,6 +1140,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.LegacyParser | NamespaceNoName | Expected a 'Name = "..."' attribute with a name on 'Namespace', found none. |
 | DreamShader.Lang.LegacyParser | NamespaceNotIdentifier | Expected the namespace name to be an identifier, found '{0}'. |
 | DreamShader.Lang.LegacyParser | NamespaceOpen | Expected '`{' to open the namespace '{0}', found {1}. |
+| DreamShader.Lang.LegacyParser | NoGenerationValue | '{0}' is not a value of NoGeneration, which is true or false; the block is built as if it were false. |
 | DreamShader.Lang.LegacyParser | NoLegacyBlock | Expected a top-level Shader, ShaderFunction, ShaderLayer, ShaderLayerBlend, Function, GraphFunction, Namespace or VirtualFunction block in this 1.x file, found none. |
 | DreamShader.Lang.LegacyParser | NoResult | Expected '{0}' to return a value or to have at least one 'out' parameter, found neither. |
 | DreamShader.Lang.LegacyParser | OldLayerWord | '{0}' is the old spelling of '{1}'; it still reads the same. |
@@ -1359,6 +1376,15 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Navigation | SpanTableBadRow | The DreamShader.SourceSpans entry '{Key}' of '{Asset}' is not an object with file/line/col and was skipped; that node cannot be navigated to. |
 | DreamShader.Navigation | SpanTableBadSpan | The DreamShader.SourceSpans entry '{Key}' of '{Asset}' names no file or a line below 1 and was skipped; that node cannot be navigated to. |
 | DreamShader.Navigation | SpanTableNotJson | The DreamShader.SourceSpans metadata of '{Asset}' is not a JSON object, so no node on it can be mapped back to a source line; rebuild the asset from its source. |
+| DreamShader.PackageAssets | GenerateNotPossible | '{0}' cannot be generated as the material function '{1}': {2}. |
+| DreamShader.PackageAssets | GeneratePlaceholder | '{0}' holds a placeholder other than '`{Name`}', the only one a generate template has. |
+| DreamShader.PackageAssets | GenerateTwice | '{0}' is generated a second time here; the line {1} already generates it from another function. |
+| DreamShader.PackageAssets | HeaderPreprocessFailed | '{0}' failed conditional compilation: {1}: {2} |
+| DreamShader.PackageAssets | PragmaGenerateKey | '{0}' is not a key of '#pragma generate', and was ignored; it takes Functions, Library and Desc. |
+| DreamShader.PackageAssets | ReasonArray | its parameter '{0}' is an array, and a material function has no array pins |
+| DreamShader.PackageAssets | ReasonExport | an 'export' function already builds an asset of its own |
+| DreamShader.PackageAssets | ReasonExtern | an 'extern' prototype names an asset that exists, and has no body to generate from |
+| DreamShader.PackageAssets | ReasonNoBody | it has no body |
 | DreamShader.Pass.BufferNode | BuiltinBuffer | Dream Pass Buffer: '{0}' is a built-in buffer, which only passes can read; a material reads a buffer '{1}' declares with Export = true. |
 | DreamShader.Pass.BufferNode | Keywords | dream pass custom pass buffer export exported render target dreamshader |
 | DreamShader.Pass.BufferNode | MenuCategory | DreamShader |
@@ -1375,6 +1401,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pass.OutputNode | NeedsEngine | Dream Pass Output needs Unreal Engine 5.8 or later. |
 | DreamShader.Pass.OutputNode | NotANumber | Dream Pass Output: {0} takes a float1 to float4 value; a Substrate BSDF, material attributes or a texture cannot be written to a buffer. |
 | DreamShader.Pass.Pipeline | BindingNoBuffer | a binding names no buffer. |
+| DreamShader.Pass.Pipeline | BufferMipsUnsupported | Buffer '{0}': only Mips = 1 is supported; passes cannot initialize or update a mip chain. |
 | DreamShader.Pass.Pipeline | BufferName | Buffer '{0}': the name is empty, taken twice, or a built-in one. |
 | DreamShader.Pass.Pipeline | BuiltinPrevious | '{0}.Previous': a built-in buffer has no history. |
 | DreamShader.Pass.Pipeline | ClearOneWrite | a clear writes exactly one buffer. |
@@ -1498,6 +1525,8 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pipeline | CatalogEmpty | The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded. |
 | DreamShader.Pipeline | CompileCancelled | Compiling '{0}' was cancelled; nothing was written. |
 | DreamShader.Pipeline | CompilingLang2Source | Compiling DreamShader source '{0}'... |
+| DreamShader.Pipeline | DisableListEmpty | A 'disable_warning' or 'disable_error' list names no code, and disables nothing; write the codes after it, such as 'DSH7224'. |
+| DreamShader.Pipeline | DisableListMalformed | '{0}' is not a diagnostic code, and was ignored; a 'disable_warning' or 'disable_error' list takes codes such as 'DSH7224'. |
 | DreamShader.Pipeline | IncludePreprocessFailed | '{0}' failed conditional compilation: {1}: {2} |
 | DreamShader.Pipeline | IncludeUnparsable | '{0}', included from '{1}', could not be parsed; its own errors are above. |
 | DreamShader.Pipeline | IncludeUnreadable | '{0}', included from '{1}', resolved but could not be read. |
@@ -1511,11 +1540,16 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pipeline | Lang2Parsing | Parsing '{0}'... |
 | DreamShader.Pipeline | Lang2Reading | Reading '{0}'... |
 | DreamShader.Pipeline | Lang2Validating | Validating the IR of '{0}'... |
-| DreamShader.Pipeline | NotACompilableSource | '{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it. |
+| DreamShader.Pipeline | NoGenerationCalleeMissing | '{0}' calls '{1}', which '{2}' marks NoGeneration and which has never been built, so there is nothing to call. Compile '{2}' by name once: Compile in the Material Content Browser, or `compile -Source`. |
+| DreamShader.Pipeline | NoGenerationLeftAlone | '{0}' was left alone: '{1}' marks it NoGeneration, and only a compile that names the file builds it. |
+| DreamShader.Pipeline | NoGenerationNeverBuilt | '{0}' has never been built: '{1}' marks it NoGeneration, so only a compile that names the file builds it, and none has. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`. |
+| DreamShader.Pipeline | NoGenerationParentMissing | The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is nothing to build this instance against. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`. |
+| DreamShader.Pipeline | NotACompilableSource | '{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it, unless it is a package's asset header. |
 | DreamShader.Pipeline | ParentCompiledFirst | '{0}' was missing or older than its source, so '{1}' was compiled first. |
 | DreamShader.Pipeline | ParentCompileFailed | The parent source '{0}' failed to compile, so this instance has no parent to build against. {1} |
 | DreamShader.Pipeline | ParentSourceDoesNotBuild | The parent '{0}' comes from '{1}', which does not compile, so the parameters this instance overrides cannot be checked; compile that source to see why. |
 | DreamShader.Pipeline | ProductCycle | The exported functions {0} call one another in a cycle, so there is no order in which they can be built; an exported function may call another only in one direction. |
+| DreamShader.Pipeline | RequiredParentProductMissing | The parent source '{0}' no longer builds a material or instance at '{1}'; refresh its source reference. |
 | DreamShader.Pipeline | ResolveDestinationFailed | '{0}' does not resolve to a valid asset path. {1} |
 | DreamShader.Pipeline | SourcePreprocessFailed | '{0}' failed conditional compilation: {1}: {2} |
 | DreamShader.Pipeline | SourceUnreadable | '{0}' could not be read. |
@@ -1526,6 +1560,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pipeline.References | MaterialReferenceMalformed | The material '{0}' does not resolve to an asset path. {1} |
 | DreamShader.Pipeline.References | MaterialReferenceNotMaterial | '{0}' is a {1}, not a material or a material instance. |
 | DreamShader.Pipeline.References | MaterialSourceDoesNotCompile | The material '{0}' comes from '{1}', which does not compile, so this pipeline has no material to check its pass against. {2} |
+| DreamShader.Pipeline.References | NoGenerationReferenceMissing | '{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is nothing to check this reference against. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`. |
 | DreamShader.Pipeline.References | PassBufferNoBuffer | UE.DreamPassBuffer names no Buffer of '{0}': write the exported buffer's name (Buffer = "Blurred"). |
 | DreamShader.Pipeline.References | PassBufferNoPipeline | UE.DreamPassBuffer names no Pipeline: write the name of the '.dsp' (Pipeline = "CP_Highlight") or the pipeline asset's path. |
 | DreamShader.Pipeline.References | PassBufferNotExportedInSource | Buffer '{1}' of the pipeline '{0}' is not exported. Declare it with Export = true in the .dsp. |
@@ -1595,6 +1630,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Tools | FormatReadFailed | '{0}' could not be read, so it was not formatted. |
 | DreamShader.Tools | FormatWriteFailed | The formatted text of '{0}' could not be written: {1}. A file that is read-only -- checked in, not checked out -- is the usual reason. |
 | DreamShader.Tools | IndexWriteFailed | The symbol index could not be written: {0}. |
+| DreamShader.Tools | ListGeneratedOrphan | '{0}' is in a package's asset folder and no source builds it any more: its package was removed or stopped generating it. Delete it if nothing uses it. |
 | DreamShader.Tools | ListGeneratedOutsideProject | {0} generated asset(s) lie outside the project directory -- an engine plugin's content -- and have no project-relative path; '-As=Packages' or '-As=Json' lists them. |
 | DreamShader.Tools | ListGeneratedUnknownFormat | '-As={0}' is no list format; the four are Packages, Files, GitIgnore and Json. |
 | DreamShader.Tools | ListGeneratedWriteFailed | The list of generated assets could not be written: {0}. |
@@ -1640,6 +1676,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderEditorBridge | DreamShaderAdoptNoBackup | none |
 | DreamShaderEditorBridge | DreamShaderAdoptNoProducts | '{0}' declares no asset any more, so '{1}' cannot be adopted into it. |
 | DreamShaderEditorBridge | DreamShaderAdoptOpenInEditor | '{0}' is open in an asset editor, whose copy a decompile cannot see, so nothing was adopted; save and close the editor, then adopt again. |
+| DreamShaderEditorBridge | DreamShaderAdoptPackageSource | DSH8133: '{0}' is built from '{1}', a file of an installed package, which the package's installer replaces on every update; anything adopted into it would be lost then. Use Revert to Source to undo the edit, or Detach to keep the asset as it is. |
 | DreamShaderEditorBridge | DreamShaderAdoptPipelineConditionalSource | DSH8149: '{0}' uses conditional compilation, so the settings of '{1}' cannot be spliced into it without deleting the branches this build did not take; move the change into the source by hand. |
 | DreamShaderEditorBridge | DreamShaderAdoptPipelineConfirm | Write the settings, parameters, buffers and passes of '{0}' back into '{1}'?\n\nThe existing file is copied to '{2}' first. Only the declarations and keys whose values changed are rewritten, so comments and the order of the file are kept. |
 | DreamShaderEditorBridge | DreamShaderAdoptPipelineNoProduct | DSH9228: '{0}' builds no pass pipeline any more, so '{1}' has nothing to be spliced into. |
@@ -1849,6 +1886,8 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderIRToAstStatements | SinkAttributeUnnamed | '{0}' wires a material attribute '{1}' that is not a name the language has; the connection is dropped. |
 | DreamShaderIRToAstStatements | WriteAttributeUnnamed | {0} writes an attribute '{1}' that is not a name the language has; the write is dropped. |
 | DreamShaderLangMigrate | DocLineBreaksLost | '@{0}' held a text of several lines, which one '///' line cannot; it is written on one line, its line breaks as blanks. |
+| DreamShaderLangMigrate | IncludedLegacyKeepsOuts | '{0}' is a 1.x function of '{1}', which keeps its 'out' parameters once that file is migrated, so this call will have no value to read; pass a variable for '{2}' too, as the 1.x text may, before either file is migrated. |
+| DreamShaderLangMigrate | IncludedLegacyReturns | '{0}' is a 1.x function of '{1}', which returns its first 'out', '{2}', once that file is migrated; this call is written for it as it is now. Migrate '{1}' first, in place, and then this file. |
 | DreamShaderLangMigrate | OptionalWithoutDefault | '{0}' of '{1}' was an optional input, and a {2} has no default the language can write; it is a required input in the migrated file. |
 | DreamShaderLangMigrate | RootKept | '{0}' keeps its '/// @root', the 1.x spelling of where its asset goes, because the place the new file would put it could not be worked out; check the asset path the first build reports. |
 | DreamShaderLangMigrate | RootQualifiedImport | '{0}' names a source root in front of the path, which '#include' cannot; write the path from the root's own folder (a leading '/') or relative to this file, then migrate again. |

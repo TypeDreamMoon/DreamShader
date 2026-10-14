@@ -6,7 +6,8 @@
 // rewritten until the 2.0 front end reads it the same way (Lang: Migrate/LangMigrate.h), printed, and then proven:
 //
 //   - every comment of the source is in the result (DSH9092), or nothing is written;
-//   - the result parses, binds, lowers and validates as 2.0 source (DSH9097), or nothing is written;
+//   - the result parses, binds, lowers and validates as 2.0 source (DSH9097), or nothing is written -- and every call
+//     in its `@custom` bodies matches the HLSL its callee becomes, which a header's bodies are not otherwise read for;
 //   - what it lowers to is compared with what the 1.x file lowered to, node order, variable names and source
 //     positions aside (IR/IRCompare.h), and every product is checked to land where it did. A difference is DSH9098,
 //     a warning: the file is still written, because the usual cause is a 1.x rule the front end reports on its own.

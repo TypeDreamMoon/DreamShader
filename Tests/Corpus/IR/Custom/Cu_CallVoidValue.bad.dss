@@ -1,0 +1,22 @@
+// A `@custom` function that returns nothing is emitted as `void`; its call in another body has no value to read
+// (DSH6266). Under 1.x every such function returned its first `out` (rule L9), and a 1.x body read that.
+
+/// @custom
+void Split(float3 Colour, out float Luma, out float3 Chroma)
+{
+    Luma = dot(Colour, float3(0.299, 0.587, 0.114));
+    Chroma = Colour - Luma;
+}
+
+/// @custom
+float Brightness(float3 Colour)
+{
+    float3 Chroma;
+    float Luma = Split(Colour, Luma, Chroma);
+    return Luma;
+}
+
+export void M_CuCallVoidValue(inout material m)
+{
+    m.Opacity = Brightness(float3(1, 0.5, 0.25));
+}

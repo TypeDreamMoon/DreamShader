@@ -84,6 +84,33 @@ namespace UE::DreamShader
 
 	/** The project root's `Packages` directory. Plugin roots carry their own in `FDreamShaderSourceRoot`. */
 	DREAMSHADER_API FString GetPackageShaderDirectory();
+
+	/**
+	 * The package `InPath` belongs to: `<Root>/Packages/@scope/name` for a scoped package, `<Root>/Packages/name`
+	 * otherwise (absolute, normalized, no trailing slash). Empty for a path under no root's `Packages` tree, and for a
+	 * file directly in `Packages` (or directly in an `@scope` folder), which belongs to no package.
+	 */
+	DREAMSHADER_API FString FindPackageDirectoryForFile(const FString& InPath);
+
+	/** True for a path under any root's `Packages` tree, whether or not it is in a package. */
+	DREAMSHADER_API bool IsPackageFilePath(const FString& InPath);
+
+	/**
+	 * True for a `.dss`, `.dsf` or `.dsi` under a package's `Assets` folder: a source the plugin builds like the
+	 * project's own -- at startup, by `compile -All`, by the cook -- into the package's asset root.
+	 */
+	DREAMSHADER_API bool IsPackageAssetsSourceFile(const FString& InPath);
+
+	/**
+	 * Where a package's assets go when a source names no Root: `/Game/DreamShaderPackages/<scope>/<name>` for a package
+	 * of the project's root, `/<Plugin>/DreamShaderPackages/<scope>/<name>` for one under a plugin's root (`@` dropped,
+	 * characters a package path cannot hold made `_`). Empty for a path in no package.
+	 */
+	DREAMSHADER_API FString GetPackageAssetRoot(const FString& InPath);
+
+	/** The folder of `InPath` relative to its package's `Assets` folder (`Noise` for `<pkg>/Assets/Noise/MF_X.dss`); empty otherwise. */
+	DREAMSHADER_API FString GetPackageAssetsRelativeDirectory(const FString& InPath);
+
 	DREAMSHADER_API FString GetGeneratedShaderDirectory();
 	DREAMSHADER_API FString GetGeneratedShaderVirtualDirectory();
 	DREAMSHADER_API FString SanitizeIdentifier(const FString& InText);

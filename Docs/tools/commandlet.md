@@ -107,6 +107,10 @@ Precedence: `-Source` is looked up first, then `-File`; `-All` is consulted only
 a value. `-Source` and `-All` together silently compiles only the one file. With none of the three,
 the usage banner is logged at `Error` and the run exits `1`.
 
+*(after 2.1.2)* `-Source` / `-File` names the file, so its [NoGeneration](../generation/no-generation.md)
+assets are built too; `-All` names none, and leaves them as they are on disk. `check -Shaders` follows
+the same rule.
+
 ### `-Source` path resolution
 
 Tried in this order; the first that applies wins.
@@ -127,9 +131,9 @@ directory second.
 | Step | Rule |
 | :-- | :-- |
 | 1 | Recursively collect `*.dsm`, `*.dsh`, `*.dsf`, `*.dss`, `*.dsi` and `*.dsp` under every [source root](../language/source-files.md#source-roots) — `<SourceDirectory>`, and the `DShader` folder of every plugin that has one |
-| 2 | Drop **everything** under each root's `Packages` folder |
-| 3 | Drop `.dsh` headers — they generate no assets and are compiled through the sources that include them |
-| 4 | Sort: `.dsf` function files first (rank 0), then every other kind (rank 1); ties broken by case-insensitive path comparison |
+| 2 | Drop everything under each root's `Packages` folder except what a package builds: its `Assets` sources and its asset headers *(after 2.1.2; before, everything)* — see [Packages](packages.md#source-file-enumeration) |
+| 3 | Drop `.dsh` headers — they generate no assets and are compiled through the sources that include them — except a package's asset header |
+| 4 | Sort: `.dsf` function files and asset headers first (rank 0), then every other kind (rank 1); ties broken by case-insensitive path comparison |
 | 5 | Compile in passes: a source that fails is held back while its pass still built something else, and retried in the next pass; once a pass builds nothing new, what still fails is reported *(since 2.1.2)* |
 
 A material that calls a function another source generates loads that function's asset, so the asset
@@ -138,8 +142,7 @@ function calling another function, nor a `.dss` whose exported function another 
 covers every shape, on a clean workspace too. A source that keeps failing — a real error, a dependency
 no source generates, or a cycle — costs at most one extra attempt per pass that built something, and is
 reported with the message of its last attempt, after every success. The cook runs the same steps
-([Cook behaviour](../generation/ephemeral.md#cook-behaviour)). Step 2 has a
-sharp edge for `.dsf` files that live in packages; see [Packages](packages.md#source-file-enumeration).
+([Cook behaviour](../generation/ephemeral.md#cook-behaviour)).
 A `.dsp` needs no rank of its own *(2.1.0)*: a material one of its passes names that is missing or older
 than its source is compiled first by the `.dsp`'s own compile.
 
@@ -197,6 +200,8 @@ one file produces several assets, the messages are joined with newlines.
 | `Generated {Kind} {AssetPath} from {SourceFile}.` | one product built. `{Kind}` is `Material`, `MaterialFunction`, `MaterialLayer`, `MaterialLayerBlend`, `MaterialInstance` or `PassPipeline` *(2.1.0)* — for every source language and both backends; a ThinCustom material is `Material` with the instance's path *(since 2.0.0)* |
 | `Generated RenderTarget {ObjectPath} from {SourceFile}.` | the render target of an exported buffer, made or reused by its pipeline's build and saved with it *(2.1.0)*; follows its pipeline's line |
 | `Skipped {AssetPath} from {SourceFile}; source hash is unchanged (build key {BuildKey}).` | hash match — pass `-Force` to regenerate |
+| `Skipped {AssetPath} from {SourceFile}; the source marks it NoGeneration, and only a compile that names the source builds it.` | *(after 2.1.2)* a [NoGeneration](../generation/no-generation.md) asset, left as it is — compile with `-Source` to build it |
+| `Skipped {AssetPath} from {SourceFile}; the source marks it NoGeneration, and it has never been built.` | *(after 2.1.2)* the same, with no asset on disk |
 | `Compiled {SourceFile}; it declares no material and no exported function, so no asset was written.` | success, nothing to write — a file of helpers, `VirtualFunction` or `GraphFunction` declarations only *(since 2.0.0)* |
 | `Warnings:` followed by one diagnostic per line | appended to a success message when the compile raised warnings |
 | one diagnostic per line, `<file>(<line>,<col>): DSHnnnn: <message>` | **failure**: the first error first, then the other errors, warnings and infos. See [Diagnostics](../diagnostics/index.md) |
@@ -478,6 +483,14 @@ failure, and the run ends `RESULT=FAILED` — a list is never silently short. As
 directory (an engine-level plugin's content) have no project-relative path; `Files` and `GitIgnore`
 say how many were left out ([`DSH9049`](../diagnostics/DSH9xxx.md)). An unknown `-As` is `DSH9048`; a
 list that cannot be written is `DSH9047`.
+
+With `-All` *(after 2.1.2)* the package assets are listed too — what a package's `Assets` sources and
+asset headers build ([Packages](packages.md#package-assets)) — and the package asset roots
+(`/Game/DreamShaderPackages`, `/<Plugin>/DreamShaderPackages`) are searched for assets **no source builds
+any more**: a removed package's, or a function a package stopped generating. Each is the warning
+[`DSH9111`](../diagnostics/DSH9xxx.md#dsh9111), and `-As=Json` lists them with `"orphaned": true` (every
+other row says `false`). The plain lists leave them out — they name what the sources build — and nothing
+is deleted.
 
 ## `.dsp` sources
 

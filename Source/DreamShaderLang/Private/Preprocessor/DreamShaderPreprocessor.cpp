@@ -633,6 +633,22 @@ namespace UE::DreamShader
 				return EDirectiveKind::None;
 			}
 
+			// The three `#pragma` lines a 1.x file takes as well (after 2.1.2): they say something about the file, and the
+			// legacy parser reads them at its top level. Every other `#pragma` stays DSH1035 there, as in 1.x.
+			if (!bLang2 && OutKeyword.Equals(TEXT("pragma"), ESearchCase::CaseSensitive))
+			{
+				const FString PragmaName = OutRest.TrimStart();
+				for (const TCHAR* const FilePragma : { TEXT("nogeneration"), TEXT("disable_warning"), TEXT("disable_error") })
+				{
+					const int32 NameLength = FCString::Strlen(FilePragma);
+					if (PragmaName.StartsWith(FilePragma, ESearchCase::CaseSensitive)
+						&& (PragmaName.Len() == NameLength || !(FChar::IsAlnum(PragmaName[NameLength]) || PragmaName[NameLength] == TEXT('_'))))
+					{
+						return EDirectiveKind::None;
+					}
+				}
+			}
+
 			for (const TCHAR* const GraphKeyword : GGraphDirectiveKeywords)
 			{
 				if (OutKeyword.Equals(GraphKeyword, ESearchCase::IgnoreCase))

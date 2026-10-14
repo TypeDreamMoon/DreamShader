@@ -18,11 +18,12 @@ namespace UE::DreamShader::Editor::Private
 	struct FDreamShaderBrowserActions
 	{
 		// Force-recompile the entry's source in memory. Refreshes the entry's status on success and
-		// pins the failure message on it otherwise. Returns whether the compile succeeded.
-		static bool Compile(FDreamShaderBrowserModel& Model, const TSharedPtr<FBrowserEntry>& Entry);
+		// pins the failure message on it otherwise. Returns whether the compile succeeded. bNamed: the user picked this
+		// entry, so its NoGeneration assets are built too; Compile stale passes false.
+		static bool Compile(FDreamShaderBrowserModel& Model, const TSharedPtr<FBrowserEntry>& Entry, bool bNamed = true);
 
 		// Force-recompile every scanned source except headers (their dependents are in the set
-		// already), behind a modal slow task.
+		// already), behind a modal slow task. Names none of them: a NoGeneration asset is left alone.
 		static void CompileAll(FDreamShaderBrowserModel& Model);
 
 		// Open the entry's source file in the preferred text editor, at a line/column when given.

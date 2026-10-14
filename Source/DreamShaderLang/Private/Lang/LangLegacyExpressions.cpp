@@ -546,7 +546,7 @@ namespace UE::DreamShader::Lang::Private
 	// `N::F`
 	// ---------------------------------------------------------------------------------------------
 
-	FExprPtr FLangParser::ParseLegacyQualifiedName()
+	FExprPtr FLangParser::ParseQualifiedName()
 	{
 		const int32 StartIndex = GetTokenIndex();
 
@@ -569,6 +569,15 @@ namespace UE::DreamShader::Lang::Private
 
 		const FLangSpan Span = SpanFrom(StartIndex);
 		const FString Flattened = LegacyAst::SanitizeIdentifier(Qualified);
+
+		if (!IsLegacyMode())
+		{
+			// A `.dss` keeps what it wrote: there is no 1.x text to migrate, and `dsc fmt` must not turn `BL::F` into
+			// `BL_F`.
+			FExprPtr Node = LegacyAst::MakeIdentifier(Flattened, Span);
+			static_cast<FIdentifierExpr&>(*Node).WrittenName = Qualified;
+			return Node;
+		}
 
 		if (LegacyInfo)
 		{

@@ -22,6 +22,7 @@
 
 #include "Commandlet/DreamShaderCommandletRunner.h"
 #include "DreamShaderModule.h"
+#include "DreamShaderSourceFileUtils.h"
 #include "IR/IRDump.h"
 #include "IR/IRLayout.h"
 #include "Lang/LangFormat.h"
@@ -229,7 +230,8 @@ namespace UE::DreamShader::Editor::Compiler
 				continue;
 			}
 
-			// Every extension IsDreamShaderLang2Source accepts; a header is compiled only through a source that includes it.
+			// Every extension IsDreamShaderLang2Source accepts. A header is compiled only through a source that includes
+			// it, unless it is a package's asset header, which is looked for in the package tree alone.
 			TArray<FString> Found;
 			for (const TCHAR* const Pattern : { TEXT("*.dss"), TEXT("*.dsi"), TEXT("*.dsp"), TEXT("*.dsm"), TEXT("*.dsf") })
 			{
@@ -241,13 +243,18 @@ namespace UE::DreamShader::Editor::Compiler
 					/*Directories*/ false,
 					/*bClearFileNames*/ false);
 			}
+			if (IFileManager::Get().DirectoryExists(*Root.PackagesDirectory))
+			{
+				IFileManager::Get().FindFilesRecursive(Found, *Root.PackagesDirectory, TEXT("*.dsh"), /*Files*/ true, /*Directories*/ false, /*bClearFileNames*/ false);
+			}
 
 			for (const FString& File : Found)
 			{
 				const FString Normalized = UE::DreamShader::NormalizeSourceFilePath(File);
-				// The Packages tree is a third-party drop, compiled only when something imports it --
-				// the same exclusion FindProjectDreamShaderSourceFiles makes for the 1.x extensions.
-				if (UE::DreamShader::IsPathUnderSourceDirectory(Normalized, Root.PackagesDirectory))
+				// The Packages tree is a third-party drop, compiled only when something imports it -- apart from what a
+				// package asks to have built: its Assets sources and its asset headers (FindProjectDreamShaderSourceFiles).
+				if (UE::DreamShader::IsPathUnderSourceDirectory(Normalized, Root.PackagesDirectory)
+					&& !::UE::DreamShader::Editor::Private::FDreamShaderSourceFileUtils::IsBuildablePackageFile(Normalized))
 				{
 					continue;
 				}
@@ -358,6 +365,8 @@ namespace UE::DreamShader::Editor::Compiler
 		FLangDiagnosticSink FlagSink;
 		TArray<FString> SourceFiles;
 		const bool bSelected = ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles, FlagSink);
+		FString NamedSource;
+		const bool bNamedSource = TryGetExplicitSourceFile(Tokens, Switches, Params, NamedSource);
 		const bool bShaders = Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("Shaders"), FlagSink);
 		const bool bForce = Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("Force"), FlagSink);
 		if (ReportFlagErrors(FlagSink, TEXT("check")))
@@ -431,6 +440,8 @@ namespace UE::DreamShader::Editor::Compiler
 			// run against a tree you do not want touched.
 			Options.bEmitAssets = bShaders;
 			Options.bForce = bForce;
+			// `-Source` names the file, so a NoGeneration product is built for its shaders; `-All` leaves it as it is.
+			Options.bIncludeNoGeneration = bNamedSource;
 
 			FDreamShaderLang2PipelineResult Result;
 			const bool bPipelineOk = RunDreamShaderLang2Pipeline(SourceFile, Options, Result);
@@ -1020,7 +1031,47 @@ namespace UE::DreamShader::Editor::Compiler
 			bool bOnDisk = false;
 			/** False for a ThinCustom material that is memory-only right now: it has no file to ignore or to type. */
 			bool bPersistent = true;
+			/** An asset under a package's asset root that no source builds any more (`-All` only; listed in `Json` alone). */
+			bool bOrphaned = false;
 		};
+
+		/**
+		 * Every package file under the package asset roots (`/Game/DreamShaderPackages`, `/<Plugin>/DreamShaderPackages`) that
+		 * Listed does not hold: what a removed package, or a package that stopped generating something, left behind.
+		 */
+		void FindOrphanedPackageAssets(const TSet<FString>& ListedPackages, TArray<FString>& OutPackageNames)
+		{
+			TArray<FString> AssetRoots;
+			AssetRoots.Add(TEXT("/Game/DreamShaderPackages"));
+			for (const UE::DreamShader::FDreamShaderSourceRoot& Root : UE::DreamShader::GetSourceShaderRoots())
+			{
+				if (!Root.PluginName.IsEmpty())
+				{
+					AssetRoots.Add(FString::Printf(TEXT("/%s/DreamShaderPackages"), *Root.PluginName));
+				}
+			}
+
+			for (const FString& AssetRoot : AssetRoots)
+			{
+				FString Directory;
+				if (!FPackageName::TryConvertLongPackageNameToFilename(AssetRoot + TEXT("/"), Directory)
+					|| !IFileManager::Get().DirectoryExists(*Directory))
+				{
+					continue;
+				}
+				TArray<FString> Files;
+				IFileManager::Get().FindFilesRecursive(Files, *Directory, *(FString(TEXT("*")) + FPackageName::GetAssetPackageExtension()), /*Files*/ true, /*Directories*/ false);
+				for (const FString& File : Files)
+				{
+					FString PackageName;
+					if (FPackageName::TryConvertFilenameToLongPackageName(File, PackageName) && !ListedPackages.Contains(PackageName.ToLower()))
+					{
+						OutPackageNames.Add(PackageName);
+					}
+				}
+			}
+			OutPackageNames.Sort();
+		}
 	}
 
 	bool RunDreamShaderListGeneratedCommandlet(
@@ -1147,6 +1198,43 @@ namespace UE::DreamShader::Editor::Compiler
 			return Left.PackageName.Compare(Right.PackageName, ESearchCase::IgnoreCase) < 0;
 		});
 
+		// Over the whole project only: a package asset root holds what every package source builds, so an asset there that no
+		// source lists was left by a package that was removed or stopped generating it. Said, never deleted -- something may
+		// still use it.
+		TArray<FGeneratedAssetRecord> Orphans;
+		if (Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("All"), FlagSink))
+		{
+			TSet<FString> ListedPackages;
+			for (const FGeneratedAssetRecord& Record : Records)
+			{
+				ListedPackages.Add(Record.PackageName.ToLower());
+			}
+			TArray<FString> OrphanPackages;
+			FindOrphanedPackageAssets(ListedPackages, OrphanPackages);
+			for (const FString& PackageName : OrphanPackages)
+			{
+				ToolSink.Warning(TEXT("DSH9111"), NoSpan, FText::Format(
+					LOCTEXT("ListGeneratedOrphan", "'{0}' is in a package's asset folder and no source builds it any more: its package was removed or stopped generating it. Delete it if nothing uses it."),
+					FText::FromString(PackageName)));
+
+				FGeneratedAssetRecord& Orphan = Orphans.AddDefaulted_GetRef();
+				Orphan.PackageName = PackageName;
+				Orphan.ObjectPath = PackageName + TEXT(".") + FPackageName::GetShortName(PackageName);
+				Orphan.bOnDisk = true;
+				Orphan.bOrphaned = true;
+				FString Filename;
+				if (FPackageName::TryConvertLongPackageNameToFilename(PackageName, Filename, FPackageName::GetAssetPackageExtension()))
+				{
+					Orphan.FilePath = FPaths::ConvertRelativePathToFull(Filename);
+					FPaths::NormalizeFilename(Orphan.FilePath);
+					if (Orphan.FilePath.StartsWith(ProjectDirectory, ESearchCase::IgnoreCase))
+					{
+						Orphan.ProjectRelativePath = Orphan.FilePath.RightChop(ProjectDirectory.Len());
+					}
+				}
+			}
+		}
+
 		FString Text;
 		int32 OutsideProject = 0;
 		switch (Format)
@@ -1180,7 +1268,9 @@ namespace UE::DreamShader::Editor::Compiler
 		case EGeneratedListFormat::Json:
 		{
 			TArray<TSharedPtr<FJsonValue>> Assets;
-			for (const FGeneratedAssetRecord& Record : Records)
+			TArray<FGeneratedAssetRecord> JsonRecords = Records;
+			JsonRecords.Append(Orphans);
+			for (const FGeneratedAssetRecord& Record : JsonRecords)
 			{
 				const TSharedRef<FJsonObject> Asset = MakeShared<FJsonObject>();
 				Asset->SetStringField(TEXT("source"), Record.SourceFile);
@@ -1192,6 +1282,7 @@ namespace UE::DreamShader::Editor::Compiler
 				Asset->SetStringField(TEXT("projectRelativeFile"), Record.ProjectRelativePath);
 				Asset->SetBoolField(TEXT("onDisk"), Record.bOnDisk);
 				Asset->SetBoolField(TEXT("persistent"), Record.bPersistent);
+				Asset->SetBoolField(TEXT("orphaned"), Record.bOrphaned);
 				Assets.Add(MakeShared<FJsonValueObject>(Asset));
 			}
 			const TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();

@@ -83,6 +83,12 @@ namespace UE::DreamShader::Editor::Compiler
 		 * The compiler service forwards its request's value.
 		 */
 		::UE::DreamShader::EThinCustomPersistence ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Materialized;
+
+		/**
+		 * FDreamShaderCompileRequest::bIncludeNoGeneration. False leaves a NoGeneration product as it is on disk (DSH8277):
+		 * it is not built, and a same-file caller uses the asset that is there.
+		 */
+		bool bIncludeNoGeneration = false;
 	};
 
 	/**
@@ -118,6 +124,14 @@ namespace UE::DreamShader::Editor::Compiler
 		TArray<int32> ProductOrder;
 		TArray<TWeakObjectPtr<UObject>> ProductAssets;
 		TArray<FString> ProductAssetPaths;
+
+		/**
+		 * The NoGeneration products this run left alone (FDreamShaderLang2PipelineOptions::bIncludeNoGeneration was false),
+		 * by product index; each also stands in ProductOrder, with the asset on disk, if any, as its asset. Of those, the
+		 * ones that have no asset at all are in NoGenerationMissingProducts too.
+		 */
+		TArray<int32> NoGenerationProducts;
+		TArray<int32> NoGenerationMissingProducts;
 
 		bool bSucceeded = false;
 		/** True when the user pressed Cancel. Distinct from a failure: nothing was written either way, but nothing is WRONG. */

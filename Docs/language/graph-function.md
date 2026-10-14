@@ -19,7 +19,7 @@ The legacy front end reads a `GraphFunction` as a `/// @custom` function whose `
 ## Synopsis
 
 ```c
-GraphFunction [ <return-type> ] <name> ( [ <parameter-list> ] )
+GraphFunction [ ( <generate-attributes> ) ] [ <return-type> ] <name> ( [ <parameter-list> ] )
 {
     <hlsl-with-UE-calls>
 }
@@ -32,8 +32,10 @@ GraphFunction [ <return-type> ] <name> ( [ <parameter-list> ] )
 
 The keyword `GraphFunction` is matched **case-sensitively**. The parameter grammar, the `in` / `out`
 qualifiers, the "at least one output" rule, the return-type form, the type tokens, the body's
-identifier normalisation, the leading `#include`s and the shape of the node's code are **identical to
-[`Function`](function.md)** — read that page for all of them. This page documents only what differs.
+identifier normalisation, the leading `#include`s, the shape of the node's code and the optional
+`(Generate = ..., Library = ..., Description = ...)` header *(after 2.1.2)* that asks a package to generate
+a material function from it are **identical to [`Function`](function.md)** — read that page for all of
+them. This page documents only what differs.
 
 ## How a GraphFunction differs from a Function
 

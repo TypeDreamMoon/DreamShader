@@ -700,6 +700,10 @@ namespace UE::DreamShader::Lang::Private
 				Pipeline.Pragma = &Pragma;
 				return;
 
+			case EPragmaKind::NoGeneration:
+				Binder.BindNoGenerationPragma(Pragma, /*bInRootFile*/ true);
+				return;
+
 			case EPragmaKind::Material:
 				Diagnostics.Error(
 					TEXT("DSH3314"),
@@ -4793,6 +4797,7 @@ namespace UE::DreamShader::Lang::Private
 			Product.Backend = IR::EIRBackend::Graph;
 			// Like a `.dsi`'s asset, a pipeline is named after its file.
 			Product.AssetName = FPaths::GetBaseFilename(Root.FilePath);
+			Product.bNoGeneration = Bound.bNoGeneration;
 			Bound.Products.Add(MoveTemp(Product));
 		}
 	}

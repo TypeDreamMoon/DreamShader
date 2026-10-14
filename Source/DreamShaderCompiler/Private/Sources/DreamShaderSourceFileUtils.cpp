@@ -3,6 +3,8 @@
 #include "DreamShaderModule.h"
 
 #include "HAL/FileManager.h"
+#include "Internationalization/Regex.h"
+#include "Misc/FileHelper.h"
 
 namespace UE::DreamShader::Editor::Private
 {
@@ -35,21 +37,50 @@ namespace UE::DreamShader::Editor::Private
 		return UE::DreamShader::IsPathUnderSourceDirectory(InPath, InDirectory);
 	}
 
-	bool FDreamShaderSourceFileUtils::IsPackageMaterialFile(const FString& InPath)
+	bool FDreamShaderSourceFileUtils::IsPackageAssetHeader(const FString& InPath)
 	{
-		if (!UE::DreamShader::IsDreamShaderMaterialFile(InPath))
+		if (!UE::DreamShader::IsDreamShaderHeaderFile(InPath))
+		{
+			return false;
+		}
+		const FString PackageDirectory = UE::DreamShader::FindPackageDirectoryForFile(InPath);
+		if (PackageDirectory.IsEmpty() || UE::DreamShader::IsPathUnderSourceDirectory(InPath, PackageDirectory + TEXT("/Examples")))
 		{
 			return false;
 		}
 
-		// Every root carries its own Packages tree, so "is this a package file" is a question about
-		// the root that owns the path, not about the project's Packages folder.
-		const UE::DreamShader::FDreamShaderSourceRoot* Root = UE::DreamShader::FindSourceRootForFile(InPath);
-		return Root != nullptr
-			&& UE::DreamShader::IsPathUnderSourceDirectory(InPath, Root->PackagesDirectory);
+		FString Text;
+		if (!FFileHelper::LoadFileToString(Text, *InPath))
+		{
+			return false;
+		}
+		// The three spellings of the annotation. A match inside a comment or a string makes the header a compile unit
+		// that generates nothing, which is harmless; the compile is what decides.
+		static const FRegexPattern Pattern(TEXT("///[ \\t]*@generate\\b|#[ \\t]*pragma[ \\t]+generate\\b|\\bGenerate[ \\t]*="));
+		FRegexMatcher Matcher(Pattern, Text);
+		return Matcher.FindNext();
 	}
 
-	void FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(TArray<FString>& OutSourceFiles)
+	bool FDreamShaderSourceFileUtils::IsBuildablePackageFile(const FString& InPath)
+	{
+		return UE::DreamShader::IsPackageAssetsSourceFile(InPath) || IsPackageAssetHeader(InPath);
+	}
+
+	bool FDreamShaderSourceFileUtils::IsExcludedPackageFile(const FString& InPath)
+	{
+		return UE::DreamShader::IsPackageFilePath(InPath) && !IsBuildablePackageFile(InPath);
+	}
+
+	bool FDreamShaderSourceFileUtils::IsCompileUnit(const FString& InPath)
+	{
+		if (!UE::DreamShader::IsDreamShaderSourceFile(InPath))
+		{
+			return false;
+		}
+		return !UE::DreamShader::IsDreamShaderHeaderFile(InPath) || IsPackageAssetHeader(InPath);
+	}
+
+	void FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(TArray<FString>& OutSourceFiles, const EDreamShaderPackageSources Packages)
 	{
 		OutSourceFiles.Reset();
 
@@ -63,11 +94,15 @@ namespace UE::DreamShader::Editor::Private
 			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsi"), RootSourceFiles);
 			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsp"), RootSourceFiles);
 
-			// This scan drops every file under Packages; the generatable scan below drops only the
-			// package .dsm files. The asymmetry is deliberate -- see Docs/language/source-files.md.
-			RootSourceFiles.RemoveAll([&Root](const FString& SourceFile)
+			// A package is somebody else's source: only what it asks to have built joins in, and only for the callers
+			// that build. See Docs/tools/packages.md.
+			RootSourceFiles.RemoveAll([&Root, Packages](const FString& SourceFile)
 			{
-				return UE::DreamShader::IsPathUnderSourceDirectory(SourceFile, Root.PackagesDirectory);
+				if (!UE::DreamShader::IsPathUnderSourceDirectory(SourceFile, Root.PackagesDirectory))
+				{
+					return false;
+				}
+				return Packages == EDreamShaderPackageSources::Exclude || !IsBuildablePackageFile(SourceFile);
 			});
 
 			OutSourceFiles.Append(MoveTemp(RootSourceFiles));
@@ -84,15 +119,20 @@ namespace UE::DreamShader::Editor::Private
 		{
 			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsm"), OutSourceFiles);
 			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsf"), OutSourceFiles);
-			// A `.dss`, a `.dsi` or a `.dsp` generates assets like a `.dsm`/`.dsf` does (a `.dsh` never does).
+			// A `.dss`, a `.dsi` or a `.dsp` generates assets like a `.dsm`/`.dsf` does. A `.dsh` does only as a package's
+			// asset header, so headers are looked for in the package tree alone.
 			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dss"), OutSourceFiles);
 			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsi"), OutSourceFiles);
 			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsp"), OutSourceFiles);
+			if (IFileManager::Get().DirectoryExists(*Root.PackagesDirectory))
+			{
+				AppendSourceFilesWithExtension(Root.PackagesDirectory, TEXT("*.dsh"), OutSourceFiles);
+			}
 		}
 
 		OutSourceFiles.RemoveAll([](const FString& SourceFile)
 		{
-			return FDreamShaderSourceFileUtils::IsPackageMaterialFile(SourceFile);
+			return FDreamShaderSourceFileUtils::IsExcludedPackageFile(SourceFile);
 		});
 	}
 }

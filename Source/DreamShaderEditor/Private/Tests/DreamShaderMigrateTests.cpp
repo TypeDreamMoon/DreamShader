@@ -414,6 +414,96 @@ bool FDreamShaderMigrateReceiversTest::RunTest(const FString& Parameters)
 }
 
 // ---------------------------------------------------------------------------------------------
+// L9: a function that returns nothing returns its first `out`
+// ---------------------------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderMigrateReturnsFirstOutTest,
+	"DreamShader.Lang2.Migrate.ReturnsFirstOut",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderMigrateReturnsFirstOutTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private::MigrateTests;
+
+	// The bodies of a header.
+	{
+		const FMigrated M = Migrate(*this, TEXT("L9_Bodies.dsh"), TEXT(
+			"Function LfHash(in float x, out float result) {\n"
+			"    result = frac(sin(x) * 43758.5453);\n"
+			"}\n"
+			"Function LfCell(in float2 p, out float dist, out float2 id) {\n"
+			"    id = floor(p);\n"
+			"    dist = LfHash(id.x) * 0.001;\n"
+			"}\n"
+			"Function LfOneLine(in float x, out float result) { result = x * 2.0; }\n"
+			"Function LfUse(in float2 p, out float value) {\n"
+			"    float d;\n"
+			"    float2 cell;\n"
+			"    LfCell(p, d, cell);\n"
+			"    float h;\n"
+			"    float k = LfHash(d, h) + 1.0;\n"
+			"    float w;\n"
+			"    value = k + LfSpace::Tint(float3(d, d, d), w).r * w;\n"
+			"}\n"
+			"Namespace(Name=\"LfSpace\")\n"
+			"{\n"
+			"    Function Tint(in float3 color, out float3 tinted, out float weight) {\n"
+			"        tinted = color * 0.5;\n"
+			"        weight = 1.0;\n"
+			"    }\n"
+			"}\n"));
+		if (M.bMigrated)
+		{
+			// Declared returning it, zeroed first and returned last, as 1.x emitted it.
+			ExpectContains(*this, M, TEXT("one out"), TEXT("float LfHash(float x)"));
+			ExpectContains(*this, M, TEXT("one out"), TEXT("    float result = (float)0;\n    result = frac(sin(x) * 43758.5453);\n    return result;\n"));
+			ExpectContains(*this, M, TEXT("two outs"), TEXT("float LfCell(float2 p, out float2 id)"));
+			ExpectContains(*this, M, TEXT("a body on the brace's line"), TEXT("{ float result = (float)0; result = x * 2.0; return result; }"));
+			// The value call stays, the call that passes the first out assigns it.
+			ExpectContains(*this, M, TEXT("a value call"), TEXT("dist = LfHash(id.x) * 0.001;"));
+			ExpectContains(*this, M, TEXT("every out passed"), TEXT("    d = LfCell(p, cell);"));
+			ExpectContains(*this, M, TEXT("every out passed, in an expression"), TEXT("float k = (h = LfHash(d)) + 1.0;"));
+			// The Namespace function keeps its outs; the body reads its value through an adapter.
+			ExpectContains(*this, M, TEXT("Namespace function"), TEXT("void LfSpace_Tint(float3 color, out float3 tinted, out float weight)"));
+			ExpectContains(*this, M, TEXT("the adapter"), TEXT("float3 LfSpace_Tint_tinted(float3 color, out float weight)"));
+			ExpectContains(*this, M, TEXT("the adapter's body"), TEXT("    LfSpace_Tint(color, tinted, weight);\n    return tinted;"));
+			ExpectContains(*this, M, TEXT("the value call of it"), TEXT("LfSpace_Tint_tinted(float3(d, d, d), w).r * w;"));
+		}
+	}
+
+	// A graph's calls of such a function.
+	{
+		const FMigrated M = Migrate(*this, TEXT("L9_Graph.dsm"), TEXT(
+			"Function LgRemap(in float value, out float result, out float spare) {\n"
+			"    result = value;\n"
+			"    spare = value * 2.0;\n"
+			"}\n"
+			"Shader(Name=\"M_LgReturns\")\n"
+			"{\n"
+			"    Outputs = { vec3 Color; float Alpha; Base.EmissiveColor = Color; Base.Opacity = Alpha; }\n"
+			"    Graph = {\n"
+			"        float Spare;\n"
+			"        LgRemap(0.25, First, Spare);\n"
+			"        float Second = LgRemap(0.5);\n"
+			"        Color = vec3(First, Second, LgRemap(0.75).spare);\n"
+			"        Alpha = Spare;\n"
+			"    }\n"
+			"}\n"));
+		if (M.bMigrated)
+		{
+			ExpectContains(*this, M, TEXT("the signature"), TEXT("float LgRemap(float value, out float spare)"));
+			// The call declared First, which receives what the function returns.
+			ExpectContains(*this, M, TEXT("a statement call"), TEXT("float First = LgRemap(0.25, Spare);"));
+			ExpectContains(*this, M, TEXT("a value call"), TEXT("float Second = LgRemap(0.5, spare = "));
+			ExpectContains(*this, M, TEXT("a selection"), TEXT("LgRemap_result = LgRemap(0.75, spare = "));
+			ExpectLacks(*this, M, TEXT("no out is passed for what is returned"), TEXT("result = LgRemap_"));
+		}
+	}
+	return true;
+}
+
+// ---------------------------------------------------------------------------------------------
 // What is refused, and the comment collector
 // ---------------------------------------------------------------------------------------------
 
@@ -843,6 +933,59 @@ bool FDreamShaderMigrateSourceRefusalsTest::RunTest(const FString& Parameters)
 			FileManager.Delete(*Result.BackupFilePath, false, true, true);
 		}
 	}
+	return true;
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderMigrateSourceBodiesTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Migrate.HeaderBodiesAreChecked",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderMigrateSourceBodiesTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+	using namespace UE::DreamShader::Editor::Private::MigrateTests;
+
+	// A header lowers to nothing, so before the proof read its bodies a call that matches no HLSL went through.
+	FDreamShaderCompile2Fixture Fixture(TEXT("MtBodies"), TEXT("Migrate2"), TEXT("dsh"));
+	FDreamShaderMigrateOptions Options;
+	Options.bCheck = true;
+
+	if (!Fixture.WriteSource(*this, TEXT(
+		"Function MtHalf(in float value, out float result) {\n"
+		"    result = value * 0.5;\n"
+		"}\n"
+		"Function MtQuarter(in float value, out float result) {\n"
+		"    float h;\n"
+		"    MtHalf(value, h);\n"
+		"    result = MtHalf(h);\n"
+		"}\n")))
+	{
+		return false;
+	}
+	FDreamShaderMigrateResult Result;
+	MigrateDreamShaderSource(Fixture.GetSourceFilePath(), Options, Result);
+	TestTrue(FString::Printf(TEXT("calls in both 1.x shapes: the check succeeds (%s)"), *DescribeResult(Result)), Result.bSucceeded);
+	TestTrue(FString::Printf(TEXT("the call that passed the first out assigns it\n%s"), *Result.MigratedText), Result.MigratedText.Contains(TEXT("h = MtHalf(value);")));
+	TestTrue(FString::Printf(TEXT("the value call stays\n%s"), *Result.MigratedText), Result.MigratedText.Contains(TEXT("result = MtHalf(h);")));
+
+	if (!Fixture.WriteSource(*this, TEXT(
+		"Function MtHalf(in float value, out float result) {\n"
+		"    result = value * 0.5;\n"
+		"}\n"
+		"Function MtQuarter(in float value, out float result) {\n"
+		"    result = MtHalf(value, 1.0, 2.0);\n"
+		"}\n")))
+	{
+		return false;
+	}
+	FDreamShaderMigrateResult Wrong;
+	MigrateDreamShaderSource(Fixture.GetSourceFilePath(), Options, Wrong);
+	TestFalse(TEXT("a call no HLSL matches: refused"), Wrong.bSucceeded);
+	TestTrue(FString::Printf(TEXT("as text that does not build, DSH9097 (%s)"), *DescribeResult(Wrong)), ResultHasCode(Wrong, TEXT("DSH9097")));
+	TestTrue(FString::Printf(TEXT("for the call, DSH6265 (%s)"), *DescribeResult(Wrong)), ResultHasCode(Wrong, TEXT("DSH6265")));
 	return true;
 }
 

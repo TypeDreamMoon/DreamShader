@@ -84,9 +84,13 @@ export float2 MF_ToonUV(float UVChannel = 0.0, float4 ScaleOffset = float4(1, 1,
 | `extern <Type> Name(params);` | A prototype bound to an existing asset through `/// @asset`. No body. |
 | `struct Name { … };` | Fields may carry their own `///` block and array dimensions. No methods, no nesting. |
 | `#include "path"` · `import "path";` | The same thing; the spelling is recorded so the printer reproduces what was written. The path must be **double-quoted**: `#include <Engine/Private/Common.ush>` is HLSL's spelling, not this one, and is `DSH3203`. The parser does not open the file; the binder reads and binds it. |
+| `Ns::Fn(…)` | A call to a member of a 1.x `Namespace` in an included header, which is declared as `Ns_Fn`; the qualified spelling is kept by the printer *(after 2.1.2)*. See [Namespace](../language/namespace.md#calling-a-namespaced-function). |
 | `#pragma material(Key = Value, …)` | File-level material settings. |
 | `#pragma layout(Node\|Comment, Key = Value, …)` | Decompiler-written node coordinates. |
 | `#pragma region Name` · `#pragma endregion` | The 2.0 spelling of the 1.x `#Region` comment box. |
+| `#pragma generate(Functions = "MF_{Name}", Library = …, Desc = …)` | *(after 2.1.2)* In a package's header: every helper function after it generates a material function. See [Packages ▸ Asset headers](../tools/packages.md#asset-headers). |
+| `#pragma nogeneration` | *(after 2.1.2)* Only a compile that names the file builds its assets. See [NoGeneration](../generation/no-generation.md). |
+| `#pragma disable_warning(DSH…, …)` · `#pragma disable_error(DSH…, …)` | *(after 2.1.2)* Codes the file does not report. See [Disabling diagnostics](disable-diagnostics.md). |
 
 Types: `float half double int uint bool`, their vectors (`float2`..`float4`) and matrices
 (`float2x2`..`float4x4`), `Texture2D TextureCube Texture2DArray Texture3D VolumeTexture`,
@@ -104,8 +108,13 @@ text wherever it falls — it does not start a directive. A block with nothing u
 nothing: it is dropped with a warning (`DSH3221`) and never reaches the tree.
 
 Keys the tree carries today include `@group`, `@desc`, `@name`, `@sort`, `@slider`, `@default`,
-`@sampler`, `@static`, `@asset`, `@library`, `@layer`, `@layerblend`, `@param` and `@custom` — the
-parser records them all; only `@custom` changes parsing, by making the body opaque.
+`@sampler`, `@static`, `@asset`, `@library`, `@layer`, `@layerblend`, `@param`, `@custom`,
+`@generate` and `@nogeneration` — the parser records them all; only `@custom` changes parsing, by making the body opaque.
+`@nogeneration` *(after 2.1.2)* on an `export` is the one-function form of `#pragma nogeneration`; see
+[NoGeneration](../generation/no-generation.md).
+`@generate <name>` *(after 2.1.2)* asks a package to generate a material function from the function
+(`@generate none` opts it out of a `#pragma generate`); it means something in a package's header only,
+and is `DSH7234` anywhere else — see [Packages ▸ Asset headers](../tools/packages.md#asset-headers).
 
 ### Statements and expressions
 
@@ -262,9 +271,9 @@ the contract; the wording is not.
 | :-- | :-- |
 | `DSH2101`–`DSH2119` | the lexer. Allocated today: `2101` unknown character · `2102` unterminated block comment · `2103` unterminated string · `2104` unknown escape · `2105` malformed number · `2106` a `#` that is not the first thing on its line |
 | `DSH2150`–`DSH2189` | expressions and statements. Allocated today: `2150`–`2155`, `2157`–`2165` |
-| `DSH2200`–`DSH2269` | the legacy front end: 1.x Graph statements (`2200`–`2222`) and top-level blocks (`2240`–`2258`) |
+| `DSH2200`–`DSH2269` | the legacy front end: 1.x Graph statements (`2200`–`2222`) and top-level blocks (`2240`–`2260`) |
 | `DSH2300`–`DSH2349` | `.dsp` syntax: `buffer` and `pass` declarations, pass bodies, bindings |
-| `DSH3200`–`DSH3249` | declarations, types, `#` directives, `///` blocks. Allocated today: `3200`–`3208`, `3210`, `3211`, `3213`–`3218`, `3220`–`3222` |
+| `DSH3200`–`DSH3249` | declarations, types, `#` directives, `///` blocks. Allocated today: `3200`–`3208`, `3210`, `3211`, `3213`–`3222` |
 | `DSH3250`–`DSH3299` | the legacy front end's sections: Properties, Settings, Outputs, Inputs, Layout |
 | `DSH3300`–`DSH3349` | `.dsp` declarations: `#pragma pipeline`, buffer and pass keys, `.dsp`-only declarations elsewhere |
 | `DSH4200`–`DSH4299` | the binder — names, types, expressions, statements, loops, regions |
@@ -330,6 +339,8 @@ no C++, no recompile. The golden schema is documented in
 - [Substrate sugar](substrate.md) — operators, legacy parameters on a slab, values built member by member, `Substrate =`
 - [Material instances](instances.md) — `.dsi`
 - [Custom Pass pipelines](passes.md) — `.dsp`, and the [runtime](../runtime/index.md) that runs them
+- [Disabling diagnostics](disable-diagnostics.md) — `disable_warning`, `disable_error`
+- [NoGeneration](../generation/no-generation.md) — sources only a named compile builds
 - [`DreamShaderLang` C++ API](../api/lang-module.md) — the module, its headers and entry points
 - [Language reference (1.x)](../language/index.md) — the syntax that ships today
 - [Preprocessor](../language/preprocessor.md) — `#if` and the define table, shared by both syntaxes

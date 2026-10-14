@@ -122,7 +122,7 @@ private:
 	void GenerateAllAssetsForCook()
 	{
 		TArray<FString> SourceFiles;
-		UE::DreamShader::Editor::Private::FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(SourceFiles);
+		UE::DreamShader::Editor::Private::FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(SourceFiles, UE::DreamShader::Editor::Private::EDreamShaderPackageSources::IncludeBuildable);
 
 		if (SourceFiles.IsEmpty())
 		{
@@ -153,7 +153,7 @@ private:
 		for (const FString& SourceFile : SourceFiles)
 		{
 			const FString NormalizedPath = UE::DreamShader::NormalizeSourceFilePath(SourceFile);
-			if (!UE::DreamShader::IsDreamShaderHeaderFile(NormalizedPath))
+			if (UE::DreamShader::Editor::Private::FDreamShaderSourceFileUtils::IsCompileUnit(NormalizedPath))
 			{
 				CompileUnits.Add(NormalizedPath);
 			}

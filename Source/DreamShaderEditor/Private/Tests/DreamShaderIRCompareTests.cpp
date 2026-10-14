@@ -387,6 +387,44 @@ bool FDreamShaderIRCompareCustomMarkersTest::RunTest(const FString& Parameters)
 	}
 	TestFalse(TEXT("another body is another node"), AreDreamShaderIRModulesEquivalent(*A.Module, *C.Module, FIRCompareOptions(), Difference));
 	TestTrue(FString::Printf(TEXT("and the difference names the Custom node (actual: %s)"), *Difference), Difference.Contains(TEXT("Custom")));
+
+	// Rule L9: a void function's first `out` is declared ahead of the markers and returned after them; the function
+	// `dsc migrate` makes return it says the same lines inside its body. Where a marker stands is not the code either,
+	// and the name the IR gives the node's first output -- `result` against `Result` -- reaches no asset.
+	FIRRun Void;
+	FIRRun Returning;
+	if (!Lower(*this, Void, TEXT(
+		"/// @custom\n"
+		"void Halve(float x, out float result)\n"
+		"{\n"
+		"    result = x * 0.5;\n"
+		"}\n"
+		"export void M_L9(inout material m)\n"
+		"{\n"
+		"    float r;\n"
+		"    Halve(0.5, r);\n"
+		"    m.Opacity = r;\n"
+		"}\n"), TEXT("First.dss"))
+		|| !Lower(*this, Returning, TEXT(
+		"/// @custom\n"
+		"float Halve(float x)\n"
+		"{\n"
+		"    float result = (float)0;\n"
+		"    result = x * 0.5;\n"
+		"    return result;\n"
+		"}\n"
+		"export void M_L9(inout material m)\n"
+		"{\n"
+		"    m.Opacity = Halve(0.5);\n"
+		"}\n"), TEXT("First.dss")))
+	{
+		return false;
+	}
+	FIRCompareOptions Spacing;
+	Spacing.bCompareCodeSpacing = false;
+	TestTrue(
+		FString::Printf(TEXT("the first out returned by the node, or by the function (%s)"), *Difference),
+		AreDreamShaderIRModulesEquivalent(*Void.Module, *Returning.Module, Spacing, Difference));
 	return true;
 }
 

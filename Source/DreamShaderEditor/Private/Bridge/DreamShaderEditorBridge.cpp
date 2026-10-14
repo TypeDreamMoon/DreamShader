@@ -848,6 +848,7 @@ namespace UE::DreamShader::Editor::Private
 
 		PendingFiles.Reset();
 		ForcedPendingFiles.Reset();
+		NamedPendingFiles.Reset();
 		DiagnosticsStore.Reset();
 	}
 
@@ -970,7 +971,7 @@ namespace UE::DreamShader::Editor::Private
 		};
 
 		TArray<FString> SourceFiles;
-		FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(SourceFiles);
+		FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(SourceFiles, EDreamShaderPackageSources::IncludeBuildable);
 
 		if (SourceFiles.IsEmpty())
 		{
@@ -991,7 +992,7 @@ namespace UE::DreamShader::Editor::Private
 		for (const FString& SourceFile : SourceFiles)
 		{
 			const FString NormalizedPath = UE::DreamShader::NormalizeSourceFilePath(SourceFile);
-			if (UE::DreamShader::IsDreamShaderHeaderFile(NormalizedPath))
+			if (!FDreamShaderSourceFileUtils::IsCompileUnit(NormalizedPath))
 			{
 				continue;
 			}
@@ -1060,13 +1061,17 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
-	void FDreamShaderEditorBridge::QueueSourceFile(const FString& SourceFilePath, const bool bForce)
+	void FDreamShaderEditorBridge::QueueSourceFile(const FString& SourceFilePath, const bool bForce, const bool bNamed)
 	{
 		const FString Normalized = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
 		PendingFiles.Add(Normalized, FPlatformTime::Seconds());
 		if (bForce)
 		{
 			ForcedPendingFiles.Add(Normalized);
+		}
+		if (bNamed)
+		{
+			NamedPendingFiles.Add(Normalized);
 		}
 	}
 
@@ -1098,17 +1103,22 @@ namespace UE::DreamShader::Editor::Private
 			}
 			if (UE::DreamShader::IsDreamShaderHeaderFile(RewrittenFile))
 			{
-				QueueDependentSourcesForImport(RewrittenFile);
-			}
-			else if (UE::DreamShader::IsDreamShaderFunctionFile(RewrittenFile) || UE::DreamShader::IsDreamShaderLang2File(RewrittenFile))
-			{
-				if (!FDreamShaderSourceFileUtils::IsPackageMaterialFile(RewrittenFile))
+				// A package's asset header builds material functions of its own besides being included.
+				if (FDreamShaderSourceFileUtils::IsPackageAssetHeader(RewrittenFile))
 				{
 					QueueSourceFile(RewrittenFile);
 				}
 				QueueDependentSourcesForImport(RewrittenFile);
 			}
-			else if (!FDreamShaderSourceFileUtils::IsPackageMaterialFile(RewrittenFile))
+			else if (UE::DreamShader::IsDreamShaderFunctionFile(RewrittenFile) || UE::DreamShader::IsDreamShaderLang2File(RewrittenFile))
+			{
+				if (!FDreamShaderSourceFileUtils::IsExcludedPackageFile(RewrittenFile))
+				{
+					QueueSourceFile(RewrittenFile);
+				}
+				QueueDependentSourcesForImport(RewrittenFile);
+			}
+			else if (!FDreamShaderSourceFileUtils::IsExcludedPackageFile(RewrittenFile))
 			{
 				QueueSourceFile(RewrittenFile);
 			}
@@ -1394,17 +1404,23 @@ namespace UE::DreamShader::Editor::Private
 				{
 					if (UE::DreamShader::IsDreamShaderHeaderFile(FileChange.Filename))
 					{
+						// A package's asset header builds material functions of its own besides being included.
+						if (FDreamShaderSourceFileUtils::IsPackageAssetHeader(FileChange.Filename))
+						{
+							Bridge->RebuildDependencyGraph();
+							Bridge->QueueSourceFile(FileChange.Filename);
+						}
 						Bridge->QueueDependentSourcesForImport(FileChange.Filename);
 					}
 					else if (UE::DreamShader::IsDreamShaderFunctionFile(FileChange.Filename) || UE::DreamShader::IsDreamShaderLang2File(FileChange.Filename))
 					{
-						if (!FDreamShaderSourceFileUtils::IsPackageMaterialFile(FileChange.Filename))
+						if (!FDreamShaderSourceFileUtils::IsExcludedPackageFile(FileChange.Filename))
 						{
 							Bridge->QueueSourceFile(FileChange.Filename);
 						}
 						Bridge->QueueDependentSourcesForImport(FileChange.Filename);
 					}
-					else if (FDreamShaderSourceFileUtils::IsPackageMaterialFile(FileChange.Filename))
+					else if (FDreamShaderSourceFileUtils::IsExcludedPackageFile(FileChange.Filename))
 					{
 						continue;
 					}
@@ -1426,12 +1442,14 @@ namespace UE::DreamShader::Editor::Private
 						{
 							Bridge->PendingFiles.Remove(SourceFile);
 							Bridge->ForcedPendingFiles.Remove(SourceFile);
+							Bridge->NamedPendingFiles.Remove(SourceFile);
 						}
 						// The file owns nothing any more; the dependents queued above refile what they filed against it.
 						Bridge->ClearDiagnostics(SourceFile);
 						Bridge->UpdateDiagnosticsFile();
 					}
-					else if (FDreamShaderSourceFileUtils::IsPackageMaterialFile(FileChange.Filename))
+					// The file is gone, so only its path can say whether it was a package source the plugin built.
+					else if (UE::DreamShader::IsPackageFilePath(FileChange.Filename) && !UE::DreamShader::IsPackageAssetsSourceFile(FileChange.Filename))
 					{
 						continue;
 					}
@@ -1439,6 +1457,7 @@ namespace UE::DreamShader::Editor::Private
 					{
 						Bridge->PendingFiles.Remove(SourceFile);
 						Bridge->ForcedPendingFiles.Remove(SourceFile);
+						Bridge->NamedPendingFiles.Remove(SourceFile);
 						Bridge->ClearDiagnostics(SourceFile);
 						Bridge->RebuildDependencyGraph();
 						Bridge->UpdateDiagnosticsFile();
@@ -1664,8 +1683,9 @@ namespace UE::DreamShader::Editor::Private
 					FString SourceFilePath;
 					if (RequestObject->TryGetStringField(TEXT("sourceFile"), SourceFilePath) && !SourceFilePath.IsEmpty())
 					{
-						// An explicit request means "rebuild": the hash skip is for saves the watcher sees.
-						QueueSourceFile(SourceFilePath, /*bForce*/ true);
+						// An explicit request means "rebuild": the hash skip is for saves the watcher sees. It names the file, so
+						// its NoGeneration products are built too.
+						QueueSourceFile(SourceFilePath, /*bForce*/ true, /*bNamed*/ true);
 						// Parked, not answered: the compile happens a few ticks later, after
 						// the debounce window. Answering now would report success before
 						// anything had been attempted.
@@ -2017,12 +2037,14 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderEditorBridge::ProcessSourceFile(const FString& SourceFilePath)
 	{
-		const bool bForce = ForcedPendingFiles.Remove(UE::DreamShader::NormalizeSourceFilePath(SourceFilePath)) > 0;
+		const FString Normalized = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		const bool bForce = ForcedPendingFiles.Remove(Normalized) > 0;
+		const bool bNamed = NamedPendingFiles.Remove(Normalized) > 0;
 		FString Message;
-		CompileSourceFile(SourceFilePath, bForce, Message);
+		CompileSourceFile(SourceFilePath, bForce, Message, bNamed);
 	}
 
-	bool FDreamShaderEditorBridge::CompileSourceFile(const FString& InSourceFilePath, const bool bForce, FString& OutMessage)
+	bool FDreamShaderEditorBridge::CompileSourceFile(const FString& InSourceFilePath, const bool bForce, FString& OutMessage, const bool bIncludeNoGeneration)
 	{
 		const FString SourceFilePath = UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath);
 
@@ -2041,6 +2063,7 @@ namespace UE::DreamShader::Editor::Private
 			Request.SourceFilePath = SourceFilePath;
 			Request.bForce = bForce;
 			Request.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Ephemeral;
+			Request.bIncludeNoGeneration = bIncludeNoGeneration;
 			Result = Compiler->CompileAssets(Request);
 			bCompilerRan = true;
 		}

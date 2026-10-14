@@ -15,7 +15,7 @@ contains with `<Name>::`.
 ## Synopsis
 
 ```c
-Namespace(Name = "<identifier>")
+Namespace(Name = "<identifier>" [ , Generate = "<template>" ] [ , Library = "<category>" ] [ , Description = "<text>" ])
 {
     { <function-declaration> | <graph-function-declaration> } …
 }
@@ -29,8 +29,11 @@ keyword.
 | Attribute | Required | Value | Effect |
 | :-- | :-- | :-- | :-- |
 | **`Name`** | yes | string | The qualifier prepended to every member's name |
+| `Generate` | no | string, `{Name}` the member's name | *(after 2.1.2)* in a package's header, every member generates a material function of that name — see [Packages ▸ Asset headers](../tools/packages.md#asset-headers). A member's own `Generate` wins; `Generate = ""` on it opts it out |
+| `Library` | no | string | *(after 2.1.2)* the function-library category of every generated function |
+| `Description` | no | string | *(after 2.1.2)* the description of every generated function |
 
-`Name` is the only attribute the block reads; any other key is parsed and silently ignored. Attribute
+Any other key is parsed and silently ignored. Attribute
 keys are matched case-insensitively, so `Namespace(name="Common")` works. The value may be quoted or
 bare; a bare value runs to the next `,` or `)` outside parentheses. A key written twice is a warning
 ([`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244)) and the later value wins. A trailing comma
@@ -109,6 +112,28 @@ Graph = {
 | Mangled spelling | `DreamShaderFn_Common_ApplyTint(…)` no longer names the function *(since 2.0.0)*: `DSH4208`. |
 | Missing name | `Common::` with nothing after it is [`DSH5260`](../diagnostics/DSH5xxx.md#dsh5260). |
 | Call forms | Identical to unqualified calls. See [Calling functions](../graph/calls.md). |
+
+**From a `.dss`** that includes the header, `Ns::Fn(…)` is read the same way *(after 2.1.2)*: the call
+reaches `Ns_Fn`, `dsc fmt` and the language service keep the qualified spelling, and an unknown member is
+[`DSH4208`](../diagnostics/DSH4xxx.md#dsh4208) naming `Ns::Fn` as written. A library such as
+dreamshader-blender is called the way its own Graphs call it:
+
+```hlsl
+#include "@typedreammoon/dreamshader-blender/Library/Noise.dsh"
+
+export void M_Noise(inout material m)
+{
+    float2 uv = UE.TexCoord(Index = 0);
+    float Fac;
+    float3 Color;
+    BL::TexNoise3D(float3(uv, 0.0), 5.0, 2.0, 0.5, 2.0, 0.0, 1.0, Fac, Color);
+    m.EmissiveColor = Color;
+}
+```
+
+The `out` arguments are ordinary `.dss` locals, declared before the call; the 1.x Graph's implicit
+declaration of a receiver ([`DSH5283`](../diagnostics/DSH5xxx.md#dsh5283)) is a legacy rule. Up to 2.1.2 a
+`.dss` reached the member only as `Ns_Fn(…)`, and `Ns::Fn` was `DSH2154` at the second `:`.
 
 **Inside another `Function` or `GraphFunction` body** a `Ns::Fn(…)` call works *(since 2.0.0)*. Body
 normalisation rewrites `Common::ApplyTint` to `Common_ApplyTint`, which is now the function's own name,

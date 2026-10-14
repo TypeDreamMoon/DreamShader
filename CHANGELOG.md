@@ -1,5 +1,96 @@
 # DreamShader ChangeLog
 
+## Unreleased
+
+### Added
+
+- **A package can ship material functions.** Installed libraries were usable from DreamShader sources only; an
+  artist working in the Material Editor got nothing from them. A package now builds the assets it asks for, in the
+  project it is installed in, under its own **asset root** (`/Game/DreamShaderPackages/<scope>/<name>`,
+  `/<Plugin>/DreamShaderPackages/...` for a plugin's package):
+  - every `.dss`, `.dsf` and `.dsi` under the package's `Assets` folder is built like a source of the project — at
+    startup, by `compile -All`, by the cook — into the asset root plus its folder under `Assets`;
+  - a header marks the functions to generate, and the plugin writes the wrappers: `/// @generate MF_X` on a function
+    or `#pragma generate(Functions = "MF_{Name}")` above several in 2.0, `Function(Generate = "MF_X")` /
+    `GraphFunction(Generate = ...)` or `Namespace(Name = "BL", Generate = "MF_BL_{Name}")` in 1.x, with `Library` and
+    `Description` alongside. The material function has an input per `in` parameter, an output per `out` one, and
+    names the header as its source, so rebuilds, *Revert to Source* and the cook come back to it.
+
+  A source calling a package function still inlines it. *Adopt Into Source* on a package's asset is refused
+  (`DSH8133`): its files are the installer's. `list-generated -All` names what is left under a package asset root
+  that no source builds any more (`DSH9111`), and deletes nothing. New diagnostics: `DSH6331`, `DSH6332`, `DSH7234`,
+  `DSH8273`–`DSH8276`. See [Packages ▸ Package assets](Docs/tools/packages.md#package-assets).
+- **NoGeneration: sources only a compile that names them builds.** `#pragma nogeneration` marks every asset of a
+  file, `/// @nogeneration` one export, `NoGeneration = true` a 1.x block. The startup sweep, a save, a dependency's
+  rebuild, *Recompile All*, *Compile all* / *Compile stale* in the Material Content Browser, `compile -All` and the
+  cook leave such an asset as it is on disk (`DSH8277`; `DSH8278` while it has never been built); *Compile* on the
+  selection, *Revert to Source*, a bridge request for the file and `compile -Source` build it. Whatever uses it —
+  a same-file caller, a `.dsi`'s parent, a `.dsp`'s material — uses the asset on disk, and is `DSH8279` while there
+  is none. New diagnostics: `DSH2260`, `DSH3219`, `DSH7235`. See [NoGeneration](Docs/generation/no-generation.md).
+- **A source can disable warnings and errors by code.** `#pragma disable_warning(DSH7224, ...)` and
+  `#pragma disable_error(...)` for the whole file — and, in the file being compiled, for everything the compile
+  reports — and `// disable_warning DSH7224` for one line (the line itself after code, the next line when alone on
+  its own). A disabled error does not fail the compile; when the compile cannot go on without it, it is reported
+  after all. A 1.x file takes the same spellings: its top level now accepts `#pragma nogeneration`,
+  `disable_warning` and `disable_error`. A word in a list that is not a code is `DSH7236`. See
+  [Disabling diagnostics](Docs/language-v2/disable-diagnostics.md).
+
+- **Calls in a `@custom` body are checked against the HLSL of the function they call.** HLSL has no default
+  arguments and a `@custom` function no overloads, so a call with another number of arguments than the callee's HLSL
+  takes is `DSH6265` (`DSH6262` as before when the callee takes a texture), and reading the value of a function whose
+  HLSL returns nothing is `DSH6266` — at the call, instead of in the shader compiler. See
+  [Generated HLSL](Docs/generation/generated-hlsl.md).
+
+### Changed
+
+- **Only a package's `Assets` sources and asset headers are built.** A `.dsf`, `.dss`, `.dsi` or `.dsp` anywhere else
+  in a package was compiled by *Recompile DSM*, the file watcher and the dependency graph, and by none of startup
+  generation, `compile -All` and the cook, so such a package had its assets in an editor session and not in a
+  packaged build. Every path now builds the same files; move a package's buildable sources under `Assets`.
+
+### Fixed
+
+- **A generated asset whose names differ only in case from another name read as hand-edited.** Unreal
+  compares names without case, and a package keeps one spelling per name, so a material function output
+  generated as `result` loaded back as `Result` when the same package held a `Result`. The digest compared
+  the spelling, and the next session's compile refused the asset (`DSH8115`) though nobody had touched it:
+  six of the 67 dreamshader-blender material functions on every second compile. The digest compares names
+  without case now; its format moved to `DSD5`, so every asset reads as `Unstamped` once and is restamped by
+  its next rebuild. See [Divergence](Docs/generation/divergence.md#what-counts-as-a-hand-edit).
+- **`check -Shaders` compiled no shader of a ThinCustom material.** It collected the `UMaterial`s a source
+  built, and a ThinCustom product is the instance in front of its hidden base, so a `.dss` on the default
+  backend was reported as `DSH9037` ("produced no material") and passed whatever its HLSL said. The base
+  material is compiled now.
+- **A `.dss` calls a 1.x `Namespace` member as `Ns::Fn(...)`.** A library header such as dreamshader-blender
+  declares its functions in `Namespace(Name = "BL")` and its Graphs call them `BL::TexNoise3D(...)`, but in a
+  `.dss` that included it the same call was `DSH2154` at the second `:` ("Expected ';' after an expression
+  statement, found ':'"); only the flattened `BL_TexNoise3D(...)` reached the function. The `.dss` parser now
+  reads `Ns::Fn` as the 1.x front end does, the printer and `dsc fmt` keep the qualified spelling, and an
+  unknown member is `DSH4208` naming `Ns::Fn` as written. See [Namespace](Docs/language/namespace.md#calling-a-namespaced-function).
+- **A `.dsi` picked up a `TranslucencySectionPriority` it never set.** Unreal 5.8.3 added the key to a material
+  instance's base property overrides without initializing it, and the instance build started from a copy made on
+  the stack, so whatever was there could become an override — `TranslucencySectionPriority = 16999` in the asset and
+  in what *Adopt Into Source* wrote back. The build now starts from the class default.
+- **A 1.x body that passed a function's first `out` as well did not compile.** 1.x wrote the HLSL of a function
+  that returns nothing as returning its first `out` (rule L9), and a call that passed it too — `Voronoi(co, d, c);` —
+  as `d = Voronoi(co, c);`. The legacy front end kept the first half only, so such a call reached the shader compiler
+  with one argument too many, or was `DSH6262` when the callee took a texture. It is reshaped again.
+- **`dsc migrate` wrote a 1.x function that returns nothing as `void`, and its callers did not compile.**
+  `Function F(in float3 p, out float result)` became `/// @custom void F(float3 p, out float result)` with the body
+  copied, but the bodies calling it were still 1.x — `fac = F(co * scale);` — and a `.dss` function is emitted as
+  declared, so every such call failed in the shader compiler. The function is now declared returning its first `out`
+  (`float F(float3 p)`, the body zeroing it first and returning it last, as 1.x did), and every call that passed it,
+  in a body or a graph, assigns it: `r = F(a, o);`. A function of a `Namespace` block, a library's entry point whose
+  `out`s are its node's pins and its material function's outputs, keeps them; a body of its file that read its value
+  calls an adapter added beside it. A call of such a function in a header that is still 1.x is `DSH9094`: migrate
+  the header first. Migrating the 1.x dreamshader-blender library now writes, header for header, the 2.0 text it was
+  ported to by hand. See [Migrate ▸ Functions that return nothing](Docs/tools/migrate.md#functions-that-return-nothing-l9).
+- **`dsc migrate` did not read the bodies of the text it wrote.** Its proof parses, binds and lowers the text and
+  compares the graphs, and a header lowers to nothing, so a call in a header's `@custom` body that matched no HLSL
+  went through. Every call in the migrated bodies is now matched against the HLSL its callee becomes (`DSH9097`
+  otherwise), and the graph comparison no longer counts where a Custom node's source markers stand or the name the IR
+  gives the node's first output, neither of which reaches the asset.
+
 ## 2.1.2 - 2026-10-11
 
 ### Changed

@@ -24,6 +24,7 @@
 
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderModule.h"
+#include "Lang/LangDiagnosticSuppression.h"
 
 #include "HAL/PlatformTime.h"
 #include "Materials/MaterialExpressionCustom.h"
@@ -142,6 +143,13 @@ namespace UE::DreamShader::Editor::Private
 {
 	void RaiseGenerationWarning(const TCHAR* Code, const FString& Message)
 	{
+		// Not even logged when the source being compiled disables the code (`#pragma disable_warning(DSH9011)`): these
+		// carry no position, so only its file-wide list can.
+		if (::UE::DreamShader::Lang::ShouldSuppressLangDiagnostic(::UE::DreamShader::Lang::ELangSeverity::Warning, Code, FString(), 0))
+		{
+			return;
+		}
+
 		// Logged and queued. Never fails a compile: these are advisory by definition.
 		const FString Line = FString::Printf(TEXT("%s: %s"), Code, *Message); /* I18N-EXEMPT: wire form `DSHnnnn: message` */
 		UE_LOG(LogDreamShader, Warning, TEXT("%s"), *Line);
@@ -176,7 +184,8 @@ namespace UE::DreamShader::Editor::Compiler
 		const ::UE::DreamShader::EThinCustomPersistence Persistence,
 		::UE::DreamShader::FDreamShaderError& OutError,
 		FDreamShaderLang2PipelineResult* OutPipelineResult,
-		const FString& RequiredParentObjectPath)
+		const FString& RequiredParentObjectPath,
+		const bool bIncludeNoGeneration)
 	{
 		::UE::DreamShader::Editor::DreamShaderCompilerServiceDetail::FScopedDreamShaderCompileNotice Notice(SourceFilePath);
 
@@ -184,6 +193,7 @@ namespace UE::DreamShader::Editor::Compiler
 		Options.bForce = bForce;
 		Options.bEmitAssets = true;
 		Options.ThinCustomPersistence = Persistence;
+		Options.bIncludeNoGeneration = bIncludeNoGeneration;
 
 		bool bSucceeded = false;
 		{
@@ -293,7 +303,9 @@ namespace UE::DreamShader::Editor::Compiler
 			::UE::DreamShader::FDreamShaderError Error;
 
 			::UE::DreamShader::FDreamShaderCompileResult Result;
-			Result.bSucceeded = CompileDreamShaderSourceFile(Request.SourceFilePath, Request.bForce, Request.ThinCustomPersistence, Error);
+			Result.bSucceeded = CompileDreamShaderSourceFile(
+				Request.SourceFilePath, Request.bForce, Request.ThinCustomPersistence, Error,
+				/*OutPipelineResult*/ nullptr, /*RequiredParentObjectPath*/ FString(), Request.bIncludeNoGeneration);
 			Result.Message = FText::FromString(Error.Message);
 			if (!Result.bSucceeded)
 			{
@@ -359,6 +371,8 @@ namespace UE::DreamShader::Editor::Private
 		Request.SourceFilePath = DreamInstance->SourceFilePath;
 		Request.bForce = true;
 		Request.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Materialized;
+		// Asked for on this material by name.
+		Request.bIncludeNoGeneration = true;
 
 		const ::UE::DreamShader::FDreamShaderCompileResult Result =
 			::UE::DreamShader::Editor::Compiler::FDreamShaderCompilerService::Get().CompileAssets(Request);

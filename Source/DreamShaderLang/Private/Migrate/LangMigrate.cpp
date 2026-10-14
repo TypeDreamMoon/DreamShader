@@ -18,9 +18,12 @@
 #include "Decompile/IRToAstInternal.h"
 #include "IR/IRCatalog.h"
 #include "IR/IRCoreOps.h"
+#include "IR/IRCustomHlslInternal.h"
 #include "Lang/LangLexer.h"
 #include "Lang/LangPrinter.h"
 #include "Lang/LangToken.h"
+
+#include "Misc/Paths.h"
 
 #define LOCTEXT_NAMESPACE "DreamShaderLangMigrate"
 
@@ -253,6 +256,47 @@ namespace UE::DreamShader::Lang
 				int32 Depth = 0;
 			};
 
+			/**
+			 * Rule L9, per function of the bound module: the HLSL of a 1.x function that returns nothing returns its first
+			 * `out`. A `.dss` declaration is emitted as it is declared, so what that function is after the migration is
+			 * decided here, before any body is walked, and every call follows it.
+			 */
+			struct FFunctionShape
+			{
+				/** The first `out` of a 1.x `Function` / `GraphFunction` that returns nothing; INDEX_NONE for any other. */
+				int32 LegacyPrimaryOut = INDEX_NONE;
+				/** Declared in this file, not in a `Namespace`: it returns that parameter from now on, and it is not one any more. */
+				bool bReturnsPrimaryOut = false;
+				/**
+				 * Declared in this file, in a `Namespace`: the library's public entry point keeps its `out` parameters, which
+				 * are its node's pins and its material function's outputs. A body that read its value calls an adapter.
+				 */
+				bool bKeepsOuts = false;
+				/** Declared in an included file that is still 1.x: its HLSL keeps the L9 shape until that file is migrated. */
+				bool bIncludedLegacy = false;
+			};
+
+			/** A function made for a `Namespace` function a body read as a value: its first `out`, returned. */
+			struct FValueAdapter
+			{
+				int32 FunctionIndex = INDEX_NONE;
+				FString Name;
+			};
+
+			void DecideFunctionShapes();
+			/** The `out` parameter Bound.Functions[FunctionIndex] returns after the migration, for a call in a graph body. */
+			int32 ReturnedOutOf(int32 FunctionIndex) const;
+			/** What a function that returns its first `out` is declared to return: that parameter's type. */
+			FTypeRef MigratedReturnType(const FBoundFunction& Callee, int32 ReturnedOut) const;
+			/** DSH9094, once per function: a call that follows the 1.x shape of a function another file declares. */
+			void WarnIncludedLegacyCall(int32 FunctionIndex, const FLangSpan& Span, bool bValueCall);
+			/** The calls of a verbatim body: `F(a, r, o)` is `r = F(a, o)`, and a `Namespace` function read as a value calls its adapter. */
+			void MigrateBodyCalls(FFunctionDecl& Function);
+			FString ClaimValueAdapter(int32 FunctionIndex);
+			/** Once every body is done: the functions that return their first `out` are declared so, and the adapters are added. */
+			void ReturnFirstOuts();
+			void AddValueAdapters();
+
 			void MigrateDeclaration(FDecl& Decl);
 			/** The comment above a 1.x block goes above the first declaration the block became. */
 			void MoveBlockComments();
@@ -290,7 +334,7 @@ namespace UE::DreamShader::Lang
 			 * Variables for the `out` parameters a call leaves out, passed by name. OutParamOutputs gets, per parameter, what
 			 * that output is read from afterwards: the new variable, or a copy of the argument the call already passed.
 			 */
-			void PassAbsentOuts(FCallExpr& Call, const FBoundExpr& Binding, const FBoundFunction& Callee, TArray<FExprPtr>& OutParamOutputs);
+			void PassAbsentOuts(FCallExpr& Call, const FBoundExpr& Binding, const FBoundFunction& Callee, TArray<FExprPtr>& OutParamOutputs, int32 ReturnedOut);
 
 			void NoteWrite(const FExpr& Target);
 			FString ClaimLocalName(const FString& Wanted);
@@ -319,6 +363,13 @@ namespace UE::DreamShader::Lang
 			/** Calls that hold a `default` placeholder whose value is gone already (rule L25); swept when the body is done. */
 			TArray<FCallExpr*> DefaultedCalls;
 			bool bFailed = false;
+
+			// ----- the whole module
+			/** Parallel to Bound.Functions. */
+			TArray<FFunctionShape> Shapes;
+			TArray<FValueAdapter> ValueAdapters;
+			/** The functions DSH9094 was said for already. */
+			TSet<int32> WarnedIncludedLegacy;
 		};
 
 		FTypeRef FMigrator::MakeExactTypeRef(const IR::FIRType& Type)
@@ -507,6 +558,7 @@ namespace UE::DreamShader::Lang
 				{
 					MigrateLiftedCalls(*Function);
 					DedentOpaqueBody(*Function);
+					MigrateBodyCalls(*Function);
 				}
 
 				// A function of a `Namespace` block named its Custom node `N::F`, and its flattened name says `N_F`.
@@ -713,6 +765,422 @@ namespace UE::DreamShader::Lang
 				Hoisted.RawBodyLength -= Inside * Indent.Len();
 			}
 			Function.RawBody = MoveTemp(Dedented);
+		}
+
+		// ------------------------------------------------------------------------------- rule L9
+
+		/** Text put into or taken out of a verbatim body: the lifted calls behind it move with it. */
+		static void EditOpaqueBody(FFunctionDecl& Function, const int32 Offset, const int32 Length, const FString& Text)
+		{
+			Function.RawBody = Function.RawBody.Left(Offset) + Text + Function.RawBody.Mid(Offset + Length);
+			for (FHoistedCall& Hoisted : Function.HoistedCalls)
+			{
+				if (Hoisted.RawBodyOffset >= Offset + Length)
+				{
+					Hoisted.RawBodyOffset += Text.Len() - Length;
+				}
+			}
+		}
+
+		/**
+		 * FirstLine as the first statement of a verbatim body and LastLine as its last, each on a line of its own at the
+		 * body's indentation. The first goes after the leading `#include` lines, which the Custom code builder hoists only
+		 * while they lead the body.
+		 */
+		static void WrapOpaqueBody(FFunctionDecl& Function, const FString& FirstLine, const FString& LastLine)
+		{
+			using namespace IR::CustomHlslPrivate;
+
+			const FString& Body = Function.RawBody;
+			const FString NewLine = Body.Contains(TEXT("\r\n")) ? FString(TEXT("\r\n")) : FString(TEXT("\n"));
+
+			int32 First = 0;
+			for (;;)
+			{
+				const int32 Directive = SkipWhitespaceAndComments(Body, First);
+				int32 Cursor = SkipInlineWhitespace(Body, Directive + 1);
+				FString Keyword;
+				if (!Body.IsValidIndex(Directive) || Body[Directive] != TCHAR('#')
+					|| !TryReadIdentifier(Body, Cursor, Keyword) || !Keyword.Equals(TEXT("include"), ESearchCase::CaseSensitive))
+				{
+					break;
+				}
+				const int32 LineEnd = Body.Find(TEXT("\n"), ESearchCase::CaseSensitive, ESearchDir::FromStart, Directive);
+				First = LineEnd == INDEX_NONE ? Body.Len() : LineEnd + 1;
+			}
+			const int32 FirstBreak = Body.Find(TEXT("\n"), ESearchCase::CaseSensitive);
+			// `{ result = x; }`: a body on the brace's own line stays on it.
+			const bool bOneLine = First == 0 && (FirstBreak == INDEX_NONE || !Body.Left(FirstBreak).TrimStartAndEnd().IsEmpty());
+			if (First == 0 && !bOneLine)
+			{
+				First = FirstBreak + 1;
+			}
+
+			// The indentation of the first line with something on it, from there on.
+			FString Indent = TEXT("    ");
+			for (int32 LineStart = First; LineStart < Body.Len();)
+			{
+				int32 LineEnd = Body.Find(TEXT("\n"), ESearchCase::CaseSensitive, ESearchDir::FromStart, LineStart);
+				LineEnd = LineEnd == INDEX_NONE ? Body.Len() : LineEnd;
+				const FString Line = Body.Mid(LineStart, LineEnd - LineStart);
+				if (!Line.TrimStartAndEnd().IsEmpty())
+				{
+					Indent = Line.Left(Line.Len() - Line.TrimStart().Len());
+					break;
+				}
+				LineStart = LineEnd + 1;
+			}
+
+			// The last line first: the first one moves what follows it.
+			int32 LastBreak = INDEX_NONE;
+			if (!bOneLine && Body.FindLastChar(TCHAR('\n'), LastBreak) && LastBreak >= First - 1 && Body.Mid(LastBreak + 1).TrimStartAndEnd().IsEmpty())
+			{
+				EditOpaqueBody(Function, LastBreak + 1, 0, Indent + LastLine + NewLine);
+			}
+			else
+			{
+				const int32 End = Body.TrimEnd().Len();
+				EditOpaqueBody(Function, End, 0, FString(TEXT(" ")) + LastLine);
+			}
+			EditOpaqueBody(Function, First, 0, bOneLine ? FString(TEXT(" ")) + FirstLine : Indent + FirstLine + NewLine);
+		}
+
+		void FMigrator::DecideFunctionShapes()
+		{
+			Shapes.Reset();
+			Shapes.SetNum(Bound.Functions.Num());
+			for (int32 Index = 0; Index < Bound.Functions.Num(); ++Index)
+			{
+				const FBoundFunction& Function = Bound.Functions[Index];
+				const FFunctionDecl* Decl = Function.Decl;
+				// Before any declaration is rewritten: bLegacy and the Namespace name go with the rewrite.
+				if (!Decl || !Decl->bLegacy || !Decl->bOpaqueBody || Function.Kind != EBoundFunctionKind::Custom || !Function.ReturnType.IsVoid())
+				{
+					continue;
+				}
+				FFunctionShape& Shape = Shapes[Index];
+				Shape.LegacyPrimaryOut = Function.Params.IndexOfByPredicate([](const FBoundParam& Param) { return Param.Direction == EParamDirection::Out; });
+				if (Shape.LegacyPrimaryOut == INDEX_NONE || !Decl->Params.IsValidIndex(Shape.LegacyPrimaryOut))
+				{
+					Shape.LegacyPrimaryOut = INDEX_NONE;
+					continue;
+				}
+				const bool bDeclaredHere = Module.Declarations.ContainsByPredicate([Decl](const FDeclPtr& Candidate) { return Candidate.Get() == Decl; });
+				if (!bDeclaredHere)
+				{
+					Shape.bIncludedLegacy = true;
+				}
+				else if (Decl->LegacyQualifiedName.IsEmpty())
+				{
+					Shape.bReturnsPrimaryOut = true;
+				}
+				else
+				{
+					Shape.bKeepsOuts = true;
+				}
+			}
+		}
+
+		int32 FMigrator::ReturnedOutOf(const int32 FunctionIndex) const
+		{
+			return Shapes.IsValidIndex(FunctionIndex) && Shapes[FunctionIndex].bReturnsPrimaryOut ? Shapes[FunctionIndex].LegacyPrimaryOut : INDEX_NONE;
+		}
+
+		FTypeRef FMigrator::MigratedReturnType(const FBoundFunction& Callee, const int32 ReturnedOut) const
+		{
+			if (ReturnedOut == INDEX_NONE)
+			{
+				return Callee.Decl ? Callee.Decl->ReturnType : MakeExactTypeRef(Callee.ReturnType);
+			}
+			// The declaration still has the parameter: it goes once every body is done (ReturnFirstOuts).
+			return (Callee.Decl && Callee.Decl->Params.IsValidIndex(ReturnedOut))
+				? Callee.Decl->Params[ReturnedOut].Type
+				: MakeExactTypeRef(Callee.Params[ReturnedOut].Type);
+		}
+
+		void FMigrator::WarnIncludedLegacyCall(const int32 FunctionIndex, const FLangSpan& Span, const bool bFromGraph)
+		{
+			if (!Shapes.IsValidIndex(FunctionIndex) || !Shapes[FunctionIndex].bIncludedLegacy || WarnedIncludedLegacy.Contains(FunctionIndex))
+			{
+				return;
+			}
+			const FBoundFunction& Callee = Bound.Functions[FunctionIndex];
+			const bool bPublic = Callee.Decl && !Callee.Decl->LegacyQualifiedName.IsEmpty();
+			const FString& OutName = Callee.Params[Shapes[FunctionIndex].LegacyPrimaryOut].Name;
+			const FString File = FPaths::GetCleanFilename(Callee.File);
+
+			if (!bPublic && bFromGraph)
+			{
+				// Written for it as it is: a function that returns nothing. Migrated in place first, it is read as it will be.
+				WarnedIncludedLegacy.Add(FunctionIndex);
+				Diagnostics.Warning(TEXT("DSH9094"), Span, FText::Format(
+					LOCTEXT("IncludedLegacyReturns", "'{0}' is a 1.x function of '{1}', which returns its first 'out', '{2}', once that file is migrated; this call is written for it as it is now. Migrate '{1}' first, in place, and then this file."),
+					FText::FromString(Callee.Name),
+					FText::FromString(File),
+					FText::FromString(OutName)));
+			}
+			else if (bPublic && !bFromGraph)
+			{
+				// A `Namespace` function keeps its `out` parameters, and a body that leaves the first out has no value to read.
+				WarnedIncludedLegacy.Add(FunctionIndex);
+				Diagnostics.Warning(TEXT("DSH9094"), Span, FText::Format(
+					LOCTEXT("IncludedLegacyKeepsOuts", "'{0}' is a 1.x function of '{1}', which keeps its 'out' parameters once that file is migrated, so this call will have no value to read; pass a variable for '{2}' too, as the 1.x text may, before either file is migrated."),
+					FText::FromString(Callee.Name),
+					FText::FromString(File),
+					FText::FromString(OutName)));
+			}
+		}
+
+		FString FMigrator::ClaimValueAdapter(const int32 FunctionIndex)
+		{
+			if (const FValueAdapter* Existing = ValueAdapters.FindByPredicate([FunctionIndex](const FValueAdapter& Adapter) { return Adapter.FunctionIndex == FunctionIndex; }))
+			{
+				return Existing->Name;
+			}
+			const FBoundFunction& Kept = Bound.Functions[FunctionIndex];
+			const FString Base = Kept.Name + TEXT("_") + Kept.Params[Shapes[FunctionIndex].LegacyPrimaryOut].Name;
+			FString Name = Base;
+			const auto IsTaken = [this](const FString& Candidate)
+			{
+				return Bound.Functions.ContainsByPredicate([&Candidate](const FBoundFunction& Function) { return Function.Name.Equals(Candidate, ESearchCase::IgnoreCase); })
+					|| ValueAdapters.ContainsByPredicate([&Candidate](const FValueAdapter& Adapter) { return Adapter.Name.Equals(Candidate, ESearchCase::IgnoreCase); });
+			};
+			for (int32 Suffix = 2; IsTaken(Name); ++Suffix)
+			{
+				Name = FString::Printf(TEXT("%s_%d"), *Base, Suffix);
+			}
+			FValueAdapter Adapter;
+			Adapter.FunctionIndex = FunctionIndex;
+			Adapter.Name = Name;
+			ValueAdapters.Add(MoveTemp(Adapter));
+			return Name;
+		}
+
+		void FMigrator::MigrateBodyCalls(FFunctionDecl& Function)
+		{
+			// A 1.x body calls a function the way its HLSL was (rule L9): `x = F(a, o)` reads the first `out`, and
+			// `F(a, r, o)` passes it as well, which 1.x wrote as `r = F(a, o)`. Which of the two stays right depends on what
+			// the function is after the migration (FFunctionShape): a function that returns its first `out` takes the
+			// second as the first, and a `Namespace` function that keeps its `out`s takes the first through an adapter.
+			using namespace IR::CustomHlslPrivate;
+
+			const FString& Body = Function.RawBody;
+			TArray<FPiece> Pieces;
+			SplitHlslPieces(Body, Pieces);
+
+			struct FEdit
+			{
+				int32 Offset = 0;
+				int32 Length = 0;
+				FString Text;
+			};
+			TArray<FEdit> Edits;
+
+			const auto Trim = [&Body](int32& Start, int32& End)
+			{
+				while (Start < End && FChar::IsWhitespace(Body[Start]))
+				{
+					++Start;
+				}
+				while (End > Start && FChar::IsWhitespace(Body[End - 1]))
+				{
+					--End;
+				}
+			};
+			const auto IsCode = [&Pieces](const int32 Start, const int32 End)
+			{
+				return !Pieces.ContainsByPredicate([Start, End](const FPiece& Piece)
+				{
+					return Piece.Kind != EPieceKind::Code && Piece.Start < End && Piece.End > Start;
+				});
+			};
+
+			for (const FPiece& Piece : Pieces)
+			{
+				if (Piece.Kind != EPieceKind::Code)
+				{
+					continue;
+				}
+				for (int32 Index = Piece.Start; Index < Piece.End;)
+				{
+					if (!IsIdentifierStart(Body[Index]) || (Index > 0 && IsIdentifierPart(Body[Index - 1])))
+					{
+						++Index;
+						continue;
+					}
+					const int32 Start = Index;
+					FString Identifier;
+					TryReadIdentifier(Body, Index, Identifier);
+
+					// `A.B(...)` is a member call, never one of the module's functions.
+					const int32 OpenParen = SkipInlineWhitespace(Body, Index);
+					const bool bIsCall = !(Start > 0 && Body[Start - 1] == TCHAR('.')) && Body.IsValidIndex(OpenParen) && Body[OpenParen] == TCHAR('(');
+					const int32 CalleeIndex = !bIsCall ? INDEX_NONE : Bound.Functions.IndexOfByPredicate([&Identifier](const FBoundFunction& Candidate)
+					{
+						return Candidate.Name.Equals(Identifier, ESearchCase::CaseSensitive);
+					});
+					if (CalleeIndex == INDEX_NONE || Shapes[CalleeIndex].LegacyPrimaryOut == INDEX_NONE)
+					{
+						continue;
+					}
+
+					int32 CloseParen = INDEX_NONE;
+					if (!TryFindMatchingParenthesis(Body, OpenParen, CloseParen))
+					{
+						continue;
+					}
+					TArray<TPair<int32, int32>> Ranges;
+					SplitTopLevelArguments(Body.Mid(OpenParen + 1, CloseParen - OpenParen - 1), Ranges);
+
+					const FFunctionShape& Shape = Shapes[CalleeIndex];
+					const FBoundFunction& Callee = Bound.Functions[CalleeIndex];
+					const bool bPublic = Callee.Decl && !Callee.Decl->LegacyQualifiedName.IsEmpty();
+					const bool bReturnsPrimary = Shape.bReturnsPrimaryOut || (Shape.bIncludedLegacy && !bPublic);
+					const int32 Primary = Shape.LegacyPrimaryOut;
+					const int32 Base = OpenParen + 1;
+
+					if (Ranges.Num() == Callee.Params.Num() && bReturnsPrimary)
+					{
+						// `F(a, r, o)` -> `r = F(a, o)`: the receiver and the comma that went with it out, the rest as written.
+						int32 ReceiverStart = Base + Ranges[Primary].Key;
+						int32 ReceiverEnd = Base + Ranges[Primary].Value;
+						Trim(ReceiverStart, ReceiverEnd);
+						int32 CutStart = ReceiverStart;
+						int32 CutEnd = ReceiverEnd;
+						if (Primary > 0)
+						{
+							// From the comma in front of it.
+							CutStart = Base + Ranges[Primary - 1].Value;
+						}
+						else if (Ranges.Num() > 1)
+						{
+							// To the next argument.
+							CutEnd = Base + Ranges[1].Key;
+							int32 NextEnd = Base + Ranges[1].Value;
+							Trim(CutEnd, NextEnd);
+						}
+						if (ReceiverStart >= ReceiverEnd || !IsCode(CutStart, CutEnd))
+						{
+							// A comment would go with it: left as written, and the proof says what the shader compiler would.
+							continue;
+						}
+						const bool bInExpression = ClassifyCustomCallUse(Body, Pieces, Start) == ECustomCallUse::Value;
+						Edits.Add({ Start, 0, FString::Printf(TEXT("%s%s = "), bInExpression ? TEXT("(") : TEXT(""), *Body.Mid(ReceiverStart, ReceiverEnd - ReceiverStart)) });
+						Edits.Add({ CutStart, CutEnd - CutStart, FString() });
+						if (bInExpression)
+						{
+							Edits.Add({ CloseParen + 1, 0, FString(TEXT(")")) });
+						}
+					}
+					else if (Ranges.Num() == Callee.Params.Num() - 1 && Shape.bKeepsOuts)
+					{
+						// The first `out` left out: its value read, which the function keeping its `out`s no longer returns.
+						Edits.Add({ Start, Index - Start, ClaimValueAdapter(CalleeIndex) });
+					}
+					else if (Ranges.Num() == Callee.Params.Num() - 1 && Shape.bIncludedLegacy && bPublic)
+					{
+						WarnIncludedLegacyCall(CalleeIndex, Function.BodySpan, /* bFromGraph */ false);
+					}
+				}
+			}
+
+			// From the back, so what is in front keeps its offset; an edit that would reach into one made already is dropped.
+			Edits.StableSort([](const FEdit& A, const FEdit& B) { return A.Offset > B.Offset; });
+			int32 Limit = MAX_int32;
+			for (const FEdit& Edit : Edits)
+			{
+				if (Edit.Offset + Edit.Length > Limit)
+				{
+					continue;
+				}
+				EditOpaqueBody(Function, Edit.Offset, Edit.Length, Edit.Text);
+				Limit = Edit.Offset;
+			}
+		}
+
+		void FMigrator::ReturnFirstOuts()
+		{
+			for (const FDeclPtr& Decl : Module.Declarations)
+			{
+				FFunctionDecl* Function = Decl.IsValid() ? Decl->As<FFunctionDecl>() : nullptr;
+				const int32 Index = Function == nullptr ? INDEX_NONE : Bound.Functions.IndexOfByPredicate([Function](const FBoundFunction& Candidate)
+				{
+					return Candidate.Decl == Function;
+				});
+				const int32 Primary = ReturnedOutOf(Index);
+				if (Primary == INDEX_NONE || !Function->Params.IsValidIndex(Primary) || !Function->bOpaqueBody)
+				{
+					continue;
+				}
+
+				// 1.x zeroed it and returned it (rule L9); the body says both now.
+				const FString Name = Function->Params[Primary].Name;
+				Function->ReturnType = Function->Params[Primary].Type;
+				Function->Params.RemoveAt(Primary);
+				const FString Type = PrintDreamShaderLangType(Function->ReturnType);
+				WrapOpaqueBody(*Function, FString::Printf(TEXT("%s %s = (%s)0;"), *Type, *Name, *Type), FString::Printf(TEXT("return %s;"), *Name));
+			}
+		}
+
+		void FMigrator::AddValueAdapters()
+		{
+			for (const FValueAdapter& Adapter : ValueAdapters)
+			{
+				const FBoundFunction& Kept = Bound.Functions[Adapter.FunctionIndex];
+				const int32 KeptAt = Module.Declarations.IndexOfByPredicate([&Kept](const FDeclPtr& Decl) { return Decl.Get() == Kept.Decl; });
+				if (KeptAt == INDEX_NONE)
+				{
+					continue;
+				}
+				const FFunctionDecl& KeptDecl = *Kept.Decl;
+				const int32 Primary = Shapes[Adapter.FunctionIndex].LegacyPrimaryOut;
+
+				TUniquePtr<FFunctionDecl> Function = MakeUnique<FFunctionDecl>();
+				Function->Name = Adapter.Name;
+				Function->ReturnType = KeptDecl.Params[Primary].Type;
+				TArray<FString> Arguments;
+				for (int32 ParamIndex = 0; ParamIndex < KeptDecl.Params.Num(); ++ParamIndex)
+				{
+					const FParam& Param = KeptDecl.Params[ParamIndex];
+					Arguments.Add(Param.Name);
+					if (ParamIndex == Primary)
+					{
+						continue;
+					}
+					FParam& Copy = Function->Params.AddDefaulted_GetRef();
+					Copy.Direction = Param.Direction;
+					Copy.Type = Param.Type;
+					Copy.Name = Param.Name;
+					Copy.bOptional = Param.bOptional;
+					Copy.Default = Param.Default ? DecompileAst::CloneExpr(*Param.Default) : FExprPtr();
+					for (const FExprPtr& Dimension : Param.ArrayDimensions)
+					{
+						Copy.ArrayDimensions.Add(Dimension ? DecompileAst::CloneExpr(*Dimension) : FExprPtr());
+					}
+				}
+
+				const FString Type = PrintDreamShaderLangType(Function->ReturnType);
+				const FString& Out = KeptDecl.Params[Primary].Name;
+				const FString NewLine = KeptDecl.RawBody.Contains(TEXT("\r\n")) ? FString(TEXT("\r\n")) : FString(TEXT("\n"));
+				Function->bOpaqueBody = true;
+				Function->RawBody = NewLine
+					+ FString::Printf(TEXT("    %s %s = (%s)0;"), *Type, *Out, *Type) + NewLine
+					+ FString::Printf(TEXT("    %s(%s);"), *KeptDecl.Name, *FString::Join(Arguments, TEXT(", "))) + NewLine
+					+ FString::Printf(TEXT("    return %s;"), *Out) + NewLine;
+				FDocDirective Custom;
+				Custom.Key = Directive::Custom;
+				Function->Doc.Directives.Add(MoveTemp(Custom));
+
+				// The name the library knows it by: its `@name`, the 1.x `N::F`, by now.
+				const FDocDirective* Title = KeptDecl.Doc.Find(Directive::Name);
+				FLangComment Comment;
+				Comment.Text = FString::Printf(TEXT("// %s as a 1.x body read it: its first 'out', returned."), Title ? *Title->Value : *KeptDecl.Name);
+				FLangTrivia Trivia;
+				Trivia.Leading.Add(MoveTemp(Comment));
+				Trivia.BlankLinesBefore = 1;
+				Module.Trivia.Add(Function.Get(), MoveTemp(Trivia));
+				Module.Declarations.Insert(FDeclPtr(MoveTemp(Function)), KeptAt + 1);
+			}
 		}
 
 		// -------------------------------------------------------------------------------------- bodies
@@ -1447,6 +1915,8 @@ namespace UE::DreamShader::Lang
 
 		void FMigrator::CanonicaliseUserCall(FCallExpr& Call, const FBoundExpr& Binding, const FBoundFunction& Callee)
 		{
+			WarnIncludedLegacyCall(Binding.Index, Call.Span, /* bFromGraph */ true);
+
 			if (FIdentifierExpr* CalleeName = Call.Callee ? Call.Callee->As<FIdentifierExpr>() : nullptr)
 			{
 				if (!CalleeName->Name.Equals(Callee.Name, ESearchCase::CaseSensitive))
@@ -1506,14 +1976,15 @@ namespace UE::DreamShader::Lang
 			}
 		}
 
-		void FMigrator::PassAbsentOuts(FCallExpr& Call, const FBoundExpr& Binding, const FBoundFunction& Callee, TArray<FExprPtr>& OutParamOutputs)
+		void FMigrator::PassAbsentOuts(FCallExpr& Call, const FBoundExpr& Binding, const FBoundFunction& Callee, TArray<FExprPtr>& OutParamOutputs, const int32 ReturnedOut)
 		{
 			OutParamOutputs.Reset();
 			OutParamOutputs.SetNum(Callee.Params.Num());
 			for (int32 ParamIndex = 0; ParamIndex < Callee.Params.Num(); ++ParamIndex)
 			{
 				const FBoundParam& Param = Callee.Params[ParamIndex];
-				if (Param.Direction == EParamDirection::In)
+				// The one the function returns after the migration is no parameter of it any more (rule L9).
+				if (Param.Direction == EParamDirection::In || ParamIndex == ReturnedOut)
 				{
 					continue;
 				}
@@ -1546,8 +2017,11 @@ namespace UE::DreamShader::Lang
 		void FMigrator::MigrateValueCall(FExprPtr& Slot, FCallExpr& Call, const FBoundExpr& Binding, const FBoundFunction& Callee)
 		{
 			// A 1.x value call passes inputs only and IS the function's first output (rule L3b): the return value, or for
-			// a function that returns nothing its first `out`.
-			if (Callee.ReturnType.IsVoid())
+			// a function that returns nothing its first `out` -- which a 1.x function of this file returns from now on (L9).
+			const int32 ReturnedOut = ReturnedOutOf(Binding.Index);
+			const bool bPassesReturnedOut = ReturnedOut != INDEX_NONE
+				&& Binding.Args.ContainsByPredicate([ReturnedOut](const FBoundArgument& Argument) { return Argument.TargetIndex == ReturnedOut; });
+			if ((Callee.ReturnType.IsVoid() && ReturnedOut == INDEX_NONE) || bPassesReturnedOut)
 			{
 				const FLangSpan Span = Call.Span;
 				HoistCall(Slot, Slot, Binding, 0, Span);
@@ -1559,7 +2033,7 @@ namespace UE::DreamShader::Lang
 			bool bLeavesOutputsOut = false;
 			for (int32 ParamIndex = 0; ParamIndex < Callee.Params.Num(); ++ParamIndex)
 			{
-				if (Callee.Params[ParamIndex].Direction != EParamDirection::Out)
+				if (Callee.Params[ParamIndex].Direction != EParamDirection::Out || ParamIndex == ReturnedOut)
 				{
 					continue;
 				}
@@ -1570,7 +2044,7 @@ namespace UE::DreamShader::Lang
 			{
 				// 2.0 wants every `out` passed: to variables nobody reads.
 				TArray<FExprPtr> Unread;
-				PassAbsentOuts(Call, Binding, Callee, Unread);
+				PassAbsentOuts(Call, Binding, Callee, Unread, ReturnedOut);
 			}
 		}
 
@@ -1601,32 +2075,55 @@ namespace UE::DreamShader::Lang
 				Hoisted.Depth = Frames.Num();
 				CollectIdentifiers(Call, Hoisted.Reads);
 
+				// A 1.x function of this file returns its first `out` from now on (rule L9): what it returns is that output.
+				const int32 ReturnedOut = ReturnedOutOf(CallBinding.Index);
 				TArray<FExprPtr> ParamOutputs;
-				PassAbsentOuts(Call, CallBinding, Callee, ParamOutputs);
+				PassAbsentOuts(Call, CallBinding, Callee, ParamOutputs, ReturnedOut);
 
 				// 1.x output order: the return value when there is one, then the `out` parameters as declared.
 				FString ReturnLocal;
-				if (!Callee.ReturnType.IsVoid())
+				FExprPtr Receiver;
+				const FBoundArgument* PassedReturnedOut = ReturnedOut == INDEX_NONE ? nullptr : CallBinding.Args.FindByPredicate([ReturnedOut](const FBoundArgument& Argument)
+				{
+					return Argument.TargetIndex == ReturnedOut;
+				});
+				if (PassedReturnedOut && Call.Arguments.IsValidIndex(PassedReturnedOut->ArgumentIndex) && Call.Arguments[PassedReturnedOut->ArgumentIndex].Value)
+				{
+					// Passed to a variable of the caller's, which receives it now; the emptied argument goes with the
+					// `default` placeholders, once nothing addresses the arguments by index.
+					Receiver = MoveTemp(Call.Arguments[PassedReturnedOut->ArgumentIndex].Value);
+					DefaultedCalls.AddUnique(&Call);
+					Hoisted.Outputs.Add(DecompileAst::CloneExpr(*Receiver));
+				}
+				else if (ReturnedOut != INDEX_NONE)
+				{
+					ReturnLocal = ClaimLocalName(Callee.Name + TEXT("_") + Callee.Params[ReturnedOut].Name);
+					Hoisted.Outputs.Add(DecompileAst::MakeIdentifierExpr(ReturnLocal));
+				}
+				else if (!Callee.ReturnType.IsVoid())
 				{
 					ReturnLocal = ClaimLocalName(Callee.Name + TEXT("_Result"));
 					Hoisted.Outputs.Add(DecompileAst::MakeIdentifierExpr(ReturnLocal));
 				}
 				for (int32 ParamIndex = 0; ParamIndex < Callee.Params.Num(); ++ParamIndex)
 				{
-					if (Callee.Params[ParamIndex].Direction != EParamDirection::In)
+					if (Callee.Params[ParamIndex].Direction != EParamDirection::In && ParamIndex != ReturnedOut)
 					{
 						Hoisted.Outputs.Add(MoveTemp(ParamOutputs[ParamIndex]));
 					}
 				}
 
-				if (ReturnLocal.IsEmpty())
+				if (Receiver)
+				{
+					QueueStatement(DecompileAst::MakeExprStmt(DecompileAst::MakeAssignExpr(MoveTemp(Receiver), MoveTemp(CallSlot))));
+				}
+				else if (ReturnLocal.IsEmpty())
 				{
 					QueueStatement(DecompileAst::MakeExprStmt(MoveTemp(CallSlot)));
 				}
 				else
 				{
-					const FTypeRef ReturnType = Callee.Decl ? Callee.Decl->ReturnType : MakeExactTypeRef(Callee.ReturnType);
-					QueueStatement(DecompileAst::MakeVarDeclStmt(ReturnType, ReturnLocal, MoveTemp(CallSlot)));
+					QueueStatement(DecompileAst::MakeVarDeclStmt(MigratedReturnType(Callee, ReturnedOut), ReturnLocal, MoveTemp(CallSlot)));
 				}
 				Existing = &HoistedCalls.Add(Key, MoveTemp(Hoisted));
 			}
@@ -1653,6 +2150,9 @@ namespace UE::DreamShader::Lang
 			const FBoundFunction& Callee = Bound.Functions[Binding.Index];
 			CanonicaliseUserCall(Call, Binding, Callee);
 
+			// A 1.x function of this file returns its first `out` from now on (rule L9): the argument passed for it is
+			// the receiver, as the return value's is, and the parameters behind it move up one.
+			const int32 ReturnedOut = ReturnedOutOf(Binding.Index);
 			TArray<int32> ParamOfArgument;
 			ParamOfArgument.Init(INDEX_NONE, Call.Arguments.Num());
 			int32 ReceiverArgument = INDEX_NONE;
@@ -1662,7 +2162,7 @@ namespace UE::DreamShader::Lang
 				{
 					continue;
 				}
-				if (Matched.TargetIndex == Callee.Params.Num())
+				if (Matched.TargetIndex == Callee.Params.Num() || (ReturnedOut != INDEX_NONE && Matched.TargetIndex == ReturnedOut))
 				{
 					ReceiverArgument = Matched.ArgumentIndex;
 				}
@@ -1685,11 +2185,12 @@ namespace UE::DreamShader::Lang
 				}
 				FArgument& Argument = Call.Arguments[ArgumentIndex];
 				const int32 ParamIndex = ParamOfArgument[ArgumentIndex];
+				const int32 Declared = (ReturnedOut != INDEX_NONE && ParamIndex > ReturnedOut) ? ParamIndex - 1 : ParamIndex;
 				if (!Argument.Name.IsEmpty())
 				{
 					bNaming = true;
 				}
-				else if (Callee.Params.IsValidIndex(ParamIndex) && (bNaming || ParamIndex != Position))
+				else if (Callee.Params.IsValidIndex(ParamIndex) && (bNaming || Declared != Position))
 				{
 					bNaming = true;
 					Argument.Name = Callee.Params[ParamIndex].Name;
@@ -1718,8 +2219,7 @@ namespace UE::DreamShader::Lang
 				});
 				if (Implicit != INDEX_NONE)
 				{
-					const FTypeRef ReturnType = Callee.Decl ? Callee.Decl->ReturnType : MakeExactTypeRef(Callee.ReturnType);
-					Replacement = DecompileAst::MakeVarDeclStmt(ReturnType, ReceiverName->Name, MoveTemp(Statement.Expression));
+					Replacement = DecompileAst::MakeVarDeclStmt(MigratedReturnType(Callee, ReturnedOut), ReceiverName->Name, MoveTemp(Statement.Expression));
 					ImplicitHere.RemoveAt(Implicit);
 					return;
 				}
@@ -1785,6 +2285,7 @@ namespace UE::DreamShader::Lang
 
 		bool FMigrator::Run()
 		{
+			DecideFunctionShapes();
 			for (FDeclPtr& Decl : Module.Declarations)
 			{
 				if (Decl)
@@ -1792,7 +2293,10 @@ namespace UE::DreamShader::Lang
 					MigrateDeclaration(*Decl);
 				}
 			}
+			// Once every call is written: they read the declarations as 1.x had them, parameter indices and all.
+			ReturnFirstOuts();
 			MoveBlockComments();
+			AddValueAdapters();
 			return !bFailed;
 		}
 	}

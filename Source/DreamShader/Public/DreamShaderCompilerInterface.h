@@ -60,6 +60,15 @@ namespace UE::DreamShader
 		 * interactive editor paths ask for Ephemeral explicitly.
 		 */
 		EThinCustomPersistence ThinCustomPersistence = EThinCustomPersistence::Materialized;
+
+		/**
+		 * Someone named this source -- *Compile* in the Material Content Browser, *Revert to Source*, a bridge request for
+		 * the file, `compile -Source` -- so its NoGeneration products (`#pragma nogeneration`, `/// @nogeneration`, a 1.x
+		 * `NoGeneration = true`) are built too. False for every compile nobody asked for: the startup sweep, a save, a
+		 * dependency's rebuild, `compile -All`, a cook. Those leave such a product as it is on disk. A source this one
+		 * compiles first (a `.dsi`'s parent, the material a `.dsp` names) is never named by it.
+		 */
+		bool bIncludeNoGeneration = false;
 	};
 
 	/** What one compile did. */
