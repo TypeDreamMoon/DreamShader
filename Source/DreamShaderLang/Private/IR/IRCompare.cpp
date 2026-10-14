@@ -70,30 +70,39 @@ namespace UE::DreamShader::IR
 			return FString::Join(Lines, TEXT("\n"));
 		}
 
-		/** `Code` without what only says where it came from: the file of the Begin/End lines, the line of the custom line. */
+		/**
+		 * `Code` without what only says where it came from: the Begin/End lines and the custom lines, wherever they stand.
+		 * Where does not count either: a 1.x function's first `out` is declared ahead of the markers and returned after
+		 * them (rule L9), and the same lines are inside the body of the function migrate made return it. The names of the
+		 * custom lines stay, in order, at the end: they are part of what was built.
+		 */
 		static FString StripCustomMarkers(const FString& Code)
 		{
 			TArray<FString> Lines;
 			Code.ParseIntoArrayLines(Lines, /* bCullEmpty */ false);
-			for (FString& Line : Lines)
+			TArray<FString> Kept;
+			TArray<FString> Names;
+			for (const FString& Line : Lines)
 			{
 				const FString Trimmed = Line.TrimStart();
-				if (Trimmed.StartsWith(GMarkerBegin, ESearchCase::CaseSensitive))
+				if (Trimmed.StartsWith(GMarkerBegin, ESearchCase::CaseSensitive) || Trimmed.StartsWith(GMarkerEnd, ESearchCase::CaseSensitive))
 				{
-					Line = GMarkerBegin;
+					continue;
 				}
-				else if (Trimmed.StartsWith(GMarkerEnd, ESearchCase::CaseSensitive))
+				if (Trimmed.StartsWith(GMarkerCustom, ESearchCase::CaseSensitive))
 				{
-					Line = GMarkerEnd;
-				}
-				else if (Trimmed.StartsWith(GMarkerCustom, ESearchCase::CaseSensitive))
-				{
-					// `// DreamShader custom: <Name> line <N>`: the name stays, it is part of what was built.
+					// `// DreamShader custom: <Name> line <N>`
 					const int32 LineWord = Trimmed.Find(TEXT(" line "), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
-					Line = LineWord == INDEX_NONE ? Trimmed : Trimmed.Left(LineWord);
+					Names.Add((LineWord == INDEX_NONE ? Trimmed : Trimmed.Left(LineWord)).RightChop(FCString::Strlen(GMarkerCustom)).TrimStartAndEnd());
+					continue;
 				}
+				Kept.Add(Line);
 			}
-			return FString::Join(Lines, TEXT("\n"));
+			if (Names.Num() > 0)
+			{
+				Kept.Add(FString(GMarkerCustom) + TEXT(" ") + FString::Join(Names, TEXT(", ")));
+			}
+			return FString::Join(Kept, TEXT("\n"));
 		}
 
 		/** How many components of PreviewValue a FunctionInput of this InputType reads; 0 when it reads none. */
@@ -351,7 +360,10 @@ namespace UE::DreamShader::IR
 				for (int32 Index = 0; Index < Node.Outputs.Num(); ++Index)
 				{
 					Text += Node.Outputs[Index].ToString();
-					if (Node.OutputNames.IsValidIndex(Index))
+					// A Custom node's first output is the engine's own (`return`, or no name; RebuildOutputs), whatever the IR
+					// calls it: `Result` for a function's return value, the parameter's name for rule L9's first `out`.
+					const bool bUnnamedInAsset = Node.Op == EIROp::Custom && Index == 0;
+					if (Node.OutputNames.IsValidIndex(Index) && !bUnnamedInAsset)
 					{
 						Text += TEXT("=");
 						Text += Node.OutputNames[Index];
