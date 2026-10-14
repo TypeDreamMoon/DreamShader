@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/builtins/ue.md",
+  "translationFile": "Docs/zh-CN/builtins/ue.md",
+  "sourceHash": null,
+  "importedSourceHash": "a1596b606f6a006d34eb6380b414a84268f3d034e1640198f5322be99001d429",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "1e93034e769d06525f16b0f2dc8f94db48e12b0ae949a975dccae1929acc9c2b",
+  "origin": "website-import",
+  "importedFrom": [
+    "builtins/ue-nodes"
+  ],
+  "pageMetadata": {
+    "builtins/ue-nodes": {
+      "title": "UE.* 节点",
+      "description": "1.x 自己实现的 27 个 UE.* 名字及其参数表、两个变换内置的坐标系、三个特殊处理的名字，以及 Properties 声明形式。"
+    }
+  }
+}

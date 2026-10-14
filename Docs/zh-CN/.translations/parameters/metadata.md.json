@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/parameters/metadata.md",
+  "translationFile": "Docs/zh-CN/parameters/metadata.md",
+  "sourceHash": null,
+  "importedSourceHash": "fc10b16b669e08949b2b182fc21467bd8aeaba84d4dc7c0bf39b3d0af380de8e",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "0fbaac45b9c838074f34f0edcee23ff3d79b063d82e1e8d7b7c46cb3ba29dc53",
+  "origin": "website-import",
+  "importedFrom": [
+    "parameters/metadata"
+  ],
+  "pageMetadata": {
+    "parameters/metadata": {
+      "title": "元数据与分组",
+      "description": "结尾的 [ … ] 块 —— 可识别的键与别名、Slider(min,max)、SamplerType、Group 作用域与 SortPriority 计数器，以及反射属性透传。"
+    }
+  }
+}

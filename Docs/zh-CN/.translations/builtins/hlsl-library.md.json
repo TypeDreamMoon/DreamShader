@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/builtins/hlsl-library.md",
+  "translationFile": "Docs/zh-CN/builtins/hlsl-library.md",
+  "sourceHash": null,
+  "importedSourceHash": "6d79868c851c334ca595ec19ff88663c22361e85e01e69cd5907ebc087c73445",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "4cb8c0041f46071c90e3b465fb7b4212b45a54ea8f3acfef4cc339e7306136af",
+  "origin": "website-import",
+  "importedFrom": [
+    "custom-pass/hlsl"
+  ],
+  "pageMetadata": {
+    "custom-pass/hlsl": {
+      "title": "HLSL pass",
+      "description": "compute pass 和不带材质的 fullscreen pass 跑的 HLSL —— 写在 .dsp 的 hlsl 块里还是 .usf 里、绑定生成的名字、DreamPass.ush 的固定参数与辅助函数，以及代码怎样经过预检和快照进入引擎。需要 UE 5.8。"
+    }
+  }
+}

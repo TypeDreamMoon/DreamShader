@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/tools/commandlet.md",
+  "translationFile": "Docs/zh-CN/tools/commandlet.md",
+  "sourceHash": null,
+  "importedSourceHash": "cd318bb244b0ae56fb899b9cabd03ee375b2aab3b75e2e664e33618046075197",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "46eaa161c2bd2c0282cbc7a21405316e0fbd597857a97720fa331d3fba520c8d",
+  "origin": "website-import",
+  "importedFrom": [
+    "tools/commandlet"
+  ],
+  "pageMetadata": {
+    "tools/commandlet": {
+      "title": "命令行",
+      "description": "-run=DreamShader —— 每个命令和开关、路径解析、退出码，以及为什么它写真资产而编辑器不写。"
+    }
+  }
+}

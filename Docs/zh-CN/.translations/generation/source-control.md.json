@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/generation/source-control.md",
+  "translationFile": "Docs/zh-CN/generation/source-control.md",
+  "sourceHash": null,
+  "importedSourceHash": "a180f9588c41080be520176290cfc3530128e3fdf00fec86b61421af59c19be4",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "f4493e1840c197695ab4282d473afd9671744990eeb0f5e93e9dd98afffaf319",
+  "origin": "website-import",
+  "importedFrom": [
+    "generation/source-control"
+  ],
+  "pageMetadata": {
+    "generation/source-control": {
+      "title": "版本控制",
+      "description": "2.0 起哪些生成资产会落盘、给它们做版本管理的两套可行做法，以及 dsc list-generated —— ignore 规则和 P4 typemap 就是照它写的。"
+    }
+  }
+}

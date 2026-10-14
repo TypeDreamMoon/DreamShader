@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/getting-started/about.md",
+  "translationFile": "Docs/zh-CN/getting-started/about.md",
+  "sourceHash": null,
+  "importedSourceHash": "97d1ac22b4bfed4524fb8569e6d74435037d052deb55774a399efc72ad9eba63",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "8d4286f61a12bc0ee7a8c068760ff1afa825eed6d5012cae7f4f8202f23214c0",
+  "origin": "website-import",
+  "importedFrom": [
+    "start/about"
+  ],
+  "pageMetadata": {
+    "start/about": {
+      "title": "关于 DreamShader",
+      "description": "这个插件是什么、包含哪五个模块、支持哪些引擎，以及相关仓库在哪里。"
+    }
+  }
+}

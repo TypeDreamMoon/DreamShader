@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/graph/calls.md",
+  "translationFile": "Docs/zh-CN/graph/calls.md",
+  "sourceHash": null,
+  "importedSourceHash": "39816f543e45136767a80125acde24b8d9105a6a82e7c0e8557e10594089a8f3",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "65ba7902a3f0b801a741ed8488791aad7cd15b34232f919dcc76fee9d573052e",
+  "origin": "website-import",
+  "importedFrom": [
+    "graph/calls"
+  ],
+  "pageMetadata": {
+    "graph/calls": {
+      "title": "调用",
+      "description": "在 Graph 块里调用 Function、GraphFunction、ShaderFunction、VirtualFunction 和参数引脚——分发顺序、值形式、语句形式、参数与输出选择。"
+    }
+  }
+}

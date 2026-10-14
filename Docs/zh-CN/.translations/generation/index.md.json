@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/generation/index.md",
+  "translationFile": "Docs/zh-CN/generation/index.md",
+  "sourceHash": null,
+  "importedSourceHash": "73b612f5e450a6cd8548b5475ebb4af33a5f3d7daf49f1e50920cd8132cbb992",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "7f997787f37f5d70c2300e1c01a29817cd1d038dee2780204541d240f45babdc",
+  "origin": "website-import",
+  "importedFrom": [
+    "generation/pipeline"
+  ],
+  "pageMetadata": {
+    "generation/pipeline": {
+      "title": "生成流程",
+      "description": "一个 DreamShaderLang 源文件如何变成 Unreal 资产 —— 每个阶段、触发条件，以及各阶段可能的失败。"
+    }
+  }
+}

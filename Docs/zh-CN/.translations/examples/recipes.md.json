@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/examples/recipes.md",
+  "translationFile": "Docs/zh-CN/examples/recipes.md",
+  "sourceHash": null,
+  "importedSourceHash": "618fb181c84364f3d37e4cddcb9731f023827160288a779a82aa66b6cecdd08b",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "f585906ff50a52b94f67b1003b10ffeb0df509e2c79626099bc28dacb045ed71",
+  "origin": "website-import",
+  "importedFrom": [
+    "examples/recipes"
+  ],
+  "pageMetadata": {
+    "examples/recipes": {
+      "title": "完整示例",
+      "description": "可直接编译的完整 DreamShaderLang 材质 —— 动画着色、UV 平移、分支、静态开关变体、半透明 UI、PBR、MaterialAttributes、Substrate、参数集合、多输出 helper、Settings 一览与 Runtime Virtual Texture，每个都有 .dsm 和 .dss 两种写法。"
+    }
+  }
+}

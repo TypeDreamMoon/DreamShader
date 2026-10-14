@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/tools/editor-integration.md",
+  "translationFile": "Docs/zh-CN/tools/editor-integration.md",
+  "sourceHash": null,
+  "importedSourceHash": "7ab23d7f8a5c5276149b1ce1f3ffb83d359cd678630d0b7a58ad01694fa9faac",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "721f9c0866481b2b9155877310b3561bf8f147c4eeaf6241ff927d31b9f84bf5",
+  "origin": "website-import",
+  "importedFrom": [
+    "tools/editor"
+  ],
+  "pageMetadata": {
+    "tools/editor": {
+      "title": "编辑器工具",
+      "description": "DreamShader 注册的每一个菜单项、工具栏按钮和右键菜单操作，Material Content Browser 面板，以及预览、VirtualFunction 工具、资产改名同步和 bridge 产物。"
+    }
+  }
+}

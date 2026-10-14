@@ -155,3 +155,59 @@ still exports immediately after its pass.
 - [HLSL passes](hlsl.md)
 - [Custom Pass material nodes](../builtins/dream-pass.md)
 - [Custom Pass examples](../examples/custom-pass.md)
+
+## Pipeline syntax reference
+
+These links keep earlier documentation bookmarks useful. The pipeline language has its own reference.
+
+### Buffers [#buffers]
+
+See [the pipeline language reference](../language-v2/passes.md#buffers).
+
+### Clear and copy [#clear-and-copy]
+
+See [the pipeline language reference](../language-v2/passes.md#clear-and-copy).
+
+### Compute [#compute]
+
+See [the pipeline language reference](../language-v2/passes.md#compute).
+
+### Custom pass pipelines  dsp [#custom-pass-pipelines--dsp]
+
+See [the pipeline language reference](../language-v2/passes.md#custom-pass-pipelines--dsp).
+
+### Fullscreen [#fullscreen]
+
+See [the pipeline language reference](../language-v2/passes.md#fullscreen).
+
+### Injection points [#injection-points]
+
+See [the pipeline language reference](../language-v2/passes.md#injection-points).
+
+### Mesh [#mesh]
+
+See [the pipeline language reference](../language-v2/passes.md#mesh).
+
+### Passes [#passes]
+
+See [the pipeline language reference](../language-v2/passes.md#passes).
+
+### Pipeline keys [#pipeline-keys]
+
+See [the pipeline language reference](../language-v2/passes.md#pipeline-keys).
+
+### References [#references]
+
+See [the pipeline language reference](../language-v2/passes.md#references).
+
+### The file [#the-file]
+
+See [the pipeline language reference](../language-v2/passes.md#the-file).
+
+### Tools [#tools]
+
+See [the pipeline language reference](../language-v2/passes.md#tools).
+
+### What the compiler checks [#what-the-compiler-checks]
+
+See [the pipeline language reference](../language-v2/passes.md#what-the-compiler-checks).

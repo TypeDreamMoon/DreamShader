@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/language/sections.md",
+  "translationFile": "Docs/zh-CN/language/sections.md",
+  "sourceHash": null,
+  "importedSourceHash": "8482a10c6652cd1cb1a195feea4ac88568a3b2755b661e1e4f177670bea031a9",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "6673c1b4e61fd9220142ebbd561777139006a934e1bef1b990d79e09d1632c19",
+  "origin": "website-import",
+  "importedFrom": [
+    "language/sections"
+  ],
+  "pageMetadata": {
+    "language/sections": {
+      "title": "Section",
+      "description": "Properties、Inputs、Outputs、Results、Settings、Options、Graph 与 Layout —— 哪个块接受哪个、重复出现时怎么处理，以及 Group 分组作用域。"
+    }
+  }
+}

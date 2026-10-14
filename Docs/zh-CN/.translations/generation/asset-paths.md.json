@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/generation/asset-paths.md",
+  "translationFile": "Docs/zh-CN/generation/asset-paths.md",
+  "sourceHash": null,
+  "importedSourceHash": "ee16c16139050980de5670685a8e87b69282ac1d3f7bd931724d95cd9640900d",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "b63eee4ad0a457f8ac3e18b16c6d310802135d81653af94fa727d7115f22a820",
+  "origin": "website-import",
+  "importedFrom": [
+    "generation/asset-paths"
+  ],
+  "pageMetadata": {
+    "generation/asset-paths": {
+      "title": "资产路径",
+      "description": "Name= 与 Root= 如何变成 Unreal package 路径、object 路径和磁盘文件 —— 包括 Plugin.X 根和插件源码根的默认值。"
+    }
+  }
+}

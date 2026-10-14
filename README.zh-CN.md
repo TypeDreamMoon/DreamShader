@@ -286,3 +286,5 @@ DreamShader 以 [MIT 许可证](LICENSE)发布。Bug 报告和功能建议请提
    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=typedreammoon/dreamshader&type=date&legend=bottom-right" />
  </picture>
 </a>
+
+文档：[English](Docs/README.md) · [简体中文](Docs/zh-CN/README.md)（迁入译文待核对）。

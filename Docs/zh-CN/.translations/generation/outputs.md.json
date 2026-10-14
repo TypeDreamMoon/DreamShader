@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/generation/outputs.md",
+  "translationFile": "Docs/zh-CN/generation/outputs.md",
+  "sourceHash": null,
+  "importedSourceHash": "51bb748103babdbb9ed4cde931e5007d047210b6aa50e8f162388f361391dfdc",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "1e6f558cc52e246a637da1afe46c5228b1a784758baccef684cba7aa9700f078",
+  "origin": "website-import",
+  "importedFrom": [
+    "generation/outputs"
+  ],
+  "pageMetadata": {
+    "generation/outputs": {
+      "title": "输出绑定",
+      "description": "Outputs section —— 声明输出变量、Base 目标清单，以及 Expression(...).Pin[i] 与 Expression(...) { … } 两种写法。"
+    }
+  }
+}

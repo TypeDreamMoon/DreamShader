@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/language/import.md",
+  "translationFile": "Docs/zh-CN/language/import.md",
+  "sourceHash": null,
+  "importedSourceHash": "0ab6746e33cd18a6dd06434db3406bcdb0bc53fd1134a3ac7d34acce65b4138d",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "882bbd8da9b7093a8ec4e71edfbdd55b53b8de8c2177c6a0ab01e66ef492cb4c",
+  "origin": "website-import",
+  "importedFrom": [
+    "language/imports"
+  ],
+  "pageMetadata": {
+    "language/imports": {
+      "title": "import 与命名空间",
+      "description": "import 如何让一个 .dsh header 的声明在当前文件里可见 —— 识别规则、specifier 规范化、源码根、header 怎么被读取，以及命名空间如何跨文件工作。"
+    }
+  }
+}

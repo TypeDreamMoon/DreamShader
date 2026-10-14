@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/getting-started/first-material.md",
+  "translationFile": "Docs/zh-CN/getting-started/first-material.md",
+  "sourceHash": null,
+  "importedSourceHash": "4cc632ea12b7914a9c597ebf27dbe92f9d0e1da9cdbe3efa4a8c291bd4473967",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "cf2b8c0b84f2a275911bb519223a95707bfa736f75781dbdd0f35fb519cf81ae",
+  "origin": "website-import",
+  "importedFrom": [
+    "start/first-material"
+  ],
+  "pageMetadata": {
+    "start/first-material": {
+      "title": "第一个材质",
+      "description": "从零写一个 UI Unlit 材质 —— .dss 写法和 1.x 写法各一份 —— 生成它，并找到编辑器故意藏起来的那个结果。"
+    }
+  }
+}

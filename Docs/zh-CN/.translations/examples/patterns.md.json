@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/examples/patterns.md",
+  "translationFile": "Docs/zh-CN/examples/patterns.md",
+  "sourceHash": null,
+  "importedSourceHash": "0b6b0aafb7a7d46a87e93eed7366664f2f83e99c78c48210e6f32dcbccd25aec",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "31bd9cf54e8f5d2afa437a959aab611d413a973b8e0a73c1b38109be6a05b962",
+  "origin": "website-import",
+  "importedFrom": [
+    "examples/patterns"
+  ],
+  "pageMetadata": {
+    "examples/patterns": {
+      "title": "常用写法",
+      "description": "DreamShaderLang 的文件级构件 —— 最小材质、参数、纹理采样、共享头文件、函数、UE.* 节点、Layer、VirtualFunction、GraphFunction 与 Layout，每一段都是完整源文件，1.x 写法旁边并列 .dss 写法。"
+    }
+  }
+}

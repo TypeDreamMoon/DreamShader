@@ -1,9 +1,10 @@
 # DreamShader documentation
 
+[English](README.md) · [简体中文](zh-CN/README.md)
+
 This directory is the English source for the DreamShader manual. Tutorials and reference pages live
 together by topic and can be read here on GitHub or in a local Markdown reader. The
-[documentation site](https://shader.toolchain.64hz.cn/en/docs) publishes these sources and maintains
-reviewed Chinese translations separately.
+[documentation site](https://shader.toolchain.64hz.cn/en/docs) publishes these English sources and the reviewed Chinese translations maintained in this plugin.
 
 ## Start here
 
@@ -41,3 +42,7 @@ The site's `docs-sync/config.json` maps source paths to published page IDs. Movi
 requires updating that mapping and incoming relative links, while retaining its page ID to keep
 existing URLs stable. English pages are generated from these sources; AI-generated Chinese updates
 are reviewed in a pull request before publication.
+
+The `zh-CN/` tree mirrors English source paths. Imported translations are unreviewed; its README lists missing translations, and `.translations/` records source versions without treating an import as approval. Website-only notes remain in the website repository.
+
+Check translation status locally with `python -B Docs/translation-status.py`; add `--all` to include every source or `--json` for structured output. This read-only tool does not need the website repository or a Git checkout.

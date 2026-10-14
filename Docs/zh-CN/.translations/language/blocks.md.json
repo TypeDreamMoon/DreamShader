@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/language/blocks.md",
+  "translationFile": "Docs/zh-CN/language/blocks.md",
+  "sourceHash": null,
+  "importedSourceHash": "2e45447ac4c8bfd976386ddc7a17a7b488e570fb872f6e284bc12233a5914993",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "df10506378f8731768b4e871b4d3ea7aa28a6c79a47a328df55305f91e8757b9",
+  "origin": "website-import",
+  "importedFrom": [
+    "language/blocks"
+  ],
+  "pageMetadata": {
+    "language/blocks": {
+      "title": "顶层块",
+      "description": "七种顶层块 —— Shader、ShaderFunction、ShaderLayer / ShaderLayerBlend、VirtualFunction、Function、GraphFunction、Namespace —— 及其各自的产出。"
+    }
+  }
+}

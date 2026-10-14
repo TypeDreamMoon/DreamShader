@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/settings/material.md",
+  "translationFile": "Docs/zh-CN/settings/material.md",
+  "sourceHash": null,
+  "importedSourceHash": "697369227926199a489c47ae46dc8a336fd3763e05491a2ec7e98c3b62a5d492",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "782953650b3021d2de69942d76c4d16383a4164269165a72b83702088450114b",
+  "origin": "website-import",
+  "importedFrom": [
+    "settings/material"
+  ],
+  "pageMetadata": {
+    "settings/material": {
+      "title": "材质 Settings",
+      "description": "Settings 块 —— 语句怎么解析、Shader 的特殊键、能触达任意 UMaterial 属性的反射解析器、重新生成时会被重置成什么，以及材质函数的四个键。"
+    }
+  }
+}

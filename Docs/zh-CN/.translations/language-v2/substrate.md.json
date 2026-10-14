@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/language-v2/substrate.md",
+  "translationFile": "Docs/zh-CN/language-v2/substrate.md",
+  "sourceHash": null,
+  "importedSourceHash": "6e1c367697cf90b5708337236ed0ef807991741769330fc0cc39d770e6f2dce8",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "40ed1dfadb376e5f575e8b765fddc41205bfaf8929821fe9e79e5d8d54d9aed6",
+  "origin": "website-import",
+  "importedFrom": [
+    "language-v2/substrate"
+  ],
+  "pageMetadata": {
+    "language-v2/substrate": {
+      "title": "Substrate 语法糖",
+      "description": "Substrate 值上的运算符与 lerp、Slab 上的旧参数化实参、运行时分支、按成员逐步构建的值，以及一份源码同时适配开与不开 Substrate 的工程。"
+    }
+  }
+}

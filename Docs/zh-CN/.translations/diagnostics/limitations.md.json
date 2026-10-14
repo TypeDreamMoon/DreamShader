@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/diagnostics/limitations.md",
+  "translationFile": "Docs/zh-CN/diagnostics/limitations.md",
+  "sourceHash": null,
+  "importedSourceHash": "5f2509007cb95b90dc87b68e7808fcbd883d24fc54447022cdd8ad35e74c3fb8",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "1bf711bcc70739e834cd7c6c29da4e48f2d1c3bede09474be9a9045fe5f8b19b",
+  "origin": "website-import",
+  "importedFrom": [
+    "diagnostics/limitations"
+  ],
+  "pageMetadata": {
+    "diagnostics/limitations": {
+      "title": "当前限制",
+      "description": "DreamShader 2.1.2 还做不到的事 —— 1.x Graph 与 .dss 的语言边界、1.x 照做但会说出来的事、反编译器的缺口、材质图层只到函数级、引擎版本与 Custom Pass 的边界。"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/graph/if.md",
+  "translationFile": "Docs/zh-CN/graph/if.md",
+  "sourceHash": null,
+  "importedSourceHash": "518b88097f8a138b3eab24b495c8042d99e0342777c524ff97896f02f2620b60",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "a6338c338703ee68cdc590232ad41c88c6a3bde259f4618df7c3d4615e7c8656",
+  "origin": "website-import",
+  "importedFrom": [
+    "graph/control-flow"
+  ],
+  "pageMetadata": {
+    "graph/control-flow": {
+      "title": "if / else",
+      "description": "Graph 块里的 if / else 是构建期的 select——两个分支都会被构建，每个改动的变量一个条件节点，而真值形式的语义是 != 0 而不是 > 0。"
+    }
+  }
+}

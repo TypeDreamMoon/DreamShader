@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/generation/ephemeral.md",
+  "translationFile": "Docs/zh-CN/generation/ephemeral.md",
+  "sourceHash": null,
+  "importedSourceHash": "d15ab5f88badc105efa04274171967b16a88b7aff840aa79fe3999cf5ee75a11",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "49c1599b00d4b4feb9fd719ea0a516c06484d98afc8f5133f81091a122c090fc",
+  "origin": "website-import",
+  "importedFrom": [
+    "generation/in-memory"
+  ],
+  "pageMetadata": {
+    "generation/in-memory": {
+      "title": "内存材质（Ephemeral）",
+      "description": "为什么编译好的 DreamShader 材质不出现在 Content Browser —— ThinCustom 产物的 Ephemeral 与 Materialized 两种状态、隐藏 base 材质，以及怎么把它写到磁盘。"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/examples/custom-pass.md",
+  "translationFile": "Docs/zh-CN/examples/custom-pass.md",
+  "sourceHash": null,
+  "importedSourceHash": "adcc25b86407875ae38530121b77a25bd1d8bdd179f620eab895a20605397ede",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "3cd106ff0c8a2db8650869f49342040bbbf01cf1186ba3dae5e058d7bebef974",
+  "origin": "website-import",
+  "importedFrom": [
+    "examples/custom-pass"
+  ],
+  "pageMetadata": {
+    "examples/custom-pass": {
+      "title": "Custom Pass 示例",
+      "description": "七条完整的 .dsp 管线，连同它们用到的 .dss 材质 —— 高亮描边、UI 毛玻璃、X 光、风场、扫描脉冲、老式 CRT、带标记的物体。需要 UE 5.8。"
+    }
+  }
+}

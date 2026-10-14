@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/language/layout.md",
+  "translationFile": "Docs/zh-CN/language/layout.md",
+  "sourceHash": null,
+  "importedSourceHash": "f39fb6414fbf01a6167a3c0fa762a67cb299e69241a39e9e2c8d924a6ee06ffb",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "484b10e0c52edfdc26c9e406b946e8730762fe4b58a186f55ee80c99e6c933c7",
+  "origin": "website-import",
+  "importedFrom": [
+    "language/layout"
+  ],
+  "pageMetadata": {
+    "language/layout": {
+      "title": "Layout 与 #Region",
+      "description": "用 Layout = { Node(...); Comment(...); } 固定生成节点的位置，用 #Region 给图语句分组，以及它们在各种布局风格下的效果。"
+    }
+  }
+}

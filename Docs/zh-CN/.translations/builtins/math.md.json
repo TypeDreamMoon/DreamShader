@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/builtins/math.md",
+  "translationFile": "Docs/zh-CN/builtins/math.md",
+  "sourceHash": null,
+  "importedSourceHash": "a08b78b8ef035844a32d749f1045b562aba993927cb1b9190fbeca7802e110f0",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "c72a81a56b3dfc8c82b779e0fe9fdb2dc50589ebb43933116e445517c949e070",
+  "origin": "website-import",
+  "importedFrom": [
+    "builtins/math"
+  ],
+  "pageMetadata": {
+    "builtins/math": {
+      "title": "数学内置",
+      "description": "无前缀、按 HLSL 拼写的调用名 —— 44 个 HLSL 名字直接降级为算术材质节点，外加 1.x 源码还能用的四个 GLSL 拼写。"
+    }
+  }
+}

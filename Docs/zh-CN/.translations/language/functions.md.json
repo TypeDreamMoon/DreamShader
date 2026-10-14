@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/language/functions.md",
+  "translationFile": "Docs/zh-CN/language/functions.md",
+  "sourceHash": null,
+  "importedSourceHash": "b80eff7aca04876db8221bd893b95b66be1bdca7a503a083b122f957dc165cf8",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "db165f0188d1e15cce2443f43d8a2ef9193154a73b013a87078c1b35ab67cd16",
+  "origin": "website-import",
+  "importedFrom": [
+    "language/functions"
+  ],
+  "pageMetadata": {
+    "language/functions": {
+      "title": "函数",
+      "description": "Function、GraphFunction 与 Namespace —— 参数、返回类型、被调函数的内嵌、UE.* 提升，以及调用如何解析。"
+    }
+  }
+}

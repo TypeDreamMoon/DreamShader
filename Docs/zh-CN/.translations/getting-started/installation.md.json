@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/getting-started/installation.md",
+  "translationFile": "Docs/zh-CN/getting-started/installation.md",
+  "sourceHash": null,
+  "importedSourceHash": "3d4271045228a11cb76afa79b7f6935f1156f4a7b776a63d18de54fccf7d85b7",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "4cf3788d06066f389f4c57284edc94a91fda9624c89927a82398eb4b242d68e8",
+  "origin": "website-import",
+  "importedFrom": [
+    "start/installation"
+  ],
+  "pageMetadata": {
+    "start/installation": {
+      "title": "安装",
+      "description": "把 DreamShader 插件加入 Unreal 项目、找到它的设置面板，并确认编译链路正常。"
+    }
+  }
+}

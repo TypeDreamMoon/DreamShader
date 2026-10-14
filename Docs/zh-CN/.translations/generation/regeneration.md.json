@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/generation/regeneration.md",
+  "translationFile": "Docs/zh-CN/generation/regeneration.md",
+  "sourceHash": null,
+  "importedSourceHash": "1310b48dd2152acb9b154415e6d64492a2d0a0008db44f2b18d5484ad22956fe",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "ebdc2912c3fcf4fca41a07279830a9969a834f1415b4bb84cfb692c3e0c5b625",
+  "origin": "website-import",
+  "importedFrom": [
+    "generation/regeneration"
+  ],
+  "pageMetadata": {
+    "generation/regeneration": {
+      "title": "重新生成",
+      "description": "一次重建会毁掉什么、什么能留下来，手改检测与三个出口，归属守卫，以及决定要不要重建的构建键。"
+    }
+  }
+}

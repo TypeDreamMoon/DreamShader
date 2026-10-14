@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/language/lexical.md",
+  "translationFile": "Docs/zh-CN/language/lexical.md",
+  "sourceHash": null,
+  "importedSourceHash": "574e87a192e210ea64edeec70f72c9099e2fc89ceead60744695496a4bab23d7",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "5315c06c293cfdefe6c089b17de9e707a44f89d85993ae73fb1423344c2a4e96",
+  "origin": "website-import",
+  "importedFrom": [
+    "language/lexical"
+  ],
+  "pageMetadata": {
+    "language/lexical": {
+      "title": "词法与大小写",
+      "description": "大小写敏感性、空白与注释、标识符与保留字、字符串与数字字面量、语句切分，以及在解析之前按行运行的预处理器。"
+    }
+  }
+}

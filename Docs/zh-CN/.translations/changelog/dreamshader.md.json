@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/changelog/dreamshader.md",
+  "translationFile": "Docs/zh-CN/changelog/dreamshader.md",
+  "sourceHash": null,
+  "importedSourceHash": "2f88168e78e7089faf7b35fbcb0eb81a5bbac694bb4d75e707294eb69e1b7a65",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "b262ed21e5c11dd1f3570241f6517d1c4375dbd083fceafaa2bb6e0905a7af82",
+  "origin": "website-import",
+  "importedFrom": [
+    "changelog/dreamshader"
+  ],
+  "pageMetadata": {
+    "changelog/dreamshader": {
+      "title": "DreamShader 插件",
+      "description": "DreamShader Unreal 插件的版本更新记录，取自插件自带的 CHANGELOG，新版本在前。"
+    }
+  }
+}

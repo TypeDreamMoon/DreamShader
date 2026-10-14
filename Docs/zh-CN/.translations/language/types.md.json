@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/language/types.md",
+  "translationFile": "Docs/zh-CN/language/types.md",
+  "sourceHash": null,
+  "importedSourceHash": "5d0377f022d01c1af7521716d651190ed13ebbd87a1b6d1ac3525c779fa1574b",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "9565804a29bd0f7ebb188a3f210db6e3da20eed91fd03d03891fb65d303f7197",
+  "origin": "website-import",
+  "importedFrom": [
+    "language/types-and-values"
+  ],
+  "pageMetadata": {
+    "language/types-and-values": {
+      "title": "类型与值",
+      "description": "52 个类型 token、分上下文的有效性矩阵、GLSL 别名、字面量，以及已经不存在的那些 token。"
+    }
+  }
+}

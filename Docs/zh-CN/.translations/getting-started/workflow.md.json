@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/getting-started/workflow.md",
+  "translationFile": "Docs/zh-CN/getting-started/workflow.md",
+  "sourceHash": null,
+  "importedSourceHash": "7d807d2fd061fb8d700b88e5e5173feb3f733372d9cb0e99e149650543f4b53b",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "0435de4bfd9f5f5ac4e6ada0a5965d6f944399cad262fabaa334622201ee2ee5",
+  "origin": "website-import",
+  "importedFrom": [
+    "start/workflow"
+  ],
+  "pageMetadata": {
+    "start/workflow": {
+      "title": "日常工作流",
+      "description": "保存、防抖、生成这个循环 —— 什么会触发重建、什么会被跳过、改一个 .dsh 会让什么失效，以及出错时看哪里。"
+    }
+  }
+}
