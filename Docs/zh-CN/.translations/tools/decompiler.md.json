@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/tools/decompiler.md",
+  "translationFile": "Docs/zh-CN/tools/decompiler.md",
+  "sourceHash": null,
+  "importedSourceHash": "149da59717399c640b3b7eef9d7af5535c5d91712b7ec1b74e5c0f2242b36000",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "ca72487d9a40d8cb26c6153c5c62a5015f3b5cd2e201a85fef7b7837358e1bd6",
+  "origin": "website-import",
+  "importedFrom": [
+    "tools/decompiler"
+  ],
+  "pageMetadata": {
+    "tools/decompiler": {
+      "title": "反编译导出",
+      "description": "把已有的材质资产导出成源文件 —— 默认的 2.0 反编译器（.dss / .dsi / .dsp），以及保留下来的 1.x 导出器（.dsm / .dsf）能还原什么、会丢什么。"
+    }
+  }
+}

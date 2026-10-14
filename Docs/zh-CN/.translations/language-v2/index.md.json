@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/language-v2/index.md",
+  "translationFile": "Docs/zh-CN/language-v2/index.md",
+  "sourceHash": null,
+  "importedSourceHash": "4b2a5add4c9865c00585cb0d3bbf32950c288c136c994c854d9f62416bb04fca",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "1dcdd7e9fce68035c34e2b2197deff2edeb649215926aed5359eb100df5fd701",
+  "origin": "website-import",
+  "importedFrom": [
+    "language-v2/index"
+  ],
+  "pageMetadata": {
+    "language-v2/index": {
+      "title": "DreamShaderLang 2.0",
+      "description": "DreamShader 2.0 的 HLSL 形状语言 —— .dss 源文件、uniform 与文档指令、每个 export 一个资产，以及它和 1.x 语言怎么并存。"
+    }
+  }
+}

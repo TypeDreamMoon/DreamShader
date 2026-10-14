@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/tools/migrate.md",
+  "translationFile": "Docs/zh-CN/tools/migrate.md",
+  "sourceHash": null,
+  "importedSourceHash": "871318d657dcb963a390ee981fc92cc45b83f74b87f0fcf9d67893b52fad1251",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "17fe6b1c0fd2e54fae0a2559ee6c28cca5281a95bdfd8bd264bd06758ba63d83",
+  "origin": "website-import",
+  "importedFrom": [
+    "language-v2/migrate"
+  ],
+  "pageMetadata": {
+    "language-v2/migrate": {
+      "title": "从 1.x 迁移",
+      "description": "dsc migrate 把 .dsm、.dsf、.dsh 源文件改写成 .dss —— 并且在写任何东西之前先证明：注释一条不丢，生成的图一模一样。"
+    }
+  }
+}

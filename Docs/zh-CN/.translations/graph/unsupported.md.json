@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/graph/unsupported.md",
+  "translationFile": "Docs/zh-CN/graph/unsupported.md",
+  "sourceHash": null,
+  "importedSourceHash": "b795b3f6536baa05626f264c0b02e852b9924021181535582f14eacd6fd2b52f",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "aa0a1db7fab109b762298764fc79bb442e8ba956a329a004acac2e7e67d6e233",
+  "origin": "website-import",
+  "importedFrom": [
+    "graph/unsupported"
+  ],
+  "pageMetadata": {
+    "graph/unsupported": {
+      "title": "不支持的写法",
+      "description": "循环、return、三元、%、比较与下标——Graph 块不实现的每一种 HLSL / GLSL 写法、编译器为它报的码，以及应该改写成什么。"
+    }
+  }
+}

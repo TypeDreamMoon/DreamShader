@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/graph/expressions.md",
+  "translationFile": "Docs/zh-CN/graph/expressions.md",
+  "sourceHash": null,
+  "importedSourceHash": "35622d14d925c76af1af82c27b5b4812bc70940bc345138ff89ee291298ad40d",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "5a3ab2b08ddfb76463cbf1825be30af0e339dfa8922de8bc9854217574d74f8c",
+  "origin": "website-import",
+  "importedFrom": [
+    "graph/expressions"
+  ],
+  "pageMetadata": {
+    "graph/expressions": {
+      "title": "运算符与转换",
+      "description": "四个运算符及其优先级、字面量、名字查找、构造器、swizzle、把值适配到目标类型的转换规则，以及相同节点的合并。"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/language-v2/instances.md",
+  "translationFile": "Docs/zh-CN/language-v2/instances.md",
+  "sourceHash": null,
+  "importedSourceHash": "8dbc0d29a08c9dbae2090b1ff7779a21f1ac421a2439aeed034f30df76c4fbf5",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "c0dc28465a38d2d47d2313cc85c7a912d979c207d2a57ffbea50ab81db2cc839",
+  "origin": "website-import",
+  "importedFrom": [
+    "language-v2/instances"
+  ],
+  "pageMetadata": {
+    "language-v2/instances": {
+      "title": "材质实例",
+      "description": ".dsi —— 把材质实例写成源码。一个父材质、它覆盖的属性和它设置的参数，并对照父材质真实的参数表做检查。"
+    }
+  }
+}

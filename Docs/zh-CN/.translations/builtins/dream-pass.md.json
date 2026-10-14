@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/builtins/dream-pass.md",
+  "translationFile": "Docs/zh-CN/builtins/dream-pass.md",
+  "sourceHash": null,
+  "importedSourceHash": "d8ec24416d17e4d61da8998bec0c772f078d44f5e9541e170ad6d36c2675e393",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "1846c1637186902043569d47a29423f9addfb41a7169f7b92485c452fecacb80",
+  "origin": "website-import",
+  "importedFrom": [
+    "builtins/dream-pass"
+  ],
+  "pageMetadata": {
+    "builtins/dream-pass": {
+      "title": "Custom Pass 材质节点",
+      "description": "UE.DreamPassOutput 写 mesh pass 画出的数据，UE.DreamPassBuffer 让普通材质读导出的缓冲区；以及 pass 材质怎么用 UE.UserSceneTexture 读 pass 的缓冲区。需要 UE 5.8。"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/tools/packages.md",
+  "translationFile": "Docs/zh-CN/tools/packages.md",
+  "sourceHash": null,
+  "importedSourceHash": "3863dad97907504d54eb37a068c970c9e6683db91885f9ec747a6b4ac70c7e62",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "eaa9a18cf5fe0b56c4f59949161c35ff19fe135d6bc5631e04f889bfc2e81871",
+  "origin": "website-import",
+  "importedFrom": [
+    "tools/packages"
+  ],
+  "pageMetadata": {
+    "tools/packages": {
+      "title": "Package",
+      "description": "DShader/Packages —— 插件实现的 import 根、扩展实现的 manifest 与锁文件，以及两者之间那道枚举缺口。"
+    }
+  }
+}

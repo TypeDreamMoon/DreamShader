@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/parameters/path.md",
+  "translationFile": "Docs/zh-CN/parameters/path.md",
+  "sourceHash": null,
+  "importedSourceHash": "024d64dbfc27bb2b39de60e81ed0d0e90e53d5f009c53602f9a6852e5c495dd8",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "1e0d3e7f5ace7ec1ca42b1dbb1b02b4589cd084f01b2d66047ed8a146cec2365",
+  "origin": "website-import",
+  "importedFrom": [
+    "parameters/path"
+  ],
+  "pageMetadata": {
+    "parameters/path": {
+      "title": "Path 资产引用",
+      "description": "Path(Root, \"…\") 与内容浏览器的 Copy Reference —— 每种 root 拼写、绝对路径与 root、对象路径补全、共用的解析器，以及它的错误码。"
+    }
+  }
+}

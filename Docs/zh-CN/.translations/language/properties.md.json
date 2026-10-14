@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/language/properties.md",
+  "translationFile": "Docs/zh-CN/language/properties.md",
+  "sourceHash": null,
+  "importedSourceHash": "d79f65d79bd18c7be9de6e1e5c4670002259f2ca233cf2b45effabb890e78ee6",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "4a08b606926981df503c7fd998b19cbd235ec0ffd82b50d722c1bd97bd055d26",
+  "origin": "website-import",
+  "importedFrom": [
+    "parameters/properties"
+  ],
+  "pageMetadata": {
+    "parameters/properties": {
+      "title": "Properties 类型",
+      "description": "Properties 声明接受的全部类型 token —— 39 个紧凑 token、22 个参数节点 token（其中 15 个能构建），它们的默认值、在 Graph 中的读法与调用形式。"
+    }
+  }
+}

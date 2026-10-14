@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/tools/vscode.md",
+  "translationFile": "Docs/zh-CN/tools/vscode.md",
+  "sourceHash": null,
+  "importedSourceHash": "af7ad44a0c7d1ae561f0743bff113f3b14950b058dab5b2c216ef37327b2dabb",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "4b52de0894eb6a833abd57229f361ff45dc87941368d9905072c000428e603fa",
+  "origin": "website-import",
+  "importedFrom": [
+    "tools/vscode"
+  ],
+  "pageMetadata": {
+    "tools/vscode": {
+      "title": "VSCode 与 Rider",
+      "description": "语言扩展、生成的 DreamShader.code-workspace，以及两侧交换的 bridge 产物。"
+    }
+  }
+}

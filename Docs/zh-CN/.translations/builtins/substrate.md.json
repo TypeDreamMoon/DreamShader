@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/builtins/substrate.md",
+  "translationFile": "Docs/zh-CN/builtins/substrate.md",
+  "sourceHash": null,
+  "importedSourceHash": "7556d1bda3a0fff907a3e61797a864ecff65773619bc1747670833227d50f3e8",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "e40f839ed6b8ec59ae31ee5ce0dce40ec538c99a31462dd6f2e05ef9fd2ef195",
+  "origin": "website-import",
+  "importedFrom": [
+    "builtins/substrate"
+  ],
+  "pageMetadata": {
+    "builtins/substrate": {
+      "title": "Substrate 节点",
+      "description": "Substrate.* 调用命名空间 —— 运行中引擎的每个 Substrate BSDF、组合与工具节点，按名字调用。需要 UE 5.4+。"
+    }
+  }
+}

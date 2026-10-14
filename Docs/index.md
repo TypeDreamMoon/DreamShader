@@ -1,5 +1,7 @@
 # DreamShader reference
 
+For tutorials and task-oriented reading, start at the [documentation overview](README.md).
+
 DreamShader compiles **DreamShaderLang** source files — `.dsm`, `.dsf`, `.dsh` and, on the 2.0 line,
 `.dss` — into standard Unreal Engine material assets: `UMaterial`, `UMaterialFunction`,
 `UMaterialFunctionMaterialLayer`, and `UMaterialFunctionMaterialLayerBlend` — and, on Unreal Engine 5.8,

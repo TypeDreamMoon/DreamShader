@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/diagnostics/index.md",
+  "translationFile": "Docs/zh-CN/diagnostics/index.md",
+  "sourceHash": null,
+  "importedSourceHash": "a9d6e54dbfae34696dea6c40c08b5c8333ae89528064ec7946392c64ba6b2c7c",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "85b914b383cad7530c08654a0d8cdb8c1490bac475f0b56c4a9de6bcf53510b6",
+  "origin": "website-import",
+  "importedFrom": [
+    "diagnostics/index"
+  ],
+  "pageMetadata": {
+    "diagnostics/index": {
+      "title": "错误速查",
+      "description": "DreamShader 的诊断出现在哪里、怎么读一条、DSHnnnn 错误码怎么分段、严重级别，一张按阶段分组的常见诊断表，以及 1.x 消息到错误码的对照。"
+    }
+  }
+}

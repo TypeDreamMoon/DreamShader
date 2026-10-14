@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/index.md",
+  "translationFile": "Docs/zh-CN/index.md",
+  "sourceHash": null,
+  "importedSourceHash": "aed470f5139fd12f95570d3013ff5b7ceb34cef2cd03ebde6c45cf0a434a087f",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "5f9c7c711f313fda2bda6367888f87de633a2b2d03e84924959fcd50c214b8ff",
+  "origin": "website-import",
+  "importedFrom": [
+    "index"
+  ],
+  "pageMetadata": {
+    "index": {
+      "title": "概览",
+      "description": "DreamShaderLang 是虚幻引擎材质的文本化语言，由 DreamShader 插件编译成标准材质资产；在 UE 5.8 上还能用 .dsp 写自己的渲染 pass。"
+    }
+  }
+}

@@ -20,7 +20,7 @@
       </p>
       <p>
         <a href="README.zh-CN.md">中文文档</a> &nbsp;·&nbsp;
-        <a href="Docs/index.md">Documentation</a> &nbsp;·&nbsp;
+        <a href="Docs/README.md">Documentation</a> &nbsp;·&nbsp;
         <a href="Docs/getting-started.md">Getting started</a> &nbsp;·&nbsp;
         <a href="Docs/language/index.md">Language reference</a> &nbsp;·&nbsp;
         <a href="Docs/examples/index.md">Examples</a> &nbsp;·&nbsp;
@@ -154,7 +154,7 @@ signatures and output bindings.
 
 ## Documentation
 
-The full reference lives in [`Docs/`](Docs/index.md), and is published at
+The documentation starts at [`Docs/README.md`](Docs/README.md), and is published at
 **<https://shader.toolchain.64hz.cn/docs>** in Chinese and English.
 
 | | |
@@ -306,3 +306,5 @@ an [issue](https://github.com/TypeDreamMoon/DreamShader/issues/new).
    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=typedreammoon/dreamshader&type=date&legend=bottom-right" />
  </picture>
 </a>
+
+Documentation: [English](Docs/README.md) · [简体中文](Docs/zh-CN/README.md) (imported translations awaiting review).

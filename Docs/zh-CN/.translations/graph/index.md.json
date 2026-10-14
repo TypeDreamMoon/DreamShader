@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/graph/index.md",
+  "translationFile": "Docs/zh-CN/graph/index.md",
+  "sourceHash": null,
+  "importedSourceHash": "3ae95d9296c43eef55f1e7ecadb1d114bc014fe9d13ad7daf006adddca3e4b8f",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "d6fdb4fd40df31bad4c49c69eac2e2b22472d8f467706ce01848f9f4766e96b0",
+  "origin": "website-import",
+  "importedFrom": [
+    "graph/overview"
+  ],
+  "pageMetadata": {
+    "graph/overview": {
+      "title": "Graph 求值模型",
+      "description": "Graph 块究竟是什么、它如何由 2.0 编译器的 legacy 前端构建成节点，以及它为什么和外层的声明语言不是同一门语言。"
+    }
+  }
+}

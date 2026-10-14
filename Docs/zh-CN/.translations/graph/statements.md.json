@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/graph/statements.md",
+  "translationFile": "Docs/zh-CN/graph/statements.md",
+  "sourceHash": null,
+  "importedSourceHash": "05e2a1b04636dc4fbb06de97a4f175750ee029c16ecf86a55ab4ad091480945e",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "8827837bb1c1bff66a4dfdde9597aff2dc012575ea493898fe7b726f936dc381",
+  "origin": "website-import",
+  "importedFrom": [
+    "graph/statements"
+  ],
+  "pageMetadata": {
+    "graph/statements": {
+      "title": "语句与声明",
+      "description": "Graph 块体里的全部语句形式——声明、赋值、成员写入、调用——以及结束规则、分类顺序、MaterialAttributes 与作用域。"
+    }
+  }
+}

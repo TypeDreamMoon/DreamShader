@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/settings/project.md",
+  "translationFile": "Docs/zh-CN/settings/project.md",
+  "sourceHash": null,
+  "importedSourceHash": "6f3fadf3e4eeb882b7d5473de8d1978c3d14865ed11bfc0cfddc7f02cbef3464",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "c88b08aa857208eb4290872dcfb489419f77fd072aae95604801fc6d9014c152",
+  "origin": "website-import",
+  "importedFrom": [
+    "settings/project"
+  ],
+  "pageMetadata": {
+    "settings/project": {
+      "title": "项目设置",
+      "description": "Project Settings ▸ DreamPlugin ▸ Dream Shader 下的全部 17 个属性、它们真实的配置标识符、默认值与作用，以及 Custom Pass 的设置对象。"
+    }
+  }
+}

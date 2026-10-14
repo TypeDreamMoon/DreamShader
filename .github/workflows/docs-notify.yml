@@ -1,0 +1,36 @@
+name: Notify documentation site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Docs/**
+      - README*.md
+      - CHANGELOG.md
+      - .github/workflows/docs-notify.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify the documentation repository
+        env:
+          GH_TOKEN: ${{ secrets.DOCS_SYNC_TOKEN }}
+          SOURCE_REPOSITORY: ${{ github.repository }}
+          SOURCE_SHA: ${{ github.sha }}
+        shell: python
+        run: |
+          import json, os, subprocess
+          if not os.environ.get("GH_TOKEN"):
+              # A fork or a repository without the secret: nothing to notify, and nothing failed.
+              print("::warning::DOCS_SYNC_TOKEN is not set; the documentation site was not notified")
+              raise SystemExit(0)
+          payload = {"event_type": "plugin-docs-updated", "client_payload": {
+              "repository": os.environ["SOURCE_REPOSITORY"], "sha": os.environ["SOURCE_SHA"]}}
+          subprocess.run(["gh", "api", "repos/TypeDreamMoon/shader.toolchain.64hz.cn/dispatches", "--input", "-"],
+                         input=json.dumps(payload), text=True, check=True)

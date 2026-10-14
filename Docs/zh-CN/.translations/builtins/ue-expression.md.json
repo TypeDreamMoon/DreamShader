@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/builtins/ue-expression.md",
+  "translationFile": "Docs/zh-CN/builtins/ue-expression.md",
+  "sourceHash": null,
+  "importedSourceHash": "fafa8bdd327010aa0a5daa138b81173240ddbe721945fbd49426b85d0c989460",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "14a8b6d1d716d6777e1d499df72c2b31751c7ad22d57cc70e371849b60f9d15e",
+  "origin": "website-import",
+  "importedFrom": [
+    "builtins/ue-expression"
+  ],
+  "pageMetadata": {
+    "builtins/ue-expression": {
+      "title": "通用 UE.Expression",
+      "description": "按类名创建内置目录里任意 UMaterialExpression 的反射调用 —— 类解析、参数分派、OutputType、输出选择、Custom 节点与结果类型。"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/getting-started/project-layout.md",
+  "translationFile": "Docs/zh-CN/getting-started/project-layout.md",
+  "sourceHash": null,
+  "importedSourceHash": "012d7962c804fe30b2244844a7d42d678d4d97efdcb67a0fed4c4e2ad2a4f9b8",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "ee3d9d9d25811f9f7c3198d1f9997f188e45d13def3cc008029c7d3ed2c1279f",
+  "origin": "website-import",
+  "importedFrom": [
+    "start/project-layout"
+  ],
+  "pageMetadata": {
+    "start/project-layout": {
+      "title": "项目结构",
+      "description": "DShader/ 怎么组织、六种源文件各放什么、插件如何贡献自己的源码根、哪些目录归插件所有，以及决定什么会被编译的 Package 规则。"
+    }
+  }
+}

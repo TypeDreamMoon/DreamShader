@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/runtime/index.md",
+  "translationFile": "Docs/zh-CN/runtime/index.md",
+  "sourceHash": null,
+  "importedSourceHash": "510cbdcdff623ca7bf8ccf1ba08bde953159707cea5bb13e8934c4d8b682f4ce",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "a574464dcb9b97e785b77b3a401ed008078cfe427b187e868d31870d8d2af299",
+  "origin": "website-import",
+  "importedFrom": [
+    "custom-pass/index"
+  ],
+  "pageMetadata": {
+    "custom-pass/index": {
+      "title": "Custom Pass 运行时",
+      "description": "编译好的 .dsp 管线在运行时发生什么 —— 什么让它作用于一个视图、pass 何时运行、缓冲区里装着什么、导出的缓冲区怎么给材质 / 蓝图 / UMG / Niagara 读，以及怎么看它做了什么。需要 UE 5.8。"
+    }
+  }
+}

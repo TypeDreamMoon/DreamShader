@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/language-v2/passes.md",
+  "translationFile": "Docs/zh-CN/language-v2/passes.md",
+  "sourceHash": null,
+  "importedSourceHash": "0bb4564992a9ba0e24091c6f5ac16e5c9180d9fb584ab67d910ed6704b55032e",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "46dcae9732fb7797c161bb840569bc41867d5e0e9f9b9bc11d503dd100471784",
+  "origin": "website-import",
+  "importedFrom": [
+    "language-v2/passes"
+  ],
+  "pageMetadata": {
+    "language-v2/passes": {
+      "title": "Custom Pass 管线",
+      "description": ".dsp —— 把自定义渲染 pass 写成源码。具名缓冲区、在渲染器注入点运行的全屏 / compute / mesh / clear / copy pass、可被激活方覆盖的参数，编译成一个 UDreamPassPipeline。需要 UE 5.8。"
+    }
+  }
+}

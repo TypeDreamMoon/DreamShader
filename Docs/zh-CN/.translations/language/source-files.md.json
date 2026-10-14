@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/language/source-files.md",
+  "translationFile": "Docs/zh-CN/language/source-files.md",
+  "sourceHash": null,
+  "importedSourceHash": "7d7f9d117da7567e9b931f63c35f013ee320ae92e0313da796d51f6f422972e3",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "b352b6e3c0631114f52c9680e6e08e75c19f0e3ed9699826d9f7fce4a4cb748b",
+  "origin": "website-import",
+  "importedFrom": [
+    "language/file-model"
+  ],
+  "pageMetadata": {
+    "language/file-model": {
+      "title": "文件模型",
+      "description": "三种 1.x 源文件、各自允许声明的顶层块、这条规则如何执行，以及一个文件和它导入的 header 如何一起编译。"
+    }
+  }
+}

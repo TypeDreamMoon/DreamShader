@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceFile": "Docs/settings/backend.md",
+  "translationFile": "Docs/zh-CN/settings/backend.md",
+  "sourceHash": null,
+  "importedSourceHash": "6f5d0c2b7e424b57eb4d06d0b495389fc0b662a8f5a41f0755ae6f9dfbdb22c5",
+  "sourceRevision": "96cffa24e5a454147d7953256ed7d45afae7ac9f",
+  "translationHash": "e88a5c8e6a73481051d161cc5cc0b1ad411e8e7d2a671265ae07b50cd079eabe",
+  "origin": "website-import",
+  "importedFrom": [
+    "settings/backend"
+  ],
+  "pageMetadata": {
+    "settings/backend": {
+      "title": "Backend",
+      "description": "Graph 与 ThinCustom 的区别 —— 谁承载图、谁是可寻址的资产，以及按文件的设置如何与项目默认值一起解析。"
+    }
+  }
+}
