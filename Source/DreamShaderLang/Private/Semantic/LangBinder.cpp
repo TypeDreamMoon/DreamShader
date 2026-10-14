@@ -27,6 +27,7 @@
 #include "Internationalization/Internationalization.h"
 #include "Internationalization/Text.h"
 #include "Misc/AssertionMacros.h"
+#include "Misc/Paths.h"
 #include "Templates/UniquePtr.h"
 
 #define LOCTEXT_NAMESPACE "DreamShader.Binder"
