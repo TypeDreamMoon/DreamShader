@@ -72,7 +72,13 @@ namespace UE::DreamShader::Lang
 		const TArray<FLangDiagnostic>& GetDiagnostics() const { return Diagnostics; }
 		const FString& GetFilePath() const { return FilePath; }
 
-		/** Moves every diagnostic of Other onto the end of this sink. */
+		/**
+		 * The warnings and errors the source disabled (LangDiagnosticSuppression.h): raised, but neither recorded above nor
+		 * counted. Kept for the one case that still needs them -- a compile that stopped with nothing else to say why.
+		 */
+		const TArray<FLangDiagnostic>& GetSuppressedDiagnostics() const { return SuppressedDiagnostics; }
+
+		/** Moves every diagnostic of Other onto the end of this sink, the suppressed ones onto the end of its suppressed ones. */
 		void Append(FLangDiagnosticSink&& Other);
 
 		/** The first error, for callers that can only report one. Null when there is none. */
@@ -90,6 +96,7 @@ namespace UE::DreamShader::Lang
 
 		FString FilePath;
 		TArray<FLangDiagnostic> Diagnostics;
+		TArray<FLangDiagnostic> SuppressedDiagnostics;
 		int32 ErrorCount = 0;
 	};
 }

@@ -455,6 +455,34 @@ namespace UE::DreamShader::Lang::Private
 			}
 		}
 
+		// Three `#pragma` lines say something about the file rather than its graph, and a 1.x file takes them as a 2.0 one
+		// does (after 2.1.2): `nogeneration`, and the `disable_warning` / `disable_error` lists the pipeline reads off the
+		// text. They become the same declarations the 2.0 parser makes, so the binder and `dsc migrate` see them.
+		if (Token.Kind == ELangTokenKind::Directive)
+		{
+			FString Payload = Token.Text.TrimStartAndEnd();
+			if (Payload.StartsWith(TEXT("pragma"), ESearchCase::CaseSensitive) && Payload.Len() > 6 && FChar::IsWhitespace(Payload[6]))
+			{
+				Payload = Payload.RightChop(6).TrimStart();
+				int32 NameEnd = 0;
+				while (NameEnd < Payload.Len() && (FChar::IsAlnum(Payload[NameEnd]) || Payload[NameEnd] == TEXT('_')))
+				{
+					++NameEnd;
+				}
+				const FString PragmaName = Payload.Left(NameEnd);
+				if (PragmaName.Equals(TEXT("nogeneration"), ESearchCase::CaseSensitive)
+					|| PragmaName.Equals(TEXT("disable_warning"), ESearchCase::CaseSensitive)
+					|| PragmaName.Equals(TEXT("disable_error"), ESearchCase::CaseSensitive))
+				{
+					if (FDeclPtr Pragma = ParseDirective(FDocBlock()))
+					{
+						OutDecls.Add(MoveTemp(Pragma));
+					}
+					return true;
+				}
+			}
+		}
+
 		// What is left is either 2.0 syntax, which a 1.x file does not take, or nothing either language knows.
 		const bool bLooksLike20 = Token.Kind == ELangTokenKind::Directive
 			|| Token.IsKeyword(ELangKeyword::Uniform)

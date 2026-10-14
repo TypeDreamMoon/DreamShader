@@ -80,6 +80,7 @@
 #include "Pipeline/DreamShaderPackageAssets.h"
 #include "DreamShaderPreprocessor.h"
 #include "DreamShaderSettings.h"
+#include "Lang/LangDiagnosticSuppression.h"
 #include "Lang/LangParser.h"
 #include "DreamShaderGenerationProgress.h"
 #include "DreamShaderGeneratedAssets.h"
@@ -725,6 +726,25 @@ namespace UE::DreamShader::Editor::Compiler
 				UnitPath = GetDreamShaderPackageAssetUnitPath(SourceFilePath);
 			}
 
+			// The warnings and errors the source disables (`#pragma disable_warning(...)`, `// disable_error DSH...`; see
+			// Lang/LangDiagnosticSuppression.h), in force from here to the end of the run on every sink it raises into. An
+			// asset header's lists are the header's, not those of the unit that stands in for it.
+			FLangDiagnosticSuppressionScope Suppression(UnitPath, RawText);
+			Suppression.AddRootFile(SourceFilePath);
+			for (const FLangDisabledDiagnostics::FMalformed& Malformed : Suppression.GetRootLists().Malformed)
+			{
+				FLangSpan MalformedSpan;
+				MalformedSpan.Offset = Malformed.Offset;
+				MalformedSpan.Length = FMath::Max(1, Malformed.Length);
+				MalformedSpan.Line = Malformed.Line;
+				MalformedSpan.Column = Malformed.Column;
+				OutResult.Diagnostics.Warning(TEXT("DSH7236"), MalformedSpan, Malformed.Text.IsEmpty()
+					? LOCTEXT("DisableListEmpty", "A 'disable_warning' or 'disable_error' list names no code, and disables nothing; write the codes after it, such as 'DSH7224'.")
+					: FText::Format(
+						LOCTEXT("DisableListMalformed", "'{0}' is not a diagnostic code, and was ignored; a 'disable_warning' or 'disable_error' list takes codes such as 'DSH7224'."),
+						FText::FromString(Malformed.Text)));
+			}
+
 			UE::DreamShader::FDreamShaderPreprocessResult PreprocessResult;
 			UE::DreamShader::FDreamShaderTextError PreprocessError;
 			if (!UE::DreamShader::PreprocessDreamShaderSource(
@@ -1353,6 +1373,21 @@ namespace UE::DreamShader::Editor::Compiler
 		{
 			if (!BuildLang2CompileError(Result.Diagnostics, Result.SourceFilePath, OutError))
 			{
+				// The source disabled the error that stopped the compile, and nothing after it said why. The one place a
+				// disabled error is reported after all: a failure with no reason reads as a fault of the compiler.
+				for (const FLangDiagnostic& Hidden : Result.Diagnostics.GetSuppressedDiagnostics())
+				{
+					if (Hidden.Severity == ELangSeverity::Error)
+					{
+						OutError.Code = Hidden.Code;
+						OutError.Message = FString::Printf( /* I18N-EXEMPT: wire form, a quoted diagnostic and its note */
+							TEXT("%s\n(The source disables %s, but the compile could not go on past it.)"),
+							*FormatLang2DiagnosticWireLine(Hidden, Result.SourceFilePath),
+							*Hidden.Code);
+						return false;
+					}
+				}
+
 				// A false return with no error in the sink is an internal fault, not a source problem: some stage
 				// refused without saying why. Naming it as such beats reporting an empty message, which reads as a
 				// success to every caller that only prints OutError. DSH9039 rather than an 829x: the 1.x convention

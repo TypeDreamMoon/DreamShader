@@ -1146,7 +1146,11 @@ namespace UE::DreamShader::Lang
 				const FString Text = Decl.Text.TrimStartAndEnd();
 				if (!Text.IsEmpty())
 				{
-					Line += TEXT(" ");
+					// `#pragma disable_warning(DSH7224)`: an argument list stays against its name, as it was written.
+					if (!Text.StartsWith(TEXT("("), ESearchCase::CaseSensitive) || Name.IsEmpty())
+					{
+						Line += TEXT(" ");
+					}
 					Line += Text;
 				}
 				break;
