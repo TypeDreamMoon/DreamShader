@@ -36,6 +36,10 @@
   statement, found ':'"); only the flattened `BL_TexNoise3D(...)` reached the function. The `.dss` parser now
   reads `Ns::Fn` as the 1.x front end does, the printer and `dsc fmt` keep the qualified spelling, and an
   unknown member is `DSH4208` naming `Ns::Fn` as written. See [Namespace](Docs/language/namespace.md#calling-a-namespaced-function).
+- **A `.dsi` picked up a `TranslucencySectionPriority` it never set.** Unreal 5.8.3 added the key to a material
+  instance's base property overrides without initializing it, and the instance build started from a copy made on
+  the stack, so whatever was there could become an override — `TranslucencySectionPriority = 16999` in the asset and
+  in what *Adopt Into Source* wrote back. The build now starts from the class default.
 
 ## 2.1.2 - 2026-10-11
 
