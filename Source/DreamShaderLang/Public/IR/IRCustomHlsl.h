@@ -117,4 +117,18 @@ namespace UE::DreamShader::IR
 		FCustomNodeCode& Out,
 		Lang::FLangDiagnosticSink& Diagnostics,
 		const TFunction<FString(const FString& File)>& StampSourcePath = TFunction<FString(const FString& File)>());
+
+	/**
+	 * The bodies of the `@custom` functions declared in OnlyModule (every one of Bound when null), read the way
+	 * BuildDreamShaderCustomNodeCode reads a helper it embeds -- without building a node. Every call to another
+	 * `@custom` function is matched against the HLSL that function becomes (DSH6262, DSH6265, DSH6266), and the closure
+	 * is walked (DSH6260, DSH6261, DSH6327).
+	 *
+	 * A header lowers to nothing, so nothing else reads its bodies before a material calls them: this is what
+	 * `dsc migrate` proves of the text it wrote. False after an error.
+	 */
+	DREAMSHADERLANG_API bool CheckDreamShaderCustomFunctionBodies(
+		const Lang::FBoundModule& Bound,
+		const Lang::FModule* OnlyModule,
+		Lang::FLangDiagnosticSink& Diagnostics);
 }

@@ -46,6 +46,10 @@
 // `Fetch(lut, i, size, a);`, which 1.x wrote as `a = Fetch(lut, i, size);` and so is it here. A `/// @custom` helper
 // keeps the signature it declares, which is the one its callers wrote.
 //
+// Every call of an embedded function is matched against the HLSL that function becomes: HLSL has no default
+// arguments and a `@custom` function no overloads, so another number of arguments (DSH6262, DSH6265), or the value of
+// a function that returns nothing (DSH6266), would only be found by the shader compiler.
+//
 // Engine facts this file encodes as text (all from HLSLMaterialTranslator::CustomExpression, 5.8):
 // an additional output is declared by the engine as `inout MaterialFloatN <Name>` and is already
 // zero-initialised at the call site, so the body assigns to it and declares nothing; the generated
@@ -799,6 +803,8 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		}
 
 		bool Build(int32 FunctionIndex, FCustomNodeCode& Out);
+		/** CheckDreamShaderCustomFunctionBodies. */
+		bool CheckBodies(const Lang::FModule* OnlyModule);
 
 	private:
 		const FPreparedFunction* Prepare(int32 FunctionIndex);
@@ -1655,27 +1661,52 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		const int32 ReceiverArgument = (CalleePrimaryOut != INDEX_NONE && Ranges.Num() == Callee.Params.Num()) ? CalleePrimaryOut : INDEX_NONE;
 		const ECustomCallUse Use = ClassifyCustomCallUse(Owner.Body, Owner.BodyPieces, BaseOffset + IdentifierEnd - Callee.Name.Len());
 
-		if (ReceiverArgument == INDEX_NONE && !bCalleeHasTexture)
+		if (ReceiverArgument == INDEX_NONE && Ranges.Num() != ParamOfArgument.Num())
 		{
-			// Nothing to splice: replace the name and let the scan walk the argument list, so
-			// nested calls and sugar inside it are rewritten in place. This is what 1.x did.
+			if (bCalleeHasTexture)
+			{
+				// Each sampler has to be spliced in beside its texture, so the positions have to line
+				// up. Without that there is nothing sensible to emit.
+				bOk = Diagnostics.Error(
+					TEXT("DSH6262"),
+					MakeBodySpan(*Owner.Function, BaseOffset + OpenParenIndex, CloseParen - OpenParenIndex + 1),
+					FText::Format(
+						LOCTEXT("CustomCallArity", "'{0}' takes {1} argument(s) but this call passes {2}; a call that carries a texture cannot be matched up by position otherwise."),
+						FText::FromString(Callee.Name),
+						ParamOfArgument.Num(),
+						Ranges.Num())) && bOk;
+			}
+			else
+			{
+				// HLSL has no default arguments, and a `@custom` function no overloads: this is a shader-compile error.
+				bOk = Diagnostics.Error(
+					TEXT("DSH6265"),
+					MakeBodySpan(*Owner.Function, BaseOffset + OpenParenIndex, CloseParen - OpenParenIndex + 1),
+					FText::Format(
+						LOCTEXT("CustomCallArityPlain", "'{0}' takes {1} argument(s) in the HLSL it becomes, but this call passes {2}."),
+						FText::FromString(Callee.Name),
+						ParamOfArgument.Num(),
+						Ranges.Num())) && bOk;
+			}
 			OutRewritten = Replacement;
 			OutNextIndex = IdentifierEnd;
 			return true;
 		}
 
-		if (ReceiverArgument == INDEX_NONE && Ranges.Num() != ParamOfArgument.Num())
+		if (ReceiverArgument == INDEX_NONE && Use == ECustomCallUse::Value && Callee.ReturnType.IsVoid() && CalleePrimaryOut == INDEX_NONE)
 		{
-			// Each sampler has to be spliced in beside its texture, so the positions have to line
-			// up. Without that there is nothing sensible to emit.
 			bOk = Diagnostics.Error(
-				TEXT("DSH6262"),
-				MakeBodySpan(*Owner.Function, BaseOffset + OpenParenIndex, CloseParen - OpenParenIndex + 1),
+				TEXT("DSH6266"),
+				MakeBodySpan(*Owner.Function, BaseOffset + IdentifierEnd - Callee.Name.Len(), CloseParen + 1 - (IdentifierEnd - Callee.Name.Len())),
 				FText::Format(
-					LOCTEXT("CustomCallArity", "'{0}' takes {1} argument(s) but this call passes {2}; a call that carries a texture cannot be matched up by position otherwise."),
-					FText::FromString(Callee.Name),
-					ParamOfArgument.Num(),
-					Ranges.Num())) && bOk;
+					LOCTEXT("CustomCallVoidValue", "'{0}' returns nothing in the HLSL it becomes, so this call has no value to read; pass a variable for each of its 'out' parameters and read those."),
+					FText::FromString(Callee.Name))) && bOk;
+		}
+
+		if (!bCalleeHasTexture && ReceiverArgument == INDEX_NONE)
+		{
+			// Nothing to splice: replace the name and let the scan walk the argument list, so
+			// nested calls and sugar inside it are rewritten in place. This is what 1.x did.
 			OutRewritten = Replacement;
 			OutNextIndex = IdentifierEnd;
 			return true;
@@ -2124,6 +2155,58 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 
 		return bOk;
 	}
+
+	bool FCustomCodeBuilder::CheckBodies(const Lang::FModule* OnlyModule)
+	{
+		const auto IsChecked = [OnlyModule](const FBoundFunction& Function)
+		{
+			if (Function.Kind != EBoundFunctionKind::Custom || !Function.Decl || !Function.Decl->bOpaqueBody)
+			{
+				return false;
+			}
+			return !OnlyModule || OnlyModule->Declarations.ContainsByPredicate([&Function](const Lang::FDeclPtr& Decl)
+			{
+				return Decl.Get() == Function.Decl;
+			});
+		};
+
+		// Every function a body could embed, under the name it is embedded by; one that lifts calls out of its body is
+		// never embedded (DSH6327, from the closure walk), so a call of it is not rewritten either.
+		TMap<int32, FString> Replacements;
+		for (int32 Index = 0; Index < Bound.Functions.Num(); ++Index)
+		{
+			const FBoundFunction& Function = Bound.Functions[Index];
+			if (Function.Kind == EBoundFunctionKind::Custom && Function.Decl && Function.Decl->HoistedCalls.Num() == 0)
+			{
+				// The name only: a function no checked body calls is not read here.
+				Replacements.Add(Index, BuildFunctionSymbolName(Function.Name));
+			}
+		}
+
+		for (int32 Index = 0; Index < Bound.Functions.Num(); ++Index)
+		{
+			if (!IsChecked(Bound.Functions[Index]))
+			{
+				continue;
+			}
+			const FPreparedFunction* Prepared = Prepare(Index);
+			if (!Prepared)
+			{
+				continue;
+			}
+
+			// As the helper it is in some other node's code: what a node of its own adds is checked by the node.
+			TArray<int32> Order;
+			CollectClosure(Index, Order);
+			ValidateSignature(*Prepared, /*bIsRoot*/ false);
+			if (!Prepared->bSelfContained)
+			{
+				// Every call is matched against its callee's HLSL here, which is what the shader compiler would do.
+				RewriteText(*Prepared, Prepared->Body, 0, Replacements);
+			}
+		}
+		return bOk;
+	}
 }
 
 namespace UE::DreamShader::IR
@@ -2170,6 +2253,13 @@ namespace UE::DreamShader::IR
 	{
 		CustomHlslPrivate::FCustomCodeBuilder Builder(Bound, Diagnostics, StampSourcePath);
 		return Builder.Build(FunctionIndex, Out);
+	}
+
+	bool CheckDreamShaderCustomFunctionBodies(const Lang::FBoundModule& Bound, const Lang::FModule* OnlyModule, Lang::FLangDiagnosticSink& Diagnostics)
+	{
+		const TFunction<FString(const FString& File)> NoStamp;
+		CustomHlslPrivate::FCustomCodeBuilder Builder(Bound, Diagnostics, NoStamp);
+		return Builder.CheckBodies(OnlyModule);
 	}
 }
 
