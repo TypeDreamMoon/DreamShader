@@ -27,7 +27,9 @@ jobs:
         run: |
           import json, os, subprocess
           if not os.environ.get("GH_TOKEN"):
-              raise SystemExit("Set DOCS_SYNC_TOKEN with Contents: write on the documentation repository")
+              # A fork or a repository without the secret: nothing to notify, and nothing failed.
+              print("::warning::DOCS_SYNC_TOKEN is not set; the documentation site was not notified")
+              raise SystemExit(0)
           payload = {"event_type": "plugin-docs-updated", "client_payload": {
               "repository": os.environ["SOURCE_REPOSITORY"], "sha": os.environ["SOURCE_SHA"]}}
           subprocess.run(["gh", "api", "repos/TypeDreamMoon/shader.toolchain.64hz.cn/dispatches", "--input", "-"],
