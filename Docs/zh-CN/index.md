@@ -17,7 +17,7 @@ DreamShader 将 **DreamShaderLang** 源文件——`.dsm`、`.dsf`、`.dsh`，�
 
 | | |
 | :-- | :-- |
-| 版本 | `2.1.2` |
+| 版本 | `2.2.0` |
 | 引擎 | Unreal Engine `5.3` – `5.8`（Win64 已验证）；Custom Pass 需要 `5.8` |
 | 模块 | `DreamShaderLang` (Runtime)、`DreamShader` (Runtime)、`DreamShaderPass` (Runtime)、`DreamShaderCompiler` (Editor)、`DreamShaderEditor` (Editor) |
 | 源文件扩展名 | `.dsm` 材质 · `.dsf` 函数 · `.dsh` 头文件 · `.dss` 2.0 编译单元 · `.dsi` 材质实例 · `.dsp` Custom Pass 管线 |
@@ -72,7 +72,7 @@ DreamShader 将 **DreamShaderLang** 源文件——`.dsm`、`.dsf`、`.dsh`，�
 | [`Properties`](language/properties.md) | 参数声明和组作用域 |
 | [`Inputs` / `Outputs`](language/inputs-outputs.md) | 函数签名和材质输出 |
 | [输出绑定](language/output-bindings.md) | `Base.<Target> = <value>;` |
-| [`Settings`](../settings/index.md) | 材质和函数设置 |
+| [`Settings`](settings/index.md) | 材质和函数设置 |
 | [`Options`](language/options.md) | `VirtualFunction` 资产绑定 |
 | [`Layout`](language/layout.md) | 节点放置、注释框、`#Region` |
 
@@ -80,7 +80,7 @@ DreamShader 将 **DreamShaderLang** 源文件——`.dsm`、`.dsf`、`.dsh`，�
 
 ### [Graph 语言](graph/index.md)
 
-`Graph = { ... }` 内部的语句和表达式语言，用于具现化材质节点。
+``Graph = { ... }`` 内部的语句和表达式语言，用于具现化材质节点。
 
 | | |
 | :-- | :-- |
@@ -121,15 +121,15 @@ DreamShader 将 **DreamShaderLang** 源文件——`.dsm`、`.dsf`、`.dsh`，�
 
 <a id="parametersparametersindexmd"></a>
 
-### [参数](../parameters/index.md)
+### [参数](parameters/index.md)
 
 | | |
 | :-- | :-- |
 | [紧凑类型](parameters/compact-types.md) | `float`、`float3`、`Texture2D`…… |
-| [参数节点](../parameters/parameter-nodes.md) | `ScalarParameter`、`StaticSwitchParameter`…… |
+| [参数节点](parameters/parameter-nodes.md) | `ScalarParameter`、`StaticSwitchParameter`…… |
 | [元数据块](parameters/metadata.md) | `Group`、`SortPriority`、`Slider`、反射属性 |
-| [`SamplerType`](../parameters/sampler-type.md) | 纹理采样器配置 |
-| [在 `Graph` 中使用参数](../parameters/graph-usage.md) | 值读取和引脚调用形式 |
+| [`SamplerType`](parameters/sampler-type.md) | 纹理采样器配置 |
+| [在 `Graph` 中使用参数](parameters/graph-usage.md) | 值读取和引脚调用形式 |
 | [`Path(...)`](parameters/path.md) | 资产引用 |
 
 ---
@@ -145,7 +145,7 @@ DreamShader 将 **DreamShaderLang** 源文件——`.dsm`、`.dsf`、`.dsh`，�
 | :-- | :-- |
 | [管线——`.dsp`](language-v2/passes.md) | 缓冲区、pass、注入点、绑定、网格选择、编译器检查的内容 |
 | [运行时](runtime/index.md) | 什么使管线生效、pass 何时运行、内置和导出的缓冲区、视图、调试、限制 |
-| [HLSL pass](../runtime/hlsl.md) | 固定参数、槽位、快照和预检查 |
+| [HLSL pass](runtime/hlsl.md) | 固定参数、槽位、快照和预检查 |
 | [材质节点](builtins/dream-pass.md) | 用于网格 pass 的 `UE.DreamPassOutput`，用于读取导出缓冲区的 `UE.DreamPassBuffer` |
 | [示例](examples/custom-pass.md) | 高亮描边、UI 毛玻璃、透视、风场 |
 | [`DreamShaderPass`](api/pass-module.md) | 该模块的 C++ 和蓝图 API |
@@ -158,14 +158,14 @@ DreamShader 将 **DreamShaderLang** 源文件——`.dsm`、`.dsf`、`.dsh`，�
 
 <a id="settingssettingsindexmd"></a>
 
-### [设置](../settings/index.md)
+### [设置](settings/index.md)
 
 | | |
 | :-- | :-- |
 | [材质设置](settings/material.md) | 特殊键加上反射的 `UMaterial` 属性 |
 | [枚举取值](settings/material-enums.md) | 每一个 `ShadingModel`、`BlendMode`、`Domain` |
 | [`Backend`](settings/backend.md) | `ThinCustom` 对比 `Graph` |
-| [函数设置](../settings/function.md) | 材质函数支持的键 |
+| [函数设置](settings/function.md) | 材质函数支持的键 |
 | [项目设置](settings/project.md) | *DreamPlugin ▸ Dream Shader* |
 
 <a id="generationgenerationindexmd"></a>
@@ -174,14 +174,14 @@ DreamShader 将 **DreamShaderLang** 源文件——`.dsm`、`.dsf`、`.dsh`，�
 
 | | |
 | :-- | :-- |
-| [资产路径](generation/asset-paths.md) | `Name=` 和 `Root=` 到包路径与磁盘路径 |
+| [资产路径](generation/asset-paths.md) | ``Name=`` 和 ``Root=`` 到包路径与磁盘路径 |
 | [瞬时材质](generation/ephemeral.md) | 薄实例、隐藏基础、烹饪行为 |
 | [缓存](generation/caching.md) | 源哈希与跳过的重建 |
 | [图表布局](generation/graph-layout.md) | 自动放置及其限制 |
 | [重新生成](generation/regeneration.md) | 重建后什么保留、什么不保留 |
 | [分歧](generation/divergence.md) | 手改过的资产：检测，以及三种出路 |
 | [NoGeneration](generation/no-generation.md) | 只有指名它们的那次编译才会构建的源文件 |
-| [生成的 HLSL](generation/generated-hlsl.md) | 生成的 `.ush` include |
+| [生成的 HLSL](generation/generated-hlsl.md) | 生成的 ``.ush`` include |
 
 ---
 
@@ -191,19 +191,19 @@ DreamShader 将 **DreamShaderLang** 源文件——`.dsm`、`.dsf`、`.dsh`，�
 
 <a id="editor-toolstoolsindexmd"></a>
 
-### [编辑器工具](../tools/index.md)
+### [编辑器工具](tools/index.md)
 
 | | |
 | :-- | :-- |
 | [编辑器集成](tools/editor-integration.md) | 菜单、工具栏、上下文菜单 |
-| [材质 Content Browser](../tools/material-browser.md) | 浏览、筛选、实例化、实体化 |
-| [预览](../tools/preview.md) | 缩略图和流式预览 |
+| [材质 Content Browser](tools/material-browser.md) | 浏览、筛选、实例化、实体化 |
+| [预览](tools/preview.md) | 缩略图和流式预览 |
 | [反编译器](tools/decompiler.md) | 把已有的材质、实例和 Custom Pass 管线导出为源文件 |
-| [VirtualFunction 工具](../tools/virtual-function-tools.md) | 声明并同步已有的函数 |
-| [工作区与编辑器扩展](../tools/workspace.md) | VSCode 工作区、VSCode 与 Rider 插件 |
-| [Package](tools/packages.md) | `DShader/Packages` 共享库 |
+| [VirtualFunction 工具](tools/virtual-function-tools.md) | 声明并同步已有的函数 |
+| [工作区与编辑器扩展](tools/workspace.md) | VSCode 工作区、VSCode 与 Rider 插件 |
+| [Package](tools/packages.md) | ``DShader/Packages`` 共享库 |
 | [Commandlet](tools/commandlet.md) | 无头编译与反编译 |
-| [编辑器 bridge](../tools/bridge.md) | 请求文件、WebSocket 协议、产物 |
+| [编辑器 bridge](tools/bridge.md) | 请求文件、WebSocket 协议、产物 |
 
 <a id="c-apiapiindexmd"></a>
 
@@ -211,14 +211,14 @@ DreamShader 将 **DreamShaderLang** 源文件——`.dsm`、`.dsf`、`.dsh`，�
 
 | | |
 | :-- | :-- |
-| [`DreamShaderModule.h`](api/dreamshader-module.md) | 模块、日志类别、导出的函数 |
-| [`DreamShaderTypes.h`](api/types.md) | 解析后的源数据模型 |
-| [`DreamShaderParser.h`](api/parser.md) | 2.0 中已退役 —— 取代 1.x 解析器入口点的是什么 |
-| [`DreamShaderSettings.h`](api/settings.md) | `UDreamShaderSettings` |
-| [`DreamShaderMaterialInstance.h`](api/material-instance.md) | 生成的实例类 |
-| [`DreamShaderVersionCompat.h`](api/version-compat.md) | 引擎版本宏 |
-| [`DreamShaderCompiler`](api/compiler-module.md) | 编译器接口与服务 |
-| [`DreamShaderPass`](api/pass-module.md) | Custom Pass：管线资产、设置、子系统、体积与组件 |
+| [``DreamShaderModule.h``](api/dreamshader-module.md) | 模块、日志类别、导出的函数 |
+| [``DreamShaderTypes.h``](api/types.md) | 解析后的源数据模型 |
+| [``DreamShaderParser.h``](api/parser.md) | 2.0 中已退役 —— 取代 1.x 解析器入口点的是什么 |
+| [``DreamShaderSettings.h``](api/settings.md) | ``UDreamShaderSettings`` |
+| [``DreamShaderMaterialInstance.h``](api/material-instance.md) | 生成的实例类 |
+| [``DreamShaderVersionCompat.h``](api/version-compat.md) | 引擎版本宏 |
+| [``DreamShaderCompiler``](api/compiler-module.md) | 编译器接口与服务 |
+| [``DreamShaderPass``](api/pass-module.md) | Custom Pass：管线资产、设置、子系统、体积与组件 |
 
 ---
 
@@ -229,7 +229,7 @@ DreamShader 将 **DreamShaderLang** 源文件——`.dsm`、`.dsf`、`.dsh`，�
 | | |
 | :-- | :-- |
 | [诊断索引](diagnostics/index.md) | 每一个错误和警告，附原因与修复方法 |
-| [禁用诊断](language-v2/disable-diagnostics.md) | `disable_warning` / `disable_error`，针对一个文件或一行 |
+| [禁用诊断](language-v2/disable-diagnostics.md) | ``disable_warning`` / ``disable_error``，针对一个文件或一行 |
 | [示例](examples/index.md) | 完整、可直接复制粘贴的源文件 |
 | [贡献](contributing/index.md) | 构建插件 |
 | [测试](contributing/testing.md) | 自动化测试套件与固定样本集 |
