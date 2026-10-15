@@ -9,7 +9,7 @@ lives.
 | :-- | :-- |
 | Repository | <https://github.com/TypeDreamMoon/DreamShader> |
 | Kind | contributor reference |
-| Plugin version | `2.1.2` — descriptor `Version` `212`, `IsBetaVersion` `false` |
+| Plugin version | `2.2.0` — descriptor `Version` `220`, `IsBetaVersion` `false` |
 | Engines | Unreal Engine `5.3` – `5.8`, Win64 verified |
 | License | MIT |
 
@@ -265,10 +265,10 @@ a `.build-plugin-output` marker, so a run after `-KeepOutput` reclaims them.
 
 | Engine | Status |
 | :-- | :-- |
-| `5.8` | Verified with `RunUAT BuildPlugin` (`2.1.2`) |
-| `5.7` | Verified with `RunUAT BuildPlugin` through `1.8.0`; not re-run for `2.0.0` to `2.1.2`, whose gates are written so that 5.7 needs no answer of its own — see [Asked of the type](../api/version-compat.md#asked-of-the-type). `2.1.0`'s Custom Pass is compiled out below 5.8 (`DREAMSHADER_WITH_CUSTOM_PASS` 0); that side of the code was built on 5.8 with the gate forced off (`Invoke-DreamShaderTests.ps1 -WithoutCustomPass`) during its development; `2.1.2` adds gates at 5.5, 5.6 and 5.7, the last of which 5.7 takes the newer side of, untested |
-| `5.6` | Verified with `RunUAT BuildPlugin` (`2.1.2`) |
-| `5.5` | Verified with `RunUAT BuildPlugin` (`2.1.2`) |
+| `5.8` | Verified with `RunUAT BuildPlugin` (`2.2.0`) |
+| `5.7` | Verified with `RunUAT BuildPlugin` through `1.8.0`; not re-run for `2.0.0` to `2.2.0`, whose gates are written so that 5.7 needs no answer of its own — see [Asked of the type](../api/version-compat.md#asked-of-the-type). `2.1.0`'s Custom Pass is compiled out below 5.8 (`DREAMSHADER_WITH_CUSTOM_PASS` 0); that side of the code was built on 5.8 with the gate forced off (`Invoke-DreamShaderTests.ps1 -WithoutCustomPass`) during its development; `2.1.2` adds gates at 5.5, 5.6 and 5.7, the last of which 5.7 takes the newer side of, untested |
+| `5.6` | Verified with `RunUAT BuildPlugin` (`2.2.0`) |
+| `5.5` | Verified with `RunUAT BuildPlugin` (`2.2.0`) |
 | `5.4` | Source-compatible; see the toolchain warning below |
 | `5.3` | Source-compatible; see the toolchain warning below |
 

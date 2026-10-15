@@ -8,7 +8,7 @@ DreamShaderLang is compiled by the DreamShader Unreal plugin. Everything on this
 | | |
 | --- | --- |
 | Repository | [TypeDreamMoon/DreamShader](https://github.com/TypeDreamMoon/DreamShader) |
-| Plugin version | `2.1.2` |
+| Plugin version | `2.2.0` |
 | Engines | Unreal Engine `5.3` – `5.8`, Win64; Custom Pass needs `5.8` |
 | Location | `<Project>/Plugins/DreamShader` |
 | Plugin dependencies | `WebSocketNetworking`, `SQLiteCore` — both engine plugins, both enabled automatically |
@@ -192,15 +192,15 @@ accepted; engine and marketplace plugins are refused (`DSH8090`). The full dispa
 
 ## Engine compatibility
 
-DreamShader `2.1.2` is developed against Unreal Engine `5.8` and verified on Win64 with a single-plugin
+DreamShader `2.2.0` is developed against Unreal Engine `5.8` and verified on Win64 with a single-plugin
 `RunUAT BuildPlugin`:
 
 | Unreal Engine | Status |
 | --- | --- |
-| `5.8` | verified (`2.1.2`); the only engine Custom Pass runs on |
+| `5.8` | verified (`2.2.0`); the only engine Custom Pass runs on |
 | `5.7` | verified through `1.8.0`; the engine gates added since ask the engine's own types, so 5.7 needs no answer of its own |
-| `5.6` | verified (`2.1.2`) |
-| `5.5` | verified (`2.1.2`) |
+| `5.6` | verified (`2.2.0`) |
+| `5.5` | verified (`2.2.0`) |
 | `5.4` | source-compatible — see the toolchain warning below |
 | `5.3` | source-compatible — see the toolchain warning below |
 

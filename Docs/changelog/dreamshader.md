@@ -8,9 +8,54 @@ language surface, the generator, the editor tooling and engine compatibility.
 
 | | |
 | :-- | :-- |
-| Current release | **2.1.2** |
+| Current release | **2.2.0** |
 | Engines | Unreal Engine `5.3` through `5.8`, Win64; Custom Pass needs `5.8` |
 | Source of record | the plugin's own `CHANGELOG.md`, shipped in the plugin folder |
+
+## 2.2.0 - 2026-10-15
+
+A feature release. An installed package can now give the Material Editor real material functions,
+a source can be kept out of every build it is not named in, and a source can silence diagnostics by
+code. **Every generated asset rebuilds once after the upgrade** — the plugin's version is part of the
+build key — and reads as `Unstamped` until it does.
+
+### Added
+
+- **A package can ship material functions.** A package builds the `.dss`, `.dsf` and `.dsi` under its
+  `Assets/` folder like a source of the project, at startup, by `compile -All` and by the cook, into its own
+  asset root (`/Game/DreamShaderPackages/<scope>/<name>`). A header asks for material functions made from its
+  helpers — `/// @generate MF_X` or `#pragma generate(Functions = "MF_{Name}")` in 2.0, `Function(Generate = ...)`
+  or `Namespace(Name = "BL", Generate = "MF_BL_{Name}")` in 1.x — and the plugin writes the wrappers. *Adopt Into
+  Source* refuses a package's asset, and `list-generated -All` names what a package left behind. See
+  [Packages ▸ Package assets](../tools/packages.md#package-assets).
+- **NoGeneration.** `#pragma nogeneration`, `/// @nogeneration` on one export, or `NoGeneration = true` on a 1.x
+  block keeps an asset out of the startup sweep, saves, dependency rebuilds, *Recompile All*, `compile -All` and the
+  cook; only a compile that names the source builds it. See [NoGeneration](../generation/no-generation.md).
+- **Diagnostics disabled by code.** `#pragma disable_warning(...)` / `disable_error(...)` for a file and
+  `// disable_warning DSHnnnn` for a line, in both languages; a disabled error does not fail the compile. See
+  [Disabling diagnostics](../language-v2/disable-diagnostics.md).
+- **Calls in a `@custom` body are checked against the callee's HLSL.** A wrong argument count is `DSH6265` and
+  reading the value of a function that returns nothing `DSH6266`, at the call instead of in the shader compiler.
+
+### Changed
+
+- **Only a package's `Assets/` sources and asset headers are built.** A buildable source elsewhere in a package
+  was compiled in an editor session and by none of startup, `compile -All` and the cook; every path now builds the
+  same files. Move such sources under `Assets/`.
+- **The output digest is `DSD5`.** It compares names without case, as Unreal does, so an asset no longer reads as
+  hand-edited because a package spelled one name two ways. Every asset reads as `Unstamped` once and is restamped by
+  its next rebuild. See [Divergence](../generation/divergence.md#what-counts-as-a-hand-edit).
+
+### Fixed
+
+- **`check -Shaders` compiles a ThinCustom material's shaders.** A `.dss` on the default backend was reported as
+  producing no material and passed whatever its HLSL said.
+- **A `.dss` calls a 1.x `Namespace` member as `Ns::Fn(...)`**, as the 1.x front end does; it was `DSH2154`.
+- **A `.dsi` no longer picks up a `TranslucencySectionPriority` it never set**, an uninitialized override of UE 5.8.3.
+- **1.x functions that return nothing (rule L9).** A call that also passes the first `out` compiles again, and
+  `dsc migrate` declares such a function returning its first `out` and rewrites its callers; its proof now checks
+  every call in the bodies it wrote. See [Migrate](../tools/migrate.md#functions-that-return-nothing-l9).
+- The plugin builds on its own (`RunUAT BuildPlugin`) on UE `5.5`, `5.6` and `5.8`.
 
 ## 2.1.2 - 2026-10-11
 

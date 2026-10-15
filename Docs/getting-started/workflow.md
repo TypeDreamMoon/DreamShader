@@ -110,7 +110,7 @@ asset exists, the stored source path matches (case-insensitively) and the stored
 | change a value in *Preprocessor Defines* | invalidates only the sources that read that name |
 | adjust whitespace, edit a comment | invalidates too — the comparison is of text, not meaning |
 | move the project, or check the same repository out elsewhere | invalidates nothing — paths are stored project-relative (since 2.1.1) |
-| upgrade the plugin | every asset rebuilds once — the version is in the build key; 2.1.2's key format is `DSK7` |
+| upgrade the plugin | every asset rebuilds once — the version is in the build key; 2.2.0's key format is `DSK7`, as in 2.1.2 |
 | rename the source | the stored path no longer matches, so nothing is skipped |
 
 To force a rebuild through a non-forced trigger, change the source text or delete the generated asset. *Recompile DSM*

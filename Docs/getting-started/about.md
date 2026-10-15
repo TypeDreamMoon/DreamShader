@@ -9,8 +9,8 @@ generation, caching, diagnostics, decompilation and editor integration are the p
 
 | | |
 | --- | --- |
-| Version | `2.1.2` — descriptor `Version` `212`, `IsBetaVersion` `false` |
-| Engines | Unreal Engine `5.3` – `5.8`, Win64; Custom Pass needs `5.8` — see [Engine support](#engine-support) for what `2.1.2` was verified against |
+| Version | `2.2.0` — descriptor `Version` `220`, `IsBetaVersion` `false` |
+| Engines | Unreal Engine `5.3` – `5.8`, Win64; Custom Pass needs `5.8` — see [Engine support](#engine-support) for what `2.2.0` was verified against |
 | Modules | `DreamShaderLang`, `DreamShader`, `DreamShaderPass` (Runtime), `DreamShaderCompiler`, `DreamShaderEditor` (Editor) |
 | Source files | `.dss` 2.0 compilation unit · `.dsi` material instance · `.dsp` Custom Pass pipeline · `.dsm` 1.x material · `.dsf` 1.x function · `.dsh` header |
 | Plugin dependencies | `WebSocketNetworking`, `SQLiteCore` |
@@ -69,7 +69,7 @@ no asset. Generation is the opposite — editor-only, game-thread-only, built on
 
 ## Engine support
 
-`2.1.2` was verified with a single-plugin `RunUAT BuildPlugin` on Win64 against `5.5`, `5.6` and `5.8`. `5.7` was last
+`2.2.0` was verified with a single-plugin `RunUAT BuildPlugin` on Win64 against `5.5`, `5.6` and `5.8`. `5.7` was last
 verified at `1.8.0`: every engine gate added since asks the engine's own headers or types rather than its version
 number, so 5.7 needs no answer of its own. `5.3` and `5.4` are source-compatible, but a recent MSVC toolchain does not
 build those engines — the failure is in engine headers, before plugin code is reached; see
@@ -126,4 +126,4 @@ store are documented in the extension repository, not here.
 - [Your first material](first-material.md) — write a `.dss` and find it
 - [Daily workflow](workflow.md) — the compile loop
 - [Custom Pass](../language-v2/passes.md) — `.dsp` pipelines
-- [Changelog](../changelog/dreamshader.md) — what changed in `2.1.2`
+- [Changelog](../changelog/dreamshader.md) — what changed in `2.2.0`
