@@ -9,8 +9,8 @@ DreamShader 是一个 Unreal Engine 插件，把 DreamShaderLang 源文件编译
 
 | | |
 | --- | --- |
-| 版本 | `2.1.2` —— 描述文件 `Version` `212`，`IsBetaVersion` `false` |
-| 引擎 | Unreal Engine `5.3` – `5.8`，Win64；Custom Pass 需要 `5.8` —— `2.1.2` 实际对哪些引擎验证过见[引擎支持](#engine-support) |
+| 版本 | `2.2.0` —— 描述文件 `Version` `220`，`IsBetaVersion` `false` |
+| 引擎 | Unreal Engine `5.3` – `5.8`，Win64；Custom Pass 需要 `5.8` —— `2.2.0` 实际对哪些引擎验证过见[引擎支持](#engine-support) |
 | 模块 | `DreamShaderLang`、`DreamShader`、`DreamShaderPass`（Runtime），`DreamShaderCompiler`、`DreamShaderEditor`（Editor） |
 | 源文件 | `.dss` 2.0 编译单元 · `.dsi` 材质实例 · `.dsp` Custom Pass 管线 · `.dsm` 1.x 材质 · `.dsf` 1.x 函数 · `.dsh` header |
 | 插件依赖 | `WebSocketNetworking`、`SQLiteCore` |
@@ -39,8 +39,9 @@ Unreal 材质图一旦变大，就很难 review、diff、复用和迁移。Dream
 | 材质实例只能在面板里一项项勾 | `.dsi`：父材质和覆盖项写成文本（自 2.0.0 起） |
 | 想要引擎没有的渲染 pass —— 描边遮罩、模糊、屏幕空间效果、写数据纹理的 compute | `.dsp` Custom Pass 管线，不改引擎（自 2.1.0 起），在（自 UE 5.8 起） |
 
-它不是材质编辑器的替代品。1.x 的 `Graph` 是一个只有四个运算符和 `if` / `else` 的节点图构建器；`.dss` 有循环和完整的
-运算符，但同样降级成一张材质图。真正命令式的逻辑写进 `/// @custom` 函数或 1.x 的 `Function`，它的函数体是真正的 HLSL，
+它不是材质编辑器的替代品。1.x 的 `Graph` 是一个只有四个运算符和
+`if` / `else` 的节点图构建器；`.dss` 有循环和完整的运算符，但同样降级成一张材质图。真正
+命令式的逻辑写进 `/// @custom` 函数或 1.x 的 `Function`，它的函数体是真正的 HLSL，
 会被编译进 `Custom` 节点。一次性的、非常视觉化的图，在 Unreal 里直接连更快 —— 等它稳定下来再导出成源文件也不迟。
 
 <a id="the-five-modules"></a>
@@ -52,7 +53,7 @@ Unreal 材质图一旦变大，就很难 review、diff、复用和迁移。Dream
 | `DreamShaderLang`（自 2.0.0 起） | Runtime | 31 | 语言本身，只依赖 `Core`：词法、两套解析器（2.0 与 1.x 前端）、预处理器、绑定器、与引擎无关的图 IR、从 IR 回到源码的路径，以及 1.x → 2.0 迁移器。 |
 | `DreamShader` | Runtime | 8 | 日志类别、规范化路径 helper、1.x 源码数据模型、define 表的引擎一侧、`UDreamShaderSettings`、`UDreamShaderMaterialInstance`、引擎版本宏，以及编译接口 `IDreamShaderCompiler`。 |
 | `DreamShaderPass`（自 2.1.0 起） | Runtime | 11 | Custom Pass 运行时：管线资产 `UDreamPassPipeline`、它的设置、子系统、`ADreamPassVolume` 与 `UDreamPassComponent`、场景视图扩展和各种 pass。每个支持的引擎上都能编译，pass 只在 5.8 上运行。 |
-| `DreamShaderCompiler` | Editor | 20 | 编译器的后半段：编译管线、IR 发射器、资产层、从反射读出的内置目录、产物索引、`.dsi` 的父材质 schema。`1.9.x` 及以前它是只含接口的 Runtime 模块。 |
+| `DreamShaderCompiler` | Editor | 20 | 编译器的后半段：编译管线、IR 发射器、资产层、从反射读出的内置目录、产物索引、`.dsi` 的父材质 schema。``1.9.x`` 及以前它是只含接口的 Runtime 模块。 |
 | `DreamShaderEditor` | Editor | **0** | 用户碰得到的一切：反编译器、`dsc migrate`、commandlet、桥接、预览、Material Content Browser、来源追溯操作、workspace 导出。 |
 
 三个 Runtime 模块在 `PostConfigInit` 阶段加载，早到设置对象、shader 目录映射和 `DreamShaderPass` 的全局 shader 类型在引擎
@@ -65,16 +66,15 @@ C++ 入口是 `IDreamShaderCompiler` —— 声明在 `DreamShader`（`DreamShad
 `GetDreamShaderCompiler()` 拿到，由 `DreamShaderCompiler` 实现 —— 以及 `DreamShaderPass` 的 C++ 与蓝图
 API。其余能力只能通过编辑器 UI、commandlet 或桥接文件访问。
 
-语言本身与引擎无关：`DreamShaderLang` 只依赖 `Core`，不创建 `UObject`，不加载资产。生成则相反 ——
-仅编辑器、仅游戏线程，构建在材质编辑库之上。
+语言本身与引擎无关：`DreamShaderLang` 只依赖 `Core`，不创建 `UObject`，不加载
+资产。生成则相反 —— 仅编辑器、仅游戏线程，构建在材质编辑库之上。
 
 <a id="engine-support"></a>
 
 ## 引擎支持
 
-`2.1.2` 已用单插件 `RunUAT BuildPlugin` 在 Win64 上对 `5.5`、`5.6` 和 `5.8` 验证。`5.7` 最后一次
-验证是在 `1.8.0`：之后加的引擎开关都直接问引擎自己的头文件或类型，而不是看版本号，所以 5.7 不需要单独的答案。`5.3` 和 `5.4` 源码兼容，但新版
-MSVC 工具链编不过这两个引擎 —— 失败发生在引擎头文件里，还没轮到插件代码；见
+`2.2.0` 已用单插件 `RunUAT BuildPlugin` 在 Win64 上对 `5.5`、`5.6` 和 `5.8` 验证。`5.7` 最后一次
+验证是在 `1.8.0`：之后加的引擎开关都直接问引擎自己的头文件或类型，而不是看版本号，所以 5.7 不需要单独的答案。`5.3` 和 `5.4` 源码兼容，但新版 MSVC 工具链编不过这两个引擎 —— 失败发生在引擎头文件里，还没轮到插件代码；见
 [安装 ▸ 引擎兼容性](installation.md#engine-compatibility)。
 
 功能可用性随引擎版本不同。插件二进制按引擎编译，所以把项目升级到新引擎意味着要重新编译插件。
@@ -131,4 +131,4 @@ DreamShader 实际上是两个独立产品，通过 `<Project>/Saved/DreamShader
 - [第一个材质](first-material.md) —— 写一个 `.dss`，然后找到它
 - [日常工作流](workflow.md) —— 编译循环
 - [Custom Pass](../language-v2/passes.md) —— `.dsp` 管线
-- [更新日志](../changelog/dreamshader.md) —— `2.1.2` 改了什么
+- [更新日志](../changelog/dreamshader.md) —— `2.2.0` 改了什么
