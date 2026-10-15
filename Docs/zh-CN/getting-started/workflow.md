@@ -1,6 +1,6 @@
 ---
 title: "日常工作流"
-description: "保存、防抖、生成这个循环 —— 什么会触发重建、什么会被跳过、编辑一个 .dsh 会让什么失效，以及出错时该看哪里。"
+description: "保存、防抖与生成这个循环——什么会触发重建、什么会被跳过、编辑一个 .dsh 会让什么失效，以及出错时该看哪里。"
 ---
 
 日常循环是：编辑源文件、保存、让插件编译、查看结果。编辑器扩展改善的是
@@ -11,10 +11,10 @@ cook 里）。
 
 ## 这个循环
 
-1. 编辑 `DShader/` 下的一个源文件 —— 一个 `.dss`、`.dsi`、`.dsp`、`.dsm`、`.dsf` 或 `.dsh`。
-2. 先修复编辑器扩展在本地报告的问题 —— 语法、未知标识符、错误的导入。
+1. 编辑 `DShader/` 下的一个源文件——一个 `.dss`、`.dsi`、`.dsp`、`.dsm`、`.dsf` 或 `.dsh`。
+2. 先修复编辑器扩展在本地报告的问题——语法、未知标识符、错误的导入。
 3. **保存。** 源目录监视器发现变化。
-4. 一个防抖计时器等待 *Save Debounce Seconds* —— 默认 `0.25`，钳制到 `[0.05, 10.0]` —— 因此连续多次保存
+4. 一个防抖计时器等待 *Save Debounce Seconds*——默认 `0.25`，钳制到 `[0.05, 10.0]`——因此连续多次保存
    只触发一次编译。
 5. DreamShader 编译该文件，并把结果写入 Output Log。
 6. 通过 *Tools ▸ DreamShader ▸ Material Content Browser* 或编辑器扩展的预览查看材质。
@@ -28,7 +28,7 @@ Seconds**。关闭自动编译后，监视器会完全忽略文件变化，你�
 
 （自 2.0.0 起）每种源文件走同一条路径：一个 `.dsm` / `.dsf` 由旧版前端读入，形成与
 `.dss` 相同的语法树，然后像它一样经历预处理、绑定、降级为图 IR、校验和发射。
-每个被导入的 `.dsh` 都**单独**解析，它的声明成为当前文件的名字 —— 不再把文本粘贴
+每个被导入的 `.dsh` 都**单独**解析，它的声明成为当前文件的名字——不再把文本粘贴
 进来。
 
 | 阶段 | 做什么 | 失败时 |
@@ -120,18 +120,18 @@ commandlet 或显式 *Materialize* 把它写到磁盘。`Graph` 后端的材质�
 | 修改 *Preprocessor Defines* 中的一个值 | 只使读取该名字的源文件失效 |
 | 调整空白、编辑注释 | 也会失效 —— 比较的是文本，不是语义 |
 | 移动项目，或在别处检出同一仓库 | 什么都不失效 —— 路径按项目相对存储（自 2.1.1 起） |
-| 升级插件 | 每个资产重建一次 —— 版本在构建键里；2.1.2 的键格式是 `DSK7` |
+| 升级插件 | 每个资产重建一次 —— 版本在构建键里；2.2.0 的键格式是 `DSK7`，与 2.1.2 相同 |
 | 重命名源文件 | 存储的路径不再匹配，因此不会跳过任何东西 |
 
 要通过非强制触发方式强制重建，请修改源文本或删除生成的资产。*Recompile DSM*
-和 commandlet 的 `-Force` 会越过构建键。见 [Regeneration ▸ The build key](../generation/caching.md)。
+和 commandlet 的 `-Force` 会越过构建键。见 [重新生成 ▸ 构建键](../generation/caching.md)。
 
 <a id="editing-a-dsh"></a>
 
 ## 编辑一个 `.dsh`
 
 保存 header 会把每个 import 或 include 它的源文件都排进队列，每个源文件再按自己的构建键决定是否
-重建。直接编译一个 `.dsh`（比如某个命令行的 `-Source` 指向它）会产生 `DSH8296` —— header
+重建。直接编译一个 `.dsh`（比如某个 commandlet 的 `-Source` 指向它）会产生 `DSH8296` —— header
 从不单独构建。
 
 Material Content Browser 把 header 显示为 `function · used by N material(s)`，检查器里列出它的依赖方，改之前就能看到影响范围。
@@ -146,49 +146,45 @@ Material Content Browser 把 header 显示为 `function · used by N material(s)
 
 **警告：**
 
-**手改过的资产不会被悄悄覆盖。** 资产生成后在编辑器里被改过，下一次编译拒绝重建它（`DSH8207`），并给出三个出口：
-**Revert to Source**（源码是对的）、**Adopt Into Source**（资产是对的，反编译回源码）、**Detach From DreamShader**（都不要，
-不再管理它）。`-Force` 也绕不过去。资产开着编辑器时同样拒绝重建（`DSH8206`）—— 关掉编辑器标签页再编译。
-见[重新生成](../generation/regeneration.md)。
+**手动编辑过的资产不会被静默覆盖。** 生成后在编辑器中编辑过的资产会被下一次编译拒绝（`DSH8207`），并给出三条出路：**Revert to Source**（源文件是对的）、**Adopt Into Source**（资产是对的；将其反编译回去）、**Detach From DreamShader**（两者都不对；不再管理它）。`-Force` 也无法绕过这一点。在资产编辑器中打开的资产同样会被拒绝（`DSH8206`）—— 关闭该编辑器选项卡后重新编译。
+参见[重新生成](../generation/regeneration.md)。
 
-DreamShader 也拒绝覆盖不是自己生成的资产：目标路径上已有一个没有 DreamShader 来源元数据的材质时，编译以 `DSH8201` 失败。
+DreamShader 还会拒绝覆盖不是它生成的资产：目标路径上存在没有 DreamShader 来源元数据的材质时，编译会以 `DSH8201` 失败。
 
 <a id="when-something-fails"></a>
 
-## 出错时看哪里
+## 出错时
 
-每条诊断都带 `DSHnnnn` 码，报在它所说那个构造的行列上：
+每条诊断都带有 `DSHnnnn` 代码，并报告在其所指构造的行和列处：
 
 ```text
 I:/MyProject/DShader/Materials/M_Minimal.dss(8,24): DSH4200: 'Tnt' is not declared; did you mean 'Tint'? Names are case-sensitive.
 ```
 
-| 位置 | 显示什么 |
+| 位置 | 显示内容 |
 | --- | --- |
-| Output Log | `LogDreamShader` 下的全部消息：先错误、再警告、再 note |
-| Material Content Browser | 源文件那一行显示第一个错误，检查器列出全部记录 |
-| 编辑器扩展 | 按文件的完整列表，定位到行列；成功编译的警告也在（自 2.1.0 起） |
+| Output Log | `LogDreamShader` 下的所有消息：先是错误，再是警告，然后是注释 |
+| Material Content Browser | 源文件所在行显示第一个错误，检查器中显示每条记录 |
+| Editor 扩展 | 按文件列的列表，定位到行和列；成功编译的警告也会显示（自 2.1.0 起） |
 
-在 header 里报的记录指向 header 本身，不是导入它的文件。到[错误速查](../diagnostics/index.md)里查码。
+在头文件中引发的记录指向该头文件，而不是导入它的文件。请在[诊断](../diagnostics/index.md)中查找该代码。
 
 <a id="migrating-an-existing-material"></a>
 
-## 迁移已有材质
+## 迁移现有材质
 
-在 Content Browser 里右键 `UMaterial`、`UMaterialFunction` 或材质实例，使用 *DreamShader ▸ Export
-.dss* / *Export .dsi*（1.x 文本用 *Export Legacy .dsm / .dsf*）。输出落在 `DShader/Decompiled/` 下并会自动打开；
-反编译器表达不了的东西写在文件头部，每条带码。把它当作初稿 —— 在正式作为源文件之前，先整理命名、helper 分层和 include。见
-[反编译导出](../tools/decompiler.md)。
+在 Content Browser 中右键单击 `UMaterial`、`UMaterialFunction` 或材质实例，然后使用 *DreamShader ▸ Export
+.dss* / *Export .dsi*（1.x 文本使用 *Export Legacy .dsm / .dsf*）。输出会落在 `DShader/Decompiled/` 下并自动打开；反编译器无法表述的内容会列在文件顶部，每项都带有其代码。把它当作初稿 —— 在采用为源文件之前，先整理好命名、helper 分层与 include。参见
+[反编译器](../tools/decompiler.md)。
 
-已有的 `.dsm` / `.dsf` 文件用 [`dsc migrate`](../tools/migrate.md) 改写成 `.dss`，它在写盘之前先证明两者
-构建出同一张图。
+现有的 `.dsm` / `.dsf` 文件会由 [`dsc migrate`](../tools/migrate.md) 重写为 `.dss`，它在写入之前会证明两者构建出相同的图。
 
 <a id="next"></a>
 
 ## 下一步
 
-- [生成流程](../generation/index.md) —— 每个阶段和它可能给出的码
-- [重新生成](../generation/regeneration.md) —— 完整的"什么能保留"清单
+- [管线](../generation/index.md) —— 每个阶段及它可能引发的代码
+- [重新生成](../generation/regeneration.md) —— 可保留内容的完整列表
 - [编辑器工具](../tools/editor-integration.md) —— Tools 菜单、Material Content Browser、Make Ephemeral
-- [VSCode 与 Rider](../tools/vscode.md) —— 诊断、预览和 Package 命令
-- [命令行](../tools/commandlet.md) —— headless 编译
+- [VSCode 与 Rider](../tools/vscode.md) —— 诊断、预览与 Package 命令
+- [Commandlet](../tools/commandlet.md) —— 无头编译

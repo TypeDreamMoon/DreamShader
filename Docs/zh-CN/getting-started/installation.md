@@ -8,7 +8,7 @@ DreamShaderLang 由 DreamShader 这个 Unreal 插件编译。本页的事情每�
 | | |
 | --- | --- |
 | 仓库 | [TypeDreamMoon/DreamShader](https://github.com/TypeDreamMoon/DreamShader) |
-| 插件版本 | `2.1.2` |
+| 插件版本 | `2.2.0` |
 | 引擎 | Unreal Engine `5.3` – `5.8`，Win64；Custom Pass 需要 `5.8` |
 | 放置路径 | `<Project>/Plugins/DreamShader` |
 | 插件依赖 | `WebSocketNetworking`、`SQLiteCore` —— 都是引擎插件，都会被自动启用 |
@@ -44,8 +44,8 @@ release 压缩包里有什么：
 
 **提示：**
 
-1.6.0 到 2.1.1 的压缩包都没有带 `Content/`，所以按压缩包安装的编辑器界面只有英文。老版本想要中文界面，从对应 tag 把
-`Content/Localization/` 复制进来即可。`Tests/`、`Tools/` 和 `Config/` 不随压缩包发布。
+1.6.0 到 2.1.1 的压缩包都没有带 `Content/`，所以按压缩包安装的编辑器界面只有英文。老版本想要中文界面，从对应 tag 把 `Content/Localization/` 复制进来即可。`Tests/`、`Tools/`
+和 `Config/` 不随压缩包发布。
 
 <a id="enable-it-and-restart"></a>
 
@@ -72,14 +72,16 @@ Project Settings ▸ DreamPlugin ▸ Dream Shader
 
 **警告：**
 
-设置在 **DreamPlugin** 分类下，**不是** *Plugins* 分类。如果找不到这个页面，说明插件没有加载成功，
-去 Output Log 里看 `LogDreamShader`。Custom Pass 的设置是同一分类下单独的一页 *DreamShader Custom Pass*。
+这些设置位于 **DreamPlugin** 分类下，**不是** *Plugins*。如果找不到该页面，说明插件没有
+加载 —— 检查 Output Log 中的 `LogDreamShader`。Custom Pass 的设置是同一分类下的独立页面，
+*DreamShader Custom Pass*。
 
 <a id="let-the-plugin-create-its-directories"></a>
 
-### 让插件创建自己的目录
+### 让插件创建其目录
 
-编辑器第一次启动时，运行时模块会创建工作目录，无论你有没有写过任何源文件：
+在编辑器首次启动时，运行时模块会创建工作目录，无论你是否已经编写了任何
+源文件：
 
 ```text
 <Project>/DShader/                                        source root
@@ -87,15 +89,16 @@ Project Settings ▸ DreamPlugin ▸ Dream Shader
 <Project>/Intermediate/DreamShader/GeneratedShaders/      mapped to /DreamShaderGenerated
 ```
 
-`DShader` 来自 *Source Directory* 设置；`Packages` 永远是它下面那个字面量子目录 `Packages`，不能单独配置。`GeneratedShaders`
-仍会被创建和映射，但（自 2.0.0 起）起编译不再往里写文件 —— `Function` 的 HLSL 直接写进它的 Custom 节点。在 UE 5.8 上，
-`DreamShaderPass` 还会在源码根下维护 `.dreampass/` —— Custom Pass HLSL 的快照，应该和源文件一起入库。
+`DShader` 来自 *Source Directory* 设置；`Packages` 始终是它下面的字面量子文件夹 `Packages`，
+无法单独配置。`GeneratedShaders` 仍会被创建并映射，但（自 2.0.0 起）没有
+编译会写入那里 —— `Function` 的 HLSL 会直接进入其 Custom 节点。在 UE 5.8 上，`DreamShaderPass` 还会在源根目录下保留 `.dreampass/` ——
+即 Custom Pass HLSL 的快照，这些快照应与源文件一起纳入版本控制。
 
 <a id="write-a-source-file-and-save-it"></a>
 
-### 写一个源文件并保存
+### 编写源文件并保存
 
-新源文件请写成 `.dss`：
+将新源文件编写为 `.dss`：
 
 ```hlsl
 // <Project>/DShader/Materials/M_InstallCheck.dss
@@ -107,7 +110,7 @@ export void M_InstallCheck(inout material m)
 }
 ```
 
-或者 1.x 写法，构建同一个资产 —— 两个文件只留一个：
+或者使用 1.x 语法，它会构建相同的资产 —— 保留这两个文件中的一个：
 
 ```c
 // <Project>/DShader/Materials/M_InstallCheck.dsm
@@ -129,44 +132,46 @@ Shader(Name="Materials/M_InstallCheck")
 }
 ```
 
-在 *Auto Compile On Save* 开启（默认）的情况下，文件监视器会发现这次保存，等过防抖时间后生成材质。
-Output Log 会输出：
+在 *Auto Compile On Save* 开启（默认）的情况下，文件监视器会捕获保存操作，并在
+防抖后生成材质。Output Log 会显示：
 
 ```text
 Generated Material /Game/Materials/M_InstallCheck from .../M_InstallCheck.dss.
 ```
 
-也可以不手写：*Tools ▸ DreamShader ▸ Material Content Browser ▸ New ▾ ▸ Material (.dss)* 从模板写出同样形状的文件。
+或者跳过手动输入：*Tools ▸ DreamShader ▸ Material Content Browser ▸ New ▾ ▸ Material (.dss)* 会从模板写入相同的
+结构。
 
 <a id="verify-the-installation"></a>
 
 ## 验证安装
 
-| 检查项 | 预期结果 |
+| 检查 | 预期 |
 | --- | --- |
 | 插件已加载 | *Project Settings ▸ DreamPlugin ▸ Dream Shader* 存在 |
-| 目录已创建 | 项目根目录下存在 `DShader/` 和 `DShader/Packages/` |
-| 源文件能编译 | Output Log 输出 `Generated Material /Game/Materials/M_InstallCheck from …` |
-| 材质确实生成了 | *Tools ▸ DreamShader ▸ Material Content Browser* 的 Sources 模式里，这一行的状态是 **up to date** |
-| 编辑器扩展已接通 | `Saved/DreamShader/Bridge/` 下有 `status.json`、`diagnostics.json`、`material-expressions.json`、`dreamshader-builtin-catalog.json` 等 |
-| 中文界面（可选） | 编辑器语言设为简体中文后，DreamShader 的菜单和面板显示中文 —— 需要压缩包里的 `Content/` |
+| 目录已存在 | 项目根目录下的 `DShader/` 和 `DShader/Packages/` |
+| 源文件可编译 | Output Log 输出 `Generated Material /Game/Materials/M_InstallCheck from …` |
+| 材质确实存在 | 在 *Tools ▸ DreamShader ▸ Material Content Browser* 的 Sources 模式下，该行显示 **up to date** |
+| 编辑器扩展已接通 | `Saved/DreamShader/Bridge/` 包含 `status.json`、`diagnostics.json`、`material-expressions.json`、`dreamshader-builtin-catalog.json` 等 |
+| 中文界面（可选） | 在编辑器语言设置为简体中文时，DreamShader 的菜单和面板已翻译 —— 需要压缩包中的 `Content/` |
 
 **警告：**
 
-不要指望在 Content Browser 里看到这个新材质。在默认的 `ThinCustom` backend 下它是 **Ephemeral** 的 ——
-只在内存里 —— 会主动从 Content Browser、资产选择器和保存列表里隐藏自己。见
-[第一个材质](first-material.md)。
+不要指望在 Content Browser 中看到新材质。在默认的 `ThinCustom` 后端下，它是 **Ephemeral** 的 ——
+仅在内存中 —— 并将自身从 Content Browser、资产选择器和保存对话框中隐藏。请参阅
+[你的第一个材质](first-material.md)。
 
 <a id="the-settings-you-will-touch-first"></a>
 
-## 最先会用到的几项设置
+## 你会最先接触到的设置
 
-完整面板有 17 项属性，下面这几项是第一天就会碰到的。注意配置标识符保留了 `b` 前缀，而显示名会把它去掉。
+完整面板有 17 个属性；以下是你第一天就会遇到的。注意配置标识符保留了
+`b` 前缀，而显示名称会去掉它。
 
 | 界面名称 | 配置属性 | 默认值 | 作用 |
 | --- | --- | --- | --- |
 | Source Directory | `SourceDirectory` | `DShader` | 扫描源文件的根目录。相对路径相对项目目录解析。 |
-| Generated Shader Directory | `GeneratedShaderDirectory` | `Intermediate/DreamShader/GeneratedShaders` | 虚拟目录 `/DreamShaderGenerated` 映射到哪里。2.0 起编译不再写 `.ush`；这里的文件是 1.x 构建留下的。 |
+| Generated Shader Directory | `GeneratedShaderDirectory` | `Intermediate/DreamShader/GeneratedShaders` | 虚拟目录 `/DreamShaderGenerated` 映射到哪里。自 2.0 起编译不再写 `.ush`；这里的文件是 1.x 构建留下的。 |
 | Default Compiler Backend | `DefaultBackend` | `ThinCustom` | 没写 backend 的源文件使用的 backend。 |
 | Show Ephemeral Materials | `bShowEphemeralMaterials` | `false` | 让 Ephemeral 材质像未保存资产一样在 Content Browser 和资产选择器里可见。 |
 | Auto Compile On Save | `bAutoCompileOnSave` | `true` | 关闭后，源目录监视器完全忽略文件变化。 |
@@ -203,15 +208,15 @@ Shader(Name="Materials/M_Minimal", Root="Plugin.MyPlugin")
 
 ## 引擎兼容性
 
-DreamShader `2.1.2` 基于 Unreal Engine `5.8` 开发，并在 Win64 上用单插件
+DreamShader `2.2.0` 基于 Unreal Engine `5.8` 开发，并在 Win64 上用单插件
 `RunUAT BuildPlugin` 验证：
 
 | Unreal Engine | 状态 |
 | --- | --- |
-| `5.8` | 已验证（`2.1.2`）；Custom Pass 只在这里运行 |
+| `5.8` | 已验证（`2.2.0`）；Custom Pass 只在这里运行 |
 | `5.7` | 验证到 `1.8.0`；之后的引擎开关都按引擎自己的类型判断，5.7 不需要单独的答案 |
-| `5.6` | 已验证（`2.1.2`） |
-| `5.5` | 已验证（`2.1.2`） |
+| `5.6` | 已验证（`2.2.0`） |
+| `5.5` | 已验证（`2.2.0`） |
 | `5.4` | 源码兼容 —— 见下面的工具链警告 |
 | `5.3` | 源码兼容 —— 见下面的工具链警告 |
 
@@ -231,10 +236,10 @@ DreamShader `2.1.2` 基于 Unreal Engine `5.8` 开发，并在 Win64 上用单�
 
 **UE `5.3` 和 `5.4` 在新版 MSVC 工具链下编不过，不论你编的是什么插件。** 引擎的
 `ConcurrentLinearAllocator.h` 在一处写入 `#elif __has_feature(address_sanitizer)` 时没有 `defined()` 保护，而工具链带着 ASan
-头文件时这会触发 `C4668`，UBT 又以 `/we4668` 编引擎代码。失败发生在**引擎**代码里，
-其中根本没有出现 `Source/DreamShader*` —— Epic 自己的 `ExampleDeviceProfileSelector` 在同一台机器上同样失败，
-可以拿来确认原因。只装 MSVC `14.38` 并不能解决（它同样带 ASan
-头文件）；需要一个不带这些头文件的工具链，或者给引擎头文件打一行补丁。UE 5.5 修掉了这个
+头文件时这会触发 `C4668`，UBT 又以 `/we4668` 编引擎代码。失败发生在
+**引擎**代码里，其中根本没有出现 `Source/DreamShader*` —— Epic 自己的 `ExampleDeviceProfileSelector` 在同一台机器上同样失败，
+可以拿来确认原因。只装 MSVC `14.38` 并不能解决（它同样带
+ASan 头文件）；需要一个不带这些头文件的工具链，或者给引擎头文件打一行补丁。UE 5.5 修掉了这个
 头文件。
 
 功能可用性随引擎版本变化：Substrate 需要 （自 UE 5.4 起），少数 transform 基准和参数需要
