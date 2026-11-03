@@ -1,0 +1,42 @@
+name: Check documentation translations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Docs/**
+      - .github/workflows/docs-check.yml
+  pull_request:
+    paths:
+      - Docs/**
+      - .github/workflows/docs-check.yml
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Read the dreamdocs version this plugin uses
+        id: tool
+        run: python3 -c "import json; print('version=' + json.load(open('Docs/dreamdocs.json'))['tool'])" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v5
+        with:
+          repository: TypeDreamMoon/dreamdocs
+          ref: v${{ steps.tool.outputs.version }}
+          path: .dreamdocs
+          persist-credentials: false
+      - name: Check the manuals and their translations
+        env:
+          PYTHONPATH: .dreamdocs
+          PYTHONIOENCODING: utf-8
+        # Structure, alignment tables, orphans; outdated pages and broken links are reported, not failed.
+        run: python3 -B -m dreamdocs check --plugin .
+      - name: Translation status
+        if: always()
+        env:
+          PYTHONPATH: .dreamdocs
+          PYTHONIOENCODING: utf-8
+        run: python3 -B -m dreamdocs status --plugin . >> "$GITHUB_STEP_SUMMARY"
