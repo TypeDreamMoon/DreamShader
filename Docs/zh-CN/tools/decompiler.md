@@ -1,8 +1,3 @@
----
-title: "反编译导出"
-description: "反编译导出"
----
-
 <a id="decompiler"></a>
 
 # 反编译导出
@@ -19,17 +14,10 @@ description: "反编译导出"
 | 起始版本 | `1.3.5`（Content Browser 操作） |
 
 > [!IMPORTANT]
-> **有两个反编译器。** 本页描述的是 **1.x** 那个，它写 `.dsm` / `.dsf`
-> 并留在 `-Format=Legacy` 后面。**2.0 反编译器**才是默认：它把资产的图读进编译器自己的 IR，
-> 打印出一个 `.dss` —— 材质实例则是 [`.dsi`](../language-v2/instances.md) ——
-> 而且它的输出是*被证明过的*：文本会被重新编译，两份 IR 互相比较。没有图的 Custom Pass 管线
-> 回来的是 [`.dsp`](../language-v2/passes.md)，读回后与资产比较*（自 2.1.0 起）*。见本页末尾的
-> [2.0 反编译器](#the-20-decompiler)。
+> **有两个反编译器。** 本页描述的是 **1.x** 那个，它写 `.dsm` / `.dsf` 并留在 `-Format=Legacy` 后面。**2.0 反编译器**才是默认：它把资产的图读进编译器自己的 IR，打印出一个 `.dss` —— 材质实例则是 [`.dsi`](../language-v2/instances.md) —— 而且它的输出是*被证明过的*：文本会被重新编译，两份 IR 互相比较。没有图的 Custom Pass 管线回来的是 [`.dsp`](../language-v2/passes.md)，读回后与资产比较*（自 2.1.0 起）*。见本页末尾的 [2.0 反编译器](#the-20-decompiler)。
 
 > [!NOTE]
-> 把 1.x 反编译器当作**迁移的起点**，不是往返保证。它会还原图的结构，以及它能表达的那部分
-> 节点状态，其余的留下一条 `// Warning:` 注释。删掉原资产之前，下面列出的
-> [已知往返缺口](#known-round-trip-gaps) 正是值得手工核对的那几项。
+> 把 1.x 反编译器当作**迁移的起点**，不是往返保证。它会还原图的结构，以及它能表达的那部分节点状态，其余的留下一条 `// Warning:` 注释。删掉原资产之前，下面列出的[已知往返缺口](#known-round-trip-gaps) 正是值得手工核对的那几项。
 
 <a id="invoking-it"></a>
 
@@ -42,15 +30,11 @@ description: "反编译导出"
 | 材质编辑器 | **DreamShader** 工具栏组合按钮 ▸ **Export Legacy .dsm** / **Export Legacy .dsf** | 同上 |
 | 命令行 | `-run=DreamShader decompile -Asset=<object path> -Format=Legacy [-Out=<file>]`，或以 `.dsm` / `.dsf` 结尾的 `-Out` | 同上 |
 
-不写 `-Format=Legacy`（也没有 `.dsm` / `.dsf` 的 `-Out`）时，命令行跑的是
-[2.0 反编译器](#the-20-decompiler) *（自 2.0.0 起）*；每个 legacy 菜单项旁边的 **Export .dss**
-在编辑器里做同样的事。
+不写 `-Format=Legacy`（也没有 `.dsm` / `.dsf` 的 `-Out`）时，命令行跑的是 [2.0 反编译器](#the-20-decompiler) *（自 2.0.0 起）*；每个 legacy 菜单项旁边的 **Export .dss** 在编辑器里做同样的事。
 
-两个编辑器入口都要求**恰好选中一个**资产，写完文件后用你偏好的编辑器打开它。见
-[编辑器集成](editor-integration.md#content-browser-context-menus)和[命令行](commandlet.md)。
+两个编辑器入口都要求**恰好选中一个**资产，写完文件后用你偏好的编辑器打开它。见[编辑器集成](editor-integration.md#content-browser-context-menus)和[命令行](commandlet.md)。
 
-进度对话框在 0.25 秒延迟后出现，标题是 `Decompiling Material '{Asset}'...` 或
-`Decompiling Material Function '{Asset}'...`，每访问一个节点走一帧。commandlet 运行中不显示该对话框。
+进度对话框在 0.25 秒延迟后出现，标题是 `Decompiling Material '{Asset}'...` 或 `Decompiling Material Function '{Asset}'...`，每访问一个节点走一帧。commandlet 运行中不显示该对话框。
 
 <a id="output-paths"></a>
 
@@ -63,9 +47,7 @@ description: "反编译导出"
 | `UMaterialFunctionMaterialLayer` | `<SourceDirectory>/Decompiled/Layers/` | `.dsf` |
 | `UMaterialFunctionMaterialLayerBlend` | `<SourceDirectory>/Decompiled/LayerBlends/` | `.dsf` |
 
-`<SourceDirectory>` 是 *Source Directory* 项目设置，默认 `DShader`。layer 和
-layer blend 的目录与 `Functions` 是分开的，而且类判定是 blend 优先，所以
-layer blend 永远不会落进 `Layers`。
+`<SourceDirectory>` 是 *Source Directory* 项目设置，默认 `DShader`。layer 和 layer blend 的目录与 `Functions` 是分开的，而且类判定是 blend 优先，所以 layer blend 永远不会落进 `Layers`。
 
 在分类目录内部，资产的 **package path** 变成相对文件路径，每个 package 段一层目录：
 
@@ -77,7 +59,7 @@ layer blend 永远不会落进 `Layers`。
 | 规则 | 细节 |
 | :-- | :-- |
 | 首尾的 `/` | 从 package 名上剥掉 |
-| 非法字符 | 控制字符和 `< > : " / \ | ? *` 变成 `_` |
+| 非法字符 | 控制字符和 `< > : " / \ | ? *` become `_` |
 | 空段 | 目录段变成 `Folder<N>`，最后一段变成 `Asset<N>`，`<N>` 是从 1 开始的序号 |
 | 没有 package | 用资产自己的名字作为唯一一段 |
 
@@ -87,17 +69,14 @@ layer blend 永远不会落进 `Layers`。
 
 ### 生成出来的资产名
 
-写在文件**内部**的 `Name=` 不是文件路径。它是
-`Decompiled/<Category>/<package segments>`，每段里的 `\ / . :` 都换成 `_`：
+写在文件**内部**的 `Name=` 不是文件路径。它是 `Decompiled/<Category>/<package segments>`，每段里的 `\ / . :` 都换成 `_`：
 
 ```text
 /Game/Materials/Metal/M_Steel
   →  Shader(Name="Decompiled/Materials/Game/Materials/Metal/M_Steel")
 ```
 
-因此重新编译导出的文件会在 `/Game/Decompiled/Materials/…` 下创建一个**新**资产，原件原封不动。
-等你准备好接管原路径时，再改 `Name=` 和 `Root=`。见
-[资产路径](../generation/asset-paths.md)。
+因此重新编译导出的文件会在 `/Game/Decompiled/Materials/…` 下创建一个**新**资产，原件原封不动。等你准备好接管原路径时，再改 `Name=` 和 `Root=`。见[资产路径](../generation/asset-paths.md)。
 
 <a id="file-layout"></a>
 
@@ -127,28 +106,15 @@ layer blend 永远不会落进 `Layers`。
 | `ShaderLayer` | `UMaterialFunctionMaterialLayer` |
 | `ShaderLayerBlend` | `UMaterialFunctionMaterialLayerBlend` |
 
-反编译出来的 `Shader` 的 `Settings` 块总是以 `Domain`、`ShadingModel` 和
-`BlendMode` 开头，无条件写出。其他每一项设置只在与 `UMaterial` 类默认值不同时才写出；
-能往返的集合见[着色器设置](../settings/material.md)。当反编译到 `Base.FrontMaterial` 绑定时，
-着色模型会被强制成 `Substrate`，因为 Substrate 材质自己的着色模型枚举
-并不描述它的表面。
+反编译出来的 `Shader` 的 `Settings` 块总是以 `Domain`、`ShadingModel` 和 `BlendMode` 开头，无条件写出。其他每一项设置只在与 `UMaterial` 类默认值不同时才写出；能往返的集合见[着色器设置](../settings/material.md)。当反编译到 `Base.FrontMaterial` 绑定时，着色模型会被强制成 `Substrate`，因为 Substrate 材质自己的着色模型枚举并不描述它的表面。
 
-`Outputs` 为每个已连接的材质属性声明一个变量并绑定它，顺序固定：
-`EmissiveColor`、`BaseColor`、`Metallic`、`Specular`、`Roughness`、`Anisotropy`、`Opacity`、
-`OpacityMask`、`Normal`、`Tangent`、`WorldPositionOffset`、`SubsurfaceColor`、`CustomData0`、
-`CustomData1`、`AmbientOcclusion`、`Refraction`、`PixelDepthOffset`、`MaterialAttributes`，以及 —— 在
-UE 5.4 及更新版本上 —— `FrontMaterial`。未连接的属性整条跳过。
+`Outputs` 为每个已连接的材质属性声明一个变量并绑定它，顺序固定： `EmissiveColor`、`BaseColor`、`Metallic`、`Specular`、`Roughness`、`Anisotropy`、`Opacity`、 `OpacityMask`、`Normal`、`Tangent`、`WorldPositionOffset`、`SubsurfaceColor`、`CustomData0`、 `CustomData1`、`AmbientOcclusion`、`Refraction`、`PixelDepthOffset`、`MaterialAttributes`，以及 —— 在 UE 5.4 及更新版本上 —— `FrontMaterial`。未连接的属性整条跳过。
 
 <a id="terminal-output-nodes"></a>
 
 ### 终端输出节点
 
-一个 `UMaterialExpressionCustomOutput`（`ThinTranslucentMaterialOutput`、`ClearCoatNormalCustomOutput`、
-`VolumetricAdvancedMaterialOutput`、`VertexInterpolator`……）没有输出 pin，所以材质根节点
-够不到它 —— 它改为从节点列表里导出，写成
-[`Expression( … )` 输出绑定](../language/output-bindings.md#the-expression--pini-target)。每个**已连接**的输入 pin 声明一个
-`Outputs` 变量，以 pin 命名，pin 的整棵输入子树写进 `Graph`。写成哪种
-形式取决于连了几个 pin：
+一个 `UMaterialExpressionCustomOutput`（`ThinTranslucentMaterialOutput`、`ClearCoatNormalCustomOutput`、 `VolumetricAdvancedMaterialOutput`、`VertexInterpolator`……）没有输出 pin，所以材质根节点够不到它 —— 它改为从节点列表里导出，写成 [`Expression( … )` 输出绑定](../language/output-bindings.md#the-expression--pini-target)。每个**已连接**的输入 pin 声明一个 `Outputs` 变量，以 pin 命名，pin 的整棵输入子树写进 `Graph`。写成哪种形式取决于连了几个 pin：
 
 | 已连接的 pin | 写成 |
 | :-- | :-- |
@@ -156,25 +122,18 @@ UE 5.4 及更新版本上 —— `FrontMaterial`。未连接的属性整条跳�
 | 2 个或更多 | [块形式](../language/output-bindings.md#block-form)，`Expression(Class="…") { Pin[<i>] = <var>; … }` *（自 1.9.0 起）* |
 | 0 | 什么都不写 —— 节点被丢掉 |
 
-两种写法重新生成的都是同一个节点；多 pin 节点选用块形式，是因为它把这一意图写进语法里，
-而不是留给 N 份重复的参数列表去表达。1.9.0 之前反编译成语句形式的文件
-仍然会逐字节反编译成语句形式。
+两种写法重新生成的都是同一个节点；多 pin 节点选用块形式，是因为它把这一意图写进语法里，而不是留给 N 份重复的参数列表去表达。1.9.0 之前反编译成语句形式的文件仍然会逐字节反编译成语句形式。
 
-`Class=` 带的是**反射**类名（`MaterialExpressionThinTranslucentMaterialOutput`，没有
-`U` 前缀），这是 `Expression(Class=…)` 能解析的写法。
+`Class=` 带的是**反射**类名（`MaterialExpressionThinTranslucentMaterialOutput`，没有 `U` 前缀），这是 `Expression(Class=…)` 能解析的写法。
 
 > [!WARNING]
-> 输出目标节点按类加参数列表去重，所以一个材质里持有**两个**同类的
-> 节点就无法往返。反编译器只导出第一个，并记录警告
-> `Material has more than one '{Class}' node; output targets are de-duplicated by class, so only the
-> first was exported.`
+> 输出目标节点按类加参数列表去重，所以一个材质里持有**两个**同类的节点就无法往返。反编译器只导出第一个，并记录警告 `Material has more than one '{Class}' node; output targets are de-duplicated by class, so only the first was exported.`
 
 <a id="what-is-exported-faithfully"></a>
 
 ## 能忠实还原的部分
 
-节点遍历器对下面每个类都有一条精心写好的分支。其余全部落到
-[通用回退](#the-ueexpression-fallback)。
+节点遍历器对下面每个类都有一条精心写好的分支。其余全部落到[通用回退](#the-ueexpression-fallback)。
 
 <a id="emitted-as-dreamshaderlang-syntax"></a>
 
@@ -214,16 +173,13 @@ UE 5.4 及更新版本上 —— `FrontMaterial`。未连接的属性整条跳�
 | `FunctionInput` | `Inputs` 段里声明的那个名字 |
 | `MaterialFunctionCall` | 在块上方生成一段 [`VirtualFunction`](../language/virtual-function.md) 声明，加上对它的调用 |
 
-未连接的操作数 pin 会退回节点自己的常量属性（如果有的话）—— `Min`、
-`Max`、`LinearInterpolate`、`Power` 和 `Clamp` 都会读它们的 `Const*` 值 ——
-否则退到字面量 `0.0`。
+未连接的操作数 pin 会退回节点自己的常量属性（如果有的话）—— `Min`、 `Max`、`LinearInterpolate`、`Power` 和 `Clamp` 都会读它们的 `Const*` 值 —— 否则退到字面量 `0.0`。
 
 <a id="emitted-as-a-property-declaration"></a>
 
 ### 写成 property 声明
 
-这些会变成 `Properties` 段里的条目，并在 `Graph` 中按名字引用。名字会做唯一化处理；
-当 DreamShaderLang 标识符不得不与资产的参数名不同时，会补一条 `ParameterName=` 元数据。
+这些会变成 `Properties` 段里的条目，并在 `Graph` 中按名字引用。名字会做唯一化处理；当 DreamShaderLang 标识符不得不与资产的参数名不同时，会补一条 `ParameterName=` 元数据。
 
 | `UMaterialExpression` 类 | 声明 |
 | :-- | :-- |
@@ -232,9 +188,7 @@ UE 5.4 及更新版本上 —— `FrontMaterial`。未连接的属性整条跳�
 | `TextureObjectParameter` | `TextureObjectParameter <Name>[ = <asset path>];` |
 | `TextureSampleParameter2D` | `TextureSampleParameter2D <Name>[ = <asset path>];` —— **仅当没有输入 pin 被连接** |
 
-只要有任何输入 pin 被连接，`TextureSampleParameter2D` 就改为写成一条精选的 `UE.Expression`，
-参数实参和采样器实参一起带上 *（自 1.3.7 起）*。它的
-`RGBA` 输出被写进一个具名临时变量一次；其他每个 pin 都变成它的 swizzle。
+只要有任何输入 pin 被连接，`TextureSampleParameter2D` 就改为写成一条精选的 `UE.Expression`，参数实参和采样器实参一起带上 *（自 1.3.7 起）*。它的 `RGBA` 输出被写进一个具名临时变量一次；其他每个 pin 都变成它的 swizzle。
 
 <a id="emitted-as-a-curated-ueexpression"></a>
 
@@ -265,8 +219,7 @@ UE 5.4 及更新版本上 —— `FrontMaterial`。未连接的属性整条跳�
 
 ## `UE.Expression` 回退
 
-上面没有分支的类都会被导出成一个通用的
-[`UE.Expression`](../builtins/ue-expression.md) 调用，反编译器同时为它记一条警告。
+上面没有分支的类都会被导出成一个通用的 [`UE.Expression`](../builtins/ue-expression.md) 调用，反编译器同时为它记一条警告。
 
 参数列表分两趟构建：
 
@@ -289,13 +242,9 @@ UE 5.4 及更新版本上 —— `FrontMaterial`。未连接的属性整条跳�
 名字比较是在归一化之后做的，所以 `bTwoSided` 和 `Two Sided` 会冲突。
 
 > [!WARNING]
-> **struct、array、map、set 和 delegate 属性会被静默丢弃。** 它们不属于受支持的属性类型，
-> 所以一个状态存在于 struct 中的节点会以该状态在类默认值处的形式导出，并且没有任何警告指出具体是哪个属性。
-> 首次编译后请手动重新设置这些值，或者将节点保留为 `UE.Expression` 并自行补上缺失的参数。
+> **struct、array、map、set 和 delegate 属性会被静默丢弃。** 它们不属于受支持的属性类型，所以一个状态存在于 struct 中的节点会以该状态在类默认值处的形式导出，并且没有任何警告指出具体是哪个属性。首次编译后请手动重新设置这些值，或者将节点保留为 `UE.Expression` 并自行补上缺失的参数。
 
-`OutputType` 总是会被写出，并根据真实输出索引解析。当存在具名输出选择器
-（`Output=` / `OutputName=`）时，`OutputIndex` 会被抑制，因为同时携带两者的调用是
-[`DSH5252`](../diagnostics/DSH5xxx.md#dsh5252)。参数超过三个、或长度超过 120 个字符的调用会跨多行写出。
+`OutputType` 总是会被写出，并根据真实输出索引解析。当存在具名输出选择器（`Output=` / `OutputName=`）时，`OutputIndex` 会被抑制，因为同时携带两者的调用是 [`DSH5252`](../diagnostics/DSH5xxx.md#dsh5252)。参数超过三个、或长度超过 120 个字符的调用会跨多行写出。
 
 <a id="layout-export"></a>
 
@@ -310,9 +259,7 @@ UE 5.4 及更新版本上 —— `FrontMaterial`。未连接的属性整条跳�
 
 文本以 `DreamShader: ` 开头的注释框会被跳过——那些是生成的标记，不是作者编写的注释。
 
-与这个设置无关，每个表达式还会被归到**最小的**那个包住它的注释框，这些归属会变成对应 `Graph` 语句周围的
-`#Region` / `#EndRegion` 指令。关闭 layout 导出会去掉 `Layout` 块，但不会去掉
-region。
+与这个设置无关，每个表达式还会被归到**最小的**那个包住它的注释框，这些归属会变成对应 `Graph` 语句周围的 `#Region` / `#EndRegion` 指令。关闭 layout 导出会去掉 `Layout` 块，但不会去掉 region。
 
 参见 [Layout](../language/layout.md)。
 
@@ -326,8 +273,7 @@ region。
 
 ### 写进文件里的警告
 
-每条只写出一次，作为 `// Decompiled from …` 头行下面的 `// Warning: …` 注释。它们
-不会让导出失败。
+每条只写出一次，作为 `// Decompiled from …` 头行下面的 `// Warning: …` 注释。它们不会让导出失败。
 
 | 消息 | 原因 |
 | :-- | :-- |
@@ -373,8 +319,7 @@ region。
 | `Exported '{File}' but could not open it.` | 写出来了，但编辑器启动不了 |
 | `Exported '{File}'.` | 成功 |
 
-日志：Display 级的 `Exported '{Asset}' to '{File}'.`，以及
-Warning 级的 `Failed to export '{Asset}' to a DreamShader source: {Reason}`。
+日志：Display 级的 `Exported '{Asset}' to '{File}'.`，以及 Warning 级的 `Failed to export '{Asset}' to a DreamShader source: {Reason}`。
 
 <a id="known-round-trip-gaps"></a>
 
@@ -535,12 +480,7 @@ Substrate 节点按源码使用的名字写出 —— `Substrate.Slab(...)`，�
 
 固定大小 buffer 的 `Scale`（资产可能仍然持有）不会被写出：`Size` 会将其排除。
 
-**重新解析检查。** 文本被交回之前会再次解析，并在不带引擎的情况下进行绑定——
-引用按原样读取，所有需要项目的检查都被跳过——然后把它绑定到的载荷与资产的载荷进行比较，只有引擎知道的事实（引用解析成什么、
-`.usf` 的 `[numthreads]`）在文本以相同方式拼写引用时取自资产。一段无法解析的文本是 `DSH9221`；
-一段无法绑定进管线的文本是 `DSH9222`——资产违反了 `.dsp` 所检查的某条规则，这可能是手动编辑造成的，
-也可能是反编译器的问题；一段读回来却是不同管线的文本是 `DSH9223`，会指出第一处差异。三者都是警告：文件按原样写入，
-它们不会被复制到文件头部。
+**重新解析检查。** 文本被交回之前会再次解析，并在不带引擎的情况下进行绑定—— 引用按原样读取，所有需要项目的检查都被跳过——然后把它绑定到的载荷与资产的载荷进行比较，只有引擎知道的事实（引用解析成什么、 `.usf` 的 `[numthreads]`）在文本以相同方式拼写引用时取自资产。一段无法解析的文本是 `DSH9221`；一段无法绑定进管线的文本是 `DSH9222`——资产违反了 `.dsp` 所检查的某条规则，这可能是手动编辑造成的，也可能是反编译器的问题；一段读回来却是不同管线的文本是 `DSH9223`，会指出第一处差异。三者都是警告：文件按原样写入，它们不会被复制到文件头部。
 
 <a id="see-also"></a>
 

@@ -1,6 +1,6 @@
 ---
-title: "Sections"
-description: "Properties、Inputs、Outputs、Results、Settings、Options、Graph 与 Layout —— 哪个块接受哪个、重复出现时怎么处理，以及 Group 作用域。"
+title: Sections
+description: Properties、Inputs、Outputs、Results、Settings、Options、Graph 与 Layout —— 哪个块接受哪个、重复出现时怎么处理，以及 Group 作用域。
 ---
 
 带属性的块，其函数体就是一串 section。一个 section 由名字、可选的 `=`，以及一对花括号里以 `;` 分隔的语句组成。
@@ -142,11 +142,9 @@ Properties {
 | 函数体 | `{ … }` |
 | 终止符 | 闭合 `}` 之后的单个 `;` 是可选的 |
 
-`Group(…)` 是**唯一**可以在 `Properties` 内打开 `{` 的构造。其他任何 `{` 都是
-`DSH3250`，而缺少 `}` 的分组会一直读到文件末尾（`DSH2150`）。
+`Group(…)` 是**唯一**可以在 `Properties` 内打开 `{` 的构造。其他任何 `{` 都是 `DSH3250`，而缺少 `}` 的分组会一直读到文件末尾（`DSH2150`）。
 
-作用域可以嵌套任意深度。嵌套作用域的有效名字是外层名字、一个 `|`，以及内层名字 —— 这正是
-Unreal 自己的子分类写法。在名字里手写的 `|` 会原样保留：
+作用域可以嵌套任意深度。嵌套作用域的有效名字是外层名字、一个 `|`，以及内层名字 —— 这正是 Unreal 自己的子分类写法。在名字里手写的 `|` 会原样保留：
 
 ```c
 Properties {
@@ -202,8 +200,7 @@ Properties {
 
 **注意：**
 
-计数器是每个 `Properties` section 播种一次的。一个块声明了两次 `Properties`，第二个 section 会拿到一个
-从 `0` 重新开始的新计数器，于是两个 section 里的两个分组可能撞上重叠的排序优先级。
+计数器是每个 `Properties` section 播种一次的。一个块声明了两次 `Properties`，第二个 section 会拿到一个从 `0` 重新开始的新计数器，于是两个 section 里的两个分组可能撞上重叠的排序优先级。
 
 当分组作用域和显式元数据都没有提供值时，参数取 `32` —— 引擎给参数节点自身的默认值，也就是 1.x 留下的值。
 
@@ -211,8 +208,7 @@ Properties {
 
 ### 元数据
 
-尾随的 `[ … ]` 块里，条目以 `;` 或 `,` 分隔，键忽略大小写匹配，
-同一个键写两次是 `DSH3256`。
+尾随的 `[ … ]` 块里，条目以 `;` 或 `,` 分隔，键忽略大小写匹配，同一个键写两次是 `DSH3256`。
 
 | 键 | 别名 | 值 |
 | :-- | :-- | :-- |
@@ -224,10 +220,7 @@ Properties {
 | `SamplerType` | — | 采样器类型；`SAMPLERTYPE_` 前缀会被去掉 |
 | *其他任何键* | — | 通过反射写到节点的同名属性上 |
 
-表里没有列出的键都通过反射写到节点上（自 2.0.0 起）：参数节点类没有的键是警告 `DSH8210`、
-值不写入（1.x 直接拒绝），属性接受不了的值是 `DSH8213`。滑条范围只属于标量参数，
-写在向量、纹理或布尔参数上是一条警告 `DSH7233`，范围被丢弃
-（自 2.1.0 起）。完整语法见 [元数据与分组](../parameters/metadata.md)。
+表里没有列出的键都通过反射写到节点上（自 2.0.0 起）：参数节点类没有的键是警告 `DSH8210`、值不写入（1.x 直接拒绝），属性接受不了的值是 `DSH8213`。滑条范围只属于标量参数，写在向量、纹理或布尔参数上是一条警告 `DSH7233`，范围被丢弃（自 2.1.0 起）。完整语法见 [元数据与分组](../parameters/metadata.md)。
 
 <a id="inputs-outputs-and-results"></a>
 
@@ -249,31 +242,24 @@ parameter-declaration := [ opt ] <type> <name> [ = <default-expression> ] [ [ <m
 | `= <default>` | 否 | 输入的默认值，同时让它变成可选（自 2.0.0 起）。对输出无意义。 |
 | `[ <metadata> ]` | 否 | 只有 `Description` / `Desc` / `Tooltip` 和 `SortPriority` / `Sort` 有效。 |
 
-不符合 `[opt] <type> <name> [= <default>] [[ … ]] ;` 的语句是 `DSH3271`，`=` 后面为空的默认值也是。
-`opt`、类型和名字之间任意空白都行（自 2.0.0 起）；类型是一个单词，所以 `Material Attributes X;` 或
-`float 4 Colour;` 是 `DSH3271`。不是类型的单词是 `DSH4201`；
-同一个 section 里两个同名参数是 `DSH4214`。
+不符合 `[opt] <type> <name> [= <default>] [[ … ]] ;` 的语句是 `DSH3271`，`=` 后面为空的默认值也是。 `opt`、类型和名字之间任意空白都行（自 2.0.0 起）；类型是一个单词，所以 `Material Attributes X;` 或 `float 4 Colour;` 是 `DSH3271`。不是类型的单词是 `DSH4201`；同一个 section 里两个同名参数是 `DSH4214`。
 
 **注意：**
 
-`in` 和 `out` 在这些 section 里**不是**限定符。它们只存在于
-[`Function` / `GraphFunction`](functions.md) 的签名形式里，那是另一套
-语法。`Inputs = { in float X; }` 是 `DSH3271`：`in` 是关键字，不是类型。
+`in` 和 `out` 在这些 section 里**不是**限定符。它们只存在于 [`Function` / `GraphFunction`](functions.md) 的签名形式里，那是另一套语法。`Inputs = { in float X; }` 是 `DSH3271`：`in` 是关键字，不是类型。
 
 <a id="input-defaults"></a>
 
 ### 输入默认值
 
-输入上的默认值是调用方不连线时引脚取的值，并让这个输入变成可选 —— 1.x 只给它一个预览值，引脚仍然必需
-（自 2.0.0 起）。
+输入上的默认值是调用方不连线时引脚取的值，并让这个输入变成可选 —— 1.x 只给它一个预览值，引脚仍然必需（自 2.0.0 起）。
 
 | 情况 | 行为 |
 | :-- | :-- |
 | 默认值能折叠成常量 | 写入 `PreviewValue` |
 | 其他任何情况 | 作为**图表达式**构建，并连接到输入的 `Preview` 引脚上 |
 
-正是这条图表达式路径，让默认值可以引用块自身生成的节点
-（自 1.2.6 起）：
+正是这条图表达式路径，让默认值可以引用块自身生成的节点（自 1.2.6 起）：
 
 ```c
 ShaderFunction(Name="Functions/F_Sample")
@@ -290,33 +276,21 @@ ShaderFunction(Name="Functions/F_Sample")
 }
 ```
 
-默认值按赋值的规则转换到输入的类型：装不下是
-`DSH4226`，更宽的向量被截到前几个分量并给出 info `DSH5289`。
-`StaticBool` 输入的默认值会变成接在 `Preview` 引脚上的 `StaticBool` 节点，因为引擎
-在那里忽略 `PreviewValue`。
+默认值按赋值的规则转换到输入的类型：装不下是 `DSH4226`，更宽的向量被截到前几个分量并给出 info `DSH5289`。 `StaticBool` 输入的默认值会变成接在 `Preview` 引脚上的 `StaticBool` 节点，因为引擎在那里忽略 `PreviewValue`。
 
 <a id="outputs"></a>
 
 ### 输出
 
-- 材质函数 `Outputs` / `Results` 条目上的 `= <expression>` 会被**丢弃**并给出警告
-  `DSH3273`；写在输出上的 `opt` 是警告 `DSH3272`。函数输出只由
-  `Graph` 驱动。这不适用于 `Shader` 的 `Outputs`，那里的初始化式是有意义的。
-- 名字恰好叫 `Result` 的第一个输出是函数的返回值，从零开始；其余每个输出都必须在 `Graph` 里被赋值
-  （`DSH6211`）。函数至少要声明一个输出（`DSH4315`），`VirtualFunction` 也一样（`DSH6313`）。
-- `MaterialAttributes` 输出从空材质开始，所以
-  `Attrs.BaseColor = …;` 这类成员写入有目标；层的输出从流入的材质开始。
+- 材质函数 `Outputs` / `Results` 条目上的 `= <expression>` 会被**丢弃**并给出警告 `DSH3273`；写在输出上的 `opt` 是警告 `DSH3272`。函数输出只由 `Graph` 驱动。这不适用于 `Shader` 的 `Outputs`，那里的初始化式是有意义的。
+- 名字恰好叫 `Result` 的第一个输出是函数的返回值，从零开始；其余每个输出都必须在 `Graph` 里被赋值（`DSH6211`）。函数至少要声明一个输出（`DSH4315`），`VirtualFunction` 也一样（`DSH6313`）。
+- `MaterialAttributes` 输出从空材质开始，所以 `Attrs.BaseColor = …;` 这类成员写入有目标；层的输出从流入的材质开始。
 
 <a id="metadata-and-order"></a>
 
 ### 元数据与顺序
 
-只有 `Description` / `Desc` / `Tooltip` 和 `SortPriority` / `Sort` 有效；其他每个键 ——
-包括 `Group` —— 都被接受并**静默忽略**：函数输入和输出节点没有分组字段，
-也不会做反射写入。一个 section 的引脚按 `SortPriority` 稳定排序（没写的
-按声明序号算），资产上得到连续的优先级 `0, 1, 2, …`（自 2.0.0 起）。
-引脚 GUID 按名字跨重新生成缓存，所以重新生成 `ShaderFunction` 不会弄断
-已有的调用点。
+只有 `Description` / `Desc` / `Tooltip` 和 `SortPriority` / `Sort` 有效；其他每个键 —— 包括 `Group` —— 都被接受并**静默忽略**：函数输入和输出节点没有分组字段，也不会做反射写入。一个 section 的引脚按 `SortPriority` 稳定排序（没写的按声明序号算），资产上得到连续的优先级 `0, 1, 2, …`（自 2.0.0 起）。引脚 GUID 按名字跨重新生成缓存，所以重新生成 `ShaderFunction` 不会弄断已有的调用点。
 
 <a id="properties-versus-inputs"></a>
 

@@ -1,8 +1,3 @@
----
-title: "DreamShaderLang"
-description: "DreamShaderLang"
----
-
 <a id="dreamshaderlang"></a>
 
 # DreamShaderLang
@@ -20,9 +15,7 @@ description: "DreamShaderLang"
 | 引擎 | Unreal Engine `5.3` – `5.8`；在所有受支持的引擎版本上，所接受的文法完全相同 |
 
 > [!NOTE]
-> 新源文件使用 [DreamShaderLang 2.0](../language-v2/index.md)（`.dss`）编写。1.x 源文件
-> 仍经由同一编译器构建，并且 [`dsc migrate`](../tools/migrate.md) 会将其重写为
-> `.dss`，并证明该重写会构建出相同的图。
+> 新源文件使用 [DreamShaderLang 2.0](../language-v2/index.md)（`.dss`）编写。1.x 源文件仍经由同一编译器构建，并且 [`dsc migrate`](../tools/migrate.md) 会将其重写为 `.dss`，并证明该重写会构建出相同的图。
 
 <a id="synopsis"></a>
 
@@ -66,9 +59,7 @@ description: "DreamShaderLang"
 | 接受的标点 | 在某个部分的文法指明之处使用 `{ } ( ) [ ] ; = , . :` 和 `::` | 2.0 文法的每个运算符都是词法单元；1.x `Graph` 所不具备的运算符会按名称被拒绝，[`DSH2200`](../diagnostics/DSH2xxx.md#dsh2200)–[`DSH2222`](../diagnostics/DSH2xxx.md#dsh2222) |
 | 错误位置 | 各个部分中该构造所在的行和列 | 该构造所在的行和列 |
 
-`#if` 系列**不属于**任何一种文法：它在文件被词法分析之前逐行处理，因此它的任何关键字都不是解析器所认识的关键字。参见[预处理器](preprocessor.md)。
-*(自 2.0.0 起)* [`import`](import.md) 是声明文法中的顶层声明；在
-1.9.x 及之前，它同样是一条面向行的指令，在解析之前处理。
+`#if` 系列**不属于**任何一种文法：它在文件被词法分析之前逐行处理，因此它的任何关键字都不是解析器所认识的关键字。参见[预处理器](preprocessor.md)。*(自 2.0.0 起)* [`import`](import.md) 是声明文法中的顶层声明；在 1.9.x 及之前，它同样是一条面向行的指令，在解析之前处理。
 
 ```text
 <file>.dsm
@@ -89,8 +80,7 @@ description: "DreamShaderLang"
   └─ emitter                material nodes  ->  asset
 ```
 
-前端和绑定器会报告其所有错误，而非仅报告第一个错误，且某个阶段出现错误会在进入下一阶段之前停止流水线；预处理器则在其第一个错误处停止。
-预处理器**首先**按文件运行，这正是 `#if` 能够决定是否采用某个 `import` 的原因——也是 `#define` 只对写入它的文件局部有效的原因。
+前端和绑定器会报告其所有错误，而非仅报告第一个错误，且某个阶段出现错误会在进入下一阶段之前停止流水线；预处理器则在其第一个错误处停止。预处理器**首先**按文件运行，这正是 `#if` 能够决定是否采用某个 `import` 的原因——也是 `#define` 只对写入它的文件局部有效的原因。
 
 <a id="declaration-language"></a>
 
@@ -124,7 +114,7 @@ description: "DreamShaderLang"
 | [`Properties`](properties.md) | 参数、`const` 和 `UE.*` 声明、`Group("…")` 作用域 |
 | [`Inputs` / `Outputs` / `Results`](inputs-outputs.md) | 材质函数的类型化参数 |
 | [输出绑定](output-bindings.md) | `Base.<Property> = <value>;` 和 `Expression( … ).Pin[<i>]` |
-| [`Settings`](../../settings/index.md) | 材质和材质函数设置 |
+| [`Settings`](../settings/index.md) | 材质和材质函数设置 |
 | [`Options`](options.md) | `VirtualFunction` 资源绑定 |
 | [`Layout`](layout.md) | `Node` / `Comment` 放置与 `#Region` |
 
@@ -155,34 +145,17 @@ description: "DreamShaderLang"
 
 ## 说明
 
-- **同一个标记可以有两种读取方式。** `1.0f` 在任何位置都是一个浮点标记。`Properties`
-  默认读取其文本——一个符号、若干数字、一个小数点 `.`、一个指数、一个可选的 `f`——因此
-  `float Strength = 1.0f;` 和 `float Strength = 1e3;` 都没问题，而 `float Strength = 0x1F;` 是
-  [`DSH3254`](../diagnostics/DSH3xxx.md#dsh3254)；`Graph` 表达式则读取该标记本身。请参阅
-  [数值字面量](lexical.md#numeric-literals)。
-- **预处理器不属于任何一种语法。** 八个小写指令——`#if`、`#ifdef`、
-  `#ifndef`、`#elif`、`#else`、`#endif`、`#define`、`#undef`——会在解析之前
-  对原始文本求值，并且永远不会进入任何一种语法 *(自 1.9.0 起)*。除这八个之外，`#` 行只有在
-  有归属者时才会被传递：在 `Function` 主体内的任何位置（即 HLSL，包括 `#include`），
-  以及在 `#Region` / `#EndRegion` 中无论如何都会传递。其他任何内容都是 `DSH1035`，
-  其中包括大小写错误的指令，例如 `#IF`。请参阅 [预处理器](preprocessor.md) 和 [布局](layout.md)。
-- **顶层块关键字和小写保留字是区分大小写的标记。**
-  节名称、类型标记、属性键、设置键以及所有其他类似关键字的标记
-  都以不区分大小写的方式匹配。请参阅 [大小写敏感性](lexical.md#case-sensitivity)。
-- **解析器与引擎版本无关。** 任何词法或语法构造都不以
-  Unreal Engine 版本为条件。版本门控只存在于解析的下游——Substrate 类型和
-  内置项（UE 5.4+），以及少量节点和设置门控。
-- `.dsm` 或 `.dsf` 必须至少包含一个 `Shader`、`ShaderFunction`、`ShaderLayer`、
-  `ShaderLayerBlend`、`Function`、`GraphFunction`、`Namespace` 或 `VirtualFunction` 块，否则它
-  就是 [`DSH2254`](../diagnostics/DSH2xxx.md#dsh2254)。*(自 2.0.0 起)* 即使是空的 `Namespace` 也会计入，
-  而 `.dsh` 可以只包含导入。
+- **同一个标记可以有两种读取方式。** `1.0f` 在任何位置都是一个浮点标记。`Properties` 默认读取其文本——一个符号、若干数字、一个小数点 `.`、一个指数、一个可选的 `f`——因此 `float Strength = 1.0f;` 和 `float Strength = 1e3;` 都没问题，而 `float Strength = 0x1F;` 是 [`DSH3254`](../diagnostics/DSH3xxx.md#dsh3254)；`Graph` 表达式则读取该标记本身。请参阅[数值字面量](lexical.md#numeric-literals)。
+- **预处理器不属于任何一种语法。** 八个小写指令——`#if`、`#ifdef`、 `#ifndef`、`#elif`、`#else`、`#endif`、`#define`、`#undef`——会在解析之前对原始文本求值，并且永远不会进入任何一种语法 *(自 1.9.0 起)*。除这八个之外，`#` 行只有在有归属者时才会被传递：在 `Function` 主体内的任何位置（即 HLSL，包括 `#include`），以及在 `#Region` / `#EndRegion` 中无论如何都会传递。其他任何内容都是 `DSH1035`，其中包括大小写错误的指令，例如 `#IF`。请参阅 [预处理器](preprocessor.md) 和 [布局](layout.md)。
+- **顶层块关键字和小写保留字是区分大小写的标记。**节名称、类型标记、属性键、设置键以及所有其他类似关键字的标记都以不区分大小写的方式匹配。请参阅 [大小写敏感性](lexical.md#case-sensitivity)。
+- **解析器与引擎版本无关。** 任何词法或语法构造都不以 Unreal Engine 版本为条件。版本门控只存在于解析的下游——Substrate 类型和内置项（UE 5.4+），以及少量节点和设置门控。
+- `.dsm` 或 `.dsf` 必须至少包含一个 `Shader`、`ShaderFunction`、`ShaderLayer`、 `ShaderLayerBlend`、`Function`、`GraphFunction`、`Namespace` 或 `VirtualFunction` 块，否则它就是 [`DSH2254`](../diagnostics/DSH2xxx.md#dsh2254)。*(自 2.0.0 起)* 即使是空的 `Namespace` 也会计入，而 `.dsh` 可以只包含导入。
 
 <a id="example"></a>
 
 ## 示例
 
-一个 `.dsm` 同时使用两种语法：声明语法掌管 `Graph = { }` 之外的一切，
-语句语法掌管其内的一切。
+一个 `.dsm` 同时使用两种语法：声明语法掌管 `Graph = { }` 之外的一切，语句语法掌管其内的一切。
 
 ```c
 Shader(Name="Materials/M_Comments")

@@ -1,6 +1,4 @@
-#dreamdocs-align 1	source=Docs/api/dreamshader-module.md	rev=8a7a159022d8	model=deepseek-flash	page=cbe747e3e2d0
-meta:title	-	fb23d646	m
-meta:description	-	fb23d646	m
+#dreamdocs-align 1	source=Docs/api/dreamshader-module.md	rev=dce3a7afae92	model=deepseek-flash	page=cbe747e3e2d0
 h1	2e4a74f34783	2e4a74f3	m
 q	e2888a9caeff	b76d75f7	m
 p	402f246965b3	c19a1d28	m
@@ -44,7 +42,7 @@ row2	3db71857c336	ff50009b	m
 row2	87ce601bb94b	fd853d75	m
 row2	53239e27ed30	a1e58e39	m
 row2	72abf7b0a032	54635df5	m
-p	3816f06ceac5	a02e5ea3	m
+p	3816f06ceac5	27aa0bb5	m
 p	b5f707863f75	9c82acfd	m
 h2	33c7a2d18439	33c7a2d1	s
 p	457b02cdc4dc	a7433751	m
@@ -102,14 +100,14 @@ q	6bb4cce83bff	e9360f66	m
 h2	90f01ef3550a	fc7f92dc	m
 li	a8a34adc3041	7867bc23	m
 li	06c0fa04880b	aecaadbc	m
-li	621b9b2344b9	178519fc	m
+li	621b9b2344b9	98282846	m
 h2	9877f70e43cf	29074c4c	m
 p	a1582252ff8a	811560d7	m
 p	5c4edb3895f1	995d5921	m
 h2	ef7175cc89ee	767b1235	m
 li	1efebde2752a	cc22aac1	m
 li	a0e94298dfcc	e375e1be	m
-li	-	ef279d5d	m
+li	5f387b367190	7963b3f9	s
 li	63e6d01fab99	f3f5a99c	m
 li	17e43ae88065	d4798c4c	m
 li	8ec2808c1664	4aaade97	m

@@ -1,8 +1,3 @@
----
-title: "`DreamShaderLang`"
-description: "`DreamShaderLang`"
----
-
 <a id="dreamshaderlang"></a>
 
 # `DreamShaderLang`
@@ -98,9 +93,7 @@ PublicDependencyModuleNames.AddRange(new[] { "Core" });
 | `IR/IRCustomHlsl.h` | `FCustomNodeCode`（`Code`、`IncludeFilePaths`、`InlinedFunctions`）、`BuildDreamShaderCustomNodeCode`，以及带 `TryParseCustomCodeBodyMarker` 的 `CustomCodeMarker` 语法 —— Custom 节点主体携带的行标记，`dsc check -Shaders` 通过它映射回着色器编译错误。 |
 | `IR/IRLayout.h` | 任何节点存在之前的图布局：`EIRLayoutStyle`（`Blocks`、`SourceBands`、`Layered`）包含 `TryParseIRLayoutStyle`、`FIRLayoutOptions`、`FIRLayoutResult` 及其部分、`LayoutDreamShaderIRGraph`、`FindDreamShaderIRLayoutOwner`、无引擎的尺寸估计，以及 `DumpDreamShaderIRLayoutSvg` / `…Json`（模式 `dreamshader-ir-layout` 版本 1，`dsc dump-layout` 写入的内容）。确定性，且从不更改图。 |
 
-> IR 在其标识中**不保存源位置**：`FIRSourceRef` 搭载在节点上供工具使用
-> （资产的 `DreamShader.SourceSpans` 表、节点 ↔ 源导航），并且从不属于
-> 去重键的一部分。两个结构相同的节点无论写在哪里都会合并。
+> IR 在其标识中**不保存源位置**：`FIRSourceRef` 搭载在节点上供工具使用（资产的 `DreamShader.SourceSpans` 表、节点 ↔ 源导航），并且从不属于去重键的一部分。两个结构相同的节点无论写在哪里都会合并。
 
 <a id="decompile-and-migrate--the-way-back"></a>
 
@@ -117,10 +110,7 @@ PublicDependencyModuleNames.AddRange(new[] { "Core" });
 
 ### 模块根 —— 2.0 中移到此处的部分
 
-下面四个头文件中有三个在 1.9.x 之前位于 `DreamShader` 模块中，并在 2.0 中移入
-`DreamShaderLang`。它们保留了 `UE::DreamShader` 命名空间和 include 路径，因此
-**现有调用者无需更改源代码** —— 只需在其 `Build.cs`
-依赖列表中添加一个 `DreamShaderLang` 条目。`DreamShaderLangModule.h` 是 2.0 中新增的。
+下面四个头文件中有三个在 1.9.x 之前位于 `DreamShader` 模块中，并在 2.0 中移入 `DreamShaderLang`。它们保留了 `UE::DreamShader` 命名空间和 include 路径，因此**现有调用者无需更改源代码** —— 只需在其 `Build.cs` 依赖列表中添加一个 `DreamShaderLang` 条目。`DreamShaderLangModule.h` 是 2.0 中新增的。
 
 | 头文件 | 用途 |
 | :-- | :-- |
@@ -129,16 +119,13 @@ PublicDependencyModuleNames.AddRange(new[] { "Core" });
 | `DreamShaderDiagnostic.h` *（2.0 中迁移）* | `FDreamShaderError` / `FDreamShaderTextError` —— 1.x 中携带代码的错误结构体，以及记录 `DSHnnnn` 首位数字含义的文档注释。 |
 | `DreamShaderLangModule.h` | `FDreamShaderLangModule`。两个生命周期方法均为空：模块对象的存在只是为了让插件描述符能够命名它、让依赖方能够链接它。没有单例访问器，也没有任何需要初始化的内容。 |
 
-> `FDreamShaderError`（1.x，`FString`/`FText` 消息）与 `FLangDiagnostic`（2.0，代码 + 严重级别 +
-> `FText` + 跨度）是刻意共存的：1.x 管线仍然携带前者，而 2.0 前端
-> 从不产生它。它们之间不会隐式转换。
+> `FDreamShaderError`（1.x，`FString`/`FText` 消息）与 `FLangDiagnostic`（2.0，代码 + 严重级别 + `FText` + 跨度）是刻意共存的：1.x 管线仍然携带前者，而 2.0 前端从不产生它。它们之间不会隐式转换。
 
 <a id="entry-points"></a>
 
 ## 入口点
 
-该模块是一条由六次调用组成的管线——预处理、词法分析、解析、绑定、降级、运行各趟处理——外加一个
-验证器、两个转储、一个打印器，以及一个用于单独解析单个表达式的调用。
+该模块是一条由六次调用组成的管线——预处理、词法分析、解析、绑定、降级、运行各趟处理——外加一个验证器、两个转储、一个打印器，以及一个用于单独解析单个表达式的调用。
 
 | 调用 | 头文件 | 约定 |
 | :-- | :-- | :-- |
@@ -195,8 +182,7 @@ void Normalise(const FString& Path, const FString& Text)
 
 ### 前端选择
 
-`FLangParseOptions::Frontend` 默认为 `ELangFrontend::Auto`，它根据
-`FLangSourceText::GetPath()` 所携带的文件扩展名进行判断：
+`FLangParseOptions::Frontend` 默认为 `ELangFrontend::Auto`，它根据 `FLangSourceText::GetPath()` 所携带的文件扩展名进行判断：
 
 | 扩展名 | `ELangFileKind` | 前端 |
 | :-- | :-- | :-- |
@@ -207,37 +193,23 @@ void Normalise(const FString& Path, const FString& Text)
 | `.dsm` | `Dsm` | 旧版 |
 | `.dsf` | `Dsf` | 旧版 |
 
-旧版前端将 1.x 构造降到*相同的* AST 节点类型上——一个 `Shader` 块
-变成 uniform、一个 `#pragma material` 和一个导出函数——因此下游无需知道
-是哪个解析器生成了模块。1.x 文本在此之外所述内容（块名、节、重命名、
-输出选择）随树一起保存在 `FLangParseResult::Legacy` 中，而声明携带
-`bLegacy`，这正是绑定器对其（且仅对其）应用文档化 1.x 规则的原因。
+旧版前端将 1.x 构造降到*相同的* AST 节点类型上——一个 `Shader` 块变成 uniform、一个 `#pragma material` 和一个导出函数——因此下游无需知道是哪个解析器生成了模块。1.x 文本在此之外所述内容（块名、节、重命名、输出选择）随树一起保存在 `FLangParseResult::Legacy` 中，而声明携带 `bLegacy`，这正是绑定器对其（且仅对其）应用文档化 1.x 规则的原因。
 
 <a id="printer-contract"></a>
 
 ### 打印器契约
 
-打印器的承诺是**结构保真，而非文本保真**：`parse(print(parse(X)))` 产生的树与 `parse(X)` 相同。具体而言——在 `FParenExpr` 记录的位置以及优先级要求的位置发出括号；`///` 块在自由文本之后按每行一条指令重新发出；不透明（`/// @custom`）主体从 `RawBody` 原样写出；pragma 和 include 保留其拼写；字面量保留书写时的词素，因此 `1.0f`、`0x10` 和 `2u` 都能保留。除 `///` 以外的注释在解析保留它们时会被重现：使用 `FLangParseOptions::bKeepTrivia` 时，每条
-注释和空行都附着到它旁边的声明或语句上
-（`FModule::Trivia`），打印器会将它们写回——这正是 `dsc migrate` 能够承诺
-不丢失任何注释的原因。不使用该选项时，它们会像以前一样被丢弃。
+打印器的承诺是**结构保真，而非文本保真**：`parse(print(parse(X)))` 产生的树与 `parse(X)` 相同。具体而言——在 `FParenExpr` 记录的位置以及优先级要求的位置发出括号；`///` 块在自由文本之后按每行一条指令重新发出；不透明（`/// @custom`）主体从 `RawBody` 原样写出；pragma 和 include 保留其拼写；字面量保留书写时的词素，因此 `1.0f`、`0x10` 和 `2u` 都能保留。除 `///` 以外的注释在解析保留它们时会被重现：使用 `FLangParseOptions::bKeepTrivia` 时，每条注释和空行都附着到它旁边的声明或语句上（`FModule::Trivia`），打印器会将它们写回——这正是 `dsc migrate` 能够承诺不丢失任何注释的原因。不使用该选项时，它们会像以前一样被丢弃。
 
-`FLangPrintOptions::NewLine` 默认为 `\n`，但不透明主体是其源文件的一个切片，
-保留该文件的终止符，因此打印一个 CRLF 文件会产生混合终止符。这是稳定的：
-下一次解析会切出相同的字节，因此固定点仍然成立。
+`FLangPrintOptions::NewLine` 默认为 `\n`，但不透明主体是其源文件的一个切片，保留该文件的终止符，因此打印一个 CRLF 文件会产生混合终止符。这是稳定的：下一次解析会切出相同的字节，因此固定点仍然成立。
 
 <a id="opaque-bodies"></a>
 
 ### 不透明主体
 
-一个函数的 `///` 块携带 `@custom` 时，其主体被原样捕获：`FFunctionDecl::Body`
-为 null，`bOpaqueBody` 为 true，`RawBody` 是花括号之间的文本，`BodySpan` 覆盖
-含花括号的范围。解析器只读取花括号——它们必须成对平衡，而其中的字符串、注释和
-`#` 行不会破坏平衡，因为词法分析器已把每一个都变成单个 token。
+一个函数的 `///` 块携带 `@custom` 时，其主体被原样捕获：`FFunctionDecl::Body` 为 null，`bOpaqueBody` 为 true，`RawBody` 是花括号之间的文本，`BodySpan` 覆盖含花括号的范围。解析器只读取花括号——它们必须成对平衡，而其中的字符串、注释和 `#` 行不会破坏平衡，因为词法分析器已把每一个都变成单个 token。
 
-由于该文本不是 DreamShaderLang，`ParseDreamShaderLang` **丢弃每一个跨度起始于 `BodySpan` 内部的词法诊断**。其中的 `$`、`@`、`'` 或行中 `#` 不是关于程序的事实，
-由着色器编译器来判定。该抑制仅限于这些跨度：
-在外部一行处的相同字符仍然是 `DSH2101` / `DSH2106`。
+由于该文本不是 DreamShaderLang，`ParseDreamShaderLang` **丢弃每一个跨度起始于 `BodySpan` 内部的词法诊断**。其中的 `$`、`@`、`'` 或行中 `#` 不是关于程序的事实，由着色器编译器来判定。该抑制仅限于这些跨度：在外部一行处的相同字符仍然是 `DSH2101` / `DSH2106`。
 
 <a id="diagnostics"></a>
 
@@ -249,9 +221,7 @@ void Normalise(const FString& Path, const FString& Text)
 Diagnostics.Error(TEXT("DSH2151"), Span, LOCTEXT("ExpectedExpression", "expected an expression"));
 ```
 
-这些消息在每文件 `LOCTEXT_NAMESPACE` 下是 `LOCTEXT`，形式为
-`"DreamShader.Lang.<Unit>"`，因此编辑器可以本地化它们。**针对代码断言，绝不要针对
-消息文本断言。**
+这些消息在每文件 `LOCTEXT_NAMESPACE` 下是 `LOCTEXT`，形式为 `"DreamShader.Lang.<Unit>"`，因此编辑器可以本地化它们。**针对代码断言，绝不要针对消息文本断言。**
 
 | 范围 | 抛出者 | 固定锚点 |
 | :-- | :-- | :-- |
@@ -265,8 +235,7 @@ Diagnostics.Error(TEXT("DSH2151"), Span, LOCTEXT("ExpectedExpression", "expected
 | `DSH6300`–`DSH6330` | 旧版前端与绑定器——`Function` / `GraphFunction`、提升的 `UE.` 调用 | `6326` 一个提升调用读取了主体局部变量 |
 | `DSH3200`–`DSH3249` | 声明、类型、指令、文档块（已分配：`3200`–`3208`、`3210`、`3211`、`3213`–`3218`、`3220`–`3222`） | `3201` 游离的预处理器指令 · `3203` `#include` / `import` 没有**双引号**路径 · `3204` 期望一个类型名 · `3208` 没有主体的函数 · `3213` 错误的存储/链接组合 · `3220` 格式错误的 `@` 指令（**警告**） · `3221` 孤立的 `///` 块（**警告**） · `3222` 一个 1.x 声明词 |
 
-绑定器、构建器、各个 pass、验证器和自定义 HLSL 构建器都通过
-同一个接收器抛出，各自带有自己的范围：
+绑定器、构建器、各个 pass、验证器和自定义 HLSL 构建器都通过同一个接收器抛出，各自带有自己的范围：
 
 | 范围 | 引发者 |
 | :-- | :-- |
@@ -288,17 +257,13 @@ Diagnostics.Error(TEXT("DSH2151"), Span, LOCTEXT("ExpectedExpression", "expected
 | `DSH9107`–`DSH9109` | `.dsi` 以及*自 2.1.0 起*的 `.dsp`（Adopt）的就地重写：共享声明、重叠编辑、错误类型的文件 |
 | `DSH9091`、`DSH9094` | 迁移器（其周围宿主提供的证明位于编辑器模块中，是 `DSH9090`–`DSH9099` 的其余部分） |
 
-`DSH1030`–`DSH1042`（预处理器的自身代码）随预处理器一起移入此模块，并
-保留了其编号。每个代码的说明文字位于[诊断](../diagnostics/index.md)下。
+`DSH1030`–`DSH1042`（预处理器的自身代码）随预处理器一起移入此模块，并保留了其编号。每个代码的说明文字位于[诊断](../diagnostics/index.md)下。
 
 <a id="testing-the-lang-corpus"></a>
 
 ## 测试：`Lang` 语料库
 
-前端由**数据驱动的语料库**覆盖，而不是每个功能手写的测试。测试固件
-位于 `Tests/Corpus/Lang/` 下，每个功能一个 `.dss` 或 `.dsh`，每个可选择性地配对一个
-`<name>.expected.json` 黄金文件；一个复杂的自动化测试在运行时枚举该树，并将
-每个固件暴露为其自身的子测试。
+前端由**数据驱动的语料库**覆盖，而不是每个功能手写的测试。测试固件位于 `Tests/Corpus/Lang/` 下，每个功能一个 `.dss` 或 `.dsh`，每个可选择性地配对一个 `<name>.expected.json` 黄金文件；一个复杂的自动化测试在运行时枚举该树，并将每个固件暴露为其自身的子测试。
 
 | | |
 | :-- | :-- |
@@ -310,21 +275,12 @@ Diagnostics.Error(TEXT("DSH2151"), Span, LOCTEXT("ExpectedExpression", "expected
 
 每个用例都会通过 `ParseDreamShaderLang` 解析一次，然后与其黄金文件进行比对：
 
-- `outcome` — `ok` 或 `error`。如果没有黄金文件，默认是“正向固件解析成功，
-  `*.bad.*` 固件失败”。
-- `errorContains` / `warningsContain` — 该严重级别下每条诊断的
-  `FLangDiagnosticSink::ToWireString` 的子字符串（大小写**敏感**）。在实践中：
-  `DSHnnnn` 代码。
-- `module` — 对解析后的 `FModule` 进行结构性计数：`declarations`（pragma 和 include
-  也会计数）、`pragmas`、`includes`、`structs`、`uniforms`（仅 `Uniform` 存储）、`constants`
-  （仅 `StaticConst`）、`functions`（全部三种链接方式）、`exports`、`externs`、`opaqueBodies`、
-  `entry`（其签名为 `void (inout material)` 的第一个函数，**无论链接方式如何**）
-  以及 `roundtrip`。
-- `roundtrip` — 打印 → 解析 → 打印逐字节相同，这就是打印器的契约以
-  测试形式表达出来。
+- `outcome` — `ok` 或 `error`。如果没有黄金文件，默认是“正向固件解析成功， `*.bad.*` 固件失败”。
+- `errorContains` / `warningsContain` — 该严重级别下每条诊断的 `FLangDiagnosticSink::ToWireString` 的子字符串（大小写**敏感**）。在实践中： `DSHnnnn` 代码。
+- `module` — 对解析后的 `FModule` 进行结构性计数：`declarations`（pragma 和 include 也会计数）、`pragmas`、`includes`、`structs`、`uniforms`（仅 `Uniform` 存储）、`constants` （仅 `StaticConst`）、`functions`（全部三种链接方式）、`exports`、`externs`、`opaqueBodies`、 `entry`（其签名为 `void (inout material)` 的第一个函数，**无论链接方式如何**）以及 `roundtrip`。
+- `roundtrip` — 打印 → 解析 → 打印逐字节相同，这就是打印器的契约以测试形式表达出来。
 
-为新构造添加覆盖就是往树中放入一个文件；无需 C++ 更改，无需重新编译。
-以无头模式运行整个层：
+为新构造添加覆盖就是往树中放入一个文件；无需 C++ 更改，无需重新编译。以无头模式运行整个层：
 
 ```
 "F:\UnrealEngine\UE_Moon\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" ^
@@ -333,12 +289,9 @@ Diagnostics.Error(TEXT("DSH2151"), Span, LOCTEXT("ExpectedExpression", "expected
   -nullrhi -unattended -nopause -nosplash -log
 ```
 
-添加 `-DreamShaderUpdateGolden` 会根据实际结果重写每个黄金文件，而不是进行断言。
-提交前手动审查差异 — 这个开关正是回归变成基线的方式。
+添加 `-DreamShaderUpdateGolden` 会根据实际结果重写每个黄金文件，而不是进行断言。提交前手动审查差异 — 这个开关正是回归变成基线的方式。
 
-除了语料库之外，每个前端单元都有自己的专注测试文件
-（`DreamShaderLangLexerTests.cpp`、`…DeclarationTests.cpp`、`…ExpressionTests.cpp`、
-`…PrinterTests.cpp`），全部位于 `DreamShader.Lang2.*` 下。
+除了语料库之外，每个前端单元都有自己的专注测试文件（`DreamShaderLangLexerTests.cpp`、`…DeclarationTests.cpp`、`…ExpressionTests.cpp`、 `…PrinterTests.cpp`），全部位于 `DreamShader.Lang2.*` 下。
 
 <a id="see-also"></a>
 

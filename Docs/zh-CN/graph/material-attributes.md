@@ -1,8 +1,3 @@
----
-title: "MaterialAttributes"
-description: "MaterialAttributes"
----
-
 <a id="materialattributes"></a>
 
 # MaterialAttributes
@@ -58,31 +53,23 @@ MaterialAttributes <name> = <material-attributes-expression> ;
 | `MaterialAttributes Attrs = F_Layer(uv);` | 任何值为 `MaterialAttributes` 的表达式 — 函数调用、`StaticSwitchParameter` 调用。 |
 
 > [!WARNING]
-> **在 `Shader` 中，`Outputs` 声明会创建该变量** *（自 2.0.0 起）*。每个 `Outputs`
-> 声明都声明在材质主体的顶部，而 `MaterialAttributes` 声明初始为空集，
-> 因此 `Attrs.BaseColor = Tint;` 无需任何 `Graph` 声明即可工作。
-> `Graph` 中的 `MaterialAttributes Attrs;` 命名的是同一个变量，不会额外添加任何内容：
+> **在 `Shader` 中，`Outputs` 声明会创建该变量** *（自 2.0.0 起）*。每个 `Outputs` 声明都声明在材质主体的顶部，而 `MaterialAttributes` 声明初始为空集，因此 `Attrs.BaseColor = Tint;` 无需任何 `Graph` 声明即可工作。 `Graph` 中的 `MaterialAttributes Attrs;` 命名的是同一个变量，不会额外添加任何内容：
 >
 > ```c
 > Outputs { MaterialAttributes Attrs; Base.MaterialAttributes = Attrs; }
 > Graph   { MaterialAttributes Attrs; Attrs.BaseColor = Tint; }
 > ```
 >
-> 在函数块中，`MaterialAttributes` 输出即为该函数的输出：写入其中的属性构成其集合，读取从未写入的属性会得到
-> [`DSH4370`](../diagnostics/DSH4xxx.md#dsh4370)。
+> 在函数块中，`MaterialAttributes` 输出即为该函数的输出：写入其中的属性构成其集合，读取从未写入的属性会得到 [`DSH4370`](../diagnostics/DSH4xxx.md#dsh4370)。
 
 > [!NOTE]
-> `MaterialAttributes B = A;` 是值拷贝，不是别名。之后对 `B.Roughness = r;` 的修改仅改变 **`B`**；
-> `A` 保持其属性不变。
+> `MaterialAttributes B = A;` 是值拷贝，不是别名。之后对 `B.Roughness = r;` 的修改仅改变 **`B`**； `A` 保持其属性不变。
 
 <a id="members"></a>
 
 ## 成员
 
-属性表即引擎的表 *（自 2.0.0 起）*：此引擎不具备的属性为
-[`DSH5200`](../diagnostics/DSH5xxx.md#dsh5200)。成员名称先进行精确匹配（名称或别名），
-然后忽略大小写匹配，并给出警告 [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276)。别名
-是完全同义的。
+属性表即引擎的表 *（自 2.0.0 起）*：此引擎不具备的属性为 [`DSH5200`](../diagnostics/DSH5xxx.md#dsh5200)。成员名称先进行精确匹配（名称或别名），然后忽略大小写匹配，并给出警告 [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276)。别名是完全同义的。
 
 | 成员 | 别名 | 分量 |
 | :-- | :-- | :-- |
@@ -111,43 +98,29 @@ MaterialAttributes <name> = <material-attributes-expression> ;
 | `FrontMaterial` *（UE 5.4+）* | — | 一个 `Substrate` 值 |
 | `MaterialAttributes` | `Attributes` | 整个集合 |
 
-1.x 别名 `CustomizedUVs0` … `CustomizedUVs7` 不在别名表中 *（自 2.0.0 起）*；
-请写 `CustomizedUV0` … `CustomizedUV7`。
+1.x 别名 `CustomizedUVs0` … `CustomizedUVs7` 不在别名表中 *（自 2.0.0 起）*；请写 `CustomizedUV0` … `CustomizedUV7`。
 
-`MaterialAttributes`（别名 `Attributes`）可作为成员解析 *（自 2.0.0 起；1.x 会拒绝）*：它
-是整个集合，也是绑定 `Base.MaterialAttributes = Attrs;` 所写入的内容。要替换
-`Graph` 变量的整个集合，请对变量本身赋值：`Attrs = Other;`。
+`MaterialAttributes`（别名 `Attributes`）可作为成员解析 *（自 2.0.0 起；1.x 会拒绝）*：它是整个集合，也是绑定 `Base.MaterialAttributes = Attrs;` 所写入的内容。要替换 `Graph` 变量的整个集合，请对变量本身赋值：`Attrs = Other;`。
 
 > [!NOTE]
-> 引擎分支宏 `MOON_ENGINE` 添加了成员 `MoonEncodedAttribute0` 到
-> `MoonEncodedAttribute4`。改名前的拼写 `MooaEncodedAttribute0` …
-> `MooaEncodedAttribute4` 可作为别名接受，因此反编译的 MooaToon 函数仍能解析。这些
-> 在标准 UE 5.3–5.8 构建中并不存在。
+> 引擎分支宏 `MOON_ENGINE` 添加了成员 `MoonEncodedAttribute0` 到 `MoonEncodedAttribute4`。改名前的拼写 `MooaEncodedAttribute0` … `MooaEncodedAttribute4` 可作为别名接受，因此反编译的 MooaToon 函数仍能解析。这些在标准 UE 5.3–5.8 构建中并不存在。
 
 <a id="reading-a-member"></a>
 
 ### 读取成员
 
-读取主体已在此值中写入的属性，得到的就是该已写入的值；不会生成节点。
-其他任何读取都来自每个值一个 `UMaterialExpressionBreakMaterialAttributes`，由该值的所有读取共享
-*（自 2.0.0 起；1.x 为每次读取生成一个 Break 节点）*。
+读取主体已在此值中写入的属性，得到的就是该已写入的值；不会生成节点。其他任何读取都来自每个值一个 `UMaterialExpressionBreakMaterialAttributes`，由该值的所有读取共享*（自 2.0.0 起；1.x 为每次读取生成一个 Break 节点）*。
 
 > [!WARNING]
-> 必须经过 Break 节点的读取，需要引擎的 Break 节点发布该
-> 属性；未发布的属性为 [`DSH8216`](../diagnostics/DSH8xxx.md#dsh8216)。这取决于
-> 引擎构建版本。无可读取内容的值 — 函数在尚未写入任何内容之前的 `MaterialAttributes` 输出 — 为 `DSH4370`。
+> 必须经过 Break 节点的读取，需要引擎的 Break 节点发布该属性；未发布的属性为 [`DSH8216`](../diagnostics/DSH8xxx.md#dsh8216)。这取决于引擎构建版本。无可读取内容的值 — 函数在尚未写入任何内容之前的 `MaterialAttributes` 输出 — 为 `DSH4370`。
 
-读取结果是具有该成员分量数量的普通数值，因此可以重排通道：
-`Attrs.BaseColor.r` 是先进行属性读取，然后进行通道选择。
+读取结果是具有该成员分量数量的普通数值，因此可以重排通道： `Attrs.BaseColor.r` 是先进行属性读取，然后进行通道选择。
 
 <a id="writing-a-member"></a>
 
 ### 写入成员
 
-成员写入会为该属性记录值；之后对同一属性的写入会替换它。节点在值**被使用**的地方生成 — 传给函数或引脚、赋给
-输出、绑定到材质：在该值的集合之上生成一个 `UMaterialExpressionSetMaterialAttributes`，
-目前已写入的每个属性对应一个引脚 *（自 2.0.0 起；1.x 为每次写入链式生成一个 Set 节点）*。
-底下没有集合的值 — 函数的输出 — 则改为生成一个带已写入引脚的 `MakeMaterialAttributes`。
+成员写入会为该属性记录值；之后对同一属性的写入会替换它。节点在值**被使用**的地方生成 — 传给函数或引脚、赋给输出、绑定到材质：在该值的集合之上生成一个 `UMaterialExpressionSetMaterialAttributes`，目前已写入的每个属性对应一个引脚 *（自 2.0.0 起；1.x 为每次写入链式生成一个 Set 节点）*。底下没有集合的值 — 函数的输出 — 则改为生成一个带已写入引脚的 `MakeMaterialAttributes`。
 
 | 规则 | 失败时的代码 |
 | :-- | :-- |
@@ -157,24 +130,18 @@ MaterialAttributes <name> = <material-attributes-expression> ;
 | 成员名称必须能解析 | `DSH5200` |
 | 值必须匹配成员的类型 | `DSH4228`；更宽的向量会取其前导分量，并给出信息 [`DSH5289`](../diagnostics/DSH5xxx.md#dsh5289) |
 
-强制转换遵循常规规则：标量会扩展，更宽的值会被截取其前导分量
-（`DSH5289`），而将 float2 赋给 float3 成员是错误。请参阅
-[Conversions](conversions.md)。
+强制转换遵循常规规则：标量会扩展，更宽的值会被截取其前导分量（`DSH5289`），而将 float2 赋给 float3 成员是错误。请参阅 [Conversions](conversions.md)。
 
 > [!NOTE]
-> `Attrs.BaseColor.r = 1.0;` 是 `DSH2206`。在 1.x Graph 中没有按通道写入属性的功能；
-> 请先构建完整的值。
+> `Attrs.BaseColor.r = 1.0;` 是 `DSH2206`。在 1.x Graph 中没有按通道写入属性的功能；请先构建完整的值。
 >
-> 声明的名称是一个标识符，因此 `MaterialAttributes A.B = x;` 是
-> [`DSH2154`](../diagnostics/DSH2xxx.md#dsh2154) *（自 2.0.0 起）*。
+> 声明的名称是一个标识符，因此 `MaterialAttributes A.B = x;` 是 [`DSH2154`](../diagnostics/DSH2xxx.md#dsh2154) *（自 2.0.0 起）*。
 
 <a id="brace-initializers-on-a-member"></a>
 
 ### 成员上的花括号初始化器
 
-`Attrs.BaseColor = {1.0, 0.35, 0.1};` 是 [`DSH2162`](../diagnostics/DSH2xxx.md#dsh2162)
-*（自 2.0.0 起）*：花括号列表只能作为声明的初始化器被读取。请编写构造函数，
-`Attrs.BaseColor = float3(1.0, 0.35, 0.1);`。
+`Attrs.BaseColor = {1.0, 0.35, 0.1};` 是 [`DSH2162`](../diagnostics/DSH2xxx.md#dsh2162) *（自 2.0.0 起）*：花括号列表只能作为声明的初始化器被读取。请编写构造函数， `Attrs.BaseColor = float3(1.0, 0.35, 0.1);`。
 
 <a id="passing-attribute-values-around"></a>
 
@@ -191,15 +158,13 @@ MaterialAttributes <name> = <material-attributes-expression> ;
 | 构造函数参数 | 拒绝 — `DSH4226`。 |
 | 算术操作数 | 拒绝 — `DSH4226`。 |
 
-绑定 `Base.MaterialAttributes` 的完整文档见
-[输出绑定](../language/output-bindings.md)。
+绑定 `Base.MaterialAttributes` 的完整文档见[输出绑定](../language/output-bindings.md)。
 
 <a id="substrate-interaction"></a>
 
 ## Substrate 交互
 
-`Substrate` 是**独立的**值类型，不是属性集，并且需要 UE 5.4 或更高版本。两者
-永远不会相互转换。
+`Substrate` 是**独立的**值类型，不是属性集，并且需要 UE 5.4 或更高版本。两者永远不会相互转换。
 
 | 情况 | 行为 |
 | :-- | :-- |

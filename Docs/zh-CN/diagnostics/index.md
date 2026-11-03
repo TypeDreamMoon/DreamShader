@@ -1,8 +1,3 @@
----
-title: "诊断"
-description: "诊断"
----
-
 <a id="diagnostics"></a>
 
 # 诊断
@@ -20,9 +15,7 @@ DreamShader 的诊断出现在哪里、如何读懂一条诊断，以及 1.x 生
 | Bridge 产物 | `<Project>/Saved/DreamShader/Bridge/diagnostics.json`、`.../Bridge/diagnostics/`、`.../Bridge/bridge.db` |
 
 > [!NOTE]
-> **到 1.9.x 为止**大多数消息没有码：1.x parser 给自己的消息编了码，1.x 生成器约 560 个
-> 报错点只报裸文本，本页当时也逐字收录那些文本。生成器和 parser 已经删掉，那些字符串
-> 一条都不会再报出。如果你在旧日志或搜索结果里见到一条，[1.x 消息及其码](#1x-messages-and-their-codes) 列出了常见的那些。
+> **到 1.9.x 为止**大多数消息没有码：1.x parser 给自己的消息编了码，1.x 生成器约 560 个报错点只报裸文本，本页当时也逐字收录那些文本。生成器和 parser 已经删掉，那些字符串一条都不会再报出。如果你在旧日志或搜索结果里见到一条，[1.x 消息及其码](#1x-messages-and-their-codes) 列出了常见的那些。
 
 <a id="where-diagnostics-appear"></a>
 
@@ -31,7 +24,7 @@ DreamShader 的诊断出现在哪里、如何读懂一条诊断，以及 1.x 生
 | 界面 | 显示什么 | 实现方 |
 | :-- | :-- | :-- |
 | **Output Log** | 分类 `LogDreamShader` 下的编译报告：失败时记 `Error`——每条记录一行线上格式，先错误、再警告、再 note——成功时记 `Display`——`Generated …` / `Skipped …` 行，再跟一个 `Warnings:` 块 | 插件 |
-| **[Material Content Browser](../../tools/material-browser.md)** | 每个源文件的记录，从 bridge 的内存诊断存储读出；源文件那一行显示第一个错误 | 插件 |
+| **[Material Content Browser](../tools/material-browser.md)** | 每个源文件的记录，从 bridge 的内存诊断存储读出；源文件那一行显示第一个错误 | 插件 |
 | **`Bridge/diagnostics.json`** | `{ version, updatedAtUtc, files[] }`，每个文件一项 | 插件 |
 | **`Bridge/diagnostics/`** | 每个文件一个 `<md5-of-normalized-path>.json` 分片，外加 `index.json`；每次写入都会删掉过期分片 | 插件 |
 | **`Bridge/bridge.db`** | SQLite 表 `diagnostics(path, json, updated_at_utc)`，在一个事务里整体替换 | 插件 |
@@ -49,19 +42,16 @@ DreamShader 的诊断出现在哪里、如何读懂一条诊断，以及 1.x 生
 | 启动时的 VirtualFunction 扫描 | 它对所扫文件的记录 |
 | 删除一个文件 | 这个文件拥有的一切记录，来自每种运行，以及登记在它上面的每条记录，无论谁登记 |
 
-同一个文件里，记录按「编译、shader 编译、VirtualFunction 扫描」排序，各自内部按源文件排，所以一个文件的第一个错误是它编译时的错误。见 [Bridge](../../tools/bridge.md)。
+同一个文件里，记录按「编译、shader 编译、VirtualFunction 扫描」排序，各自内部按源文件排，所以一个文件的第一个错误是它编译时的错误。见 [Bridge](../tools/bridge.md)。
 
 > [!NOTE]
-> bridge 从不在 commandlet 里运行。`-run=DreamShader`、`-run=Cook` 以及任何其他 commandlet
-> 进程都不写 `diagnostics.json`、不写分片、不写 `bridge.db` 行；消息只存在于
-> 日志中（以及一个 `-DiagnosticsOut` 文件中）。bridge 也会被 `-NoDreamShaderEditorBridge` 禁用。
-> 见 [Commandlet](../tools/commandlet.md)。
+> bridge 从不在 commandlet 里运行。`-run=DreamShader`、`-run=Cook` 以及任何其他 commandlet 进程都不写 `diagnostics.json`、不写分片、不写 `bridge.db` 行；消息只存在于日志中（以及一个 `-DiagnosticsOut` 文件中）。bridge 也会被 `-NoDreamShaderEditorBridge` 禁用。见 [Commandlet](../tools/commandlet.md)。
 
 <a id="severity"></a>
 
 ## 严重级别
 
-一次编译按每条记录被报出时的级别登记它自己的记录——失败的编译登记全部，成功的编译登记它的警告和 note*（自 2.1.0 起；在此之前，每条入库的诊断都是 `error`，成功编译的警告只到达 Output Log）*。编译不解释的记录——`generate-error`、`material-compile`、`virtual-function-sync`——是 `error`。该字段及其取值见 [Bridge](../../tools/bridge.md)。
+一次编译按每条记录被报出时的级别登记它自己的记录——失败的编译登记全部，成功的编译登记它的警告和 note*（自 2.1.0 起；在此之前，每条入库的诊断都是 `error`，成功编译的警告只到达 Output Log）*。编译不解释的记录——`generate-error`、`material-compile`、`virtual-function-sync`——是 `error`。该字段及其取值见 [Bridge](../tools/bridge.md)。
 
 不属于任何编译记录、只写日志的警告（`UE_LOG(LogDreamShader, Warning, …)`）从不进入存储。客户端遇到缺失或未知的严重级别时，按 error 处理。
 
@@ -165,8 +155,7 @@ I:/Project/DShader/Materials/M_Sample.dsm(8,19): DSH4200: 'Tin' is not declared 
 | `Asset '{ObjectPath}' is open in an asset editor, so it was NOT rebuilt. …` | [`DSH8206`](DSH8xxx.md#dsh8206)，附带 [`DSH8101`](DSH8xxx.md#dsh8101) |
 | `Asset '{ObjectPath}' was edited by hand since DreamShader generated it …` | [`DSH8207`](DSH8xxx.md#dsh8207)，附带 [`DSH8115`](DSH8xxx.md#dsh8115) —— 见 [Divergence](../generation/divergence.md) |
 
-不在表里的消息：到 [README.md](README.md) 里搜它所描述情况的一个词，
-或者把文件编译一遍、读它现在报的码。
+不在表里的消息：到 [README.md](README.md) 里搜它所描述情况的一个词，或者把文件编译一遍、读它现在报的码。
 
 <a id="what-1x-accepted-in-silence"></a>
 
@@ -196,39 +185,34 @@ I:/Project/DShader/Materials/M_Sample.dsm(8,19): DSH4200: 'Tin' is not declared 
 | 与内置同名、从 `Graph` 调用的 `ShaderFunction` | 调到了内置 | 在声明处报 [`DSH6206`](DSH6xxx.md#dsh6206) |
 | `dot(vec3Value, vec2Value)` | 接受；后来 Unreal 自己的材质翻译失败 | [`DSH4226`](DSH4xxx.md#dsh4226) |
 
-1.x 写进文档、1.x 源文件仍在依赖的写法 —— 换了大小写的名字、GLSL 拼写、写进 `float3` 位置的 `float4` —— 照样构建，
-作为一条把它说出来的 [legacy 规则](#reading-a-code)。
+1.x 写进文档、1.x 源文件仍在依赖的写法 —— 换了大小写的名字、GLSL 拼写、写进 `float3` 位置的 `float4` —— 照样构建，作为一条把它说出来的 [legacy 规则](#reading-a-code)。
 
 <a id="virtualfunction-sync"></a>
 
 ## VirtualFunction 同步
 
-启动服务会重新读取每一个 `VirtualFunction` 声明，并从它的
-`UMaterialFunction` 资产刷新它，以及 Material Function 工具栏和上下文菜单上的编辑器操作。
-这些消息没有 `DSHnnnn` 码，`DSH9001` 除外 —— 用于使用 `#if` 的源文件。
+启动服务会重新读取每一个 `VirtualFunction` 声明，并从它的 `UMaterialFunction` 资产刷新它，以及 Material Function 工具栏和上下文菜单上的编辑器操作。这些消息没有 `DSHnnnn` 码，`DSH9001` 除外 —— 用于使用 `#if` 的源文件。
 
-同步诊断通过 `stage = virtualFunctionSync`、`code = virtual-function-sync`
-和 `source = DreamShader VirtualFunction` 进入存储。编辑器操作消息是 toast 通知和
-日志行；它们不会被存储。
+同步诊断通过 `stage = virtualFunctionSync`、`code = virtual-function-sync` 和 `source = DreamShader VirtualFunction` 进入存储。编辑器操作消息是 toast 通知和日志行；它们不会被存储。
 
 | 消息 | 原因 | 修复 | 参见 |
 | :-- | :-- | :-- | :-- |
-| `Created VirtualFunction file but could not open it: {File}` | `.dsh` 已写入，但 VSCode 无法启动 | 手动打开该文件 | [VirtualFunction 工具](../../tools/virtual-function-tools.md) |
-| `DreamShader could not find a VirtualFunction definition for {Asset}.` | 对没有声明的资产执行 *Open VirtualFunction* | 改用 *CreateVirtualFunction* | [VirtualFunction 工具](../../tools/virtual-function-tools.md) |
-| `DreamShader could not find the selected Material Function.` | 所选资产在菜单构建与执行操作之间消失了 | 重新选择该资产 | [VirtualFunction 工具](../../tools/virtual-function-tools.md) |
-| `DreamShader could not open VirtualFunction file: {File}` | 编辑器启动失败 | 手动打开该文件 | [VirtualFunction 工具](../../tools/virtual-function-tools.md) |
-| `DreamShader could not read VirtualFunction source file '{File}'.` | 源文件不可读；报在第 1 行第 1 列 | 检查文件锁和权限 | [VirtualFunction 工具](../../tools/virtual-function-tools.md) |
-| `DreamShader failed to build VirtualFunction call: {Detail}` | 无法生成调用片段 | 看内层消息 | [VirtualFunction 工具](../../tools/virtual-function-tools.md) |
-| `DreamShader failed to build VirtualFunction reference: {Detail}` | 无法生成引用片段 | 看内层消息 | [VirtualFunction 工具](../../tools/virtual-function-tools.md) |
-| `DreamShader failed to build VirtualFunction: {Detail}` | 无法生成声明文本 | 看内层消息 | [VirtualFunction 工具](../../tools/virtual-function-tools.md) |
-| `DreamShader failed to create directory: {Dir}` | 无法创建 `DShader/VirtualFunctions` | 检查权限 | [VirtualFunction 工具](../../tools/virtual-function-tools.md) |
-| `DreamShader failed to update VirtualFunction source file '{File}'.` | 刷新后的声明写不回去；报在第 1 行第 1 列 | 检查文件锁和版本控制 | [VirtualFunction 工具](../../tools/virtual-function-tools.md) |
-| `DreamShader failed to write VirtualFunction file: {File}` | 无法写入新的 `.dsh` | 检查权限 | [VirtualFunction 工具](../../tools/virtual-function-tools.md) |
+| `Created VirtualFunction file but could not open it: {File}` | `.dsh` 已写入，但 VSCode 无法启动 | 手动打开该文件 | [VirtualFunction 工具](../tools/virtual-function-tools.md) |
+| `DreamShader could not find a VirtualFunction definition for {Asset}.` | 对没有声明的资产执行 *Open VirtualFunction* | 改用 *CreateVirtualFunction* | [VirtualFunction 工具](../tools/virtual-function-tools.md) |
+| `DreamShader could not find the selected Material Function.` | 所选资产在菜单构建与执行操作之间消失了 | 重新选择该资产 | [VirtualFunction 工具](../tools/virtual-function-tools.md) |
+| `DreamShader could not open VirtualFunction file: {File}` | 编辑器启动失败 | 手动打开该文件 | [VirtualFunction 工具](../tools/virtual-function-tools.md) |
+| `DreamShader could not read VirtualFunction source file '{File}'.` | 源文件不可读；报在第 1 行第 1 列 | 检查文件锁和权限 | [VirtualFunction 工具](../tools/virtual-function-tools.md) |
+| `DreamShader failed to build VirtualFunction call: {Detail}` | 无法生成调用片段 | 看内层消息 | [VirtualFunction 工具](../tools/virtual-function-tools.md) |
+| `DreamShader failed to build VirtualFunction reference: {Detail}` | 无法生成引用片段 | 看内层消息 | [VirtualFunction 工具](../tools/virtual-function-tools.md) |
+| `DreamShader failed to build VirtualFunction: {Detail}` | 无法生成声明文本 | 看内层消息 | [VirtualFunction 工具](../tools/virtual-function-tools.md) |
+| `DreamShader failed to create directory: {Dir}` | 无法创建 `DShader/VirtualFunctions` | 检查权限 | [VirtualFunction 工具](../tools/virtual-function-tools.md) |
+| `DreamShader failed to update VirtualFunction source file '{File}'.` | 刷新后的声明写不回去；报在第 1 行第 1 列 | 检查文件锁和版本控制 | [VirtualFunction 工具](../tools/virtual-function-tools.md) |
+| `DreamShader failed to write VirtualFunction file: {File}` | 无法写入新的 `.dsh` | 检查权限 | [VirtualFunction 工具](../tools/virtual-function-tools.md) |
 | `Expected exactly one VirtualFunction block.` | 重新解析的声明区域得到零个或多个块 | 每个声明区域只保留一个 `VirtualFunction` | [VirtualFunction](../language/virtual-function.md) |
-| `MaterialFunction '{Name}' does not have a valid package path.` | 资产最外层的包名为空，或不以 `/` 开头 | 把资产重新保存到已挂载内容根目录下的某处 | [VirtualFunction 工具](../../tools/virtual-function-tools.md) |
+| `MaterialFunction '{Name}' does not have a valid package path.` | 资产最外层的包名为空，或不以 `/` 开头 | 把资产重新保存到已挂载内容根目录下的某处 | [VirtualFunction 工具](../tools/virtual-function-tools.md) |
 | `MaterialFunction '{Name}' does not expose any outputs.` | 资产没有 `FunctionOutput` 节点 | 给材质函数加一个输出 | [VirtualFunction](../language/virtual-function.md) |
 | `VirtualFunction '{Name}' asset reference is invalid: {Detail}` | `Options.Asset` 解析不了；原始字面量作为诊断的 `assetPath` 报出 | 改正 `Path( … )` | [Path](../parameters/path.md) |
-| `VirtualFunction '{Name}' could not be refreshed from MaterialFunction '{Path}': {Detail}` | 声明构建器失败 | 看内层消息 | [VirtualFunction 工具](../../tools/virtual-function-tools.md) |
+| `VirtualFunction '{Name}' could not be refreshed from MaterialFunction '{Path}': {Detail}` | 声明构建器失败 | 看内层消息 | [VirtualFunction 工具](../tools/virtual-function-tools.md) |
 | `VirtualFunction '{Name}' references missing MaterialFunction '{Path}'.` | `LoadObject` 返回 null | 恢复资产，或者更新 `Options.Asset` | [VirtualFunction](../language/virtual-function.md) |
 | `VirtualFunction attributes are missing a closing ')'.` | 头部中 `(` 不配平 | 配平圆括号 | [VirtualFunction](../language/virtual-function.md) |
 | `VirtualFunction body is missing a closing '}'.` | 主体中 `{` 不配平 | 配平花括号 | [VirtualFunction](../language/virtual-function.md) |
@@ -236,9 +220,7 @@ I:/Project/DShader/Materials/M_Sample.dsm(8,19): DSH4200: 'Tin' is not declared 
 | `VirtualFunction name cannot be empty.` | 声明构建器收到了空名字 | 提供一个名字 | [VirtualFunction](../language/virtual-function.md) |
 
 > [!NOTE]
-> 同步服务按裸关键字 `VirtualFunction` 找声明，**区分大小写**，
-> 两边要有标识符边界 —— 和 legacy 前端对块关键字的要求一样。
-> 小写的 `virtualfunction` 两边都看不见。
+> 同步服务按裸关键字 `VirtualFunction` 找声明，**区分大小写**，两边要有标识符边界 —— 和 legacy 前端对块关键字的要求一样。小写的 `virtualfunction` 两边都看不见。
 
 <a id="other-log-lines"></a>
 
@@ -252,8 +234,7 @@ I:/Project/DShader/Materials/M_Sample.dsm(8,19): DSH4200: 'Tin' is not declared 
 | `'{ObjectPath}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run Tools > DreamShader > Make Ephemeral to make it Ephemeral again.` | 编译落到了一个背后有文件的 ThinCustom 产物上；由存储决定，所以它被重建并存盘 |
 | `Skipping automatic layout for large DreamShader graph ({Count} nodes). Existing generated positions will be used.` | 记在 `Display` 级别；1.x 的 `Classic` 布局跳过了大图 |
 
-commandlet 自己的运行行、用法横幅和退出码在
-[命令行](../tools/commandlet.md)；反编译器的在[反编译导出](../tools/decompiler.md)。
+commandlet 自己的运行行、用法横幅和退出码在[命令行](../tools/commandlet.md)；反编译器的在[反编译导出](../tools/decompiler.md)。
 
 <a id="example"></a>
 
@@ -280,7 +261,7 @@ Output Log：
 LogDreamShader: Error: I:/Project/DShader/Materials/M_Sample.dsm(8,19): DSH4200: 'Tin' is not declared in this scope.
 ```
 
-`Saved/DreamShader/Bridge/diagnostics.json`：
+`Saved/DreamShader/Bridge/diagnostics.json`:
 
 ```json
 {
@@ -306,17 +287,15 @@ LogDreamShader: Error: I:/Project/DShader/Materials/M_Sample.dsm(8,19): DSH4200:
 }
 ```
 
-同一条记录还会写进 `Bridge/diagnostics/<md5>.json` 和
-`Bridge/bridge.db` 的 `diagnostics` 表，并出现在 Material Content Browser 里这个源文件的那一行。`stage` 由
-码的范围决定：`preprocess`、`parse`、`bind`、`ir`、`generate` 或 `tools`。
+同一条记录还会写进 `Bridge/diagnostics/<md5>.json` 和 `Bridge/bridge.db` 的 `diagnostics` 表，并出现在 Material Content Browser 里这个源文件的那一行。`stage` 由码的范围决定：`preprocess`、`parse`、`bind`、`ir`、`generate` 或 `tools`。
 
 <a id="see-also"></a>
 
 ## 另请参阅
 
 - [README.md](README.md) — 每个码，及其严重级别和消息
-- [桥接](../../tools/bridge.md) — 请求文件、WebSocket 协议和诊断产物
-- [Material Content Browser](../../tools/material-browser.md) — 显示每个源文件记录的那个标签页
+- [桥接](../tools/bridge.md) — 请求文件、WebSocket 协议和诊断产物
+- [Material Content Browser](../tools/material-browser.md) — 显示每个源文件记录的那个标签页
 - [命令行](../tools/commandlet.md) — `-run=DreamShader`、`-DiagnosticsOut`、它的开关和退出码
 - [DreamShaderLang 2.0](../language-v2/index.md#diagnostics) — 完整的码范围
 - [`dsc migrate`](../tools/migrate.md) — 以 2.0 文本写出的 legacy 规则

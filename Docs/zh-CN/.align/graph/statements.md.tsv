@@ -1,6 +1,4 @@
-#dreamdocs-align 1	source=Docs/graph/statements.md	rev=83b99e8d8c38	model=deepseek-flash	page=05e2a1b04636
-meta:title	-	19f3a6f1	m
-meta:description	-	19f3a6f1	m
+#dreamdocs-align 1	source=Docs/graph/statements.md	rev=dce3a7afae92	model=deepseek-flash	page=05e2a1b04636
 h1	d82a89053bc6	58a25d69	m
 q	ce89dcc5028a	b92244fc	m
 p	9acc408c8404	4248f3a9	m
@@ -37,7 +35,7 @@ p	79d7f8751ae5	301907df	m
 row3	3775119a9869	8dd2fde1	m
 row3	c1d49d075678	451013d1	m
 row3	9a8295a733a7	6f484f46	m
-row3	-	69f405fd	m
+row3	4cb3a6025de5	e5520fe7	s
 row3	b0aa5c641303	5e28ebea	m
 row3	c8a8258b01ab	2c397bd6	m
 row3	8b9aa09e965c	1a5c82b4	m
@@ -80,7 +78,7 @@ row2	4c458f9e0fae	bf013a58	m
 row2	a974e943f392	63b945d0	m
 row2	2a15d0817757	4ccb9e42	m
 row2	3f5c4d4eb984	fd7da196	m
-row2	-	356e60c6	m
+row2	013ffe235eaf	79ae3694	s
 row2	befeb28e0410	4c273a52	m
 row2	8d0a42d330fb	c5c80894	m
 h3	be27f52f2fbf	9f2b43b6	m

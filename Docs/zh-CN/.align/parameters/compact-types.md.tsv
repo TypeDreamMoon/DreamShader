@@ -1,8 +1,6 @@
-#dreamdocs-align 1	source=Docs/parameters/compact-types.md	rev=8a7a159022d8	model=deepseek-flash	page=d7010e469bf9
-meta:title	-	dcfcf38f	m
-meta:description	-	dcfcf38f	m
+#dreamdocs-align 1	source=Docs/parameters/compact-types.md	rev=dce3a7afae92	model=deepseek-flash	page=d7010e469bf9
 h1	4c787dcfcb7a	8b85027f	m
-q	4010fcb2b6af	e12d021f	m
+q	4010fcb2b6af	6eb840f0	m
 p	5807dba48973	2f9af230	m
 row2	e070228b259f	e070228b	s
 row2	d1e8b6fc9ce2	c36c5c7c	m
@@ -82,9 +80,9 @@ row5	b2085626619d	c6c032ea	m
 row5	c70ff080f4ba	a93c32ce	m
 row5	331512659764	41582211	m
 p	e2be2c20d285	e45a21cb	m
-p	95f8de4dd850	9542ab4e	m
+p	95f8de4dd850	8a30dd5a	m
 h3	b584687431a7	e8ec6922	m
-p	22ff88d6b4cd	2ad49f03	m
+p	22ff88d6b4cd	aaa983f7	m
 h3	0cd451ee0cf8	bcf3f50e	m
 row2	4318ed6bf669	4385249f	m
 row2	d95e126f93fa	0775dc15	m
@@ -93,9 +91,9 @@ row2	9688b67aec4d	9688b67a	s
 row2	0befa4fb4266	f74a3128	m
 q	97f1e7b4f7a5	38ddb2d6	m
 h3	234b0073be78	96d4b3e1	m
-p	4ef216ac14b7	5e3e97c9	m
-p	17c7d61c31fe	8e9acc94	m
-q	b15b321880dc	259b98e7	m
+p	4ef216ac14b7	2c616e4d	m
+p	17c7d61c31fe	acfb4f17	m
+q	b15b321880dc	9d3246de	m
 h2	de8ba24d305a	91a2df5b	m
 p	849b25a8f230	a4afdaca	m
 row2	92f469681e22	1f40e67f	m
@@ -113,7 +111,7 @@ li	42c73bb39db7	bf371d91	m
 li	7935b2692cb3	3fb51827	m
 li	525a7d8cdfdb	922e011d	m
 li	4637a7c0556d	a3626844	m
-li	9dd519ea5ef7	4e8d3249	m
+li	9dd519ea5ef7	412f728a	m
 h2	c7a32292efc5	70aaa9db	m
 row2	99d1bc1c4079	89f19076	m
 row2	34e80b8be32f	bece3feb	m
@@ -126,14 +124,14 @@ row2	898ee56c5764	f27cc17d	m
 row2	a0cbf6fa7724	ecbd651b	m
 h2	9877f70e43cf	29074c4c	m
 p	bef11620073f	5c676a59	m
-p	3b17f99cb26f	1e6c975f	m
+p	3b17f99cb26f	3b493a13	m
 h2	ef7175cc89ee	767b1235	m
-li	5ab13ad516fd	b092ae11	m
-li	2441e8194d09	3c846f45	m
+li	5ab13ad516fd	92f1b396	m
+li	2441e8194d09	16971661	m
 li	85dc3d977028	52784297	m
 li	781da5fd6a5c	403992ce	m
-li	459c0cbb7abb	5b553992	m
-li	83d6974d9e71	1bc3f370	m
+li	459c0cbb7abb	2689461d	m
+li	83d6974d9e71	1f24c3a7	m
 li	370ef92db852	fbb7b708	m
 li	9f904728d4f3	51eafdc1	m
 li	c946fa7dba07	43365ff3	m

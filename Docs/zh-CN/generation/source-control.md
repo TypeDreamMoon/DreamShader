@@ -1,8 +1,3 @@
----
-title: "版本控制"
-description: "版本控制"
----
-
 <a id="source-control"></a>
 
 # 版本控制
@@ -49,7 +44,7 @@ description: "版本控制"
 | `DreamShader.OutputDigest` | 生成器写下的内容，用于 [divergence](divergence.md) 检测 |
 
 > [!NOTE]
-> 引擎自带的类没法由插件添加 registry tag，所以在编辑器外没有任何东西能向 asset registry 询问「哪些资产是 DreamShader 的」。在编辑器里，[Material Content Browser](../../tools/material-browser.md) 按出身筛选；在编辑器外，去问**源码** —— ``list-generated`` 做的正是这件事。
+> 引擎自带的类没法由插件添加 registry tag，所以在编辑器外没有任何东西能向 asset registry 询问「哪些资产是 DreamShader 的」。在编辑器里，[Material Content Browser](../tools/material-browser.md) 按出身筛选；在编辑器外，去问**源码** —— ``list-generated`` 做的正是这件事。
 
 <a id="listing-the-generated-assets"></a>
 
@@ -152,19 +147,12 @@ Get-Content $list | ForEach-Object { "`tbinary+w //depot/MyProject/$_" }
 git status --porcelain -- Content   # must print nothing
 ```
 
-一次编译会跳过每一个 [build key](caching.md) 仍然匹配的源文件，因此一棵最新的树产出
-的东西逐字节一致。该键还涵盖插件版本、引擎版本以及源文件读取过的宏
-—— 所以**升级 DreamShader 或引擎会重新生成一切**。请把这个改动单独放在一个提交里，
-不要夹带其他内容；这个 diff 很大、是二进制、而且是预期之中的。
+一次编译会跳过每一个 [build key](caching.md) 仍然匹配的源文件，因此一棵最新的树产出的东西逐字节一致。该键还涵盖插件版本、引擎版本以及源文件读取过的宏 —— 所以**升级 DreamShader 或引擎会重新生成一切**。请把这个改动单独放在一个提交里，不要夹带其他内容；这个 diff 很大、是二进制、而且是预期之中的。
 
 > [!NOTE]
-> 该键用源文件和头文件相对于工程目录的路径来命名它们，因此检出到别处的 CI agent
-> 会得到相同的键，上面的检查在那里也成立。到 2.1.0 为止，该键用的是它们的**绝对**路径，
-> 这样的 agent 会重建并重存每一个资产；升级后的第一次编译会重建一切一次
-> （build key 格式 `DSK4`）。参见 [缓存](caching.md#what-is-hashed)。
+> 该键用源文件和头文件相对于工程目录的路径来命名它们，因此检出到别处的 CI agent 会得到相同的键，上面的检查在那里也成立。到 2.1.0 为止，该键用的是它们的**绝对**路径，这样的 agent 会重建并重存每一个资产；升级后的第一次编译会重建一切一次（build key 格式 `DSK4`）。参见 [缓存](caching.md#what-is-hashed)。
 
-**代价。** 历史中二进制文件的反复变动，以及靠重新编译——而不是靠二选一——解决的合并冲突：
-任取一个版本，对源码运行 `compile`，提交结果。
+**代价。** 历史中二进制文件的反复变动，以及靠重新编译——而不是靠二选一——解决的合并冲突：任取一个版本，对源码运行 `compile`，提交结果。
 
 <a id="which-one"></a>
 
@@ -179,34 +167,18 @@ git status --porcelain -- Content   # must print nothing
 | 升级插件或引擎 | 没有东西要提交 | 一次很大的重新生成提交 |
 | 手改生成资产 | 在被采用之前只在本地 | 被纳入版本管理，并被[标记为已分歧](divergence.md) |
 
-做法 A 适合人人都开着带插件的编辑器的团队；做法 B 适合有人只消费内容的团队。
-不管选哪个，ThinCustom 后端都让问题变小：Ephemeral 材质没有文件，需要做决定的
-只剩它的函数、它的实例，以及被 Materialize 过的那些。
+做法 A 适合人人都开着带插件的编辑器的团队；做法 B 适合有人只消费内容的团队。不管选哪个，ThinCustom 后端都让问题变小：Ephemeral 材质没有文件，需要做决定的只剩它的函数、它的实例，以及被 Materialize 过的那些。
 
 <a id="notes"></a>
 
 ## 说明
 
-- **`DShader/.dreampass/` 在两种做法下都是源码。** 它装着 `.usf` 文件的快照
-  —— `.dsp` 管线的 HLSL pass 用的就是这些文件 —— 以及全局 shader 据以构建的 slot 注册表
-  （[HLSL pass](../../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)）。那些 shader 是从快照而不是从正在编辑的文件编译的，
-  所以队友的编辑器和 cook 跑的就是快照：一份缺少这些快照的检出会让每个 slot 都跑到空桩上，
-  直到它的 `.dsp` 文件被重新编译。请把这个文件夹和产生它的 `.dsp` 和 `.usf` 改动一起提交；它里面的冲突靠任取一边、
-  再重新编译 `.dsp` 文件解决，永远不要手改。
-- **`Intermediate/DreamShader/GeneratedShaders/*.ush`** 是 1.x 为 `Function` 块写的东西；2.0.0 起没有
-  编译再往那里写（[生成的 HLSL](generated-hlsl.md#location)）。永远不要提交它；
-  Unreal 自带的忽略规则已经覆盖 `Intermediate/`。
-- **`Saved/DreamShader/`** 装着 dump、索引、迁移源文件的备份和 bridge 的状态。
-  自带的忽略规则也覆盖 `Saved/`；清理之前值得看一眼的只有 `Saved/DreamShader/Migrated/`，
-  因为 [`dsc migrate`](../tools/migrate.md) 把 1.x 原件挪到那里。
-- **自带 DreamShader 源文件的插件**对自己的 `Content/` 面临同样的选择。发布
-  生成资产（做法 B）能让工程在不编译插件的情况下使用它；`-All` 也覆盖
-  插件源码根，所以一份清单两边都够用。
-- **给源文件改名会挪动它的资产。** 在做法 B 下，把改名、新资产和旧资产的删除
-  放进同一个提交；[资产改名同步](../../tools/asset-rename-sync.md)会让引用
-  指向新路径。
-- **`list-generated` 列的是源码会构建的东西，不是磁盘上躺着的东西。** 源文件被删掉的生成资产
-  是孤儿，不在清单里；Material Content Browser 会显示它们。
+- **`DShader/.dreampass/` 在两种做法下都是源码。** 它装着 `.usf` 文件的快照 —— `.dsp` 管线的 HLSL pass 用的就是这些文件 —— 以及全局 shader 据以构建的 slot 注册表（[HLSL pass](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)）。那些 shader 是从快照而不是从正在编辑的文件编译的，所以队友的编辑器和 cook 跑的就是快照：一份缺少这些快照的检出会让每个 slot 都跑到空桩上，直到它的 `.dsp` 文件被重新编译。请把这个文件夹和产生它的 `.dsp` 和 `.usf` 改动一起提交；它里面的冲突靠任取一边、再重新编译 `.dsp` 文件解决，永远不要手改。
+- **`Intermediate/DreamShader/GeneratedShaders/*.ush`** 是 1.x 为 `Function` 块写的东西；2.0.0 起没有编译再往那里写（[生成的 HLSL](generated-hlsl.md#location)）。永远不要提交它； Unreal 自带的忽略规则已经覆盖 `Intermediate/`。
+- **`Saved/DreamShader/`** 装着 dump、索引、迁移源文件的备份和 bridge 的状态。自带的忽略规则也覆盖 `Saved/`；清理之前值得看一眼的只有 `Saved/DreamShader/Migrated/`，因为 [`dsc migrate`](../tools/migrate.md) 把 1.x 原件挪到那里。
+- **自带 DreamShader 源文件的插件**对自己的 `Content/` 面临同样的选择。发布生成资产（做法 B）能让工程在不编译插件的情况下使用它；`-All` 也覆盖插件源码根，所以一份清单两边都够用。
+- **给源文件改名会挪动它的资产。** 在做法 B 下，把改名、新资产和旧资产的删除放进同一个提交；[资产改名同步](../tools/asset-rename-sync.md)会让引用指向新路径。
+- **`list-generated` 列的是源码会构建的东西，不是磁盘上躺着的东西。** 源文件被删掉的生成资产是孤儿，不在清单里；Material Content Browser 会显示它们。
 
 <a id="see-also"></a>
 

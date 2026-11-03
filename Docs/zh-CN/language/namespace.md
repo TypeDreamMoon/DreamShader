@@ -1,8 +1,3 @@
----
-title: "命名空间"
-description: "命名空间"
----
-
 <a id="namespace"></a>
 
 # 命名空间
@@ -38,7 +33,7 @@ Namespace(Name = "<identifier>" [ , Generate = "<template>" ] [ , Library = "<ca
 | 属性 | 必需 | 值 | 作用 |
 | :-- | :-- | :-- | :-- |
 | **`Name`** | 是 | 字符串 | 添加到每个成员名称之前的限定符 |
-| `Generate` | 否 | 字符串，`{Name}` 成员名称 | *(2.1.2 之后)* 在包的头部中，每个成员都会生成一个该名称的材质函数——见[包 ▸ 资源头部](../../tools/packages.md#asset-headers)。成员自身的 `Generate` 优先；对其设置 `Generate = ""` 可使其退出 |
+| `Generate` | 否 | 字符串，`{Name}` 成员名称 | *(2.1.2 之后)* 在包的头部中，每个成员都会生成一个该名称的材质函数——见[包 ▸ 资源头部](../tools/packages.md#asset-headers)。成员自身的 `Generate` 优先；对其设置 `Generate = ""` 可使其退出 |
 | `Library` | 否 | 字符串 | *(2.1.2 之后)* 每个生成函数的函数库分类 |
 | `Description` | 否 | 字符串 | *(2.1.2 之后)* 每个生成函数的描述 |
 

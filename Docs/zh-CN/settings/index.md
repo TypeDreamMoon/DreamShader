@@ -1,8 +1,3 @@
----
-title: "设置"
-description: "设置"
----
-
 <a id="settings"></a>
 
 # 设置
@@ -138,8 +133,7 @@ Settings key
 | [`DSH2245`](../diagnostics/DSH2xxx.md#dsh2245) | `Shader` 内部的节名称、函数块或该块不具备的 `VirtualFunction` |
 | [`DSH2246`](../diagnostics/DSH2xxx.md#dsh2246) | `Shader` 或函数块中的 `Code` 节，该块采用 `Graph` |
 
-在*应用*设置时引发的诊断列于 [着色器设置](material.md#diagnostics)、
-[后端](backend.md#diagnostics) 和 [函数设置](function.md#diagnostics)。
+在*应用*设置时引发的诊断列于 [着色器设置](material.md#diagnostics)、[后端](backend.md#diagnostics) 和 [函数设置](function.md#diagnostics)。
 
 <a id="example"></a>
 

@@ -1,8 +1,3 @@
----
-title: "布局"
-description: "布局"
----
-
 <a id="layout"></a>
 
 # 布局
@@ -18,12 +13,7 @@ description: "布局"
 | 生成 | 节点位置，以及每条 `Comment` 语句对应一个 `UMaterialExpressionComment` |
 | 不接受于 | `VirtualFunction` |
 
-*(自 2.0.0 起)* 由哪一趟处理读取该 section 取决于工程的
-[图布局风格](../generation/graph-layout.md#layout-styles)。`Blocks`（默认）以及在编译器 IR 上计算的其他风格，会在各自的
-排布之上服从每一条 `Node` 和 `Comment` 语句。`Classic` 是 1.x 的布局，按 1.x 的方式使用该
-section，即
-[显式布局与自动布局](#explicit-layout-versus-automatic-layout) 所描述的方式。`.dss` 写出的语句与 `#pragma layout(Node, …)` / `#pragma layout(Comment, …)` 相同 —— 见
-[DreamShaderLang 2.0](../language-v2/index.md#declarations)。
+*(自 2.0.0 起)* 由哪一趟处理读取该 section 取决于工程的[图布局风格](../generation/graph-layout.md#layout-styles)。`Blocks`（默认）以及在编译器 IR 上计算的其他风格，会在各自的排布之上服从每一条 `Node` 和 `Comment` 语句。`Classic` 是 1.x 的布局，按 1.x 的方式使用该 section，即[显式布局与自动布局](#explicit-layout-versus-automatic-layout) 所描述的方式。`.dss` 写出的语句与 `#pragma layout(Node, …)` / `#pragma layout(Comment, …)` 相同 —— 见 [DreamShaderLang 2.0](../language-v2/index.md#declarations)。
 
 <a id="synopsis"></a>
 
@@ -64,8 +54,7 @@ Layout [=]
 `MaterialExpressionEditorX/Y` 和编辑器图节点的 `NodePosX/Y` 都会被写入，所以位置在重新打开材质后依然保留。
 
 > [!NOTE]
-> 匹配不到任何东西的 `Var` 会被**静默忽略** —— 无论是拼写错误，还是钉了一个图从未读取过的属性，
-> 都没有诊断。
+> 匹配不到任何东西的 `Var` 会被**静默忽略** —— 无论是拼写错误，还是钉了一个图从未读取过的属性，都没有诊断。
 
 <a id="comment"></a>
 
@@ -83,13 +72,9 @@ Layout [=]
 | `Color` | 否 | `float4` 字面量 | 框颜色；不写就用布局自己的默认色。 |
 
 > [!WARNING]
-> `W` 和 `H` 是**必填参数**。`Comment(Name="X", X=0, Y=0)` 是
-> [`DSH3275`](../diagnostics/DSH3xxx.md#dsh3275)，参数缺失和格式错误都报这个码。
+> `W` 和 `H` 是**必填参数**。`Comment(Name="X", X=0, Y=0)` 是 [`DSH3275`](../diagnostics/DSH3xxx.md#dsh3275)，参数缺失和格式错误都报这个码。
 
-`Color` 字面量遵循通用的向量字面量语法：`(` 之前的 token 被忽略，所以
-`float4(…)`、`vec4(…)` 和 `(…)` 都能解析。一个分量铺成 `(x, x, x, 1)`，两个给
-`(x, y, 0, 0)`，三个给 `(x, y, z, 1)`，第四个之后的分量被忽略。其他写法是
-[`DSH3276`](../diagnostics/DSH3xxx.md#dsh3276)。
+`Color` 字面量遵循通用的向量字面量语法：`(` 之前的 token 被忽略，所以 `float4(…)`、`vec4(…)` 和 `(…)` 都能解析。一个分量铺成 `(x, x, x, 1)`，两个给 `(x, y, 0, 0)`，三个给 `(x, y, z, 1)`，第四个之后的分量被忽略。其他写法是 [`DSH3276`](../diagnostics/DSH3xxx.md#dsh3276)。
 
 生成的注释框始终使用 `FontSize = 24` 和分组模式，所以拖动框会带动它圈住的节点。
 
@@ -124,9 +109,7 @@ Layout [=]
 | 输出绑定的 reroute 使用点（构造时） | `720` |
 | 材质根节点 | 图边界右侧 `520` |
 
-各列从输出列向左排，所以负 X 是“上游”，材质根节点位于所有节点右侧。完整表格以及 IR 风格自己的间距见
-[图布局](../generation/graph-layout.md#layout-constants)。*(自 2.0.0 起)* 1.x 按节点种类给的构造位置（属性节点 `-800`、`Expression( … )` 目标 `1200` 等）已经没有了：
-每个节点都在同一列创建，再由布局摆放。
+各列从输出列向左排，所以负 X 是“上游”，材质根节点位于所有节点右侧。完整表格以及 IR 风格自己的间距见[图布局](../generation/graph-layout.md#layout-constants)。*(自 2.0.0 起)* 1.x 按节点种类给的构造位置（属性节点 `-800`、`Expression( … )` 目标 `1200` 等）已经没有了：每个节点都在同一列创建，再由布局摆放。
 
 <a id="explicit-layout-versus-automatic-layout"></a>
 
@@ -140,21 +123,15 @@ Layout [=]
 | 有 `Layout` 块，但没有 `Node` 匹配上、也没有 `Comment` | 自动布局照常运行，就当这个块不存在 |
 | 没有 `Layout` 块 | 自动布局运行 |
 
-在显式路径上，块里没点名的表达式仍然会被摆放：位置从已经定位的邻居迭代传播 —— 位于已知消费者和已知
-依赖的中点、已知消费者左边 `360`、或已知依赖右边 `360` —— 重合槽位有扇出避让。仍然没被摆放的，会进入
-所有已定位节点左侧的兜底列。
+在显式路径上，块里没点名的表达式仍然会被摆放：位置从已经定位的邻居迭代传播 —— 位于已知消费者和已知依赖的中点、已知消费者左边 `360`、或已知依赖右边 `360` —— 重合槽位有扇出避让。仍然没被摆放的，会进入所有已定位节点左侧的兜底列。
 
 在 IR 风格下，被钉住的节点移到指定位置，风格摆在它周围的节点跟着一起移动。
 
 > [!NOTE]
-> **布局总是会运行** *(自 2.0.0 起)*，Ephemeral 材质和保存了的材质一样；唯一的例外是 `Classic`
-> 风格的大图保护。见
-> [图布局](../generation/graph-layout.md#when-layout-runs)。
+> **布局总是会运行** *(自 2.0.0 起)*，Ephemeral 材质和保存了的材质一样；唯一的例外是 `Classic` 风格的大图保护。见[图布局](../generation/graph-layout.md#when-layout-runs)。
 
 > [!NOTE]
-> 第二个 `Layout` 区段会**替换**第一个，而不是追加，并带有警告
-> [`DSH2258`](../diagnostics/DSH2xxx.md#dsh2258) *（自 2.0.0 起）*。一个块体里只有最后一个
-> `Layout` 块有效。
+> 第二个 `Layout` 区段会**替换**第一个，而不是追加，并带有警告 [`DSH2258`](../diagnostics/DSH2xxx.md#dsh2258) *（自 2.0.0 起）*。一个块体里只有最后一个 `Layout` 块有效。
 
 <a id="region--endregion"></a>
 
@@ -194,21 +171,11 @@ Graph = {
 
 ## 说明
 
-- **注释标题。** 在 `Classic` 下，每个框的标题都是 `DreamShader: <Name>`，因此
-  `Comment(Name="Sampling", …)` 读作 `DreamShader: Sampling`。在 IR 风格下，`Comment` 保持
-  其书写时的标题，而样式为区域和块生成的框则会带有该前缀。该
-  前缀标记一个框是编译器自身的；见[重新生成](../generation/regeneration.md)。
+- **注释标题。** 在 `Classic` 下，每个框的标题都是 `DreamShader: <Name>`，因此 `Comment(Name="Sampling", …)` 读作 `DreamShader: Sampling`。在 IR 风格下，`Comment` 保持其书写时的标题，而样式为区域和块生成的框则会带有该前缀。该前缀标记一个框是编译器自身的；见[重新生成](../generation/regeneration.md)。
 - `Comment` 的 `Name` 为空或空白时属于 `DSH3275`，因此永远不会为它创建任何框。
-- [反编译器](../tools/decompiler.md)会将位置和自由注释框写回为
-  `#pragma layout` 行，或写为带 `-Format Legacy` 的 `Layout` 块，因此材质可以导出、
-  编辑并重新生成，且位置保持不变。是否输出由 **Export Decompiled
-  Layout** 项目设置控制，默认开启。见[项目设置](../settings/project.md)。
-- `Classic` 自动布局会在非常大的图上放弃 —— 在达到或超过 1200 个表达式时，它会记录
-  `Skipping automatic layout for large DreamShader graph ({Count} nodes). Existing generated positions will be used.`
-  并保留构建时的位置。`Layout` 块是控制这些
-  图的方式。见[图布局](../generation/graph-layout.md)。
-- `Layout` 在 `VirtualFunction` 内不被接受
-  （[`DSH2245`](../diagnostics/DSH2xxx.md#dsh2245)）；该块不生成图。
+- [反编译器](../tools/decompiler.md)会将位置和自由注释框写回为 `#pragma layout` 行，或写为带 `-Format Legacy` 的 `Layout` 块，因此材质可以导出、编辑并重新生成，且位置保持不变。是否输出由 **Export Decompiled Layout** 项目设置控制，默认开启。见[项目设置](../settings/project.md)。
+- `Classic` 自动布局会在非常大的图上放弃 —— 在达到或超过 1200 个表达式时，它会记录 `Skipping automatic layout for large DreamShader graph ({Count} nodes). Existing generated positions will be used.` 并保留构建时的位置。`Layout` 块是控制这些图的方式。见[图布局](../generation/graph-layout.md)。
+- `Layout` 在 `VirtualFunction` 内不被接受（[`DSH2245`](../diagnostics/DSH2xxx.md#dsh2245)）；该块不生成图。
 
 <a id="diagnostics"></a>
 

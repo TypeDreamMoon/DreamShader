@@ -1,6 +1,4 @@
-#dreamdocs-align 1	source=Docs/graph/calls.md	rev=8a7a159022d8	model=deepseek-flash	page=39816f543e45
-meta:title	-	635eb1d6	m
-meta:description	-	635eb1d6	m
+#dreamdocs-align 1	source=Docs/graph/calls.md	rev=dce3a7afae92	model=deepseek-flash	page=39816f543e45
 h1	d2291b05c181	56e7fef6	m
 q	fa9a072142f4	25a7cb60	m
 p	64e524ce9199	9332d9e1	m
@@ -8,7 +6,7 @@ row2	e070228b259f	e070228b	s
 row2	fa9f0fdacd2c	e2e66098	m
 row2	5db6c16dc18e	f4f85b32	m
 row2	d98ea31f529a	85e74b01	m
-p	2ed534e27418	78d89f0f	m
+p	2ed534e27418	ae4131d4	m
 h2	aec06b0a14e4	75d61361	m
 p	f4e7c6d04adb	0a58fa38	m
 h2	1cf6db7c4060	30049af2	m
@@ -89,10 +87,10 @@ p	189eccfefd42	d29efa6e	m
 h3	09139749a9ff	09139749	s
 p	a1e8ee452dc6	8ce9773a	m
 row2	0f1bbe58f6c9	ec1a66a5	m
-row2	-	329e59f1	m
-row2	-	6a71434e	m
-row2	-	e9ddf2ac	m
-row2	-	6e255432	m
+row2	3cb221766764	774b9875	s
+row2	3e660db1953d	6201e94d	s
+row2	774a5ed3c880	0b808858	s
+row2	4a362664efb2	43d669e7	s
 p	cef9d70586f9	36bdf057	m
 h2	26eadb3909ce	c17ba69c	m
 h3	65e2309e8eb5	e7aa45a0	m
@@ -201,7 +199,7 @@ row2	a00a887ad376	805cd046	m
 row2	dad6a447620d	267e3d3a	m
 row2	91106c8ef3ce	71878b36	m
 h2	9877f70e43cf	29074c4c	m
-p	-	1202a70a	m
+p	dbb42fde5547	dbb42fde	s
 p	bef11620073f	5c676a59	m
 p	99e73f7e694b	bb21eb00	m
 h2	ef7175cc89ee	767b1235	m
@@ -215,7 +213,7 @@ li	afbc67f3e129	9a4c3021	m
 li	e1cef7c2602b	d2b26a19	m
 li	f15e871a613d	6bda07f0	m
 li	24d62003fca8	0a1d6268	m
-li	8da065943327	2b4aa927	m
+li	8da065943327	e21b5ff0	m
 li	14efd224bc3d	1b54eb34	m
 li	f48b40ad0e8f	116cc5a9	m
 li	5831c3ad025b	a89e990f	m

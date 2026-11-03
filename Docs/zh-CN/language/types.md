@@ -1,8 +1,3 @@
----
-title: "类型 token"
-description: "类型 token"
----
-
 <a id="type-tokens"></a>
 
 # 类型 token
@@ -17,12 +12,7 @@ description: "类型 token"
 | 种类 | 词法类别 |
 | 匹配 | 在每个上下文中都**大小写不敏感** |
 
-*(自 2.0.0 起)* 每个类型 token 都过同一张表：1.x 拼法读作对应的 2.0 类型
-（`vec3` 和 `Float3` 读作 `float3`，`MaterialAttributes` 读作 `material`，`StaticBool` 读作 `bool`），
-不给诊断；不是类型的单词原样保留，由绑定器拒绝
-（[`DSH4201`](../diagnostics/DSH4xxx.md#dsh4201)）—— 在 `Properties` 里前端先拒绝它
-（[`DSH3252`](../diagnostics/DSH3xxx.md#dsh3252)）。2.0 的类型名见
-[DreamShaderLang 2.0](../language-v2/index.md#declarations)。
+*(自 2.0.0 起)* 每个类型 token 都过同一张表：1.x 拼法读作对应的 2.0 类型（`vec3` 和 `Float3` 读作 `float3`，`MaterialAttributes` 读作 `material`，`StaticBool` 读作 `bool`），不给诊断；不是类型的单词原样保留，由绑定器拒绝（[`DSH4201`](../diagnostics/DSH4xxx.md#dsh4201)）—— 在 `Properties` 里前端先拒绝它（[`DSH3252`](../diagnostics/DSH3xxx.md#dsh3252)）。2.0 的类型名见 [DreamShaderLang 2.0](../language-v2/index.md#declarations)。
 
 <a id="synopsis"></a>
 
@@ -63,9 +53,7 @@ Function [ <type> ] <name> ( [ { in | out } ] <type> <name> , … ) { … }
 | `Graph` | `Graph` 块内部的声明语句 | [Graph declarations](../graph/declarations.md) |
 
 > [!NOTE]
-> *(自 2.0.0 起)* `Prop` 由前端在读区段时检查。其他各列由绑定器对整个文件检查，
-> 并由降级到图的那一步在某个类型的值会变成引脚的地方检查 —— 没有引脚能承载的类型在那里被拒绝，
-> 就在需要那个引脚的声明或调用处。
+> *(自 2.0.0 起)* `Prop` 由前端在读区段时检查。其他各列由绑定器对整个文件检查，并由降级到图的那一步在某个类型的值会变成引脚的地方检查 —— 没有引脚能承载的类型在那里被拒绝，就在需要那个引脚的声明或调用处。
 
 <a id="validity-matrix"></a>
 
@@ -84,28 +72,16 @@ Function [ <type> ] <name> ( [ { in | out } ] <type> <name> , … ) { … }
 | `mat2` `mat3` `mat4`、`float2x2` … `float4x4` | ✘ `DSH3252` | ✘ | ✘ | ✘ | ✘ | ✘ —— 见 [矩阵](#matrices) |
 
 1. `Texture3D` 输入是一个 `VolumeTexture` 引脚。
-2. `Function` 的纹理类型 `in` 参数在生成的 HLSL 里还会配一个 `SamplerState <Name>Sampler`
-   参数，也就是引擎在 `Custom` 节点的每个纹理输入旁声明的那一个。见 [Function](function.md)。
-3. 只能是变量：没有 `Base.` 引脚接受纹理，而 `Substrate` 只接到
-   `Base.FrontMaterial`。它没有零值，所以 `Graph` 必须在读取前给它赋值。
-4. `Graph` 块里的纹理、`SamplerState` 和 `Substrate` 声明**必须**带
-   初始化式 —— 它们没有默认值：
-   [`DSH2215`](../diagnostics/DSH2xxx.md#dsh2215)。
-5. `Substrate` 输入是函数的 Substrate 引脚；Substrate 值来自 `Substrate.*`
-   节点，引擎从 UE 5.4 起才有它。
-6. *(自 2.0.0 起)* 读作 `bool`，所以 `Properties` 里的 `StaticBool X = true;` 声明的是**动态**
-   布尔参数，而不是静态的；1.x 在那里拒绝这个 token。静态开关参数请写 `StaticBoolParameter`。
+2. `Function` 的纹理类型 `in` 参数在生成的 HLSL 里还会配一个 `SamplerState <Name>Sampler` 参数，也就是引擎在 `Custom` 节点的每个纹理输入旁声明的那一个。见 [Function](function.md)。
+3. 只能是变量：没有 `Base.` 引脚接受纹理，而 `Substrate` 只接到 `Base.FrontMaterial`。它没有零值，所以 `Graph` 必须在读取前给它赋值。
+4. `Graph` 块里的纹理、`SamplerState` 和 `Substrate` 声明**必须**带初始化式 —— 它们没有默认值： [`DSH2215`](../diagnostics/DSH2xxx.md#dsh2215)。
+5. `Substrate` 输入是函数的 Substrate 引脚；Substrate 值来自 `Substrate.*` 节点，引擎从 UE 5.4 起才有它。
+6. *(自 2.0.0 起)* 读作 `bool`，所以 `Properties` 里的 `StaticBool X = true;` 声明的是**动态**布尔参数，而不是静态的；1.x 在那里拒绝这个 token。静态开关参数请写 `StaticBoolParameter`。
 7. 这两个 token 的输入都是函数的 `StaticBool` 引脚。
 8. 读作 `bool`。
-9. 在 `Properties` 里，`StaticBoolParameter` 是**参数节点 token**，不是类型 token：它
-   生成一个 `UMaterialExpressionStaticBoolParameter`，默认值只接受 `true` / `false`
-   （[`DSH3254`](../diagnostics/DSH3xxx.md#dsh3254)）。见
-   [Parameter nodes](../../parameters/parameter-nodes.md)。
+9. 在 `Properties` 里，`StaticBoolParameter` 是**参数节点 token**，不是类型 token：它生成一个 `UMaterialExpressionStaticBoolParameter`，默认值只接受 `true` / `false` （[`DSH3254`](../diagnostics/DSH3xxx.md#dsh3254)）。见 [Parameter nodes](../parameters/parameter-nodes.md)。
 
-*(自 2.0.0 起)* `SamplerState` 是独立的类型；1.x 在接受它的地方都把它读成 `Texture2D`。
-它在 `Properties` 里被拒绝（`DSH3252`），作为材质函数输入被拒绝
-（[`DSH4364`](../diagnostics/DSH4xxx.md#dsh4364)），作为 `Function` 结果被拒绝（`DSH6254`），而一个 `Graph`
-的这种声明需要初始化式（`DSH2215`）。
+*(自 2.0.0 起)* `SamplerState` 是独立的类型；1.x 在接受它的地方都把它读成 `Texture2D`。它在 `Properties` 里被拒绝（`DSH3252`），作为材质函数输入被拒绝（[`DSH4364`](../diagnostics/DSH4xxx.md#dsh4364)），作为 `Function` 结果被拒绝（`DSH6254`），而一个 `Graph` 的这种声明需要初始化式（`DSH2215`）。
 
 <a id="counts-at-a-glance"></a>
 
@@ -119,16 +95,13 @@ Function [ <type> ] <name> ( [ { in | out } ] <type> <name> , … ) { … }
 | 不透明 / 其他 | `SamplerState` `MaterialAttributes` `Substrate` `StaticBool` `StaticBoolParameter` | 5 |
 
 > [!NOTE]
-> 没有 `vec1`、`ivec1`、`uvec1` 或 `bvec1`，也没有 `half` 的 GLSL 向量拼法。
-> 单分量的 GLSL 风格写法根本不存在；请用 `float` 或 `float1`。
+> 没有 `vec1`、`ivec1`、`uvec1` 或 `bvec1`，也没有 `half` 的 GLSL 向量拼法。单分量的 GLSL 风格写法根本不存在；请用 `float` 或 `float1`。
 
 <a id="glsl-aliases"></a>
 
 ## GLSL 别名
 
-`vec` / `ivec` / `uvec` / `bvec` 拼法在其对应的
-`float` / `int` / `uint` / `bool` 拼法被接受的每个位置都是一等 token —— 在 `Properties`、`Inputs`、`Outputs`、`Graph`
-声明和 `Graph` 构造器里都是 —— 并读作那个拼法。
+`vec` / `ivec` / `uvec` / `bvec` 拼法在其对应的 `float` / `int` / `uint` / `bool` 拼法被接受的每个位置都是一等 token —— 在 `Properties`、`Inputs`、`Outputs`、`Graph` 声明和 `Graph` 构造器里都是 —— 并读作那个拼法。
 
 | GLSL 拼法 | 等价于 |
 | :-- | :-- |
@@ -293,7 +266,7 @@ Function float Luma(in vec3 color)          // vec3 -> float3 in the generated H
 - [Constructors](../graph/constructors.md) —— 构造器名称
 - [MaterialAttributes](../graph/material-attributes.md) —— 读取和写入属性成员
 - [Compact parameter types](../parameters/compact-types.md) —— 每个紧凑 token 生成哪种节点
-- [Parameter nodes](../../parameters/parameter-nodes.md) —— 22 个显式 `*Parameter` token
+- [Parameter nodes](../parameters/parameter-nodes.md) —— 22 个显式 `*Parameter` token
 - [OutputType / ResultType](../builtins/output-type.md) —— `UE.*` 调用接受的 token 集
 - [Substrate builtins](../builtins/substrate.md) —— UE 5.4+ 的 `Substrate.*` 接口
 - [DreamShaderLang 2.0](../language-v2/index.md) —— `.dss` 写出的类型名

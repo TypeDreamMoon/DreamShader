@@ -1,8 +1,3 @@
----
-title: "C++ API"
-description: "C++ API"
----
-
 <a id="c-api"></a>
 
 # C++ API
@@ -32,14 +27,7 @@ description: "C++ API"
 | `DreamShaderCompiler` | **`Editor`** | `Default` | 20 | `DREAMSHADERCOMPILER_API` | 编译器的后半部分 *（自 2.0 起；直至 1.9.x 为仅含接口的 Runtime 模块）*：管线、IR 发射器、资产层、由反射构建的内置目录、产物索引、`.dsi` 父模式与设置，以及 *（自 2.1.0 起）* 带 Custom Pass HLSL 槽注册表及其预检查的 `.dsp` 发射。注册唯一的 `IDreamShaderCompiler`。 |
 | `DreamShaderEditor` | `Editor` | `Default` | **0** | *（未使用）* | 用户能接触到的一切：反编译器、`dsc migrate`、命令小程序、桥接、预览、Material 内容浏览器、来源操作、工作区导出器、遍管线详情面板，以及自动化测试。 |
 
-这五个模块都在 `DreamShader.uplugin` 中声明。`DreamShaderLang`、`DreamShader` 和 `DreamShaderPass`
-在 `PostConfigInit` 加载 —— 足够早，使设置对象与着色器目录映射在任何事物请求它们之前就已存在；
-对于 `DreamShaderPass`，还早于引擎确定其着色器类型列表的时间（其全局着色器类型会在模块加载时加入该列表）——
-而两个 Editor 模块则在 `Default` 加载。`DreamShaderLang` 在描述符中列于首位：其他所有模块都直接或通过
-`DreamShader` 依赖它，单靠加载阶段无法确定它们的顺序。基于同样的原因，`DreamShaderPass` 跟在
-`DreamShader` 之后，`DreamShaderCompiler` 列在 `DreamShaderEditor` 之前；在编译器启动之前运行的调用方仍然能获得一个：`GetDreamShaderCompiler()` 会按需加载
-该模块。
-插件为 `EnabledByDefault` 和 `CanContainContent`；`IsBetaVersion` 为 `false`。
+这五个模块都在 `DreamShader.uplugin` 中声明。`DreamShaderLang`、`DreamShader` 和 `DreamShaderPass` 在 `PostConfigInit` 加载 —— 足够早，使设置对象与着色器目录映射在任何事物请求它们之前就已存在；对于 `DreamShaderPass`，还早于引擎确定其着色器类型列表的时间（其全局着色器类型会在模块加载时加入该列表）—— 而两个 Editor 模块则在 `Default` 加载。`DreamShaderLang` 在描述符中列于首位：其他所有模块都直接或通过 `DreamShader` 依赖它，单靠加载阶段无法确定它们的顺序。基于同样的原因，`DreamShaderPass` 跟在 `DreamShader` 之后，`DreamShaderCompiler` 列在 `DreamShaderEditor` 之前；在编译器启动之前运行的调用方仍然能获得一个：`GetDreamShaderCompiler()` 会按需加载该模块。插件为 `EnabledByDefault` 和 `CanContainContent`；`IsBetaVersion` 为 `false`。
 
 <a id="public-headers"></a>
 
@@ -61,30 +49,14 @@ description: "C++ API"
 | `DreamShaderCompilerService.h` · `DreamShaderCompilePipeline.h` · `DreamShaderIREmitter.h` · `DreamShaderBuiltinCatalog.h` · `DreamShaderProductIndex.h` · `DreamShaderPassPipelines.h` *（自 2.1.0 起）* · 另有 14 个 | `DreamShaderCompiler` | 仅编辑器 | 编译器服务、带其中间产物的管线、发射器、目录、产物索引、Custom Pass 槽位注册表工具。列于 [DreamShaderCompiler 页面](compiler-module.md#public-headers)。 |
 | `Lang/*.h` · `Semantic/LangBound.h` · `IR/*.h` · `Decompile/IRToAst.h` · `Migrate/LangMigrate.h` | `DreamShaderLang` | 保留文件夹前缀：`#include "Lang/LangParser.h"` | 语言本身。列于 [DreamShaderLang 页面](lang-module.md#public-headers)。 |
 
-命名空间：`DreamShaderModule.h`、`DreamShaderTypes.h`、
-`DreamShaderCompilerInterface.h`、`DreamShaderDefineResolution.h`、`DreamShaderDefineTable.h` 和
-`DreamShaderPreprocessor.h` 中的所有内容都位于 `UE::DreamShader` 中——在
-2.0 中迁移到 `DreamShaderLang` 的那两个保留了该命名空间，因此它们的调用方无需更改源码。语言位于
-`UE::DreamShader::Lang` 和 `UE::DreamShader::IR`；编译器模块是
-`UE::DreamShader::Editor::Compiler`。`FDreamShaderModule`、`FDreamShaderCompilerModule`、
-`UDreamShaderSettings`、`UDreamShaderMaterialInstance` 和 `EDreamShaderDefaultBackend` 位于全局
-作用域。`DreamShaderPass` *（自 2.1.0 起）* 将其反射类型——`UDreamPassPipeline`、
-`UDreamPassSubsystem`、`ADreamPassVolume`、`EDreamPass*` 枚举和 `FDreamPass*` 结构体——置于全局
-作用域（反射类型必须如此），并将其自由函数置于 `UE::DreamPass` 中。
+命名空间：`DreamShaderModule.h`、`DreamShaderTypes.h`、 `DreamShaderCompilerInterface.h`、`DreamShaderDefineResolution.h`、`DreamShaderDefineTable.h` 和 `DreamShaderPreprocessor.h` 中的所有内容都位于 `UE::DreamShader` 中——在 2.0 中迁移到 `DreamShaderLang` 的那两个保留了该命名空间，因此它们的调用方无需更改源码。语言位于 `UE::DreamShader::Lang` 和 `UE::DreamShader::IR`；编译器模块是 `UE::DreamShader::Editor::Compiler`。`FDreamShaderModule`、`FDreamShaderCompilerModule`、 `UDreamShaderSettings`、`UDreamShaderMaterialInstance` 和 `EDreamShaderDefaultBackend` 位于全局作用域。`DreamShaderPass` *（自 2.1.0 起）* 将其反射类型——`UDreamPassPipeline`、 `UDreamPassSubsystem`、`ADreamPassVolume`、`EDreamPass*` 枚举和 `FDreamPass*` 结构体——置于全局作用域（反射类型必须如此），并将其自由函数置于 `UE::DreamPass` 中。
 
 <a id="linkage"></a>
 
 ## 链接
 
 > [!WARNING]
-> **`DreamShaderEditor` 不导出任何内容，无法被链接。** 它根本没有 `Public/` 文件夹，
-> 其 `Build.cs` 未声明任何 `PublicDependencyModuleNames`，而 `DREAMSHADEREDITOR_API`——
-> UnrealBuildTool 为每个模块都会定义——在插件源码中零次出现。
-> 其模块类 `FDreamShaderEditorModule` 声明于 `.cpp` 内部，而非头文件中，因此
-> 也无法从外部命名。编辑器模块所做的一切只能通过
-> UE 的模块系统、通过 UI 操作或通过 [commandlet](../tools/commandlet.md) 访问。
-> 编译已不再属于这些操作：自 2.0 起编译器是独立模块，通过
-> [`IDreamShaderCompiler`](compiler-module.md#idreamshadercompiler) 访问。
+> **`DreamShaderEditor` 不导出任何内容，无法被链接。** 它根本没有 `Public/` 文件夹，其 `Build.cs` 未声明任何 `PublicDependencyModuleNames`，而 `DREAMSHADEREDITOR_API`—— UnrealBuildTool 为每个模块都会定义——在插件源码中零次出现。其模块类 `FDreamShaderEditorModule` 声明于 `.cpp` 内部，而非头文件中，因此也无法从外部命名。编辑器模块所做的一切只能通过 UE 的模块系统、通过 UI 操作或通过 [commandlet](../tools/commandlet.md) 访问。编译已不再属于这些操作：自 2.0 起编译器是独立模块，通过 [`IDreamShaderCompiler`](compiler-module.md#idreamshadercompiler) 访问。
 
 | 模块 | `DREAMSHADERLANG_API` | `DREAMSHADER_API` | `DREAMSHADERPASS_API` | `DREAMSHADERCOMPILER_API` | `DREAMSHADEREDITOR_API` |
 | :-- | :-- | :-- | :-- | :-- | :-- |
@@ -121,7 +93,7 @@ FDreamShaderModule& Module = FModuleManager::LoadModuleChecked<FDreamShaderModul
 | 设置 | 值 |
 | :-- | :-- |
 | `PCHUsage` | `PCHUsageMode.UseExplicitOrSharedPCHs` |
-| `PublicDependencyModuleNames` | `Core`、`CoreUObject`、`DeveloperSettings`、`DreamShaderLang`、`Engine`、`Projects`、`RenderCore` |
+| `PublicDependencyModuleNames` | `Core`, `CoreUObject`, `DeveloperSettings`, `DreamShaderLang`, `Engine`, `Projects`, `RenderCore` |
 | `PrivateDependencyModuleNames` | *（未声明任何项）* |
 | `PublicDefinitions` | `DREAMSHADER_WITH_MOON_ENGINE=0\|1`，从引擎的 `SceneTypes.h` 探测；`DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS=0\|1`，从声明 `EMaterialParameterType` 的头文件探测 |
 
@@ -131,9 +103,9 @@ FDreamShaderModule& Module = FModuleManager::LoadModuleChecked<FDreamShaderModul
 | `CoreUObject` | `UObject`、`UObjectInitialized()`、两个 `UCLASS` |
 | `DeveloperSettings` | `UDeveloperSettings`，`UDreamShaderSettings` 的基类 |
 | `DreamShaderLang` | `DreamShaderDefineResolution.h` 填充的定义表，`FDreamShaderError` |
-| `Engine` | `Engine/EngineTypes.h`、`MaterialDomain.h`、`UMaterialInstanceConstant` |
+| `Engine` | `Engine/EngineTypes.h`, `MaterialDomain.h`, `UMaterialInstanceConstant` |
 | `Projects` | `IPluginManager` —— 着色器挂载查找和 `Path(Plugin.X, …)` 解析 |
-| `RenderCore` | `ShaderCore.h` 的 `AllShaderSourceDirectoryMappings` / `AddShaderSourceDirectoryMapping` |
+| `RenderCore` | `ShaderCore.h`'s `AllShaderSourceDirectoryMappings` / `AddShaderSourceDirectoryMapping` |
 
 <a id="dreamshaderpassbuildcs"></a>
 
@@ -144,8 +116,8 @@ FDreamShaderModule& Module = FModuleManager::LoadModuleChecked<FDreamShaderModul
 | 设置 | 值 |
 | :-- | :-- |
 | `PCHUsage` | `PCHUsageMode.UseExplicitOrSharedPCHs` |
-| `PublicDependencyModuleNames` | `Core`、`CoreUObject`、`DeveloperSettings`、`DreamShader`、`Engine`、`RenderCore`、`RHI` |
-| `PrivateDependencyModuleNames` | `Projects`、`Renderer` |
+| `PublicDependencyModuleNames` | `Core`, `CoreUObject`, `DeveloperSettings`, `DreamShader`, `Engine`, `RenderCore`, `RHI` |
+| `PrivateDependencyModuleNames` | `Projects`, `Renderer` |
 | `PublicDefinitions` | 当目标引擎为 5.8 或更高版本时为 `DREAMSHADER_WITH_CUSTOM_PASS=1`（`Target.Version`），低于该版本时为 `=0` —— 见 [`DREAMSHADER_WITH_CUSTOM_PASS`](version-compat.md#dreamshader_with_custom_pass) |
 | `PrivateIncludePaths` | 仅在 5.8 及更高版本上，Renderer 模块的 `Internal` 文件夹，用于 `FPostProcessingInputs` —— UBT 只会将 `Internal` 文件夹交给处于同一规则作用域的模块，引擎插件属于该作用域，而项目插件则不属于 |
 
@@ -158,19 +130,12 @@ FDreamShaderModule& Module = FModuleManager::LoadModuleChecked<FDreamShaderModul
 | 设置 | 值 |
 | :-- | :-- |
 | `PCHUsage` | `PCHUsageMode.UseExplicitOrSharedPCHs` |
-| `PublicDependencyModuleNames` | `Core`、`CoreUObject`、`DreamShader`、`DreamShaderLang`、`Engine` |
-| `PrivateDependencyModuleNames` | `AssetRegistry`、`AssetTools`、`DreamShaderPass`、`Json`、`MaterialEditor`、`Projects`、`RenderCore`、`RHI`、`TargetPlatform`、`UnrealEd` |
+| `PublicDependencyModuleNames` | `Core`, `CoreUObject`, `DreamShader`, `DreamShaderLang`, `Engine` |
+| `PrivateDependencyModuleNames` | `AssetRegistry`, `AssetTools`, `DreamShaderPass`, `Json`, `MaterialEditor`, `Projects`, `RenderCore`, `RHI`, `TargetPlatform`, `UnrealEd` |
 
-这些公共依赖之所以是公共的，是因为公开头文件暴露了它们：`UMaterial*` 和
-`EMaterialProperty`（`Engine`）、`FTextShaderDefinition` 以及编译接口（`DreamShader`）、
-`FLangDiagnosticSink` / `FModule` / `FIRModule`（`DreamShaderLang`）。Editor 类型的模块不能
-作为 Runtime 模块的依赖，这就是接口本身位于 `DreamShader` 的原因。
+这些公共依赖之所以是公共的，是因为公开头文件暴露了它们：`UMaterial*` 和 `EMaterialProperty`（`Engine`）、`FTextShaderDefinition` 以及编译接口（`DreamShader`）、 `FLangDiagnosticSink` / `FModule` / `FIRModule`（`DreamShaderLang`）。Editor 类型的模块不能作为 Runtime 模块的依赖，这就是接口本身位于 `DreamShader` 的原因。
 
-`DreamShaderPass`、`RenderCore`、`RHI` 和 `TargetPlatform` 是 `.dsp` 的另一半 *(自 2.1.0 起)*：
-`DreamShaderPass` 用于 `.dsp` 编译成的资产、其设置及其槽路径；另外三个用于
-HLSL 槽——着色器源映射、预检查的进程内编译、它按名称找到的全局着色器类型、
-着色器平台以及目标平台烘焙的格式。该模块没有任何公开头文件
-提及它们，因此它们是私有的。
+`DreamShaderPass`、`RenderCore`、`RHI` 和 `TargetPlatform` 是 `.dsp` 的另一半 *(自 2.1.0 起)*： `DreamShaderPass` 用于 `.dsp` 编译成的资产、其设置及其槽路径；另外三个用于 HLSL 槽——着色器源映射、预检查的进程内编译、它按名称找到的全局着色器类型、着色器平台以及目标平台烘焙的格式。该模块没有任何公开头文件提及它们，因此它们是私有的。
 
 <a id="dreamshadereditorbuildcs"></a>
 

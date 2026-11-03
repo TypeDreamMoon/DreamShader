@@ -1,8 +1,3 @@
----
-title: "转换"
-description: "转换"
----
-
 <a id="conversions"></a>
 
 # 转换
@@ -129,26 +124,20 @@ float  R    = Src;      // Src.r   — DSH5289
 
 ## 拓宽
 
-**唯一**的拓宽规则是标量广播。一个单分量值无需节点即可满足更宽的位置：
-该标量本身会在读取该值的任何位置被连接，它所到达的材质节点会
-对其进行复制 *（自 2.0.0 起；1.x 会构建一条 `AppendVector` 链）*。常量标量会被折叠进
-`ConstantNVector`。
+**唯一**的拓宽规则是标量广播。一个单分量值无需节点即可满足更宽的位置：该标量本身会在读取该值的任何位置被连接，它所到达的材质节点会对其进行复制 *（自 2.0.0 起；1.x 会构建一条 `AppendVector` 链）*。常量标量会被折叠进 `ConstantNVector`。
 
 ```c
 float  K   = 0.5;
 vec3   All = K;         // no node: K is connected wherever All is read
 ```
 
-**没有**零填充，也**没有**部分拓宽。`float3 v = SomeFloat2;` 就是 `DSH4228`。使用
-构造函数来说明额外通道包含什么：`float3 v = float3(SomeFloat2, 0.0);`。唯一
-接受更窄向量的地方是节点的引脚（规则 4）。
+**没有**零填充，也**没有**部分拓宽。`float3 v = SomeFloat2;` 就是 `DSH4228`。使用构造函数来说明额外通道包含什么：`float3 v = float3(SomeFloat2, 0.0);`。唯一接受更窄向量的地方是节点的引脚（规则 4）。
 
 <a id="float-int-and-bool"></a>
 
 ## Float、int 和 bool
 
-编译器知道每个数字的种类 *（自 2.0.0 起）*；生成的图却不知道，因为
-材质图中的每个值都是 float。因此种类的变化不会对图产生任何改变。
+编译器知道每个数字的种类 *（自 2.0.0 起）*；生成的图却不知道，因为材质图中的每个值都是 float。因此种类的变化不会对图产生任何改变。
 
 | 标记族 | 对转换而言意味着什么 |
 | :-- | :-- |
@@ -162,23 +151,15 @@ vec3   All = K;         // no node: K is connected wherever All is read
 
 - `int x = 7.9;` 存储 7.9。如果想要截断，请使用 `floor(…)`。
 - `bool b = 0.5;` 存储 0.5。不存在到 0 或 1 的转换。
-- 显式图转换遵循同样的规则：`(int)0.5` 和 `(bool)0.5` 都保留 0.5，
-  包括当常量表达式由绑定器求值时。使用 `trunc(...)` 丢弃
-  小数部分，或使用 `value != 0` 生成 0/1。`@custom` 主体内部的转换是 HLSL 转换。
+- 显式图转换遵循同样的规则：`(int)0.5` 和 `(bool)0.5` 都保留 0.5，包括当常量表达式由绑定器求值时。使用 `trunc(...)` 丢弃小数部分，或使用 `value != 0` 生成 0/1。`@custom` 主体内部的转换是 HLSL 转换。
 - 将 `float4` 赋值给 `int3` 会像 `float4` → `float3`（`DSH5289`）一样收窄。
-- 种类在一个地方有影响：两个整数
-  [构造函数](constructors.md#integer-constructors)调用之间的 `/` 是
-  [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243)。如果任一侧是整数字面量（`7`）或 `int` 变量，
-  则与 1.x 一样是浮点除法。参见
-  [整数除法](expressions.md#integer-division)。
+- 种类在一个地方有影响：两个整数[构造函数](constructors.md#integer-constructors)调用之间的 `/` 是 [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243)。如果任一侧是整数字面量（`7`）或 `int` 变量，则与 1.x 一样是浮点除法。参见[整数除法](expressions.md#integer-division)。
 
 <a id="authoritative-component-counts"></a>
 
 ## 权威分量数
 
-*（自 2.0.0 起）* 不存在。1.x 允许某些值——常量折叠的构造函数、`dot`、
-已知宽度表的 `UE.*` 内置项——携带一个“权威”宽度，该宽度会覆盖声明
-并引导运算符。现在每个值都具有其类型的宽度：
+*（自 2.0.0 起）* 不存在。1.x 允许某些值——常量折叠的构造函数、`dot`、已知宽度表的 `UE.*` 内置项——携带一个“权威”宽度，该宽度会覆盖声明并引导运算符。现在每个值都具有其类型的宽度：
 
 | 值 | 宽度 |
 | :-- | :-- |
@@ -189,23 +170,16 @@ vec3   All = K;         // no node: K is connected wherever All is read
 | `UE.*` / `Substrate.*` 节点输出 | 引擎目录赋予该输出的宽度；引擎未给出宽度的输出遵循该节点最宽的输入，或者，当没有比标量更宽的输入时，遵循该值所去往的位置 |
 | Swizzle | 其通道数量 |
 
-因此 `float2 dir = UE.CameraVectorWS();` 是一个 `float2`——前两个分量 `DSH5289`——而
-1.x 存储三个。两个不同宽度的操作数只能通过标量广播相遇；其他任何情况都是
-`DSH4226`（位置 9），并且运算符从不自行拓宽或收窄操作数。
+因此 `float2 dir = UE.CameraVectorWS();` 是一个 `float2`——前两个分量 `DSH5289`——而 1.x 存储三个。两个不同宽度的操作数只能通过标量广播相遇；其他任何情况都是 `DSH4226`（位置 9），并且运算符从不自行拓宽或收窄操作数。
 
 <a id="notes"></a>
 
 ## 说明
 
-- 转换绝不会把数字变成 `MaterialAttributes`、纹理或 `Substrate` 值，也不会把一种
-  纹理类型变成另一种。
-- 声明纹理、`SamplerState` 或 `Substrate` 变量而不提供初始值设定项是
-  [`DSH2215`](../diagnostics/DSH2xxx.md#dsh2215)，因为没有可用的默认值来起始。
-  标量和向量从零开始。参见[声明](declarations.md)。
-- `Outputs` 声明是其声明类型的普通变量：对它的每次赋值都在
-  写入处检查，而不是在图构建完成后检查一次。
-- 一个 `MaterialAttributes` 值到达不承载它的引脚或函数输入时，会在图构建时
-  成为 [`DSH4371`](../diagnostics/DSH4xxx.md#dsh4371)。
+- 转换绝不会把数字变成 `MaterialAttributes`、纹理或 `Substrate` 值，也不会把一种纹理类型变成另一种。
+- 声明纹理、`SamplerState` 或 `Substrate` 变量而不提供初始值设定项是 [`DSH2215`](../diagnostics/DSH2xxx.md#dsh2215)，因为没有可用的默认值来起始。标量和向量从零开始。参见[声明](declarations.md)。
+- `Outputs` 声明是其声明类型的普通变量：对它的每次赋值都在写入处检查，而不是在图构建完成后检查一次。
+- 一个 `MaterialAttributes` 值到达不承载它的引脚或函数输入时，会在图构建时成为 [`DSH4371`](../diagnostics/DSH4xxx.md#dsh4371)。
 
 <a id="diagnostics"></a>
 
@@ -252,9 +226,7 @@ Shader(Name="Docs/M_Conversions", Root="Game")
 }
 ```
 
-将最后一条语句替换为 `Color = dir * Tint;` 会失败并报 `DSH4226`：`float4` 参数
-使乘积为四个分量宽，而运算符不会拓宽 `float3` 操作数来
-匹配。
+将最后一条语句替换为 `Color = dir * Tint;` 会失败并报 `DSH4226`：`float4` 参数使乘积为四个分量宽，而运算符不会拓宽 `float3` 操作数来匹配。
 
 <a id="see-also"></a>
 

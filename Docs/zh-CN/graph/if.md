@@ -1,16 +1,10 @@
----
-title: "if / else"
-description: "if / else"
----
-
 <a id="if--else"></a>
 
 # if / else
 
 > [DreamShader](../index.md) » [Graph](index.md) » **if**
 
-`Graph` 块里唯一的控制流语句：一个构建期构造，它把**两个**分支都求值成材质节点，并按每个变量
-用一个条件节点在两个结果之间选择。
+`Graph` 块里唯一的控制流语句：一个构建期构造，它把**两个**分支都求值成材质节点，并按每个变量用一个条件节点在两个结果之间选择。
 
 | | |
 | :-- | :-- |
@@ -44,8 +38,7 @@ else if ( <condition> ) { … }
 <condition> := <expression> [ { >= | <= | == | != | > | < } <expression> ]
 ```
 
-`if`、`else`、`( )`、`{ }` 是 DreamShaderLang 的字面标点。`[ … ]`、`{ a | b }` 和 `…` 是
-元记号，永远不会被键入。
+`if`、`else`、`( )`、`{ }` 是 DreamShaderLang 的字面标点。`[ … ]`、`{ a | b }` 和 `…` 是元记号，永远不会被键入。
 
 <a id="requirements"></a>
 
@@ -61,10 +54,7 @@ else if ( <condition> ) { … }
 | `else if` | `else` 位置上的一个 `if` 语句。因此 `else if` 链是一棵嵌套语句树，而不是一个扁平列表。 |
 
 > [!WARNING]
-> `If (x) {}` 和 `ELSE {}` **不是**控制流。因为关键字匹配区分大小写，
-> `If (x)` 是对一个叫 `If` 的函数的调用，而本该放这条语句 `;` 的位置出现 `{` 时，
-> 报 [`DSH2154`](../diagnostics/DSH2xxx.md#dsh2154) —— 一个完全不提 `if` 的码。见
-> [不支持的写法](unsupported.md#wrong-case-keywords)。
+> `If (x) {}` 和 `ELSE {}` **不是**控制流。因为关键字匹配区分大小写， `If (x)` 是对一个叫 `If` 的函数的调用，而本该放这条语句 `;` 的位置出现 `{` 时，报 [`DSH2154`](../diagnostics/DSH2xxx.md#dsh2154) —— 一个完全不提 `if` 的码。见[不支持的写法](unsupported.md#wrong-case-keywords)。
 
 <a id="condition"></a>
 
@@ -92,26 +82,19 @@ else if ( <condition> ) { … }
 
 ### 条件是这样读的
 
-1. 整个条件作为一条表达式解析。缺操作数——`if ()`、`if (Mask >)`——是
-   [`DSH2151`](../diagnostics/DSH2xxx.md#dsh2151) *（自 2.0.0 起；1.x 把 `if (Mask >)` 读成
-   `if (Mask != 0)`）*。
+1. 整个条件作为一条表达式解析。缺操作数——`if ()`、`if (Mask >)`——是 [`DSH2151`](../diagnostics/DSH2xxx.md#dsh2151) *（自 2.0.0 起；1.x 把 `if (Mask >)` 读成 `if (Mask != 0)`）*。
 2. 表达式是比较时，它的两边就是两个操作数。其他任何东西都是**真值**形式。
-3. 每个操作数都是 1.x 值表达式：第二个比较、`&&` 或 `||` 是
-   [`DSH2210`](../diagnostics/DSH2xxx.md#dsh2210)，1.x 没有的其他运算符照常在其他地方被拒绝（`DSH2200`–`DSH2222`，见
-   [不支持的写法](unsupported.md)）。
-4. 绑定器给操作数定型：两边都必须是数（纹理、`MaterialAttributes` 或 `Substrate` 值是 [`DSH4226`](../diagnostics/DSH4xxx.md#dsh4226)），
-   条件必须是单个值——两个向量的比较是 [`DSH4260`](../diagnostics/DSH4xxx.md#dsh4260)。
+3. 每个操作数都是 1.x 值表达式：第二个比较、`&&` 或 `||` 是 [`DSH2210`](../diagnostics/DSH2xxx.md#dsh2210)，1.x 没有的其他运算符照常在其他地方被拒绝（`DSH2200`–`DSH2222`，见[不支持的写法](unsupported.md)）。
+4. 绑定器给操作数定型：两边都必须是数（纹理、`MaterialAttributes` 或 `Substrate` 值是 [`DSH4226`](../diagnostics/DSH4xxx.md#dsh4226)），条件必须是单个值——两个向量的比较是 [`DSH4260`](../diagnostics/DSH4xxx.md#dsh4260)。
 
 > [!WARNING]
-> **`&&` 和 `||` 会被拒绝** *（自 2.0.0 起）*。1.x 会静默丢掉第一个
-> 比较之后的一切，所以 `if (a > 0 && b > 0)` 编译成 `if (a > 0)`，不产生任何诊断。它现在
-> 是 `DSH2210`。
+> **`&&` 和 `||` 会被拒绝** *（自 2.0.0 起）*。1.x 会静默丢掉第一个比较之后的一切，所以 `if (a > 0 && b > 0)` 编译成 `if (a > 0)`，不产生任何诊断。它现在是 `DSH2210`。
 >
 > ```c
-> // 被拒绝（DSH2210）；1.x 构建的是 if (Mask > 0.5)。
+> // Refused (DSH2210); 1.x built if (Mask > 0.5).
 > if (Mask > 0.5 && Alpha > 0.5) { Color = Hot; } else { Color = Cold; }
 >
-> // 请改写成嵌套 if：
+> // Write nested ifs instead:
 > if (Mask > 0.5) {
 >     if (Alpha > 0.5) { Color = Hot; } else { Color = Cold; }
 > } else {
@@ -119,9 +102,7 @@ else if ( <condition> ) { … }
 > }
 > ```
 >
-> 条件里的 `%`、`?:`、`[ ]`、`~`、`!` 以及移位和位运算符也一样：
-> 各自是带码的错误。见
-> [不支持的写法](unsupported.md#operators-1x-truncated)。
+> 条件里的 `%`、`?:`、`[ ]`、`~`、`!` 以及移位和位运算符也一样：各自是带码的错误。见[不支持的写法](unsupported.md#operators-1x-truncated)。
 
 <a id="truthy-semantics"></a>
 
@@ -134,9 +115,7 @@ else if ( <condition> ) { … }
 | `if (x)` | 一个持有 `0` 的 `Constant` 节点 | `x != 0`，即 `x > 0` **或** `x < 0` |
 
 > [!WARNING]
-> **负值**为真。`if (Height)` 对 `Height = -1.0` 选择 then 分支，和它对 `Height = 1.0` 时
-> 完全一样。这与 HLSL/C 语义以及反编译器的 `!= 0` 约定一致，
-> 但它不是 `if (Height > 0)` 的意思。符号有意义时请把比较显式写出来。
+> **负值**为真。`if (Height)` 对 `Height = -1.0` 选择 then 分支，和它对 `Height = 1.0` 时完全一样。这与 HLSL/C 语义以及反编译器的 `!= 0` 约定一致，但它不是 `if (Height > 0)` 的意思。符号有意义时请把比较显式写出来。
 
 <a id="node-wiring"></a>
 
@@ -162,9 +141,7 @@ else if ( <condition> ) { … }
 | `!=` | then | else | then |
 | 真值 | then | else | then |
 
-不是 `StaticBoolParameter` 的 `bool` 属性——一个普通的 `StaticBool` 或 `bool` 条目——是
-动态参数 *（自 2.0.0 起）*，对它的 `if` 是真值形式的 `If`。见
-[Properties](../language/properties.md)。
+不是 `StaticBoolParameter` 的 `bool` 属性——一个普通的 `StaticBool` 或 `bool` 条目——是动态参数 *（自 2.0.0 起）*，对它的 `if` 是真值形式的 `If`。见 [Properties](../language/properties.md)。
 
 结果与两个分支值中较宽的那个一样宽。它永远不是纹理对象。
 
@@ -172,8 +149,7 @@ else if ( <condition> ) { … }
 
 ## 两个分支总是都会构建
 
-没有死代码消除，也不会在构建期按条件做决定，哪怕条件是常量。降级一条 `if` 语句依次做
-以下所有事：
+没有死代码消除，也不会在构建期按条件做决定，哪怕条件是常量。降级一条 `if` 语句依次做以下所有事：
 
 1. 将条件降级一次。
 2. 从 `if` 之前的值出发，降级每一条 then 语句。
@@ -209,11 +185,11 @@ else if ( <condition> ) { … }
 > **分支内的声明留在其分支中** *(自 2.0.0 起)*。1.x 会合并分支中声明的名字，要求另一个分支也有它，并在 `if` 之后保留它。现在在一个分支中声明的 `float3 Temp = …;` 在该分支结束后就没了，两个分支中声明的同名变量是两个不相干的变量。当之后的代码需要它时，请在 `if` **之前**声明该变量：
 >
 > ```c
-> // 'Blend' 只属于各自分支：if 之后的 Color = Blend; 是 DSH4200。
+> // 'Blend' is local to each branch: Color = Blend; after the if is DSH4200.
 > if (Mask > 0.5) { float3 Blend = float3(1.0, 0.0, 0.0); Color = Blend; }
 > else            { float  Blend = 0.25;                  Color = float3(Blend, Blend, Blend); }
 >
-> // 一次声明、一种类型，两个分支里都只是赋值。
+> // One declaration, one type, assigned in both branches.
 > float3 Blend = float3(0.0, 0.0, 0.0);
 > if (Mask > 0.5) { Blend = float3(1.0, 0.0, 0.0); }
 > else            { Blend = float3(0.25, 0.25, 0.25); }
@@ -255,7 +231,7 @@ else if ( <condition> ) { … }
 | 条件 | 代码 |
 | :-- | :-- |
 | 第二个比较、`&&` 或 `\|\|` | `DSH2210` |
-| `!`、`?:` | [`DSH2200`](../diagnostics/DSH2xxx.md#dsh2200) |
+| `!`, `?:` | [`DSH2200`](../diagnostics/DSH2xxx.md#dsh2200) |
 | `%`、`~`、移位或位运算符 | [`DSH2201`](../diagnostics/DSH2xxx.md#dsh2201) |
 | 条件里出现赋值 | [`DSH2204`](../diagnostics/DSH2xxx.md#dsh2204) |
 | 不是数的操作数 | `DSH4226` |

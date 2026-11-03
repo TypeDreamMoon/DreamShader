@@ -1,8 +1,3 @@
----
-title: "DreamShaderVersionCompat.h"
-description: "DreamShaderVersionCompat.h"
----
-
 <a id="dreamshaderversioncompath"></a>
 
 # DreamShaderVersionCompat.h
@@ -116,19 +111,13 @@ PublicDefinitions.Add("DREAMSHADER_WITH_CUSTOM_PASS=" + (bWithCustomPass ? "1" :
 
 ## 完整的版本门控行为
 
-插件中由这些宏之一守护的每个位置，按其所要求的版本分组。
-诊断信息以代码形式引用；下面仍然引用的字符串是日志行、材质编译错误
-和 UI 文本，它们不携带代码。
+插件中由这些宏之一守护的每个位置，按其所要求的版本分组。诊断信息以代码形式引用；下面仍然引用的字符串是日志行、材质编译错误和 UI 文本，它们不携带代码。
 
 <a id="decided-by-the-node-catalog"></a>
 
 ### 由节点目录决定
 
-*(自 2.0.0 起)* 1.x 生成器中由引擎版本控制的绝大部分内容已不再属于 DreamShader 的
-门控。`UE.*` 和 `Substrate.*` 节点、它们的引脚和属性、
-其枚举属性的值以及源可写入的材质属性都来自 **内置目录**，
-该目录是从正在运行的引擎反射而来的（它已加载的每个非抽象 `UMaterialExpression`
-类）。引擎没有的内容，目录不会列出，绑定器会这样说明：
+*(自 2.0.0 起)* 1.x 生成器中由引擎版本控制的绝大部分内容已不再属于 DreamShader 的门控。`UE.*` 和 `Substrate.*` 节点、它们的引脚和属性、其枚举属性的值以及源可写入的材质属性都来自 **内置目录**，该目录是从正在运行的引擎反射而来的（它已加载的每个非抽象 `UMaterialExpression` 类）。引擎没有的内容，目录不会列出，绑定器会这样说明：
 
 | 1.x 门控的内容 | 门控 | 现在 |
 | :-- | :-- | :-- |
@@ -140,8 +129,7 @@ PublicDefinitions.Add("DREAMSHADER_WITH_CUSTOM_PASS=" + (bWithCustomPass ? "1" :
 | `UE.UserSceneTexture` | — | 在目录中缺少它的引擎上为 [`DSH5300`](../diagnostics/DSH5xxx.md#dsh5300)（绑定器从 5.6 起认识它） |
 | `UE.DreamPassBuffer` / `UE.DreamPassOutput` | — | 在低于 5.8 的版本中有意从目录中省略，因此 `DSH5300`（参见 [UE ≥ 5.8](#ue--58--dreamshader_with_custom_pass)） |
 
-用 `dsc export-catalog` 从较旧引擎导出的目录会给出相同的答案。
-C++ 中剩余的门控就是下面这些。
+用 `dsc export-catalog` 从较旧引擎导出的目录会给出相同的答案。 C++ 中剩余的门控就是下面这些。
 
 <a id="ue--54--dreamshader_ue_version_at_least5-4"></a>
 
@@ -158,8 +146,7 @@ C++ 中剩余的门控就是下面这些。
 
 ### UE ≥ 5.4 — `DREAMSHADER_WITH_SUBSTRATE_BUILTINS`
 
-Substrate 门控是一个单独的宏，因此可以独立覆盖，但其默认
-阈值同样是 5.4。
+Substrate 门控是一个单独的宏，因此可以独立覆盖，但其默认阈值同样是 5.4。
 
 | 功能 | 在 UE ≥ 5.4 上 | 在 UE 5.3 上 |
 | :-- | :-- | :-- |
@@ -184,8 +171,7 @@ Substrate 门控是一个单独的宏，因此可以独立覆盖，但其默认
 | 读取一个输入引脚 | `Expression->GetInput(Index)` | `Expression->GetInput(Index)` — 相同。`GetInputsView()` 也可以使用，但它已弃用，改用 `FExpressionInputIterator` / `GetInput()`，并在 UE 5.8 上发出 C4996，因此绝不会仅仅为了访问单个引脚而构建数组视图 |
 | 解析 `UMaterialExpressionObjectPositionWS`（反编译器） | 直接使用 `StaticClass()` 和 `IsA<>` | `FindObject<UClass>(nullptr, "/Script/Engine.MaterialExpressionObjectPositionWS")` |
 
-`periodicworld` 基础和 `PeriodicWorldTileSize` 参数在此处不再受门控
-*(自 2.0.0 起)*：参见 [由节点目录决定](#decided-by-the-node-catalog)。
+`periodicworld` 基础和 `PeriodicWorldTileSize` 参数在此处不再受门控*(自 2.0.0 起)*：参见 [由节点目录决定](#decided-by-the-node-catalog)。
 
 <a id="ue--56"></a>
 
@@ -204,24 +190,16 @@ Substrate 门控是一个单独的宏，因此可以独立覆盖，但其默认
 | 反编译器 `TextureSample` 导出 | `GatherMode` 被往返转换 | 省略 |
 | `DREAMSHADER_ENGINE_EXPRESSION_CLASS(Name)`（在 `DreamShaderMaterialExpressionCompat.h` 中） | `U<Name>::StaticClass()` | `FindObject<UClass>(nullptr, "/Script/Engine.<Name>")`。仍被定义，且自 2.0.0 起未被任何地方调用：`UE.*` 目录是通过遍历已加载的类构建的，不需要 `StaticClass()` |
 
-`firstperson` 基础和 `FirstPersonInterpolationAlpha` 参数在此处不再受门控
-*(自 2.0.0 起)*：参见 [由节点目录决定](#decided-by-the-node-catalog)。
+`firstperson` 基础和 `FirstPersonInterpolationAlpha` 参数在此处不再受门控*(自 2.0.0 起)*：参见 [由节点目录决定](#decided-by-the-node-catalog)。
 
 > [!NOTE]
-> `DREAMSHADER_ENGINE_EXPRESSION_CLASS` 是**链接**期门控，不是编译期门控。UE 5.6
-> 更改了 UHT，使其在导出 `Z_Construct_<Class>_NoRegister` 的情况下生成 `DECLARE_CLASS2`，因此
-> 即使对于那些既不携带 `MinimalAPI` 也不携带
-> `ENGINE_API` 的 `UCLASS()`，`StaticClass()` 也能从插件中解析出来。UE 5.5 及更早版本生成 `DECLARE_CLASS(..., NO_API)`：`GetPrivateStaticClass` 永远不会
-> 离开 `Engine.dll`，而命名 `StaticClass()` 可在所有引擎上编译，随后会以
-> `LNK2019` 失败。只有完整的 [`RunUAT BuildPlugin`](../contributing/index.md#synopsis) 才能看到它——针对单个引擎的
-> 编辑器构建永远看不到。
+> `DREAMSHADER_ENGINE_EXPRESSION_CLASS` 是**链接**期门控，不是编译期门控。UE 5.6 更改了 UHT，使其在导出 `Z_Construct_<Class>_NoRegister` 的情况下生成 `DECLARE_CLASS2`，因此即使对于那些既不携带 `MinimalAPI` 也不携带 `ENGINE_API` 的 `UCLASS()`，`StaticClass()` 也能从插件中解析出来。UE 5.5 及更早版本生成 `DECLARE_CLASS(..., NO_API)`：`GetPrivateStaticClass` 永远不会离开 `Engine.dll`，而命名 `StaticClass()` 可在所有引擎上编译，随后会以 `LNK2019` 失败。只有完整的 [`RunUAT BuildPlugin`](../contributing/index.md#synopsis) 才能看到它——针对单个引擎的编辑器构建永远看不到。
 
 <a id="asked-of-the-type"></a>
 
 ### 对类型的询问
 
-*（自 2.0.0 起）* 此处没有版本号：每一行由引擎自身类型是否有该成员决定——
-或者，*（自 2.0.1 起）*，由引擎是否有该节点的头文件决定（`__has_include`）。
+*（自 2.0.0 起）* 此处没有版本号：每一行由引擎自身类型是否有该成员决定—— 或者，*（自 2.0.1 起）*，由引擎是否有该节点的头文件决定（`__has_include`）。
 
 | 功能 | 成员存在的位置 | 成员不存在的位置 |
 | :-- | :-- | :-- |
@@ -269,8 +247,7 @@ Substrate 门控是一个单独的宏，因此可以独立覆盖，但其默认
 
 ### UE ≥ 5.8 — `DREAMSHADER_WITH_CUSTOM_PASS`
 
-*（自 2.1.0 起）* Custom Pass 整体。语言本身没有变化：`.dsp` 可在
-所有引擎上解析和绑定，`.dss` 也是如此——变化的是引擎侧能够构建和运行的内容。
+*（自 2.1.0 起）* Custom Pass 整体。语言本身没有变化：`.dsp` 可在所有引擎上解析和绑定，`.dss` 也是如此——变化的是引擎侧能够构建和运行的内容。
 
 | 模块 | 功能 | 在 UE ≥ 5.8 上 | 在 UE 5.3 – 5.7 上 |
 | :-- | :-- | :-- | :-- |
@@ -285,8 +262,8 @@ Substrate 门控是一个单独的宏，因此可以独立覆盖，但其默认
 | `DreamShaderCompiler` | HLSL 槽预检查 | 为活动功能级别和目标平台的着色器格式编译每个更改的槽 | [`DSH8323`](../diagnostics/DSH8xxx.md#dsh8323) |
 | `DreamShaderCompiler` | 在 `.dsp` 上的 `dsc check -Shaders` | 预检查其槽 | [`DSH8338`](../diagnostics/DSH8xxx.md#dsh8338) |
 | `DreamShaderCompiler` | 注册表提交后槽着色器的热重载 | 在编辑器中，从不在 commandlet 中 | 无 |
-| `DreamShaderEditor` | [管线详情面板](../../tools/editor-integration.md#pass-pipeline-details-panel) | 按文档 | 在管线概览中多一行：`Custom Pass runs on Unreal Engine 5.8 and later. This engine loads and saves the pipeline, and runs none of it.` |
-| `DreamShaderEditor` | [`pass-keys.json`](../../tools/workspace.md#pass-keysjson) | `supported: true` | `supported: false` 和 `unsupportedReason: "Custom Pass pipelines run on Unreal Engine 5.8 and later."`；键、注入点和格式在两种情况下都会被写入 |
+| `DreamShaderEditor` | [管线详情面板](../tools/editor-integration.md#pass-pipeline-details-panel) | 按文档 | 在管线概览中多一行：`Custom Pass runs on Unreal Engine 5.8 and later. This engine loads and saves the pipeline, and runs none of it.` |
+| `DreamShaderEditor` | [`pass-keys.json`](../tools/workspace.md#pass-keysjson) | `supported: true` | `supported: false` 和 `unsupportedReason: "Custom Pass pipelines run on Unreal Engine 5.8 and later."`；键、注入点和格式在两种情况下都会被写入 |
 | `DreamShaderEditor` | 渲染自动化测试（`DreamShaderPassRenderTests.cpp`） | 已编译进来 | 已编译排除 |
 
 <a id="since-ue-5x-summary"></a>
@@ -301,39 +278,18 @@ Substrate 门控是一个单独的宏，因此可以独立覆盖，但其默认
 | **5.7** | 层混合输入上的 `BlendInputRelevance` · 按平台 × 按质量的材料资源诊断 · 标量参数 `ControlType` / `Enumeration` / `EnumerationIndex` 往返 · 来自 `ShouldShowPreview()` 的节点预览高度 |
 | **5.8** | Custom Pass *（自 2.1.0 起）*——构建和运行 `.dsp` 管线、HLSL 槽、`UE.DreamPassBuffer` / `UE.DreamPassOutput` 节点（[`DREAMSHADER_WITH_CUSTOM_PASS`](#dreamshader_with_custom_pass)） · 参数集合实例参数（向引擎的枚举询问） |
 
-只有较新引擎才有的节点、引脚、枚举器和材质属性不在此表中：
-运行中引擎的目录决定它们（[见上文](#decided-by-the-node-catalog)）。其他所有内容
-在从 5.3 到 5.8 的每个引擎上表现一致。`.dsp` 是唯一一个在所有引擎上都解析和绑定
-且仅在 5.8 上构建的源。
+只有较新引擎才有的节点、引脚、枚举器和材质属性不在此表中：运行中引擎的目录决定它们（[见上文](#decided-by-the-node-catalog)）。其他所有内容在从 5.3 到 5.8 的每个引擎上表现一致。`.dsp` 是唯一一个在所有引擎上都解析和绑定且仅在 5.8 上构建的源。
 
 <a id="notes"></a>
 
 ## 注意事项
 
-- **该门控是编译时的，而非运行时的。** 针对 UE 5.3 构建的插件二进制文件
-  完全不包含 Substrate 代码路径。将项目迁移到更新的引擎需要重新构建
-  插件以获得更新的行为。
-- **`GetInputsView()` 仅在一个地方保留。** Epic 已弃用它，转而使用
-  `FExpressionInputIterator` 和 `UMaterialExpression::GetInput()`，在 UE 5.8 上命名它会产生 C4996
-  ——今天是警告，在移除它的任何版本中都是编译错误。剩余的调用是
-  `GetDreamShaderExpressionInputCount` 的 UE 5.3 – 5.4 分支，其中 `CountInputs()` 尚不存在，
-  弃用也未生效；其他所有位置都按索引请求引脚。
-- *（自 2.0.0 起）* 引擎缺少的节点、引脚、枚举器或属性在其目录中缺失，
-  因此使用它们的源在绑定时是错误；1.x 会静默丢弃其中一些（未读取的参数）。
-  只有少数这些错误会指明版本
-  ——[`DSH5294`](../diagnostics/DSH5xxx.md#dsh5294)（来自较新引擎的 Substrate 节点）、
-  [`DSH5300`](../diagnostics/DSH5xxx.md#dsh5300)（`UE.UserSceneTexture`，Custom Pass
-  节点）、[`DSH7128`](../diagnostics/DSH7xxx.md#dsh7128)（5.3 上的 `ShadingModel="Substrate"`）以及
-  [`DSH8300`](../diagnostics/DSH8xxx.md#dsh8300)（低于 5.8 的 `.dsp`）；其余都说明该节点、
-  引脚、值或属性不存在（`DSH5210`、`DSH5213`、`DSH5215`、`DSH5200`）。5.3 上的
-  `substrate-builtins.json` 清单仍携带 `unsupportedReason`。要在多个引擎上构建一个源，
-  请用 `#if DS_ENGINE_MINOR >= …` 保护较新的代码。
-- `DREAMSHADER_WITH_SUBSTRATE_BUILTINS` 作为值被求值，因此必须写为
-  `#if DREAMSHADER_WITH_SUBSTRATE_BUILTINS`，而不是 `#ifdef`。它始终被定义。
-- `DREAMSHADER_UE_VERSION_AT_LEAST` 是无条件定义的，因此在构建目标中预定义它
-  会产生宏重定义。请改为覆盖三个版本号宏。
-- 因为 `DreamShaderModule.h` 包含此头文件，任何使用插件路径辅助函数的
-  翻译单元也可以使用这些宏。
+- **该门控是编译时的，而非运行时的。** 针对 UE 5.3 构建的插件二进制文件完全不包含 Substrate 代码路径。将项目迁移到更新的引擎需要重新构建插件以获得更新的行为。
+- **`GetInputsView()` 仅在一个地方保留。** Epic 已弃用它，转而使用 `FExpressionInputIterator` 和 `UMaterialExpression::GetInput()`，在 UE 5.8 上命名它会产生 C4996 ——今天是警告，在移除它的任何版本中都是编译错误。剩余的调用是 `GetDreamShaderExpressionInputCount` 的 UE 5.3 – 5.4 分支，其中 `CountInputs()` 尚不存在，弃用也未生效；其他所有位置都按索引请求引脚。
+- *（自 2.0.0 起）* 引擎缺少的节点、引脚、枚举器或属性在其目录中缺失，因此使用它们的源在绑定时是错误；1.x 会静默丢弃其中一些（未读取的参数）。只有少数这些错误会指明版本 ——[`DSH5294`](../diagnostics/DSH5xxx.md#dsh5294)（来自较新引擎的 Substrate 节点）、 [`DSH5300`](../diagnostics/DSH5xxx.md#dsh5300)（`UE.UserSceneTexture`，Custom Pass 节点）、[`DSH7128`](../diagnostics/DSH7xxx.md#dsh7128)（5.3 上的 `ShadingModel="Substrate"`）以及 [`DSH8300`](../diagnostics/DSH8xxx.md#dsh8300)（低于 5.8 的 `.dsp`）；其余都说明该节点、引脚、值或属性不存在（`DSH5210`、`DSH5213`、`DSH5215`、`DSH5200`）。5.3 上的 `substrate-builtins.json` 清单仍携带 `unsupportedReason`。要在多个引擎上构建一个源，请用 `#if DS_ENGINE_MINOR >= …` 保护较新的代码。
+- `DREAMSHADER_WITH_SUBSTRATE_BUILTINS` 作为值被求值，因此必须写为 `#if DREAMSHADER_WITH_SUBSTRATE_BUILTINS`，而不是 `#ifdef`。它始终被定义。
+- `DREAMSHADER_UE_VERSION_AT_LEAST` 是无条件定义的，因此在构建目标中预定义它会产生宏重定义。请改为覆盖三个版本号宏。
+- 因为 `DreamShaderModule.h` 包含此头文件，任何使用插件路径辅助函数的翻译单元也可以使用这些宏。
 
 <a id="example"></a>
 

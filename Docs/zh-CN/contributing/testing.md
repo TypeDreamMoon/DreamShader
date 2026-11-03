@@ -1,8 +1,3 @@
----
-title: "测试"
-description: "测试"
----
-
 <a id="testing"></a>
 
 # 测试
@@ -121,31 +116,21 @@ Custom Pass 渲染测试需要渲染设备但不需要窗口：将它们作为�
 & "<EngineDir>\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" --% "<ProjectDir>\<Project>.uproject" -ExecCmds="Automation RunTests DreamShader.Pass.Render+DreamShader.Pass.Lifecycle; Quit" -RenderOffscreen -d3d12 -unattended -nopause -nosplash -NoDreamShaderEditorBridge -log
 ```
 
-`Tools/Tests/Invoke-DreamShaderTests.ps1` 在独立宿主项目上运行两个门控
-(`Tools/TestHost`)：`-nullrhi` 下的 `Suite` 预设，以及离屏的 `Rhi` 预设。
+`Tools/Tests/Invoke-DreamShaderTests.ps1` 在独立宿主项目上运行两个门控 (`Tools/TestHost`)：`-nullrhi` 下的 `Suite` 预设，以及离屏的 `Rhi` 预设。
 
 <a id="both-sides-of-the-custom-pass-gate"></a>
 
 ### Custom Pass 门控的两侧
 
-在 UE 5.8 之前，[`DREAMSHADER_WITH_CUSTOM_PASS`](../api/version-compat.md#dreamshader_with_custom_pass)
-为 `0`，插件在构建时不包含 Custom Pass 的渲染器部分。当向 UBT 传入 `-ProjectDefine:DREAMSHADER_FORCE_NO_CUSTOM_PASS` 时，5.8 的机器也会构建该部分，
-测试脚本的 `-WithoutCustomPass` 会传入该参数：
+在 UE 5.8 之前，[`DREAMSHADER_WITH_CUSTOM_PASS`](../api/version-compat.md#dreamshader_with_custom_pass) 为 `0`，插件在构建时不包含 Custom Pass 的渲染器部分。当向 UBT 传入 `-ProjectDefine:DREAMSHADER_FORCE_NO_CUSTOM_PASS` 时，5.8 的机器也会构建该部分，测试脚本的 `-WithoutCustomPass` 会传入该参数：
 
 ```powershell
 pwsh -NoProfile -File Tools\Tests\Invoke-DreamShaderTests.ps1 -Preset Suite -WithoutCustomPass -Filter DreamShader.Lang2.Pipeline+DreamShader.Compiler2.Pipeline+DreamShader.Pass.Logic
 ```
 
-在 `0` 下，管线会测试构建资源是否被编译排除、
-`DreamShader.Compiler2.Pipeline.NeedsCustomPass` 是否被编译包含：一次 `.dsp` 构建会报告 `DSH8300` 并且
-不写入任何内容。渲染和生命周期测试会随渲染器一起被编译排除。
+在 `0` 下，管线会测试构建资源是否被编译排除、 `DreamShader.Compiler2.Pipeline.NeedsCustomPass` 是否被编译包含：一次 `.dsp` 构建会报告 `DSH8300` 并且不写入任何内容。渲染和生命周期测试会随渲染器一起被编译排除。
 
-下一次不带该开关的构建会自行恢复渲染器：更改后的 UBT 命令行
-会使 UBT 的 makefile 失效，因此规则会被重新求值。由
-规则文件读取的环境变量不会被看到——UBT 会保留它上次求值的规则，直到规则文件发生变化，并且
-在 5.8 上，即使在 `-NoUBTMakefiles` 下它也会加载其 makefile。运行前，脚本会从 UBT 为 `DreamShaderPass` 写入的定义中读取
-二进制文件位于哪一侧，并在与所要求的一侧不符时停止，
-例如在构建了另一种类型之后出现 `-NoBuild` 的情况。
+下一次不带该开关的构建会自行恢复渲染器：更改后的 UBT 命令行会使 UBT 的 makefile 失效，因此规则会被重新求值。由规则文件读取的环境变量不会被看到——UBT 会保留它上次求值的规则，直到规则文件发生变化，并且在 5.8 上，即使在 `-NoUBTMakefiles` 下它也会加载其 makefile。运行前，脚本会从 UBT 为 `DreamShaderPass` 写入的定义中读取二进制文件位于哪一侧，并在与所要求的一侧不符时停止，例如在构建了另一种类型之后出现 `-NoBuild` 的情况。
 
 <a id="command-line-switches"></a>
 
@@ -160,12 +145,7 @@ pwsh -NoProfile -File Tools\Tests\Invoke-DreamShaderTests.ps1 -Preset Suite -Wit
 | `-log` / `-stdout` | 将日志路由到控制台。 |
 
 > [!WARNING]
-> **被跳过的测试会报告成功。** 测试套件中的每条跳过路径都会调用 `AddInfo(...)`，然后
-> 调用 `return true`。因此一次 `-nullrhi` 运行会显示 `DreamShader.Render.ThinCustomVsGraphParity` 和
-> `DreamShader.Roundtrip.MTestToonRenderParity` 为绿色，**却没有比较过一个像素**，而
-> 在 UE 5.3 上的运行会显示 `DreamShader.Compiler.Generate.SubstrateMaterial` 为绿色，却没有
-> 编译过 Substrate 材质。要证明渲染一致性，请在不带 `-nullrhi` 的情况下运行，并阅读日志中的信息
-> 行。
+> **被跳过的测试会报告成功。** 测试套件中的每条跳过路径都会调用 `AddInfo(...)`，然后调用 `return true`。因此一次 `-nullrhi` 运行会显示 `DreamShader.Render.ThinCustomVsGraphParity` 和 `DreamShader.Roundtrip.MTestToonRenderParity` 为绿色，**却没有比较过一个像素**，而在 UE 5.3 上的运行会显示 `DreamShader.Compiler.Generate.SubstrateMaterial` 为绿色，却没有编译过 Substrate 材质。要证明渲染一致性，请在不带 `-nullrhi` 的情况下运行，并阅读日志中的信息行。
 
 <a id="skip-conditions"></a>
 
@@ -201,9 +181,7 @@ pwsh -NoProfile -File Tools\Tests\Invoke-DreamShaderTests.ps1 -Preset Suite -Wit
 | `FScopedDreamShaderGraphBackendPin` | RAII：在作用域内强制 `UDreamShaderSettings::DefaultBackend = Graph` 并恢复先前的值。 |
 
 > [!NOTE]
-> `Compile/` 语料黄金文件编码的是 **Graph-backend** 语义，因此该运行器在每个用例期间都固定
-> `DefaultBackend = Graph`。`Legacy/Compile/` 是例外：它的
-> 黄金文件来自 2026-09-15 的 1.x 捕获，并固定为 **ThinCustom**，即项目默认值。
+> `Compile/` 语料黄金文件编码的是 **Graph-backend** 语义，因此该运行器在每个用例期间都固定 `DefaultBackend = Graph`。`Legacy/Compile/` 是例外：它的黄金文件来自 2026-09-15 的 1.x 捕获，并固定为 **ThinCustom**，即项目默认值。
 
 <a id="test-index"></a>
 
@@ -215,8 +193,7 @@ pwsh -NoProfile -File Tools\Tests\Invoke-DreamShaderTests.ps1 -Preset Suite -Wit
 
 ### `DreamShaderAutomationTests.cpp` — 30 个声明
 
-除非注释另有说明，否则其中每一个都会向 `DShader/Tests/Automation` 写入一个源文件，
-从中生成，针对生成的资源进行断言，并在退出时删除两者。
+除非注释另有说明，否则其中每一个都会向 `DShader/Tests/Automation` 写入一个源文件，从中生成，针对生成的资源进行断言，并在退出时删除两者。
 
 | 测试 | 宏 | 备注 |
 | :-- | :-- | :-- |
@@ -277,7 +254,7 @@ pwsh -NoProfile -File Tools\Tests\Invoke-DreamShaderTests.ps1 -Preset Suite -Wit
 | `DreamShader.Lang.Import.ExtractImportPath` | `TryExtractImportPathFromLine`：引号规则、注释拒绝、尾部垃圾拒绝 |
 | `DreamShader.Lang.Import.NormalizeSpecifier` | `NormalizeImportSpecifier`：无扩展名的说明符获得 `.dsh`，反斜杠和前导 `./` 被剥离 |
 | `DreamShader.Commandlet.Args.SplitAndGet` | Commandlet 键/值规范化以及 `Params → Switches → Tokens` 搜索顺序，基于来自 `UCommandlet::ParseCommandLine` 的列表 |
-| `DreamShader.Commandlet.Args.FlagValues` | `HasCommandletFlag`：逐行验证 [布尔标志](../../tools/commandlet.md#boolean-flags) 表格行，任何其他值均为 `DSH9110` |
+| `DreamShader.Commandlet.Args.FlagValues` | `HasCommandletFlag`：逐行验证 [布尔标志](../tools/commandlet.md#boolean-flags) 表格行，任何其他值均为 `DSH9110` |
 
 <a id="corpus-runners--13-declarations"></a>
 
@@ -305,7 +282,7 @@ pwsh -NoProfile -File Tools\Tests\Invoke-DreamShaderTests.ps1 -Preset Suite -Wit
 
 ## 图基线 *(自 1.9.0 起)*
 
-自动化套件说编译仍然*成功*。它并没说编译器仍然产生**相同的图**——而对于编译器重写来说，这是唯一重要的问题。[`dump-graph`](../../tools/commandlet.md#dump-graph-since-190) commandlet 动词填补了这一空白：它为每个生成的资产写出一份规范化 JSON（节点类、反射属性、连接、引脚顺序；不含坐标、颜色或 GUID），然后通过普通文本 diff 比较两次捕获。
+自动化套件说编译仍然*成功*。它并没说编译器仍然产生**相同的图**——而对于编译器重写来说，这是唯一重要的问题。[`dump-graph`](../tools/commandlet.md#dump-graph-since-190) commandlet 动词填补了这一空白：它为每个生成的资产写出一份规范化 JSON（节点类、反射属性、连接、引脚顺序；不含坐标、颜色或 GUID），然后通过普通文本 diff 比较两次捕获。
 
 为整个项目捕获基线。编译步骤不是可选的——`dump-graph` 从不写入资产，因此磁盘上已有的资产会按现状转储，而不是重新构建：
 
@@ -336,10 +313,7 @@ git diff --no-index -- I:/Baseline/before I:/Baseline/after
 
 ## 渲染一致性
 
-两种像素测试都会渲染两个材质并逐帧比较。
-`ThinCustomVsGraphParity` 从同一主体构建成对内容，每个后端一个（`Graph` 和
-`ThinCustom`）；`MTestToonRenderParity` 将项目材质与其自身反编译源码重新生成的材质进行比较
-（`Original` 对 `RoundTripTwin`）。
+两种像素测试都会渲染两个材质并逐帧比较。 `ThinCustomVsGraphParity` 从同一主体构建成对内容，每个后端一个（`Graph` 和 `ThinCustom`）；`MTestToonRenderParity` 将项目材质与其自身反编译源码重新生成的材质进行比较（`Original` 对 `RoundTripTwin`）。
 
 | 标准 | 值 |
 | :-- | :-- |
@@ -365,8 +339,7 @@ git diff --no-index -- I:/Baseline/before I:/Baseline/after
 
 ## 语料库
 
-`Tests/Corpus` 位于**插件**之下，而不是项目的 `DShader` 树之下，因此它随插件一起分发，并且永远不会被普通的源文件发现机制拾取。
-[`Tests/Corpus/README.md`](../../../Tests/Corpus/README.md) 是该树、每个黄金基准模式以及每个运行器的参考；本节是地图。
+`Tests/Corpus` 位于**插件**之下，而不是项目的 `DShader` 树之下，因此它随插件一起分发，并且永远不会被普通的源文件发现机制拾取。 [`Tests/Corpus/README.md`](../../../Tests/Corpus/README.md) 是该树、每个黄金基准模式以及每个运行器的参考；本节是地图。
 
 | 层 | 源文件 | 用例做什么 | 需求 |
 | :-- | --: | :-- | :-- |
@@ -415,26 +388,20 @@ DreamShader.Compiler2.CorpusLegacy.Material.M_Surface
 | 层 | 入口点 |
 | :-- | :-- |
 | `Parse/`，`Lang/` | `ParseDreamShaderLang` — `Auto` 为 `.dsm` / `.dsf` 选择旧版前端，并在 `.dsh` 中按声明选择 |
-| `IR/`，`Legacy/IR/` | `BindDreamShaderLang` → `BuildDreamShaderIR` → `RunDreamShaderIRPasses` → `ValidateDreamShaderIR` |
+| `IR/`, `Legacy/IR/` | `BindDreamShaderLang` → `BuildDreamShaderIR` → `RunDreamShaderIRPasses` → `ValidateDreamShaderIR` |
 | `Legacy/Parse/` | `ParseDreamShaderLang` 带 `bKeepTrivia` → `PrintDreamShaderLang`，并将打印出的文本再次作为 2.0 解析 |
 | `Decompile/` | `RaiseDreamShaderIR` → `BuildDreamShaderAstFromIR` → 打印 → 再次降低 → `AreDreamShaderIRModulesEquivalent` |
 | `Migrate/` | 旧版解析 + 绑定 → `MigrateDreamShaderLegacyModule` → 打印 → 注释计数 → 作为 2.0 构建 → IR 等价 |
 | `Compile/`，`Legacy/Compile/`，`Instance/`，`Parity/` | `CompileDreamShaderTestAssets` — 编译器服务的 `CompileAssets` 之上的测试门面 —— 然后 `dump-graph` 对每个资产的转储 |
 | `Roundtrip/` | 编译 → 对整个源文件执行 `RunDreamShaderDecompileRequest` → 在另一个临时根目录下编译文本 → 比较两个转储 |
 
-编译层会将每个夹具复制到临时源根目录并构建到
-`/Game/DreamShaderTests/...` 中，然后清理两者。
+编译层会将每个夹具复制到临时源根目录并构建到 `/Game/DreamShaderTests/...` 中，然后清理两者。
 
 <a id="expectedjson"></a>
 
 ## `.expected.json`
 
-每个字段都是选择加入的；缺失的字段不做任何断言。下表是 **`Parse/` 层**的黄金基准（`"entryPoint": "parse"`）：由于 1.x 解析器已在 2.0 中退役，其 `definition` 字段是从旧版前端的 AST 和 `FLegacyMigrationInfo` 中读取的，而不是从
-`FTextShaderDefinition` 中读取，字段名相同。其他每一层都有自己的形态 — `lang`、`ir`、
-`legacy`、`legacy-ir`、`decompile`、`migrate`、`compile`、`roundtrip` — 记录在
-[`Tests/Corpus/README.md`](../../../Tests/Corpus/README.md) 中。它们共享两个约定：
-`errorContains` / `warningsContain` / `infosContain` 保存 `DSHnnnn` 代码而非消息文本，
-以及 `...Pending: true` 标志（`textPending`、`irPending`、`graphPending`）会跳过尚未有人审核的黄金基准的字节比较 — 移除该标志是审核者的行为，绝不是编写者的行为。
+每个字段都是选择加入的；缺失的字段不做任何断言。下表是 **`Parse/` 层**的黄金基准（`"entryPoint": "parse"`）：由于 1.x 解析器已在 2.0 中退役，其 `definition` 字段是从旧版前端的 AST 和 `FLegacyMigrationInfo` 中读取的，而不是从 `FTextShaderDefinition` 中读取，字段名相同。其他每一层都有自己的形态 — `lang`、`ir`、 `legacy`、`legacy-ir`、`decompile`、`migrate`、`compile`、`roundtrip` — 记录在 [`Tests/Corpus/README.md`](../../../Tests/Corpus/README.md) 中。它们共享两个约定： `errorContains` / `warningsContain` / `infosContain` 保存 `DSHnnnn` 代码而非消息文本，以及 `...Pending: true` 标志（`textPending`、`irPending`、`graphPending`）会跳过尚未有人审核的黄金基准的字节比较 — 移除该标志是审核者的行为，绝不是编写者的行为。
 
 | 字段 | 类型 | 层 | 含义 |
 | :-- | :-- | :-- | :-- |
@@ -452,52 +419,36 @@ DreamShader.Compiler2.CorpusLegacy.Material.M_Surface
 | `definition.codeNotEmpty` | bool | Parse | `Definition.Code` 是否非空 |
 
 > [!WARNING]
-> `outcome` 仅与 `"error"` 进行比较（不区分大小写，因此 `"Error"` 和 `"ERROR"`
-> 都没问题）。一个笔误——`"fail"`、带尾随空格的 `"error "`、`"errors"`——会让 golden 期望**成功**，而一个本应
-> 固定失败结果的夹具就会悄然开始断言相反的结果。请只使用 `"ok"` 或 `"error"`。
+> `outcome` 仅与 `"error"` 进行比较（不区分大小写，因此 `"Error"` 和 `"ERROR"` 都没问题）。一个笔误——`"fail"`、带尾随空格的 `"error "`、`"errors"`——会让 golden 期望**成功**，而一个本应固定失败结果的夹具就会悄然开始断言相反的结果。请只使用 `"ok"` 或 `"error"`。
 
 <a id="adding-a-fixture"></a>
 
 ## 添加夹具
 
-1. 将源文件放入该层的目录——`Tests/Corpus/IR/<Area>/X.dss`、
-   `Tests/Corpus/Legacy/Compile/Material/M_X.dsm`、…… 使用层前缀；对负向用例在名称主干中添加 `.bad.`。
-2. 可选地添加 `<same stem>.expected.json`，并包含上表中字段的任意子集。没有 golden 的正向用例
-   仍断言“必须成功”；没有 golden 的 `.bad.` 用例断言“必须失败”。
+1. 将源文件放入该层的目录——`Tests/Corpus/IR/<Area>/X.dss`、 `Tests/Corpus/Legacy/Compile/Material/M_X.dsm`、…… 使用层前缀；对负向用例在名称主干中添加 `.bad.`。
+2. 可选地添加 `<same stem>.expected.json`，并包含上表中字段的任意子集。没有 golden 的正向用例仍断言“必须成功”；没有 golden 的 `.bad.` 用例断言“必须失败”。
 3. **不要编写 C++，也不要重新编译。** 每个运行器都会在下次运行时枚举其目录树。
-4. 运行该层一次以查看新的子测试出现：
-   `-ExecCmds="Automation RunTests DreamShader.Lang.Parse; Quit"`。
-5. 要从实际结果引导生成 golden，请添加 `-DreamShaderUpdateGolden` 并再次运行，然后在提交前
-   手动审查写出的 JSON。新的文本、IR 或图形 golden 在写入时会设置
-   其 `...Pending` 标志；在逐行阅读 golden 后删除该标志。
+4. 运行该层一次以查看新的子测试出现： `-ExecCmds="Automation RunTests DreamShader.Lang.Parse; Quit"`。
+5. 要从实际结果引导生成 golden，请添加 `-DreamShaderUpdateGolden` 并再次运行，然后在提交前手动审查写出的 JSON。新的文本、IR 或图形 golden 在写入时会设置其 `...Pending` 标志；在逐行阅读 golden 后删除该标志。
 
 <a id="regenerating-goldens"></a>
 
 ### 重新生成 golden
 
-在命令行中加上 `-DreamShaderUpdateGolden` 时，每个运行器会写出 golden 而不是
-对其进行断言，并记录 `Updated golden '{Path}'.`；若写入失败，则记录 `Failed to write golden '{Path}'.`
+在命令行中加上 `-DreamShaderUpdateGolden` 时，每个运行器会写出 golden 而不是对其进行断言，并记录 `Updated golden '{Path}'.`；若写入失败，则记录 `Failed to write golden '{Path}'.`
 
-`Parse/` writer 输出什么：`entryPoint: "parse"`、`outcome`，然后是
-`errorContains: [<the codes>]` 或一个 `definition` 对象，包含 `name`（为空时省略）、
-`outputDeclarations`、`outputs`、`materialFunctions`、`materialFunction0Kind`（仅当至少存在一个时）、
-`virtualFunctions`、`codeNotEmpty` 和 `settings`（仅当非空时）；另外，当解析产生警告时，
-会有一个顶层 `warningsContain`。其他层的 writer 及其 schema 在
-语料库 README 中描述。
+`Parse/` writer 输出什么：`entryPoint: "parse"`、`outcome`，然后是 `errorContains: [<the codes>]` 或一个 `definition` 对象，包含 `name`（为空时省略）、 `outputDeclarations`、`outputs`、`materialFunctions`、`materialFunction0Kind`（仅当至少存在一个时）、 `virtualFunctions`、`codeNotEmpty` 和 `settings`（仅当非空时）；另外，当解析产生警告时，会有一个顶层 `warningsContain`。其他层的 writer 及其 schema 在语料库 README 中描述。
 
 输出为格式化美观的 JSON。
 
 > [!WARNING]
-> `-DreamShaderUpdateGolden` 会按代码当前的行为重写 golden。在未审查的更改之后运行它
-> 会把回归当作新的基线接受。提交前请对每个被触及的
-> `.expected.json` 进行差异对比，并且绝不要把该开关放入 CI 任务。
+> `-DreamShaderUpdateGolden` 会按代码当前的行为重写 golden。在未审查的更改之后运行它会把回归当作新的基线接受。提交前请对每个被触及的 `.expected.json` 进行差异对比，并且绝不要把该开关放入 CI 任务。
 
 <a id="diagnostics"></a>
 
 ## 诊断
 
-运行器发出的断言和基础设施消息。运行时替换显示为
-`{Placeholder}`；`{Case}` 是夹具的**绝对源路径**，而不是其子测试名称。
+运行器发出的断言和基础设施消息。运行时替换显示为 `{Placeholder}`；`{Case}` 是夹具的**绝对源路径**，而不是其子测试名称。
 
 | 消息 | 层 | 原因 |
 | :-- | :-- | :-- |
@@ -522,16 +473,13 @@ DreamShader.Compiler2.CorpusLegacy.Material.M_Surface
 | `DreamShader {layer} corpus test invoked without a source path.` | every runner | 子测试以空命令参数启动；`{layer}` 是 `parse`、`lang`、`IR`、`legacy parse`、`legacy IR`、`legacy compile`、`compile`、`instance`、`decompile`、`migrate` 或 `roundtrip`（该运行器为 `DreamShader RoundtripIR test …`） |
 | `Failed to write DreamShader automation source file '{Path}'.` | harness | 测试无法写入其临时源文件 |
 
-1.x Generate 运行器及其 `generation should …` 消息已消失 *(自 2.0.0 起)*：其夹具
-为 `Legacy/Compile/`，通过 2.0 管线编译。其他层的断言消息位于
-其运行器中，以及 [`Tests/Corpus/README.md`](../../../Tests/Corpus/README.md) 中。
+1.x Generate 运行器及其 `generation should …` 消息已消失 *(自 2.0.0 起)*：其夹具为 `Legacy/Compile/`，通过 2.0 管线编译。其他层的断言消息位于其运行器中，以及 [`Tests/Corpus/README.md`](../../../Tests/Corpus/README.md) 中。
 
 <a id="example"></a>
 
 ## 示例
 
-随附的负向夹具，用于固定“每个解析单元一个 `Shader`”规则。
-`Tests/Corpus/Parse/TopLevel/T_TwoShaders.bad.dsm`：
+随附的负向夹具，用于固定“每个解析单元一个 `Shader`”规则。 `Tests/Corpus/Parse/TopLevel/T_TwoShaders.bad.dsm`：
 
 ```c
 Shader(Name="DreamShaderTests/Corpus/M_First")
@@ -549,9 +497,7 @@ Shader(Name="DreamShaderTests/Corpus/M_Second")
 }
 ```
 
-仅 `.bad.` 名称主干本身会断言“解析必须失败”。其 golden，
-`T_TwoShaders.bad.expected.json`，还固定了旧版前端为第二个 `Shader`
-块抛出的代码，[`DSH2250`](../diagnostics/DSH2xxx.md#dsh2250)：
+仅 `.bad.` 名称主干本身会断言“解析必须失败”。其 golden， `T_TwoShaders.bad.expected.json`，还固定了旧版前端为第二个 `Shader` 块抛出的代码，[`DSH2250`](../diagnostics/DSH2xxx.md#dsh2250)：
 
 ```json
 {
@@ -580,11 +526,10 @@ DreamShader.Lang.Parse.TopLevel.T_TwoShaders.bad
 - [贡献](index.md) — 构建插件及源码树布局
 - [发布](release.md) — 发布归档中为何不含 `Tests/`
 - [Commandlet](../tools/commandlet.md) — `-run=DreamShader`，另一个无头入口点
-- [编辑器桥接](../../tools/bridge.md) — `-NoDreamShaderEditorBridge` 会关闭什么
-- [预览](../../tools/preview.md) — 一致性测试所驱动的渲染器
+- [编辑器桥接](../tools/bridge.md) — `-NoDreamShaderEditorBridge` 会关闭什么
+- [预览](../tools/preview.md) — 一致性测试所驱动的渲染器
 - [后端](../settings/backend.md) — `Graph` 与 `ThinCustom`，一致性用例所比较的维度
 - [项目设置](../settings/project.md) — `DefaultBackend`，`Compile/` 运行器将其固定为 `Graph`
 - [`DreamShaderLang`](../api/lang-module.md) — `ParseDreamShaderLang` 以及文本层调用的所有其他入口点
 - [诊断索引](../diagnostics/index.md) — 测试夹具所断言的各类消息
-- [版本兼容性](../api/version-compat.md) — `DREAMSHADER_WITH_SUBSTRATE_BUILTINS` 与 UE 5.4 跳过
-</content>
+- [版本兼容性](../api/version-compat.md) — `DREAMSHADER_WITH_SUBSTRATE_BUILTINS` 与 UE 5.4 跳过 </content>

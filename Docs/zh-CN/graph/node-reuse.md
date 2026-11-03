@@ -1,8 +1,3 @@
----
-title: "节点复用"
-description: "节点复用"
----
-
 <a id="node-reuse"></a>
 
 # 节点复用
@@ -23,8 +18,7 @@ description: "节点复用"
 
 ## 去重遍历
 
-遍历运行在**一个**生成资产的图形上:一个 `Shader`,或一个 `ShaderFunction` /
-`ShaderLayer` / `ShaderLayerBlend`。一个声明了材质和两个函数资产的 `.dsm` 有三个独立的图形,它们之间不共享任何内容。
+遍历运行在**一个**生成资产的图形上:一个 `Shader`,或一个 `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend`。一个声明了材质和两个函数资产的 `.dsm` 有三个独立的图形,它们之间不共享任何内容。
 
 | 顺序 | 遍历 | 作用 |
 | --: | :-- | :-- |
@@ -63,11 +57,9 @@ description: "节点复用"
 
 - 在两个文本上相同的表达式之间重新赋值变量会产生两个不同的节点;
 - 当 `UV3` 持有的节点与 `UV1` 相同时,`UV1.x * 2.0` 和 `UV3.x * 2.0` 是同一个节点;
-- 构建相同节点的两种拼写是同一个节点:`F_Tint(a, b)` 和
-  `F_Tint(Color = a, Tint = b)`,`1` 和 `1.0`。
+- 构建相同节点的两种拼写是同一个节点:`F_Tint(a, b)` 和 `F_Tint(Color = a, Tint = b)`,`1` 和 `1.0`。
 
-大小写不同的名称是同一个声明(伴随警告
-[`DSH5275`](../diagnostics/DSH5xxx.md#dsh5275)),因此 `F_Tint(Color = a)` 和 `F_Tint(color = a)` 也是同一个节点。
+大小写不同的名称是同一个声明(伴随警告 [`DSH5275`](../diagnostics/DSH5xxx.md#dsh5275)),因此 `F_Tint(Color = a)` 和 `F_Tint(color = a)` 也是同一个节点。
 
 <a id="what-is-never-merged"></a>
 
@@ -103,32 +95,20 @@ description: "节点复用"
 类型为参数节点(`TextureSampleParameter2D`、`ChannelMaskParameter`……)的属性在每次使用时都以其声明的默认值和元数据写出;具有相同参数的使用是一个节点,而具有不同引脚的[引脚调用](calls.md#input-pin-wiring)是另一个节点,它指向同一个材质参数。
 
 > [!NOTE]
-> `Outputs` 表达式目标——`Expression( … ).Pin[i]` 和
-> [块形式](../language/output-bindings.md#block-form)——是在读取 `Outputs` 部分时分组,而不是由本遍历分组:每个类和参数列表一致的绑定(参数名忽略
-> 大小写、顺序任意、排除引脚索引)填充一个节点的不同引脚,而绑定两次的引脚是
-> [`DSH3268`](../diagnostics/DSH3xxx.md#dsh3268)。这正是参数列表的确切拼写至关重要的原因:多一个或少一个参数就是第二个节点,悄无声息地。块形式的存在是为了消除让这种错误变得容易的重复——它只写一次规范,并降低为 N 个不会产生分歧的绑定。
+> `Outputs` 表达式目标——`Expression( … ).Pin[i]` 和[块形式](../language/output-bindings.md#block-form)——是在读取 `Outputs` 部分时分组,而不是由本遍历分组:每个类和参数列表一致的绑定(参数名忽略大小写、顺序任意、排除引脚索引)填充一个节点的不同引脚,而绑定两次的引脚是 [`DSH3268`](../diagnostics/DSH3xxx.md#dsh3268)。这正是参数列表的确切拼写至关重要的原因:多一个或少一个参数就是第二个节点,悄无声息地。块形式的存在是为了消除让这种错误变得容易的重复——它只写一次规范,并降低为 N 个不会产生分歧的绑定。
 
 <a id="observable-consequences"></a>
 
 ## 可观察的后果
 
-- 一个资产中同一数值的每一次出现都是 **一个** `Constant` 节点：`1` 与 `1.0`、
-  `0.5` 与 `.5`。常量比较精确到 9 位有效数字。
-- 一个取反 `-x` 是 `Multiply(x, Constant(-1))`。同一个 `-x` 写两次是一个 `Multiply`；两个
-  不同的取反各自拥有自己的 `Constant(-1)` *（自 2.0.0 起；1.x 共用同一个）*。一个
-  取反常量的写法（`-0.5`）会折叠为一个 `Constant`。
-- `A + B` 写两次会产出一个 `Add` 节点——前提是两个操作数都是相同的节点，且通过
-  相同的输出读取。
-- `UE.TexCoord(Index = 0)` 写五次会产出 **一个** `TextureCoordinate` 节点 *（自 2.0.0 起；
-  1.x 会产出五个）*。
-- `Src.rgb` 使用十次是一个 `ComponentMask`，或者当 `Src` 具有 `RGB` 输出
-  引脚时完全不产生节点。
-- `F_Tint(a, b)` 与 `F_Tint(b, a)` 是不同的节点；`F_Tint(Color = a)` 与 `F_Tint(color = a)`
-  是同一个节点。
-- 由于该遍处理会跨越 `if` 分支，在两个分支中写入的共享子表达式只构建一次，
-  且 `If` 的两个输入都读取它。
-- 节点 **布局** 在合并后的图上计算，因此合并后的节点只有一个位置，不会留下空隙。
-  请参阅[图布局](../generation/graph-layout.md)。
+- 一个资产中同一数值的每一次出现都是 **一个** `Constant` 节点：`1` 与 `1.0`、 `0.5` 与 `.5`。常量比较精确到 9 位有效数字。
+- 一个取反 `-x` 是 `Multiply(x, Constant(-1))`。同一个 `-x` 写两次是一个 `Multiply`；两个不同的取反各自拥有自己的 `Constant(-1)` *（自 2.0.0 起；1.x 共用同一个）*。一个取反常量的写法（`-0.5`）会折叠为一个 `Constant`。
+- `A + B` 写两次会产出一个 `Add` 节点——前提是两个操作数都是相同的节点，且通过相同的输出读取。
+- `UE.TexCoord(Index = 0)` 写五次会产出 **一个** `TextureCoordinate` 节点 *（自 2.0.0 起； 1.x 会产出五个）*。
+- `Src.rgb` 使用十次是一个 `ComponentMask`，或者当 `Src` 具有 `RGB` 输出引脚时完全不产生节点。
+- `F_Tint(a, b)` 与 `F_Tint(b, a)` 是不同的节点；`F_Tint(Color = a)` 与 `F_Tint(color = a)` 是同一个节点。
+- 由于该遍处理会跨越 `if` 分支，在两个分支中写入的共享子表达式只构建一次，且 `If` 的两个输入都读取它。
+- 节点 **布局** 在合并后的图上计算，因此合并后的节点只有一个位置，不会留下空隙。请参阅[图布局](../generation/graph-layout.md)。
 
 <a id="example"></a>
 
@@ -169,8 +149,7 @@ VectorParameter    Tint
 Multiply           Tint * (...)
 ```
 
-七条语句产生九个节点 *（自 2.0.0 起）*：两个 `TexCoord` 调用合并为一个节点，而 `.x`
-swizzle 无论被读取多少次都是一个 `ComponentMask`。
+七条语句产生九个节点 *（自 2.0.0 起）*：两个 `TexCoord` 调用合并为一个节点，而 `.x` swizzle 无论被读取多少次都是一个 `ComponentMask`。
 
 <a id="see-also"></a>
 
@@ -183,6 +162,6 @@ swizzle 无论被读取多少次都是一个 `ComponentMask`。
 - [调用](calls.md) —— 调用节点及其参数列表
 - [`if` / `else`](if.md) —— 为什么复用不以分支为作用域
 - [MaterialAttributes](material-attributes.md) —— Make/Set/读取节点
-- [图中的参数](../../parameters/graph-usage.md) —— 参数节点是如何生成的
+- [图中的参数](../parameters/graph-usage.md) —— 参数节点是如何生成的
 - [图布局](../generation/graph-layout.md) —— 保留下来的节点被放置在何处
 - [UE.Expression](../builtins/ue-expression.md) —— `Class=` 参数以及节点的属性

@@ -1,8 +1,3 @@
----
-title: "着色器设置"
-description: "着色器设置"
----
-
 <a id="shader-settings"></a>
 
 # 着色器设置
@@ -69,12 +64,7 @@ blendmode   rendertype   shadingmodel   materialdomain   domain   backend
 这些键的拼写只通过修剪并转小写来查找，因此 `blendmode`、`BlendMode` 和 `BLENDMODE` 都可以。
 
 > [!WARNING]
-> 仅以下划线区别于特殊键的拼写会被**静默丢弃**。
-> `Blend_Mode = "Translucent";` 不会设置混合模式：对 `BlendMode` 的直接探测匹配不到
-> 所存储的键 `blend_mode`，而反射遍历会跳过它，因为其去分隔符后的形式
-> 在特殊键列表上。没有错误，没有警告，没有效果。`Render_Type`、
-> `Shading_Model`、`Material_Domain` 和 `Back_end` 同理。请写成不带分隔符的名字。（自 2.0.0 起，
-> 空格或连字符不能充当键中的分隔符：[`DSH3261`](../diagnostics/DSH3xxx.md#dsh3261)。）
+> 仅以下划线区别于特殊键的拼写会被**静默丢弃**。 `Blend_Mode = "Translucent";` 不会设置混合模式：对 `BlendMode` 的直接探测匹配不到所存储的键 `blend_mode`，而反射遍历会跳过它，因为其去分隔符后的形式在特殊键列表上。没有错误，没有警告，没有效果。`Render_Type`、 `Shading_Model`、`Material_Domain` 和 `Back_end` 同理。请写成不带分隔符的名字。（自 2.0.0 起，空格或连字符不能充当键中的分隔符：[`DSH3261`](../diagnostics/DSH3xxx.md#dsh3261)。）
 
 <a id="application-order"></a>
 
@@ -185,8 +175,7 @@ blendmode   rendertype   shadingmodel   materialdomain   domain   backend
 类型的消息在校验块时被包成 [`DSH7125`](../diagnostics/DSH7xxx.md#dsh7125)（真实材质随后拒绝时是 [`DSH7126`](../diagnostics/DSH7xxx.md#dsh7126)），再以 [`DSH8215`](../diagnostics/DSH8xxx.md#dsh8215) 到达你，它指出材质并引用这个码。
 
 > [!NOTE]
-> 如果对象类型属性的类派生自 `UTexture`，**且**属性名恰好是 `Texture` 或 `TextureObject`，那么资产加载失败时会写入 `nullptr` 而不是报错。
-> 这是材质表达式的惯例；这里同样适用。
+> 如果对象类型属性的类派生自 `UTexture`，**且**属性名恰好是 `Texture` 或 `TextureObject`，那么资产加载失败时会写入 `nullptr` 而不是报错。这是材质表达式的惯例；这里同样适用。
 
 当对象类型的值是引用 —— 以 `Path(` 或 `/` 开头，或以 `'` 结尾 —— 且解析失败时，`DSH7125` 句号之后那句就是解析器的消息。
 
@@ -265,20 +254,13 @@ blendmode   rendertype   shadingmodel   materialdomain   domain   backend
 
 其余所有 `UMaterial` 属性都保持新构造材质所具有的值。
 
-`bUsedWithVolumetricCloud` 是上表中唯一一个不是常量的条目：它由 domain 决定。一个
-`Volume` domain 的材质是体积材质，而体积云渲染器会拒绝一个
-未为此标记的材质 —— 所以你永远不需要手写这个标志。显式写出它可以
-覆盖 domain 的选择；一个只喂给体积雾的 `Volume` 材质可以用 `bUsedWithVolumetricCloud = "false";` 把
-标志重新关掉，并省下云的着色器排列组合。
+`bUsedWithVolumetricCloud` 是上表中唯一一个不是常量的条目：它由 domain 决定。一个 `Volume` domain 的材质是体积材质，而体积云渲染器会拒绝一个未为此标记的材质 —— 所以你永远不需要手写这个标志。显式写出它可以覆盖 domain 的选择；一个只喂给体积雾的 `Volume` 材质可以用 `bUsedWithVolumetricCloud = "false";` 把标志重新关掉，并省下云的着色器排列组合。
 
 <a id="the-round-trip-set"></a>
 
 ## 往返集合
 
-[反编译器](../tools/decompiler.md)会无条件写出 `Domain`、`ShadingModel` 和 `BlendMode`，
-另外还会在与 `UMaterial` 类默认值不同时写出以下各项。这
-是保证能挺过一次 `UMaterial` → `.dsm` → `UMaterial` 往返的集合；它是
-`Settings` 所接受内容的子集，而不是对其的限制。
+[反编译器](../tools/decompiler.md)会无条件写出 `Domain`、`ShadingModel` 和 `BlendMode`，另外还会在与 `UMaterial` 类默认值不同时写出以下各项。这是保证能挺过一次 `UMaterial` → `.dsm` → `UMaterial` 往返的集合；它是 `Settings` 所接受内容的子集，而不是对其的限制。
 
 **布尔值（40 个，按写出顺序）**
 
@@ -301,46 +283,27 @@ bAlwaysEvaluateWorldPositionOffset                        bUsedWithVolumetricClo
 
 `bHasPixelAnimation` 仅在 UE 5.4 及更新版本上写出。
 
-`bUsedWithVolumetricCloud` 是唯一一个不与 `UMaterial` 类默认值比较的布尔值：它
-会与 domain 会赋予它的值进行比较（见上表）。在一个 `Volume` domain
-材质上，无需写出该行的值是 `true`，因此被写出的是 `false` —— 这
-正是让一个仅用于雾的 `Volume` 材质不会带着开启的标志回来的原因。
+`bUsedWithVolumetricCloud` 是唯一一个不与 `UMaterial` 类默认值比较的布尔值：它会与 domain 会赋予它的值进行比较（见上表）。在一个 `Volume` domain 材质上，无需写出该行的值是 `true`，因此被写出的是 `false` —— 这正是让一个仅用于雾的 `Volume` 材质不会带着开启的标志回来的原因。
 
 **枚举（1 个）** —— `MaterialDecalResponse`。
 
-可达但反编译器从不写出、从而在往返中丢失的：
-`OpacityMaskClipValue`、`NumCustomizedUVs`、`TranslucencyLightingMode`、`RefractionMethod`、
-`RefractionDepthBias`、`TranslucencyPass`、`ShadingRate`、`FloatPrecisionMode`、`BlendableLocation`、
-`BlendablePriority`、`bIsBlendable`、`UserSceneTexture`、`StencilCompare`、`StencilRefValue`、
-`bEnableStencilTest`、`MaxWorldPositionOffsetDisplacement`、`PhysMaterial`、`PhysMaterialMask`，以及
-解析器能按名称触达的其他所有引擎属性。确切的可用性取决于引擎版本
-—— 解析器是对引擎自身属性集的纯反射。
+可达但反编译器从不写出、从而在往返中丢失的： `OpacityMaskClipValue`、`NumCustomizedUVs`、`TranslucencyLightingMode`、`RefractionMethod`、 `RefractionDepthBias`、`TranslucencyPass`、`ShadingRate`、`FloatPrecisionMode`、`BlendableLocation`、 `BlendablePriority`、`bIsBlendable`、`UserSceneTexture`、`StencilCompare`、`StencilRefValue`、 `bEnableStencilTest`、`MaxWorldPositionOffsetDisplacement`、`PhysMaterial`、`PhysMaterialMask`，以及解析器能按名称触达的其他所有引擎属性。确切的可用性取决于引擎版本 —— 解析器是对引擎自身属性集的纯反射。
 
 <a id="notes"></a>
 
 ## 备注
 
-- 反射的面是**引擎的**，不是插件的。自定义或修改过的引擎构建
-  会通过同一个解析器暴露它自己的属性和自己的枚举值，所以本手册的
-  表格只描述原版 UE 5.3 – 5.8 的面。
-- 在 [ThinCustom 后端](backend.md)下，每个设置都落在**隐藏的基础 `UMaterial`** 上，
-  而不是写出的 `UDreamShaderMaterialInstance` 上。从实例上读取混合模式看到的是
-  继承来的值。
-- [`ShaderFunction`](function.md) 上的 `Settings` 块**不**共享这种行为。那里
-  只读取四个键，而本页上的每个键在那里都是一个
-  [`DSH3263`](../diagnostics/DSH3xxx.md#dsh3263) 警告。
-- 跨多个 `Settings` 段的重复键会合并，后者胜出，并给出
-  一个 [`DSH3262`](../diagnostics/DSH3xxx.md#dsh3262) 警告。见
-  [设置](index.md#how-a-statement-is-parsed)。
-- 一个设置失败会对该材质只报告一次，即 `DSH8215`；消息会指出材质
-  并引用反射写入器的代码和消息。
+- 反射的面是**引擎的**，不是插件的。自定义或修改过的引擎构建会通过同一个解析器暴露它自己的属性和自己的枚举值，所以本手册的表格只描述原版 UE 5.3 – 5.8 的面。
+- 在 [ThinCustom 后端](backend.md)下，每个设置都落在**隐藏的基础 `UMaterial`** 上，而不是写出的 `UDreamShaderMaterialInstance` 上。从实例上读取混合模式看到的是继承来的值。
+- [`ShaderFunction`](function.md) 上的 `Settings` 块**不**共享这种行为。那里只读取四个键，而本页上的每个键在那里都是一个 [`DSH3263`](../diagnostics/DSH3xxx.md#dsh3263) 警告。
+- 跨多个 `Settings` 段的重复键会合并，后者胜出，并给出一个 [`DSH3262`](../diagnostics/DSH3xxx.md#dsh3262) 警告。见[设置](index.md#how-a-statement-is-parsed)。
+- 一个设置失败会对该材质只报告一次，即 `DSH8215`；消息会指出材质并引用反射写入器的代码和消息。
 
 <a id="diagnostics"></a>
 
 ## 诊断
 
-因为键在到达发射器时会被转为小写，这些消息中引用的键是
-**小写**拼写，而不是源码写出的。
+因为键在到达发射器时会被转为小写，这些消息中引用的键是**小写**拼写，而不是源码写出的。
 
 | 代码 | 触发条件 |
 | :-- | :-- |
@@ -357,9 +320,7 @@ bAlwaysEvaluateWorldPositionOffset                        bUsedWithVolumetricClo
 | `DSH7232` | `Substrate` 不是 `Legacy`、`Bridge` 或 `Native` |
 | `DSH3261` | 键不是一个名称 —— 包括嵌套路径或下标 |
 
-`Backend` 值在源码被绑定时检查 —— 见 [后端](backend.md#diagnostics)。
-`DSH7112`–`DSH7117`、`DSH7119`、`DSH7120`、`DSH7122` 和 `DSH7123` 涉及嵌套和带下标的路径以及
-解析器自身的不变量；1.x 键不会触及它们。
+`Backend` 值在源码被绑定时检查 —— 见 [后端](backend.md#diagnostics)。 `DSH7112`–`DSH7117`、`DSH7119`、`DSH7120`、`DSH7122` 和 `DSH7123` 涉及嵌套和带下标的路径以及解析器自身的不变量；1.x 键不会触及它们。
 
 <a id="example"></a>
 

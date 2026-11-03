@@ -1,8 +1,3 @@
----
-title: "OutputType"
-description: "OutputType"
----
-
 <a id="outputtype"></a>
 
 # OutputType
@@ -44,10 +39,7 @@ description: "OutputType"
 不符合上述任何情况的标记——非 Custom 调用中的纹理、`MaterialAttributes`、`Substrate` 或 `SamplerState` 标记，矩阵，拼写错误——都会被无诊断信息地丢弃 *(自 2.0.0 起；1.x 会报告不支持的标记)*，并由目录确定值的类型。
 
 > [!NOTE]
-> 宽度提示遵循 1.x 的行为，即当目录会构建另一个图时：
-> `float Cam = UE.Expression(Class = "CameraPositionWS", OutputType = "float")` 将 `Cam` 类型设为
-> `float`，并在读取 `Cam` 的任何位置连接节点的整体输出，这正是 1.x 图
-> 所为。在引擎以与提示相同方式确定类型的节点上，它不会改变任何东西。
+> 宽度提示遵循 1.x 的行为，即当目录会构建另一个图时： `float Cam = UE.Expression(Class = "CameraPositionWS", OutputType = "float")` 将 `Cam` 类型设为 `float`，并在读取 `Cam` 的任何位置连接节点的整体输出，这正是 1.x 图所为。在引擎以与提示相同方式确定类型的节点上，它不会改变任何东西。
 
 <a id="accepted-tokens"></a>
 
@@ -61,10 +53,10 @@ description: "OutputType"
 
 | 标记 | Custom 输出类型 |
 | :-- | :-- |
-| `float`、`float1`、`half`、`half1` | `Float1` |
-| `float2`、`vec2`、`half2` | `Float2` |
-| `float3`、`vec3`、`half3` | `Float3` |
-| `float4`、`vec4`、`half4` | `Float4` |
+| `float`, `float1`, `half`, `half1` | `Float1` |
+| `float2`, `vec2`, `half2` | `Float2` |
+| `float3`, `vec3`, `half3` | `Float3` |
+| `float4`, `vec4`, `half4` | `Float4` |
 | `MaterialAttributes` — 带引号 | `MaterialAttributes` |
 
 *(自 2.0.0 起)* `int`、`uint`、`bool` 及其向量、`ivec*`、`uvec*`、`bvec*`、纹理标记、`StaticBool` 和 `Substrate` 在此处为 `DSH5261`。裸写的 `MaterialAttributes` 会被读取为类型 `material`，同样为 `DSH5261`；请为其加引号。
@@ -95,17 +87,15 @@ description: "OutputType"
 
 | 节点 | 目录列出的输出（UE 5.8） |
 | :-- | :-- |
-| `VertexColor` | `RGB`、`R`、`G`、`B`、`A` |
-| `TextureSample` | `RGB`、`R`、`G`、`B`、`A`、`RGBA` |
-| `SceneColor` | `RGB`、`A` |
-| `SceneTexture` | `Color`、`Size`、`InvSize` |
+| `VertexColor` | `RGB`, `R`, `G`, `B`, `A` |
+| `TextureSample` | `RGB`, `R`, `G`, `B`, `A`, `RGBA` |
+| `SceneColor` | `RGB`, `A` |
+| `SceneTexture` | `Color`, `Size`, `InvSize` |
 
 名称按精确方式比较；在 1.x 源码中，仅忽略大小写匹配的名称会被接受，并给出 [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276)。没有任何输出使用的名称是 [`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201) *(自 2.0.0 起；1.x 会按固定顺序对每个未命名输出测试七个掩码名称)*。在输出全都是同一个值的通道视图的节点上，一个输出内部的 swizzle 就是该输出（`UE.VertexColor().a`）。完整规则：[`UE.Expression`](ue-expression.md#selecting-an-output)。
 
 > [!NOTE]
-> 这些不是 `OutputType` 值，`OutputType` 标记永远不是有效的 `Output` 选择器。
-> `UE.Expression(Class = "BreakMaterialAttributes", Output = "BaseColor")` 按输出*名称*选择；
-> `UE.VertexColor(Output = "RGB")` 选择其掩码命名的输出。
+> 这些不是 `OutputType` 值，`OutputType` 标记永远不是有效的 `Output` 选择器。 `UE.Expression(Class = "BreakMaterialAttributes", Output = "BaseColor")` 按输出*名称*选择； `UE.VertexColor(Output = "RGB")` 选择其掩码命名的输出。
 
 <a id="notes"></a>
 

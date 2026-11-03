@@ -1,11 +1,9 @@
 ---
-title: "关于 DreamShader"
-description: "这个插件是什么、包含哪五个模块、支持哪些引擎，以及相关仓库在哪里。"
+title: 关于 DreamShader
+description: 这个插件是什么、包含哪五个模块、支持哪些引擎，以及相关仓库在哪里。
 ---
 
-DreamShader 是一个 Unreal Engine 插件，把 DreamShaderLang 源文件编译成标准材质资产 —— 并且，
-在 UE 5.8 上，把 `.dsp` Custom Pass 管线编译成你自己的渲染 pass。DreamShaderLang 是语言；解析、
-生成、缓存、诊断、反编译和编辑器集成都由插件负责。
+DreamShader 是一个 Unreal Engine 插件，把 DreamShaderLang 源文件编译成标准材质资产 —— 并且，在 UE 5.8 上，把 `.dsp` Custom Pass 管线编译成你自己的渲染 pass。DreamShaderLang 是语言；解析、生成、缓存、诊断、反编译和编辑器集成都由插件负责。
 
 | | |
 | --- | --- |
@@ -39,10 +37,7 @@ Unreal 材质图一旦变大，就很难 review、diff、复用和迁移。Dream
 | 材质实例只能在面板里一项项勾 | `.dsi`：父材质和覆盖项写成文本（自 2.0.0 起） |
 | 想要引擎没有的渲染 pass —— 描边遮罩、模糊、屏幕空间效果、写数据纹理的 compute | `.dsp` Custom Pass 管线，不改引擎（自 2.1.0 起），在（自 UE 5.8 起） |
 
-它不是材质编辑器的替代品。1.x 的 `Graph` 是一个只有四个运算符和
-`if` / `else` 的节点图构建器；`.dss` 有循环和完整的运算符，但同样降级成一张材质图。真正
-命令式的逻辑写进 `/// @custom` 函数或 1.x 的 `Function`，它的函数体是真正的 HLSL，
-会被编译进 `Custom` 节点。一次性的、非常视觉化的图，在 Unreal 里直接连更快 —— 等它稳定下来再导出成源文件也不迟。
+它不是材质编辑器的替代品。1.x 的 `Graph` 是一个只有四个运算符和 `if` / `else` 的节点图构建器；`.dss` 有循环和完整的运算符，但同样降级成一张材质图。真正命令式的逻辑写进 `/// @custom` 函数或 1.x 的 `Function`，它的函数体是真正的 HLSL，会被编译进 `Custom` 节点。一次性的、非常视觉化的图，在 Unreal 里直接连更快 —— 等它稳定下来再导出成源文件也不迟。
 
 <a id="the-five-modules"></a>
 
@@ -56,26 +51,19 @@ Unreal 材质图一旦变大，就很难 review、diff、复用和迁移。Dream
 | `DreamShaderCompiler` | Editor | 20 | 编译器的后半段：编译管线、IR 发射器、资产层、从反射读出的内置目录、产物索引、`.dsi` 的父材质 schema。``1.9.x`` 及以前它是只含接口的 Runtime 模块。 |
 | `DreamShaderEditor` | Editor | **0** | 用户碰得到的一切：反编译器、`dsc migrate`、commandlet、桥接、预览、Material Content Browser、来源追溯操作、workspace 导出。 |
 
-三个 Runtime 模块在 `PostConfigInit` 阶段加载，早到设置对象、shader 目录映射和 `DreamShaderPass` 的全局 shader 类型在引擎
-确定 shader 类型列表之前就已就位；两个 Editor 模块在 `Default` 阶段加载。
+三个 Runtime 模块在 `PostConfigInit` 阶段加载，早到设置对象、shader 目录映射和 `DreamShaderPass` 的全局 shader 类型在引擎确定 shader 类型列表之前就已就位；两个 Editor 模块在 `Default` 阶段加载。
 
 **提示：**
 
-`DreamShaderEditor` 不导出任何符号，也无法被链接 —— 它根本没有 `Public/` 目录。受支持的
-C++ 入口是 `IDreamShaderCompiler` —— 声明在 `DreamShader`（`DreamShaderCompilerInterface.h`），通过
-`GetDreamShaderCompiler()` 拿到，由 `DreamShaderCompiler` 实现 —— 以及 `DreamShaderPass` 的 C++ 与蓝图
-API。其余能力只能通过编辑器 UI、commandlet 或桥接文件访问。
+`DreamShaderEditor` 不导出任何符号，也无法被链接 —— 它根本没有 `Public/` 目录。受支持的 C++ 入口是 `IDreamShaderCompiler` —— 声明在 `DreamShader`（`DreamShaderCompilerInterface.h`），通过 `GetDreamShaderCompiler()` 拿到，由 `DreamShaderCompiler` 实现 —— 以及 `DreamShaderPass` 的 C++ 与蓝图 API。其余能力只能通过编辑器 UI、commandlet 或桥接文件访问。
 
-语言本身与引擎无关：`DreamShaderLang` 只依赖 `Core`，不创建 `UObject`，不加载
-资产。生成则相反 —— 仅编辑器、仅游戏线程，构建在材质编辑库之上。
+语言本身与引擎无关：`DreamShaderLang` 只依赖 `Core`，不创建 `UObject`，不加载资产。生成则相反 —— 仅编辑器、仅游戏线程，构建在材质编辑库之上。
 
 <a id="engine-support"></a>
 
 ## 引擎支持
 
-`2.2.0` 已用单插件 `RunUAT BuildPlugin` 在 Win64 上对 `5.5`、`5.6` 和 `5.8` 验证。`5.7` 最后一次
-验证是在 `1.8.0`：之后加的引擎开关都直接问引擎自己的头文件或类型，而不是看版本号，所以 5.7 不需要单独的答案。`5.3` 和 `5.4` 源码兼容，但新版 MSVC 工具链编不过这两个引擎 —— 失败发生在引擎头文件里，还没轮到插件代码；见
-[安装 ▸ 引擎兼容性](installation.md#engine-compatibility)。
+`2.2.0` 已用单插件 `RunUAT BuildPlugin` 在 Win64 上对 `5.5`、`5.6` 和 `5.8` 验证。`5.7` 最后一次验证是在 `1.8.0`：之后加的引擎开关都直接问引擎自己的头文件或类型，而不是看版本号，所以 5.7 不需要单独的答案。`5.3` 和 `5.4` 源码兼容，但新版 MSVC 工具链编不过这两个引擎 —— 失败发生在引擎头文件里，还没轮到插件代码；见[安装 ▸ 引擎兼容性](installation.md#engine-compatibility)。
 
 功能可用性随引擎版本不同。插件二进制按引擎编译，所以把项目升级到新引擎意味着要重新编译插件。
 
@@ -87,8 +75,7 @@ API。其余能力只能通过编辑器 UI、commandlet 或桥接文件访问。
 | **5.7** | Collection 参数上的 `Group` / `SortPriority` · Layer Blend 输入上的 `BlendInputRelevance` · 按平台、按质量等级的材质资源诊断 |
 | **5.8** | Custom Pass —— 运行 `.dsp` 管线、`UE.DreamPassOutput` / `UE.DreamPassBuffer` · `Substrate.Toon` · 参数集合参数的 `.dsi` 覆盖 · ThinCustom 实例回写保留下来的 double vector 与 static component mask 覆盖（后两项按引擎自己的头文件判断，带了这些成员的 5.7 也能用） |
 
-未列出的功能在 5.3 到 5.8 上行为一致。节点目录跟着运行中的引擎走：引擎没有的类或枚举取值会明确拒绝（`DSH5210`、`DSH5215`、`DSH5294`……），而不是静默降级。
-见[当前限制](../diagnostics/limitations.md#engine-version-boundaries)。
+未列出的功能在 5.3 到 5.8 上行为一致。节点目录跟着运行中的引擎走：引擎没有的类或枚举取值会明确拒绝（`DSH5210`、`DSH5215`、`DSH5294`……），而不是静默降级。见[当前限制](../diagnostics/limitations.md#engine-version-boundaries)。
 
 <a id="who-implements-what"></a>
 
@@ -107,8 +94,7 @@ DreamShader 实际上是两个独立产品，通过 `<Project>/Saved/DreamShader
 | 预览的相机控制与帧确认 | 编辑器扩展 |
 | `dreamshader.package.json`、`dreamshader.lock.json`、安装 / 更新 / 商店 | 编辑器扩展 |
 
-插件的 C++ 从不读取这两个 Package 文件。一个 Package 之所以能被解析，仅仅因为它的文件在
-`DShader/Packages` 下。
+插件的 C++ 从不读取这两个 Package 文件。一个 Package 之所以能被解析，仅仅因为它的文件在 `DShader/Packages` 下。
 
 <a id="repositories"></a>
 
@@ -119,9 +105,7 @@ DreamShader 实际上是两个独立产品，通过 `<Project>/Saved/DreamShader
   - [Rider 插件](https://github.com/tsdaer/dreamshader-language-support) —— `.dsm` / `.dsf` / `.dsh` 文件类型、语法与 PSI 解析、高亮、补全、导航、诊断、桥接集成、语义 token、inlay hints、Package 工具。
   - [Package Store Index](https://github.com/TypeDreamMoon/dreamshader-package-index) —— 扩展的 Package 商店读取的索引。带 GitHub topic `dreamshader-package` 的仓库同样可以被发现。
 
-问题反馈到插件仓库的
-[issue tracker](https://github.com/TypeDreamMoon/DreamShader/issues)。扩展自身的设置、命令和 Package
-商店记录在扩展仓库里，不在这里。
+问题反馈到插件仓库的 [issue tracker](https://github.com/TypeDreamMoon/DreamShader/issues)。扩展自身的设置、命令和 Package 商店记录在扩展仓库里，不在这里。
 
 <a id="next"></a>
 

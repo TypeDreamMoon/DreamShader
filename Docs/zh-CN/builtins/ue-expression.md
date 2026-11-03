@@ -1,16 +1,10 @@
----
-title: "UE.Expression"
-description: "UE.Expression"
----
-
 <a id="ueexpression"></a>
 
 # UE.Expression
 
 > [DreamShader](../index.md) » [内置节点](index.md) » **UE.Expression**
 
-反射节点调用：按名字创建内置目录中的任意 `UMaterialExpression` 类，并用参数
-填充它的输入引脚和属性。
+反射节点调用：按名字创建内置目录中的任意 `UMaterialExpression` 类，并用参数填充它的输入引脚和属性。
 
 | | |
 | :-- | :-- |
@@ -31,30 +25,19 @@ UE.Expression( Class = <class-specifier>
 UE.<ClassName>( [ <arg-name> = <expression> ] … )
 ```
 
-两种形式在绑定器中走的是同一条路径。调用用 `Class` 指明它的类，或用 `UE.` 后面的
-名字，因此 `UE.Sine(…)` 和 `UE.Expression(Class = "Sine", …)` 完全相同；在另一个名字上写 `Class`
-参数会用该参数覆盖名字。`Expression` 不指定任何类，所以第一种形式
-需要 `Class` —— 没有它，该调用就是 [`DSH5218`](../diagnostics/DSH5xxx.md#dsh5218)。
+两种形式在绑定器中走的是同一条路径。调用用 `Class` 指明它的类，或用 `UE.` 后面的名字，因此 `UE.Sine(…)` 和 `UE.Expression(Class = "Sine", …)` 完全相同；在另一个名字上写 `Class` 参数会用该参数覆盖名字。`Expression` 不指定任何类，所以第一种形式需要 `Class` —— 没有它，该调用就是 [`DSH5218`](../diagnostics/DSH5xxx.md#dsh5218)。
 
-`OutputType` 不再必需 *（自 2.0.0 起）*：目录知道每个类产出什么。见
-[OutputType](#outputtype)。
+`OutputType` 不再必需 *（自 2.0.0 起）*：目录知道每个类产出什么。见 [OutputType](#outputtype)。
 
-参数是命名的。位置参数只在目录为其给定参数顺序的类上绑定 —— `TextureCoordinate`、`Constant`、`Constant2Vector`、`Constant3Vector`、`Constant4Vector`、
-`Transform`、`TransformPosition`、`Panner`、`ComponentMask`、`Time`，以及五个 Substrate
-组合节点 —— 在其他地方是 [`DSH5220`](../diagnostics/DSH5xxx.md#dsh5220)，
-超出顺序末尾则是 [`DSH5221`](../diagnostics/DSH5xxx.md#dsh5221) *（自 2.0.0 起）*。在 [`UE.*` 目录](ue.md#catalogue)的 27 个
-1.x 名字上，legacy 前端会先丢弃位置参数
-（[`DSH5254`](../diagnostics/DSH5xxx.md#dsh5254)），两个变换的 `Input` 除外。
+参数是命名的。位置参数只在目录为其给定参数顺序的类上绑定 —— `TextureCoordinate`、`Constant`、`Constant2Vector`、`Constant3Vector`、`Constant4Vector`、 `Transform`、`TransformPosition`、`Panner`、`ComponentMask`、`Time`，以及五个 Substrate 组合节点 —— 在其他地方是 [`DSH5220`](../diagnostics/DSH5xxx.md#dsh5220)，超出顺序末尾则是 [`DSH5221`](../diagnostics/DSH5xxx.md#dsh5221) *（自 2.0.0 起）*。在 [`UE.*` 目录](ue.md#catalogue)的 27 个 1.x 名字上，legacy 前端会先丢弃位置参数（[`DSH5254`](../diagnostics/DSH5xxx.md#dsh5254)），两个变换的 `Input` 除外。
 
-文本参数可以带引号也可以不带引号：`Class = Sine` 和 `Class = "Sine"` 相同，
-`OutputType = float3` 和 `OutputType = "float3"` 也相同。
+文本参数可以带引号也可以不带引号：`Class = Sine` 和 `Class = "Sine"` 相同， `OutputType = float3` 和 `OutputType = "float3"` 也相同。
 
 <a id="order-of-resolution"></a>
 
 ## 解析顺序
 
-调用会依次经过编译器的各个阶段。每个阶段报告其所有错误，而有错误的阶段会在进入下一阶段之前
-停止流水线 *（自 2.0.0 起；1.x 在第一个失败步骤处停止）*。
+调用会依次经过编译器的各个阶段。每个阶段报告其所有错误，而有错误的阶段会在进入下一阶段之前停止流水线 *（自 2.0.0 起；1.x 在第一个失败步骤处停止）*。
 
 | # | 阶段 | 对调用做什么 | 错误码 |
 | :-- | :-- | :-- | :-- |
@@ -69,9 +52,7 @@ UE.<ClassName>( [ <arg-name> = <expression> ] … )
 
 ## 类解析
 
-`Class` 接受带引号的字符串、裸词或带点的名字
-（否则 [`DSH5217`](../diagnostics/DSH5xxx.md#dsh5217)）。说明符会去除首尾空白，并在
-目录中按以下顺序查找：
+`Class` 接受带引号的字符串、裸词或带点的名字（否则 [`DSH5217`](../diagnostics/DSH5xxx.md#dsh5217)）。说明符会去除首尾空白，并在目录中按以下顺序查找：
 
 | # | 匹配 |
 | :-- | :-- |
@@ -85,30 +66,23 @@ UE.<ClassName>( [ <arg-name> = <expression> ] … )
 都没匹配上则是 [`DSH5212`](../diagnostics/DSH5xxx.md#dsh5212)。第 1–5 行区分大小写。
 
 > [!IMPORTANT]
-> `UMaterialExpressionSine` 可以解析 *（自 2.0.0 起；1.x 与反射名比较，带 `U` 前缀的拼写
-> 永远匹配不上）*。`USine` 不能。
+> `UMaterialExpressionSine` 可以解析 *（自 2.0.0 起；1.x 与反射名比较，带 `U` 前缀的拼写永远匹配不上）*。`USine` 不能。
 
 > [!NOTE]
-> 目录列出构建它时已加载的类，抽象类和已弃用的类不在其中。位于编辑器尚未加载的插件模块中的
-> 表达式类不在其中。
+> 目录列出构建它时已加载的类，抽象类和已弃用的类不在其中。位于编辑器尚未加载的插件模块中的表达式类不在其中。
 
-在 `Substrate.*` 路径上，名字就是类，而 `Class=` 是
-[`DSH5216`](../diagnostics/DSH5xxx.md#dsh5216)。
+在 `Substrate.*` 路径上，名字就是类，而 `Class=` 是 [`DSH5216`](../diagnostics/DSH5xxx.md#dsh5216)。
 
 <a id="outputtype"></a>
 
 ## OutputType
 
-`OutputType` —— 或其别名 `ResultType` —— **不是**必需的 *（自 2.0.0 起）*。legacy 前端
-会把它从调用上取下，值的类型来自目录。它仍在两个
-地方有意义：
+`OutputType` —— 或其别名 `ResultType` —— **不是**必需的 *（自 2.0.0 起）*。legacy 前端会把它从调用上取下，值的类型来自目录。它仍在两个地方有意义：
 
 - 在 `Custom` 节点上，它是节点的输出类型 —— 见 [Custom 节点](#custom-nodes)；
-- 在只有一个数值输出的节点上，数值类型 token 是值的宽度，和
-  1.x 一样，并且节点整体连接。
+- 在只有一个数值输出的节点上，数值类型 token 是值的宽度，和 1.x 一样，并且节点整体连接。
 
-它曾经的其他一切 —— 纹理、`MaterialAttributes` 或 `Substrate` token、拼写错误的 token —— 都会
-无诊断地丢弃。token 表在 [`OutputType`](output-type.md) 页面。
+它曾经的其他一切 —— 纹理、`MaterialAttributes` 或 `Substrate` token、拼写错误的 token —— 都会无诊断地丢弃。token 表在 [`OutputType`](output-type.md) 页面。
 
 <a id="argument-dispatch"></a>
 
@@ -123,8 +97,7 @@ UE.<ClassName>( [ <arg-name> = <expression> ] … )
 | `Output`、`OutputName` | 按名字选择输出 —— 大小写不限 |
 | `OutputIndex` | 按索引选择输出 —— 大小写不限 |
 
-其他每个参数都会按以下顺序对类的目录条目解析。第一个匹配的
-胜出。
+其他每个参数都会按以下顺序对类的目录条目解析。第一个匹配的胜出。
 
 | # | 判断 | 结果 |
 | :-- | :-- | :-- |
@@ -137,8 +110,7 @@ UE.<ClassName>( [ <arg-name> = <expression> ] … )
 | g | 在 1.x 源码中，或在引脚取决于其属性的类上：值是数字、纹理、材质、Substrate 值或节点 | 以 [`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291) 保留，并在构建节点时按该名字连接（若节点没有此引脚则为 [`DSH8212`](../diagnostics/DSH8xxx.md#dsh8212)） |
 | h | —— | [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213)，当拼写接近时附带“您是否想输入” |
 
-输入 pin 名优先于同名属性；真正的 pin 名或属性名优先于别名。
-同一个 pin 或属性给两次报 [`DSH4215`](../diagnostics/DSH4xxx.md#dsh4215)。
+输入 pin 名优先于同名属性；真正的 pin 名或属性名优先于别名。同一个 pin 或属性给两次报 [`DSH4215`](../diagnostics/DSH4xxx.md#dsh4215)。
 
 别名有：
 
@@ -169,8 +141,7 @@ UE.<ClassName>( [ <arg-name> = <expression> ] … )
 
 ### 字面量属性
 
-其余匹配上的名字是属性，建节点时写进去。绑定器检查值；发射器用 1.x 的字面量写入器写入，写不进去的值报
-[`DSH8213`](../diagnostics/DSH8xxx.md#dsh8213)，其消息带着写入器自己的码。
+其余匹配上的名字是属性，建节点时写进去。绑定器检查值；发射器用 1.x 的字面量写入器写入，写不进去的值报 [`DSH8213`](../diagnostics/DSH8xxx.md#dsh8213)，其消息带着写入器自己的码。
 
 | 属性类型 | 绑定器接受 | 发射器读作 | `DSH8213` 中的码 |
 | :-- | :-- | :-- | :-- |
@@ -189,8 +160,7 @@ UE.<ClassName>( [ <arg-name> = <expression> ] … )
 绑定器不接受的值报 [`DSH5224`](../diagnostics/DSH5xxx.md#dsh5224)：数值属性收到运行时计算的值，或文本属性收到数字。
 
 > [!WARNING]
-> `FStrProperty` 和 `FNameProperty` 永远不会失败。参数携带的任何文本 —— 包括解析不了的路径 —— 都被原样存下来。
-> 既不报诊断，也不产生回退值。
+> `FStrProperty` 和 `FNameProperty` 永远不会失败。参数携带的任何文本 —— 包括解析不了的路径 —— 都被原样存下来。既不报诊断，也不产生回退值。
 
 <a id="enum-values"></a>
 
@@ -205,8 +175,7 @@ UE.<ClassName>( [ <arg-name> = <expression> ] … )
 | `PPI_PostProcessInput0`、`ESceneTextureId::PPI_PostProcessInput0` | `DSH5215` | 接受，给出 `DSH5278` |
 | 与值名不同的显示名 | `DSH5215` | `DSH5215` *(自 2.0.0 起)* |
 
-1.x 的匹配（规则 L12）忽略大小写、空格、制表符以及字符 `_`、`-`、`:`、`.` 和 `/`，
-并依次尝试整个值、``Enum::`` 作用域之后，以及去掉自身前缀之后。节点按目录的拼写写入。[`UE.SceneTexture`](ue.md#uescenetexture) 和变换的坐标系都依赖这一点。
+1.x 的匹配（规则 L12）忽略大小写、空格、制表符以及字符 `_`、`-`、`:`、`.` 和 `/`，并依次尝试整个值、``Enum::`` 作用域之后，以及去掉自身前缀之后。节点按目录的拼写写入。[`UE.SceneTexture`](ue.md#uescenetexture) 和变换的坐标系都依赖这一点。
 
 <a id="object-properties"></a>
 
@@ -224,9 +193,7 @@ UE.<ClassName>( [ <arg-name> = <expression> ] … )
 | 资产加载成功但类不对 | `DSH8213`（`DSH7139`） |
 
 > [!WARNING]
-> 失败置空这条规则是静默的。`UE.Expression(Class = "TextureSample",
-> Texture = Path(Game, "Missing/T_Nope"))` 会带着一个未赋值的纹理编译通过，而不是报告资产缺失。
-> 只有 `UTexture` 类型属性上的 `Texture` 和 `TextureObject` 这两个属性名会这样。
+> 失败置空这条规则是静默的。`UE.Expression(Class = "TextureSample", Texture = Path(Game, "Missing/T_Nope"))` 会带着一个未赋值的纹理编译通过，而不是报告资产缺失。只有 `UTexture` 类型属性上的 `Texture` 和 `TextureObject` 这两个属性名会这样。
 
 <a id="selecting-an-output"></a>
 
@@ -248,19 +215,15 @@ UE.<ClassName>( [ <arg-name> = <expression> ] … )
 | 类没有这个名字的输出 | [`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201) |
 | 索引超过最后一个输出 | [`DSH5282`](../diagnostics/DSH5xxx.md#dsh5282) |
 
-名字与目录列出的输出精确比较；在 1.x 源码里，只在忽略大小写时才匹配的名字也接受，给出 `DSH5276`。名字可以带空格（`Output = "Second Roughness"`）。
-多输出节点上引擎没命名、带掩码的输出，按掩码保留的通道列出
-（`RGB`、`R`、`A`）；见[输出名](output-type.md#output-mask-pseudo-names)。
+名字与目录列出的输出精确比较；在 1.x 源码里，只在忽略大小写时才匹配的名字也接受，给出 `DSH5276`。名字可以带空格（`Output = "Second Roughness"`）。多输出节点上引擎没命名、带掩码的输出，按掩码保留的通道列出（`RGB`、`R`、`A`）；见[输出名](output-type.md#output-mask-pseudo-names)。
 
-两个选择器都不用，调用就是节点本身：见
-[结果类型与分量数](#result-type-and-component-count)。
+两个选择器都不用，调用就是节点本身：见[结果类型与分量数](#result-type-and-component-count)。
 
 <a id="custom-nodes"></a>
 
 ## Custom 节点
 
-`UE.Expression(Class = "Custom", …)` —— `MaterialExpressionCustom` 也行 —— 建出一个 pin 就是调用参数的节点
-（规则 L4）：
+`UE.Expression(Class = "Custom", …)` —— `MaterialExpressionCustom` 也行 —— 建出一个 pin 就是调用参数的节点（规则 L4）：
 
 | 方面 | 行为 |
 | :-- | :-- |
@@ -287,14 +250,13 @@ UE.<ClassName>( [ <arg-name> = <expression> ] … )
 
 在 1.x 源码里，第 4、5 行的类上的数值 `OutputType` 会改为决定值的类型，见上。
 
-输出的类型：有掩码时是掩码的宽度，否则是引擎的值类型；引擎只说「一个 float」时，由已知宽度表决定 ——
-1.x 自己那张表，在类只有一个输出时被查询，外加目录补充的几行：
+输出的类型：有掩码时是掩码的宽度，否则是引擎的值类型；引擎只说「一个 float」时，由已知宽度表决定 —— 1.x 自己那张表，在类只有一个输出时被查询，外加目录补充的几行：
 
 | 宽度 | 类 |
 | :-- | :-- |
 | 2 | `TextureCoordinate`、`Panner`、`Rotator`、`SceneTexelSize`；`SceneTexture` 的 `Size` 和 `InvSize` 输出 |
-| 3 | `ObjectPositionWS`、`CameraVectorWS`、`VertexNormalWS`、`VertexTangentWS`、`Transform`、`TransformPosition`、`SkyAtmosphereLightDirection`、`PixelNormalWS`、`CrossProduct`、`ObjectBounds`、`CameraPositionWS`、`ReflectionVectorWS` |
-| 1 | `PixelDepth`、`TwoSidedSign`、`Arctangent2Fast`、`Length`、`MaterialXLuminance`、`Time`、`SceneDepth`、`ObjectRadius`、`PerInstanceRandom`、`PerInstanceFadeAmount` |
+| 3 | `ObjectPositionWS`, `CameraVectorWS`, `VertexNormalWS`, `VertexTangentWS`, `Transform`, `TransformPosition`, `SkyAtmosphereLightDirection`, `PixelNormalWS`, `CrossProduct`, `ObjectBounds`, `CameraPositionWS`, `ReflectionVectorWS` |
+| 1 | `PixelDepth`, `TwoSidedSign`, `Arctangent2Fast`, `Length`, `MaterialXLuminance`, `Time`, `SceneDepth`, `ObjectRadius`, `PerInstanceRandom`, `PerInstanceFadeAmount` |
 
 `MaterialAttributes` 结果是 [`material`](../graph/material-attributes.md) 值。
 
@@ -315,10 +277,7 @@ UE.<ClassName>( [ <arg-name> = <expression> ] … )
 
 ## 节点复用
 
-IR 把类相同、属性相同、输入相同的两个节点合并成一个，读第二个的地方都改读第一个 *（自 2.0.0 起）*。比较的是
-节点，不是调用的拼写：参数顺序、别名、只差大小写都不影响；`Custom` 节点和其他节点一样合并。
-语句 —— 没有输出的节点 —— 永不合并。参见
-[节点复用](../graph/node-reuse.md)。
+IR 把类相同、属性相同、输入相同的两个节点合并成一个，读第二个的地方都改读第一个 *（自 2.0.0 起）*。比较的是节点，不是调用的拼写：参数顺序、别名、只差大小写都不影响；`Custom` 节点和其他节点一样合并。语句 —— 没有输出的节点 —— 永不合并。参见[节点复用](../graph/node-reuse.md)。
 
 <a id="sampletexture2d"></a>
 
@@ -334,23 +293,15 @@ SampleTexture2D(<texture-object>, <uv>)
 UE.Expression(Class = "TextureSample", TextureObject = <arg0>, Coordinates = <arg1>)
 ```
 
-调用代表整个采样：`float4 t = SampleTexture2D(T, uv)` 是 `RGBA` 输出，
-`float3 c = …` 是 `RGB` 输出，`.a` 是 `A` 输出。两个参数都是
-位置参数，且都必需；其他任何形状 —— 命名参数、第三个参数、输出选择器 —— 都报
-[`DSH5256`](../diagnostics/DSH5xxx.md#dsh5256)。
+调用代表整个采样：`float4 t = SampleTexture2D(T, uv)` 是 `RGBA` 输出， `float3 c = …` 是 `RGB` 输出，`.a` 是 `A` 输出。两个参数都是位置参数，且都必需；其他任何形状 —— 命名参数、第三个参数、输出选择器 —— 都报 [`DSH5256`](../diagnostics/DSH5xxx.md#dsh5256)。
 
-用纹理采样参数 token（`TextureSampleParameter2D` 及其同类）声明的 property，则改用它的 pin 调用 ——
-`BaseTex(Coordinates = uv)`。参见
-[Graph 中的参数](../../parameters/graph-usage.md)。
+用纹理采样参数 token（`TextureSampleParameter2D` 及其同类）声明的 property，则改用它的 pin 调用 —— `BaseTex(Coordinates = uv)`。参见 [Graph 中的参数](../parameters/graph-usage.md)。
 
 <a id="declaration-form"></a>
 
 ## 声明形式
 
-`UE.<Name>(…)` —— 包括 `UE.Expression(Class = …)` —— 可以作为 property 类型写在
-[`Properties`](../language/properties.md) 里。它是任何 `UE.` 调用的[声明形式](ue.md#properties-declaration-form)：
-在每个读取该 property 的 `Graph` 体开头声明一个局部变量，绑定方式与
-`Graph` 形式相同。与 1.x 的不同 *（自 2.0.0 起）*：
+`UE.<Name>(…)` —— 包括 `UE.Expression(Class = …)` —— 可以作为 property 类型写在 [`Properties`](../language/properties.md) 里。它是任何 `UE.` 调用的[声明形式](ue.md#properties-declaration-form)：在每个读取该 property 的 `Graph` 体开头声明一个局部变量，绑定方式与 `Graph` 形式相同。与 1.x 的不同 *（自 2.0.0 起）*：
 
 | 方面 | 现在 | 1.x |
 | :-- | :-- | :-- |
@@ -365,16 +316,11 @@ UE.Expression(Class = "TextureSample", TextureObject = <arg0>, Coordinates = <ar
 
 ## 说明
 
-- 属性名是**扁平**的。这里不接受带点的路径和 `[index]` 选择器；那些只存在于
-  [`Settings`](../settings/material.md) 一节，那是一个不同的解析器。
+- 属性名是**扁平**的。这里不接受带点的路径和 `[index]` 选择器；那些只存在于 [`Settings`](../settings/material.md) 一节，那是一个不同的解析器。
 - 必需的 pin 没连是警告 —— 1.x 源码里的 [`DSH5279`](../diagnostics/DSH5xxx.md#dsh5279) —— 节点真需要这个 pin 时，引擎在编译材质时报错。
-- 名字写错和 `Class` 写错是两个码：`UE.Sinee()` 报
-  [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210)，`UE.Expression(Class = "Sinee")` 报 `DSH5212`。
-- 调用可以像任何表达式一样 swizzle：
-  `UE.Expression(Class = "VertexColor").rgb`。参见
-  [Swizzle](../graph/swizzle.md#swizzling-a-call-result)。
-- `dsc export-catalog` 写出每个类的 pin、属性、别名和输出 —— 这是查参数名最实用的办法。编辑器也会把清单导出到
-  `Saved/DreamShader/Bridge/material-expressions.json`；参见[Bridge](../../tools/bridge.md)。
+- 名字写错和 `Class` 写错是两个码：`UE.Sinee()` 报 [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210)，`UE.Expression(Class = "Sinee")` 报 `DSH5212`。
+- 调用可以像任何表达式一样 swizzle： `UE.Expression(Class = "VertexColor").rgb`。参见 [Swizzle](../graph/swizzle.md#swizzling-a-call-result)。
+- `dsc export-catalog` 写出每个类的 pin、属性、别名和输出 —— 这是查参数名最实用的办法。编辑器也会把清单导出到 `Saved/DreamShader/Bridge/material-expressions.json`；参见[Bridge](../tools/bridge.md)。
 
 <a id="diagnostics"></a>
 
@@ -475,10 +421,10 @@ Add, Multiply                                                       (Color)
 - [Substrate](substrate.md) —— 共用这条路径的姊妹命名空间
 - [Substrate 语法糖](../language-v2/substrate.md) —— 虚拟参数和运算符
 - [`Path(…)`](../parameters/path.md) —— 对象属性的资产引用语法
-- [图中的参数](../../parameters/graph-usage.md) —— 参数的 pin 调用形式
+- [图中的参数](../parameters/graph-usage.md) —— 参数的 pin 调用形式
 - [材质属性](../graph/material-attributes.md) —— `material` 值种类
 - [转换](../graph/conversions.md) —— 宽度以及值如何适配
 - [节点复用](../graph/node-reuse.md) —— 相同的节点
 - [图函数](../language/graph-function.md) —— `UE.*` 调用提升为 Custom 节点 pin
-- [Bridge](../../tools/bridge.md) —— 导出的反射表达式清单
+- [Bridge](../tools/bridge.md) —— 导出的反射表达式清单
 - [诊断索引](../diagnostics/index.md) —— 每个码

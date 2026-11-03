@@ -1,6 +1,4 @@
-#dreamdocs-align 1	source=Docs/language/virtual-function.md	rev=8a7a159022d8	model=deepseek-flash	page=640478c5b997
-meta:title	-	c885a09b	m
-meta:description	-	c885a09b	m
+#dreamdocs-align 1	source=Docs/language/virtual-function.md	rev=dce3a7afae92	model=deepseek-flash	page=640478c5b997
 h1	5ae0bd3dee36	5ae0bd3d	m
 q	d8d66e659bc5	08819bc7	m
 p	56698a042012	f6be3c29	m
@@ -74,7 +72,7 @@ p	266b8abd04f8	bce81421	m
 q	dbc9df938931	fe5ec741	m
 h2	90f01ef3550a	fc7f92dc	m
 li	a3de0a7be905	31b6ccbb	m
-li	1259397da2f5	92b068a9	m
+li	1259397da2f5	80256069	m
 li	454b74ab60e4	73eded33	m
 li	b714069fc75a	94f61421	m
 li	74878b331f8f	affd1338	m
@@ -115,8 +113,8 @@ row2	6d631811e906	ba54f547	m
 row2	098ecfb4b056	16806e7d	m
 p	e9dda333401c	641c4118	m
 h2	9877f70e43cf	29074c4c	m
-p	-	52928493	m
-p	-	aac35e91	m
+p	34d3d7d2236a	34d3d7d2	s
+p	bd5ec7dd6084	bd5ec7dd	s
 p	67bc8007992d	da9122af	m
 h2	ef7175cc89ee	767b1235	m
 li	65aa2c465ff4	6b16d48e	m
@@ -128,5 +126,5 @@ li	1fc309de8a1d	0de37f6e	m
 li	9d96fa4d25d1	038148b8	m
 li	7e7f8bd6b4f6	9a15cf6f	m
 li	f47499069039	3abe0558	m
-li	562a8bb60297	1b462014	m
+li	562a8bb60297	b7c6f473	m
 li	be08c1b99972	92c782f9	m

@@ -1,17 +1,10 @@
----
-title: "内置项"
-description: "内置项"
----
-
 <a id="builtins"></a>
 
 # 内置项
 
 > [DreamShader](../index.md) » **内置项**
 
-DreamShaderLang 自行解析而不在作者声明中查找的名称：
-`UE.*` 命名空间、`Substrate.*` 命名空间、保留的 `SampleTexture2D` 形式，以及数学
-内置函数集。
+DreamShaderLang 自行解析而不在作者声明中查找的名称： `UE.*` 命名空间、`Substrate.*` 命名空间、保留的 `SampleTexture2D` 形式，以及数学内置函数集。
 
 | | |
 | :-- | :-- |
@@ -23,10 +16,7 @@ DreamShaderLang 自行解析而不在作者声明中查找的名称：
 
 ## 调用表面
 
-自 2.0.0 起，这些表面共享同一实现。`UE.` 或 `Substrate.` 调用会绑定到
-**内置目录**——通过反射读取运行中引擎的材质表达式类
-（`dsc export-catalog` 将其写出）——而数学内置函数是编译器的核心操作之一。
-各行的差异仍在于 **旧版前端** 在绑定器看到 1.x 写法之前对其所做的处理。
+自 2.0.0 起，这些表面共享同一实现。`UE.` 或 `Substrate.` 调用会绑定到**内置目录**——通过反射读取运行中引擎的材质表达式类（`dsc export-catalog` 将其写出）——而数学内置函数是编译器的核心操作之一。各行的差异仍在于 **旧版前端** 在绑定器看到 1.x 写法之前对其所做的处理。
 
 | # | 表面 | 写法 | 位置 | 旧版前端首先做什么 | 参考 |
 | :-- | :-- | :-- | :-- | :-- | :-- |
@@ -36,36 +26,28 @@ DreamShaderLang 自行解析而不在作者声明中查找的名称：
 | 4 | 数学内置函数 | `pow(a, b)` | `Graph` | 无 | [数学内置函数](math.md) |
 | 5 | `Substrate.*` | `Substrate.Slab(BaseColor = c)` | `Graph`、`Outputs` | 丢弃 `OutputType` / `ResultType` | [Substrate](substrate.md) |
 
-表面 3 是一种*声明*，而非表达式；从它声明的局部变量来看，该调用是普通的
-`UE.` 调用。表面 1、2、4 和 5 是在 `Graph` 体内求值的表达式。
+表面 3 是一种*声明*，而非表达式；从它声明的局部变量来看，该调用是普通的 `UE.` 调用。表面 1、2、4 和 5 是在 `Graph` 体内求值的表达式。
 
 > [!IMPORTANT]
-> 表面 1 和 3 共享内置名称，但不共享参数列表。`UE.TexCoord` 在 `Graph` 中保留
-> `Index` 并用 `DSH5254` 丢弃 `CoordinateIndex`；作为属性声明时两者都接受，因为此处不适用
-> 1.x 过滤器。所有差异均列于
-> [`UE.*` 目录 § 属性声明形式](ue.md#properties-declaration-form)。
+> 表面 1 和 3 共享内置名称，但不共享参数列表。`UE.TexCoord` 在 `Graph` 中保留 `Index` 并用 `DSH5254` 丢弃 `CoordinateIndex`；作为属性声明时两者都接受，因为此处不适用 1.x 过滤器。所有差异均列于 [`UE.*` 目录 § 属性声明形式](ue.md#properties-declaration-form)。
 
 <a id="the-reserved-sampletexture2d-form"></a>
 
 ### 保留的 `SampleTexture2D` 形式
 
-`SampleTexture2D(<texture-object>, <uv>)` 不在任何命名空间中，但属于同一集群。它
-是一个保留名称，由旧版前端在查找用户属性和函数之前重写为
+`SampleTexture2D(<texture-object>, <uv>)` 不在任何命名空间中，但属于同一集群。它是一个保留名称，由旧版前端在查找用户属性和函数之前重写为
 
 ```c
 UE.Expression(Class = "TextureSample", TextureObject = <arg0>, Coordinates = <arg1>)
 ```
 
-——即整个样本，在需要 `float4` 的地方使用 `RGBA`。它是唯一**区分大小写**匹配的内置调用形式：`sampletexture2d(t, uv)` 不是它。它恰好接受两个位置参数
-（否则会报 [`DSH5256`](../diagnostics/DSH5xxx.md#dsh5256)）。参见
-[`UE.Expression`](ue-expression.md#sampletexture2d)。
+——即整个样本，在需要 `float4` 的地方使用 `RGBA`。它是唯一**区分大小写**匹配的内置调用形式：`sampletexture2d(t, uv)` 不是它。它恰好接受两个位置参数（否则会报 [`DSH5256`](../diagnostics/DSH5xxx.md#dsh5256)）。参见 [`UE.Expression`](ue-expression.md#sampletexture2d)。
 
 <a id="dispatch-order-inside-a-graph"></a>
 
 ## `Graph` 内的分派顺序
 
-调用按以下顺序解析；首个匹配者胜出。完整查找见
-[名称解析](../graph/name-resolution.md)。
+调用按以下顺序解析；首个匹配者胜出。完整查找见[名称解析](../graph/name-resolution.md)。
 
 | 顺序 | 对被调用者的测试 | 结果 |
 | :-- | :-- | :-- |
@@ -87,8 +69,7 @@ UE.Expression(Class = "TextureSample", TextureObject = <arg0>, Coordinates = <ar
 | 4 | 仅在 1.x 源中：忽略大小写匹配的唯一名称或别名 | 该类，附 [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276) |
 | 5 | 无 | [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210)，或者对于后续引擎才有的节点为 `DSH5294` / `DSH5300` |
 
-`UE.Expression` 不命名任何类，因此没有 `Class` 时它是
-[`DSH5218`](../diagnostics/DSH5xxx.md#dsh5218)。
+`UE.Expression` 不命名任何类，因此没有 `Class` 时它是 [`DSH5218`](../diagnostics/DSH5xxx.md#dsh5218)。
 
 <a id="name-and-argument-matching"></a>
 
@@ -107,23 +88,10 @@ UE.Expression(Class = "TextureSample", TextureObject = <arg0>, Coordinates = <ar
 | 传递给属性的枚举值 | 值的名称去掉其前缀，精确匹配；在 1.x 源中忽略大小写、空格、`_`、`-`、`:`、`.`、`/`、前缀以及 `Enum::` 作用域，附 [`DSH5278`](../diagnostics/DSH5xxx.md#dsh5278) |
 | 未加引号的文本参数 | 在任何接受带引号字符串的地方都接受裸词或点分名称——`Class = Sine` 等于 `Class = "Sine"` |
 
-目录给出了参数顺序的类接受位置参数——
-`TextureCoordinate`、`Constant` … `Constant4Vector`、`Transform`、`TransformPosition`、`Panner`、
-`ComponentMask`、`Time` 以及五个 Substrate 合成节点——在其他位置则会被拒绝并产生
-[`DSH5220`](../diagnostics/DSH5xxx.md#dsh5220) *(自 2.0.0 起)*。在 27 个 1.x 名称上，旧版前端会优先丢弃它们，
-但 `UE.TransformVector` 和 `UE.TransformPosition` 的位置 0（`Input`）除外；
-`UE.StaticSwitchParameter` 在位置 0 读取 `True`，在位置 1 读取 `False`，而 `SampleTexture2D`
-以位置方式接受其两个参数。[数学内置项](math.md)按位置接受参数，
-或按节点引脚命名接受参数 *(自 2.0.0 起)*。
+目录给出了参数顺序的类接受位置参数—— `TextureCoordinate`、`Constant` … `Constant4Vector`、`Transform`、`TransformPosition`、`Panner`、 `ComponentMask`、`Time` 以及五个 Substrate 合成节点——在其他位置则会被拒绝并产生 [`DSH5220`](../diagnostics/DSH5xxx.md#dsh5220) *(自 2.0.0 起)*。在 27 个 1.x 名称上，旧版前端会优先丢弃它们，但 `UE.TransformVector` 和 `UE.TransformPosition` 的位置 0（`Input`）除外； `UE.StaticSwitchParameter` 在位置 0 读取 `True`，在位置 1 读取 `False`，而 `SampleTexture2D` 以位置方式接受其两个参数。[数学内置项](math.md)按位置接受参数，或按节点引脚命名接受参数 *(自 2.0.0 起)*。
 
 > [!WARNING]
-> **在 27 个 1.x 名称上，该名称未读取的参数会被丢弃——现在会给出警告。** 旧版
-> 前端保留 1.x 参数列表，并以 `DSH5254` 丢弃其他任何内容
-> *(自 2.0.0 起；1.x 会无声丢弃)*。`UE.Time(Bogus = 1)` 可以编译并会说明这一点；
-> `UE.TexCoord(0)` 会产生 UV 通道 0，因为位置参数被丢弃，而
-> `CoordinateIndex` 保留其节点默认值。其他所有调用都会根据目录
-> 逐参数绑定，不属于任何引脚或属性的名称会引发 [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213)——
-> 或者在 1.x 源中，为已构建节点保留并产生 [`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291)。
+> **在 27 个 1.x 名称上，该名称未读取的参数会被丢弃——现在会给出警告。** 旧版前端保留 1.x 参数列表，并以 `DSH5254` 丢弃其他任何内容*(自 2.0.0 起；1.x 会无声丢弃)*。`UE.Time(Bogus = 1)` 可以编译并会说明这一点； `UE.TexCoord(0)` 会产生 UV 通道 0，因为位置参数被丢弃，而 `CoordinateIndex` 保留其节点默认值。其他所有调用都会根据目录逐参数绑定，不属于任何引脚或属性的名称会引发 [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213)—— 或者在 1.x 源中，为已构建节点保留并产生 [`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291)。
 
 <a id="pages"></a>
 
@@ -144,22 +112,12 @@ UE.Expression(Class = "TextureSample", TextureObject = <arg0>, Coordinates = <ar
 
 ## 说明
 
-- **在任何界面上，相同的调用都只对应一个节点。** IR 会合并具有相同类、
-  属性和输入的节点 *(自 2.0.0 起；1.x 仅为泛型调用和 `Substrate.*` 调用
-  以及数学内置项复用节点，从不为 Custom 节点复用)*。请参阅[节点复用](../graph/node-reuse.md)。
-- 节点落在画布上的位置由布局处理决定。请参阅
-  [图表布局](../generation/graph-layout.md)。
-- 在 [`GraphFunction`](../language/graph-function.md) 主体内编写的 `UE.*` 调用会被提升出
-  HLSL，并成为生成的 Custom 节点上的输入引脚。本页上的参数规则
-  仍然适用于该调用本身。
-- `Substrate.*` 命名空间包含正在运行的引擎的 Substrate 类，在
-  UE 5.4 之前没有任何此类；在那里调用会引发 `DSH5210`。请参阅 [Substrate](substrate.md#availability)。
-- 内置项目录是引擎的反射类，包括已加载插件的类。不属于内置项、已声明属性、
-  `Graph` 变量或已声明函数的名称属于
-  [未知标识符](../graph/name-resolution.md)。
-- `.dss` 写入与 `UE.<ClassShortName>(Pin = …, Property = …)` 相同的节点；`dsc migrate` 以这种方式写入
-  每个 1.x 调用。请参阅 [`dsc migrate`](../tools/migrate.md) 和
-  [DreamShaderLang 2.0](../language-v2/index.md)。
+- **在任何界面上，相同的调用都只对应一个节点。** IR 会合并具有相同类、属性和输入的节点 *(自 2.0.0 起；1.x 仅为泛型调用和 `Substrate.*` 调用以及数学内置项复用节点，从不为 Custom 节点复用)*。请参阅[节点复用](../graph/node-reuse.md)。
+- 节点落在画布上的位置由布局处理决定。请参阅[图表布局](../generation/graph-layout.md)。
+- 在 [`GraphFunction`](../language/graph-function.md) 主体内编写的 `UE.*` 调用会被提升出 HLSL，并成为生成的 Custom 节点上的输入引脚。本页上的参数规则仍然适用于该调用本身。
+- `Substrate.*` 命名空间包含正在运行的引擎的 Substrate 类，在 UE 5.4 之前没有任何此类；在那里调用会引发 `DSH5210`。请参阅 [Substrate](substrate.md#availability)。
+- 内置项目录是引擎的反射类，包括已加载插件的类。不属于内置项、已声明属性、 `Graph` 变量或已声明函数的名称属于[未知标识符](../graph/name-resolution.md)。
+- `.dss` 写入与 `UE.<ClassShortName>(Pin = …, Property = …)` 相同的节点；`dsc migrate` 以这种方式写入每个 1.x 调用。请参阅 [`dsc migrate`](../tools/migrate.md) 和 [DreamShaderLang 2.0](../language-v2/index.md)。
 
 <a id="example"></a>
 

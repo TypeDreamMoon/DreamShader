@@ -1,14 +1,8 @@
----
-title: "DSH9xxx --- 工具、同步与内部不变量"
-description: "DSH9xxx --- 工具、同步与内部不变量"
----
-
 <a id="dsh9xxx-----tools-sync-and-internal-invariants"></a>
 
 # DSH9xxx --- 工具、同步与内部不变量
 
-> 生成标记之间的内容由 `.skill/gen-diagnostics.ps1` 写入。
-> 标记下方的一切均由手工撰写，并在重新生成后保留。
+> 生成标记之间的内容由 `.skill/gen-diagnostics.ps1` 写入。标记下方的一切均由手工撰写，并在重新生成后保留。
 
 <a id="dsh9001"></a>
 
@@ -30,7 +24,7 @@ DSH9001: '{0}' uses conditional compilation, and VirtualFunction sync rewrites a
 
 **修复。** 将 `VirtualFunction` 定义保存在没有指令的源文件中，或手动刷新它们：材质函数上的 **Copy VirtualFunction Definition** 会给出当前声明以供粘贴。该拒绝是按文件生效的，不会阻止其他文件的同步
 
-**另见** [VirtualFunction 工具](../../tools/virtual-function-tools.md)、[预处理器](../language/preprocessor.md)
+**另见** [VirtualFunction 工具](../tools/virtual-function-tools.md)、[预处理器](../language/preprocessor.md)
 
 <a id="dsh9011"></a>
 
@@ -96,7 +90,7 @@ Could not back up '%s' to '%s'; its asset references were left pointing at the o
 
 **修复。** 什么都没写入：源文件仍然指向旧路径，并将在下次编译时无法加载该资产。清除任何阻碍复制的东西——签出该文件、去掉只读标志、关闭占用 `<file>.bak` 的程序——然后来回重命名该资产，或手动编辑路径。在项目设置中关闭 *Sync Source References On Asset Rename* 可完全阻止插件尝试此操作
 
-**另见** [资产重命名同步](../../tools/asset-rename-sync.md#backups)
+**另见** [资产重命名同步](../tools/asset-rename-sync.md#backups)
 
 <a id="dsh9021"></a>
 
@@ -118,7 +112,7 @@ Could not write '%s' after renaming an asset it references; the file as it was i
 
 **修复。** 文件的原样保存在 `<file>.bak` 中；磁盘上的源文件未被改动，因为失败的步骤正是写入本身。恢复或忽略 `.bak`，使文件可写，然后手动编辑路径或来回重命名该资产以再次触发同步
 
-**另见** [资产重命名同步](../../tools/asset-rename-sync.md#backups)
+**另见** [资产重命名同步](../tools/asset-rename-sync.md#backups)
 
 <a id="dsh9022"></a>
 
@@ -136,13 +130,9 @@ The IR dump could not be written: {0}.
 **引发者** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:570`
 <!-- generated:end DSH9022 -->
 
-**原因。** `dump-ir` 无法创建其输出目录或写入转储文件。消息说明了
-是哪一种。默认目录为 `<Project>/Saved/DreamShader/IR`；`-Out=` 可覆盖它。
+**原因。** `dump-ir` 无法创建其输出目录或写入转储文件。消息说明了是哪一种。默认目录为 `<Project>/Saved/DreamShader/IR`；`-Out=` 可覆盖它。
 
-**修复。** 检查该目录是否可写，以及是否有任何东西占用着该文件。转储路径是
-`<out>/<root>/<path relative to that root>.ir.txt`，因此若某个根的显示名称包含路径
-分隔符，就会产生意料之外的目录——如果消息中的路径
-看起来不对，这一点值得检查。
+**修复。** 检查该目录是否可写，以及是否有任何东西占用着该文件。转储路径是 `<out>/<root>/<path relative to that root>.ir.txt`，因此若某个根的显示名称包含路径分隔符，就会产生意料之外的目录——如果消息中的路径看起来不对，这一点值得检查。
 
 <a id="dsh9023"></a>
 
@@ -160,8 +150,7 @@ The symbol index could not be written: {0}.
 **引发者** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:816`
 <!-- generated:end DSH9023 -->
 
-**原因。** `index` 无法创建其输出目录或写入索引文件。默认
-目录为 `<Project>/Saved/DreamShader/Index`。
+**原因。** `index` 无法创建其输出目录或写入索引文件。默认目录为 `<Project>/Saved/DreamShader/Index`。
 
 **修复。** 同 DSH9022。
 
@@ -181,12 +170,9 @@ The builtin catalog manifest could not be written: {0}.
 **引发者** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1353`
 <!-- generated:end DSH9024 -->
 
-**原因。** `export-catalog` 无法创建其目录或写入清单。默认路径为
-`<Project>/Saved/DreamShader/Bridge/dreamshader-builtin-catalog.json`，与其他桥接
-清单并列。
+**原因。** `export-catalog` 无法创建其目录或写入清单。默认路径为 `<Project>/Saved/DreamShader/Bridge/dreamshader-builtin-catalog.json`，与其他桥接清单并列。
 
-**修复。** 同 DSH9022。如果桥接正在运行，该目录一定存在，因此这指向一个
-锁或一个只读的 `Saved/`。
+**修复。** 同 DSH9022。如果桥接正在运行，该目录一定存在，因此这指向一个锁或一个只读的 `Saved/`。
 
 <a id="dsh9025"></a>
 
@@ -226,12 +212,9 @@ The builtin catalog came back empty, so '{0}' describes no expression at all. Re
 **由以下触发** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:438`
 <!-- generated:end DSH9026 -->
 
-**原因。** `-Platform=` 指定了此引擎没有对应着色器平台的内容。可接受的写法是短配置文件（`SM6`、`SM5`、`ES3_1`），它们分别映射到 `PCD3D_SM6`、`PCD3D_SM5` 和
-`PCD3D_ES3_1`，以及引擎已知的任何着色器格式名称（`PCD3D_SM6`、`SF_VULKAN_SM6`、
-`SF_METAL_SM5`）。注意，格式名称与 `EShaderPlatform` 枚举器名称并不相同：是 `PCD3D_SM6`，而不是 `SP_PCD3D_SM6`。
+**原因。** `-Platform=` 指定了此引擎没有对应着色器平台的内容。可接受的写法是短配置文件（`SM6`、`SM5`、`ES3_1`），它们分别映射到 `PCD3D_SM6`、`PCD3D_SM5` 和 `PCD3D_ES3_1`，以及引擎已知的任何着色器格式名称（`PCD3D_SM6`、`SF_VULKAN_SM6`、 `SF_METAL_SM5`）。注意，格式名称与 `EShaderPlatform` 枚举器名称并不相同：是 `PCD3D_SM6`，而不是 `SP_PCD3D_SM6`。
 
-**修复。** 使用其中一个短配置文件，或精确的着色器格式名称。多个值之间以逗号
-分隔：`-Platform=SM6,SM5`。
+**修复。** 使用其中一个短配置文件，或精确的着色器格式名称。多个值之间以逗号分隔：`-Platform=SM6,SM5`。
 
 <a id="dsh9027"></a>
 
@@ -249,11 +232,9 @@ The builtin catalog came back empty, so '{0}' describes no expression at all. Re
 **由以下触发** `Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp:455`
 <!-- generated:end DSH9027 -->
 
-**原因。** `-Quality=` 指定了不是材质质量级别的内容。共有四个：`Low`、
-`Medium`、`High`、`Epic`。
+**原因。** `-Quality=` 指定了不是材质质量级别的内容。共有四个：`Low`、 `Medium`、`High`、`Epic`。
 
-**修复。** 使用这四个之一。多个值之间以逗号分隔。省略该开关会检查项目当前的
-可扩展性级别，这正是编辑器所显示的。
+**修复。** 使用这四个之一。多个值之间以逗号分隔。省略该开关会检查项目当前的可扩展性级别，这正是编辑器所显示的。
 
 <a id="dsh9028"></a>
 
@@ -275,8 +256,7 @@ Shader compilation for '{0}' did not finish within {1} seconds per material. A c
 
 导致此问题的两种形态都是真实存在的，且都在消息中有所提及：一种是编译器无法确定循环次数的循环，另一种是因其读取位于发散分支中而无法确定 mip 级别的纹理读取。两者都会让着色器编译器执行无界的工作，而不是直接失败。
 
-**修复。** 找到那个循环或纹理读取。如果循环次数不是常量，循环应放在 `@custom` 主体中（前端在图中会以 DSH4360 拒绝它，所以这里几乎总是已经是 HLSL 循环）。分支中的纹理读取需要显式级别——`Tex.SampleLevel(UV, 0)`
-而不是 `Tex.Sample(UV)`。
+**修复。** 找到那个循环或纹理读取。如果循环次数不是常量，循环应放在 `@custom` 主体中（前端在图中会以 DSH4360 拒绝它，所以这里几乎总是已经是 HLSL 循环）。分支中的纹理读取需要显式级别——`Tex.SampleLevel(UV, 0)` 而不是 `Tex.Sample(UV)`。
 
 <a id="dsh9029"></a>
 
@@ -296,17 +276,13 @@ Shader compilation for '{0}' did not finish within {1} seconds per material. A c
 
 **原因。** 着色器编译器拒绝了生成的 HLSL。消息是编译器自身的文本，前面加上了其来源的着色器平台和质量级别，并且诊断信息会尽可能精确地定位到位置：
 
-1. 当错误指名某个表达式时，通过资产的 `DreamShader.SourceSpans` 表——精确的
-   文件、行、列和长度；
-2. 当错误指名生成 HLSL 中的某一行时，通过 `@custom` 节点代码内的 `// Begin/End DreamShader source:` 标记，
-   在该块内按行计数；
+1. 当错误指名某个表达式时，通过资产的 `DreamShader.SourceSpans` 表——精确的文件、行、列和长度；
+2. 当错误指名生成 HLSL 中的某一行时，通过 `@custom` 节点代码内的 `// Begin/End DreamShader source:` 标记，在该块内按行计数；
 3. 当两种方式都不奏效时，定位到源文件的第 1 行，并在 `detail` 中给出编译器的原始文本。
 
-因此，位置为第 1 行意味着“此错误属于此文件，但无法精确定位”，
-而绝不是“错误在第 1 行”。
+因此，位置为第 1 行意味着“此错误属于此文件，但无法精确定位”，而绝不是“错误在第 1 行”。
 
-**修复。** 阅读编译器自身的消息。在 DreamShader 源码中，绝大多数常见原因是
-在 `@custom` 主体中使用了图未定义的符号——`@custom` 主体内的 `UE.*` 调用不会被提升为输入引脚，因此在那里写一个会产生此处未声明的标识符，而不是一个节点。
+**修复。** 阅读编译器自身的消息。在 DreamShader 源码中，绝大多数常见原因是在 `@custom` 主体中使用了图未定义的符号——`@custom` 主体内的 `UE.*` 调用不会被提升为输入引脚，因此在那里写一个会产生此处未声明的标识符，而不是一个节点。
 
 <a id="dsh9030"></a>
 
@@ -328,7 +304,7 @@ DreamShader failed to create graph dump directory '%s'.
 
 **修复。** 检查 `-Out` 路径是否存在且可写，并确认没有任何文件已经占用转储所需的某个目录名。没有 `-Out` 时，目标是 `<Project>/Saved/DreamShader/GraphBaseline`，只有 `Saved/` 本身为只读时才会失败
 
-**另见** [Commandlet](../../tools/commandlet.md#dump-graph-since-190)
+**另见** [Commandlet](../tools/commandlet.md#dump-graph-since-190)
 
 <a id="dsh9031"></a>
 
@@ -350,7 +326,7 @@ DreamShader failed to write graph dump '%s'.
 
 **修复。** 关闭占用该文件的内容，或清除只读标志，然后重新运行。捕获到一个全新的空目录可以同时绕开这两者——基线是整体写入的，因此旧目录中没有需要保留的内容
 
-**另见** [Commandlet](../../tools/commandlet.md#dump-graph-since-190)
+**另见** [Commandlet](../tools/commandlet.md#dump-graph-since-190)
 
 <a id="dsh9032"></a>
 
@@ -372,7 +348,7 @@ DreamShader could not work out which assets '%s' builds, so there is no graph to
 
 **修复。** 如果消息带有解析错误，请修复源码；对同一文件运行 `compile` 会以自己的代码报告相同的失败。如果文件是一个合理地不产生任何资产的辅助文件，它就没有可转储的内容，可以排除在捕获之外——`-All` 会访问它并报告它，这就是为什么对一棵辅助源码树运行 `-All` 会以 `1` 退出，而这棵树本身并没有任何问题
 
-**另见** [Commandlet](../../tools/commandlet.md#dump-graph-since-190)
+**另见** [Commandlet](../tools/commandlet.md#dump-graph-since-190)
 
 <a id="dsh9033"></a>
 
@@ -394,7 +370,7 @@ DreamShader could not resolve generated asset '%s' from '%s' after generation.
 
 **修复。** 在源上运行 `compile -Force`，查看编译器对同一路径的反馈；无法加载的包在那里也会失败，并给出关于该包而非关于转储的消息。如果资产是被手动删除的，编译一次即可重新创建它
 
-**另见** [Commandlet](../../tools/commandlet.md#dump-graph-since-190)
+**另见** [Commandlet](../tools/commandlet.md#dump-graph-since-190)
 
 <a id="dsh9034"></a>
 
@@ -416,7 +392,7 @@ DreamShader cannot dump '%s': %s is not a Material, MaterialFunction, material i
 
 **修复。** 查看消息所指的资产，要么将其移开，要么更改源的 `Name=` / `Root=`，使两者不再冲突。转储报告的冲突与生成会报告的是同一个；只是它通过不同途径到达那里，因为它不必写入
 
-**另见** [Commandlet](../../tools/commandlet.md#dump-graph-since-190)
+**另见** [Commandlet](../tools/commandlet.md#dump-graph-since-190)
 
 <a id="dsh9035"></a>
 
@@ -900,7 +876,7 @@ The source file '{File}' this node was generated from is not on disk any more, s
 
 **原因。** *Open Source Line*（或 *Open Call Site*）无法为该文件启用文本编辑器。两种不同的原因共用此代码，因为二者的用户下一步操作相同：跨度中指明的文件已不在磁盘上，或者链中的每个启动器都拒绝了——VSCode、该扩展名的操作系统默认编辑器以及记事本。
 
-**修复。** 如果文件缺失，说明资产的寿命长于其源：重新生成它，或从版本控制恢复该文件。如果文件存在，则问题出在启动器链上——检查该扩展名是否有默认应用程序，并参阅 [Workspace](../../tools/workspace.md) 了解 VSCode 是如何被发现的。
+**修复。** 如果文件缺失，说明资产的寿命长于其源：重新生成它，或从版本控制恢复该文件。如果文件存在，则问题出在启动器链上——检查该扩展名是否有默认应用程序，并参阅 [Workspace](../tools/workspace.md) 了解 VSCode 是如何被发现的。
 
 <a id="dsh9059"></a>
 
@@ -1060,8 +1036,7 @@ The input '{0}' of '{1}' is a dynamic bool pin, which the language has no parame
 
 **原因。** 某个函数输入属于引擎的动态 `Bool` 引脚类型。该语言中，`bool` 参数是标量引脚，`/// @static` 参数是 StaticBool 引脚；它没有针对动态 bool 引脚的拼写方式。
 
-**修复方法。** 接受标量引脚（调用方可能需要重新连接一次），或在反编译前在资源中
-将输入的 类型 改为 StaticBool 或 Scalar。
+**修复方法。** 接受标量引脚（调用方可能需要重新连接一次），或在反编译前在资源中将输入的 类型 改为 StaticBool 或 Scalar。
 
 <a id="dsh9067"></a>
 
@@ -1079,8 +1054,7 @@ The input '{0}' of '{1}' is a dynamic bool pin, which the language has no parame
 **由以下内容引发** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1556`
 <!-- generated:end DSH9067 -->
 
-**原因。** 一个 Custom 节点带有 Additional Defines。一个 `/// @custom` 函数声明了输入、
-输出和代码，但没有用于 defines 的指令。
+**原因。** 一个 Custom 节点带有 Additional Defines。一个 `/// @custom` 函数声明了输入、输出和代码，但没有用于 defines 的指令。
 
 **修复方法。** 将每个 define 作为 `#define` 行移动到函数体中。
 
@@ -1100,14 +1074,9 @@ The input '{0}' of '{1}' is a dynamic bool pin, which the language has no parame
 **由以下内容引发** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1069`、`Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2455`
 <!-- generated:end DSH9068 -->
 
-**原因。** 一个节点更改了文本无法承载的属性：在参数上，某个没有任何 `///`
-指令代表的属性（通道名、曲线图集、自定义原始数据索引……）；在任何
-其他节点上，某个调用参数无法容纳的类型的属性（引脚数组、映射、委托）。
-结构体数组会按 ImportText 读取的文本写出，其中不含引脚
-（`Layers = "((LayerName=\"Grass\"))"`）。重建后的节点会为其使用引擎默认值。
+**原因。** 一个节点更改了文本无法承载的属性：在参数上，某个没有任何 `///` 指令代表的属性（通道名、曲线图集、自定义原始数据索引……）；在任何其他节点上，某个调用参数无法容纳的类型的属性（引脚数组、映射、委托）。结构体数组会按 ImportText 读取的文本写出，其中不含引脚（`Layers = "((LayerName=\"Grass\"))"`）。重建后的节点会为其使用引擎默认值。
 
-**修复方法。** 在重建后的资源上手动设置该属性，或将该节点排除在源之外
-（手工制作的函数 + `extern`）。
+**修复方法。** 在重建后的资源上手动设置该属性，或将该节点排除在源之外（手工制作的函数 + `extern`）。
 
 <a id="dsh9069"></a>
 
@@ -1125,10 +1094,7 @@ The input '{0}' of '{1}' is a dynamic bool pin, which the language has no parame
 **由以下内容引发** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1793`、`Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2170`、`Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2181`
 <!-- generated:end DSH9069 -->
 
-**原因。** 一个 StaticSwitch 的 `Value` 引脚没有连接任何内容，因此它始终采用其
-`DefaultValue` 所命名的分支。源会直接说明该分支；重建后的图表中那里没有开关。
-对于 `SwitchValue` 未连接任何内容、其 `ConstSwitchValue` 永久选择一个
-输入（或默认值）的 Switch，以及除了默认值之外没有其他输入的 Switch，也是如此。
+**原因。** 一个 StaticSwitch 的 `Value` 引脚没有连接任何内容，因此它始终采用其 `DefaultValue` 所命名的分支。源会直接说明该分支；重建后的图表中那里没有开关。对于 `SwitchValue` 未连接任何内容、其 `ConstSwitchValue` 永久选择一个输入（或默认值）的 Switch，以及除了默认值之外没有其他输入的 Switch，也是如此。
 
 **修复方法。** 无需修复；如果该开关应为可切换的，请在资源中将静态布尔值连接到 `Value`（将值连接到 `SwitchValue`）。
 
@@ -1148,11 +1114,7 @@ The input '{0}' of '{1}' is a dynamic bool pin, which the language has no parame
 **由以下内容引发** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2414`
 <!-- generated:end DSH9070 -->
 
-**原因。** 一个节点连接了其类未声明为命名引脚的输入（某个类别的动态输入，
-而目录通过反射读取该类）。源中的调用按名称连接引脚，因此无法
-写出这些连接。目录知道按节点为其引脚命名的类（Landscape 图层混合、
-草地或物理材质输出）会改用该节点显示的名称写出；这仅适用于名称为空、
-是关键字，或与另一个引脚或参数同名的引脚。
+**原因。** 一个节点连接了其类未声明为命名引脚的输入（某个类别的动态输入，而目录通过反射读取该类）。源中的调用按名称连接引脚，因此无法写出这些连接。目录知道按节点为其引脚命名的类（Landscape 图层混合、草地或物理材质输出）会改用该节点显示的名称写出；这仅适用于名称为空、是关键字，或与另一个引脚或参数同名的引脚。
 
 **修复方法。** 在反编译后手动重建该部分；消息中会指明该节点。
 
@@ -1172,14 +1134,9 @@ The input '{0}' of '{1}' has its Preview pin wired. Source says that as a defaul
 **由以下内容引发** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1397`、`Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:3024`
 <!-- generated:end DSH9071 -->
 
-**原因。** 一个材质函数说明了其接口的某些内容，而源尚未写出这些内容。
-一个 FunctionInput 连接了其 Preview 引脚：该输入的默认值是一个图表表达式，源
-会将其表示为作为表达式的参数默认值——编译器会构建它，反编译器尚不
-写出它，重建后的输入会预览其数字。或者该函数有一个用户公开的标题，
-而没有任何指令承载它。
+**原因。** 一个材质函数说明了其接口的某些内容，而源尚未写出这些内容。一个 FunctionInput 连接了其 Preview 引脚：该输入的默认值是一个图表表达式，源会将其表示为作为表达式的参数默认值——编译器会构建它，反编译器尚不写出它，重建后的输入会预览其数字。或者该函数有一个用户公开的标题，而没有任何指令承载它。
 
-**修复方法。** 在反编译文本中手动写出默认值：`float Name = <expression>`。标题
-必须在重建后的资源上设置。
+**修复方法。** 在反编译文本中手动写出默认值：`float Name = <expression>`。标题必须在重建后的资源上设置。
 
 <a id="dsh9072"></a>
 
@@ -1197,14 +1154,9 @@ The input '{0}' of '{1}' has its Preview pin wired. Source says that as a defaul
 **由以下内容引发** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1597`、`Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1628`、`Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:695`、`Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:728`、`Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:735`
 <!-- generated:end DSH9072 -->
 
-**原因。** 一个节点通过目录不了解的某种内容使用：
-一个 Break/GetMaterialAttributes 输出不是材质属性（由插件添加，或是
-表中不存在的索引）会被读取为零；一个节点没有对应槽位的输出索引会被读取为该节点的
-第一个输出，而对一个其类未列出任何输出的节点的读取会被读取为零；一个
-Set/MakeMaterialAttributes 输入不是已知属性时会被丢弃。
+**原因。** 一个节点通过目录不了解的某种内容使用：一个 Break/GetMaterialAttributes 输出不是材质属性（由插件添加，或是表中不存在的索引）会被读取为零；一个节点没有对应槽位的输出索引会被读取为该节点的第一个输出，而对一个其类未列出任何输出的节点的读取会被读取为零；一个 Set/MakeMaterialAttributes 输入不是已知属性时会被丢弃。
 
-**修复方法。** 检查该属性是否属于一个未加载的插件；否则在资源中重新连接
-该节点。
+**修复方法。** 检查该属性是否属于一个未加载的插件；否则在资源中重新连接该节点。
 
 <a id="dsh9073"></a>
 
@@ -1222,15 +1174,7 @@ Set/MakeMaterialAttributes 输入不是已知属性时会被丢弃。
 **由以下内容引发** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1191`、`Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1329`、`Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1716`、`Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2064`、`Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2227`
 <!-- generated:end DSH9073 -->
 
-**原因。** 一个引擎节点被该语言写为两个节点，或写为另一个类下的节点。一个
-StaticSwitchParameter 既是参数又是开关：源会表示一个 `/// @static uniform bool`
-和一个静态分支，构建时会生成一个 StaticBoolParameter 加一个 StaticSwitch。一个纹理采样
-参数会变成一个纹理 uniform 及其采样（TextureObjectParameter + TextureSample）。一个
-GetMaterialAttributes 节点会重建为 BreakMaterialAttributes。一个 Convert 节点（Make / Break
-FloatN）以及一个带有未命名分支的 Switch 会将其引脚保留在任何调用都无法命名的数组中，因此它们会
-按其计算内容写出（所有分支都已命名的 Switch 会按 Switch 本身写出）：每个 Convert 输出按其组合来源的通道写出（ComponentMask 和 AppendVector
-节点），一个 Switch 按引擎由它生成的各分支写出（Floor 和 If 节点）。实例会继续
-正常工作：参数名称和静态排列相同。
+**原因。** 一个引擎节点被该语言写为两个节点，或写为另一个类下的节点。一个 StaticSwitchParameter 既是参数又是开关：源会表示一个 `/// @static uniform bool` 和一个静态分支，构建时会生成一个 StaticBoolParameter 加一个 StaticSwitch。一个纹理采样参数会变成一个纹理 uniform 及其采样（TextureObjectParameter + TextureSample）。一个 GetMaterialAttributes 节点会重建为 BreakMaterialAttributes。一个 Convert 节点（Make / Break FloatN）以及一个带有未命名分支的 Switch 会将其引脚保留在任何调用都无法命名的数组中，因此它们会按其计算内容写出（所有分支都已命名的 Switch 会按 Switch 本身写出）：每个 Convert 输出按其组合来源的通道写出（ComponentMask 和 AppendVector 节点），一个 Switch 按引擎由它生成的各分支写出（Floor 和 If 节点）。实例会继续正常工作：参数名称和静态排列相同。
 
 **修复方法。** 无需修复。
 
@@ -1250,9 +1194,7 @@ FloatN）以及一个带有未命名分支的 Switch 会将其引脚保留在任
 **由以下内容引发** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2985`
 <!-- generated:end DSH9074 -->
 
-**原因。** 一个启用了 *Use Material Attributes* 的材质会从唯一的
-MaterialAttributes 引脚读取其属性；同时已连接的各单独属性引脚会被引擎忽略，
-因此也会被反编译器忽略。
+**原因。** 一个启用了 *Use Material Attributes* 的材质会从唯一的 MaterialAttributes 引脚读取其属性；同时已连接的各单独属性引脚会被引擎忽略，因此也会被反编译器忽略。
 
 **修复方法。** 无需修复；在资源中断开无效连线以停止该提示。
 
@@ -1272,13 +1214,9 @@ The uniform '{0}' is written as '{1}': the name is already taken in this file.
 **由以下内容引发** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1277`、`Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:664`、`Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp:69`
 <!-- generated:end DSH9075 -->
 
-**原因。** 反编译文件中的某项内容无法保留其名称：一个参数，其名称已被
-另一个声明占用；一个局部变量，其名称与参数相同或不是该语言允许的标识符；一个
-自定义函数，其名称已被占用。它会以另一个名称写出；uniform 会通过 `/// @name` 保留其真实
-参数名称。
+**原因。** 反编译文件中的某项内容无法保留其名称：一个参数，其名称已被另一个声明占用；一个局部变量，其名称与参数相同或不是该语言允许的标识符；一个自定义函数，其名称已被占用。它会以另一个名称写出；uniform 会通过 `/// @name` 保留其真实参数名称。
 
-**修复方法。** 对于 uniform 和局部变量，无需修复。被重命名的自定义函数仍可能
-在另一个自定义函数体内部以其旧名称被调用，而该函数体是逐字 HLSL：请手动更改该调用。
+**修复方法。** 对于 uniform 和局部变量，无需修复。被重命名的自定义函数仍可能在另一个自定义函数体内部以其旧名称被调用，而该函数体是逐字 HLSL：请手动更改该调用。
 
 <a id="dsh9076"></a>
 
@@ -1296,8 +1234,7 @@ A region of '{0}' is titled '{1}', which does not fit on a '#pragma region' line
 **由以下内容引发** `Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp:575`
 <!-- generated:end DSH9076 -->
 
-**原因。** 注释框的标题无法原样放在 `#pragma region` 行上（它含有换行，
-或为空）。它会以可以使用的形式写出。
+**原因。** 注释框的标题无法原样放在 `#pragma region` 行上（它含有换行，或为空）。它会以可以使用的形式写出。
 
 **修复方法。** 无需修复；如果愿意，可在文本中编辑该区域的标题。
 
@@ -1317,8 +1254,7 @@ A region of '{0}' is titled '{1}', which does not fit on a '#pragma region' line
 **由以下内容引发** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1698`、`Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1927`
 <!-- generated:end DSH9077 -->
 
-**原因。** 某些节点位置未能保留。位置通过变量名（`#pragma
-layout(Node, Var = ...)`）按整个文件存储：源中内联写入的值没有可依附的名称，而文件中两个函数将其放置在不同位置的名称则存在歧义。这些节点将在下次构建时由布局处理阶段放置。
+**原因。** 某些节点位置未能保留。位置通过变量名（`#pragma layout(Node, Var = ...)`）按整个文件存储：源中内联写入的值没有可依附的名称，而文件中两个函数将其放置在不同位置的名称则存在歧义。这些节点将在下次构建时由布局处理阶段放置。
 
 **修复。** 无需修复。为值赋予其自己的变量以保留其位置。
 
@@ -1598,8 +1534,7 @@ The decompiled text does not parse back: {0}: {1}. It is written as it is; this 
 **引发者** `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:502`
 <!-- generated:end DSH9091 -->
 
-**原因。** 一个 `import` 在路径前方指定了源根（`import
-"MoonToon:Shared/Common.dsh"`). `#include` 没有这种形式。
+**原因。** 一个 `import` 在路径前方指定了源根（`import "MoonToon:Shared/Common.dsh"`). `#include` 没有这种形式。
 
 **修复。** 从该根自身的文件夹开始书写路径，并带上前导 `/`，或相对于文件书写，然后再次迁移。
 
@@ -1839,8 +1774,7 @@ DSH9103: The Parent of '{0}' no longer resolves, so the overrides of '{1}' canno
 **引发者** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:320`
 <!-- generated:end DSH9104 -->
 
-**原因。** 该实例覆盖了一个基础属性 `#pragma instance`，但没有对应的键。重建后的
-实例会采用父级的值。
+**原因。** 该实例覆盖了一个基础属性 `#pragma instance`，但没有对应的键。重建后的实例会采用父级的值。
 
 **修复。** 在重建后的资产上手动设置它，或在父级上设置。
 
@@ -1964,7 +1898,7 @@ Expected a '#pragma instance(...)' line in this .dsi file, found none; the file 
 
 **修复。** 单独写入该标志以将其开启（`-Force`），或使用八个词之一写入；将其省略，或写入 `=false`，以使其保持关闭。仅检查动词所读取的标志：它不接受的标志会被忽略，无论其值为何。
 
-**另见** [Commandlet——布尔标志](../../tools/commandlet.md#boolean-flags)
+**另见** [Commandlet——布尔标志](../tools/commandlet.md#boolean-flags)
 
 <a id="dsh9111"></a>
 
@@ -2004,8 +1938,7 @@ The Custom Pass slot registry cannot be read: {0}. 'dsc pass-registry -Rebuild' 
 
 **原因。** `pass-registry` 无法读取 `Registry.json` 以列出它：该文件无法打开，它不是有效的 JSON——其中残留的合并冲突是常见原因——或者某个条目没有槽位编号、管线或通道。不会列出任何内容，运行失败（退出码 `1`）。任何 `.dsp` 的编译都会拒绝同一个文件（DSH8315）。
 
-**修复。** 运行 `./dsc.ps1 pass-registry -Rebuild`：它会将该文件移至一旁，保存为 `Registry.json.unreadable`，并编译每一个 `.dsp`，从而再次为每个 HLSL 通道分配槽位。选择冲突的任意一方并再次编译 `.dsp` 文件同样可行；切勿手动合并该 JSON。参见
-[`pass-registry`](../../tools/commandlet.md#pass-registry)。
+**修复。** 运行 `./dsc.ps1 pass-registry -Rebuild`：它会将该文件移至一旁，保存为 `Registry.json.unreadable`，并编译每一个 `.dsp`，从而再次为每个 HLSL 通道分配槽位。选择冲突的任意一方并再次编译 `.dsp` 文件同样可行；切勿手动合并该 JSON。参见 [`pass-registry`](../tools/commandlet.md#pass-registry)。
 
 <a id="dsh9201"></a>
 
@@ -2043,10 +1976,7 @@ No .dsp builds '{0}' any more, but the asset is still there and its pass '{1}' p
 **引发者** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:213`
 <!-- generated:end DSH9202 -->
 
-**原因。** 信息性。`pass-registry -Gc`，或 `-Rebuild` 的收集步骤释放了一个槽位：不再有任何
-`.dsp` 构建其管线，或其管线的 `.dsp` 编译后不再在该表中以
-HLSL 运行该通道。其在 `Registry.json` 中的条目、在注册表文件中的区段及其快照均被
-删除。命令程序不会重新编译任何着色器；下一次编辑器启动时编译已更改的注册表。
+**原因。** 信息性。`pass-registry -Gc`，或 `-Rebuild` 的收集步骤释放了一个槽位：不再有任何 `.dsp` 构建其管线，或其管线的 `.dsp` 编译后不再在该表中以 HLSL 运行该通道。其在 `Registry.json` 中的条目、在注册表文件中的区段及其快照均被删除。命令程序不会重新编译任何着色器；下一次编辑器启动时编译已更改的注册表。
 
 **修复。** 无需处理。提交已更改的 `.dreampass/` 文件夹。
 
@@ -2066,14 +1996,9 @@ Registry.json did not parse and was moved aside to '{0}'; the compiles that foll
 **由以下触发** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:343`
 <!-- generated:end DSH9203 -->
 
-**原因。** `pass-registry -Rebuild` 发现一个无法解析的 `Registry.json` —— 其中残留的合并冲突
-是常见原因 —— 将其移到 `Registry.json.unreadable` 并从一个空
-注册表开始。随后的编译会按路径顺序为每个 HLSL 通道重新分配槽位，因此槽位编号
-可能变化，每个带 HLSL 通道的管线都会以新槽位重新构建并保存。
+**原因。** `pass-registry -Rebuild` 发现一个无法解析的 `Registry.json` —— 其中残留的合并冲突是常见原因 —— 将其移到 `Registry.json.unreadable` 并从一个空注册表开始。随后的编译会按路径顺序为每个 HLSL 通道重新分配槽位，因此槽位编号可能变化，每个带 HLSL 通道的管线都会以新槽位重新构建并保存。
 
-**修复。** 无需修复。提交重新构建的 `.dreampass/` 文件夹，如果你
-提交生成资产，也提交重新构建的管线。没有任何东西读取 `Registry.json.unreadable`：查看它以了解冲突
-是什么，然后删除它，而不是提交它。
+**修复。** 无需修复。提交重新构建的 `.dreampass/` 文件夹，如果你提交生成资产，也提交重新构建的管线。没有任何东西读取 `Registry.json.unreadable`：查看它以了解冲突是什么，然后删除它，而不是提交它。
 
 <a id="dsh9204"></a>
 
@@ -2091,14 +2016,9 @@ Registry.json did not parse and was moved aside to '{0}'; the compiles that foll
 **由以下触发** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:395`
 <!-- generated:end DSH9204 -->
 
-**原因。** `pass-registry -Rebuild` 强制编译源根目录下的每个 `.dsp`，而此
-失败；消息以编译报告结尾。其管线保留注册表中为其保留的槽位
-—— 如果此次重建重置了不可读的注册表（DSH9203），则为无槽位 —— 其资产
-不会更新。本次运行失败（退出代码 `1`），但仍完成其余步骤。
+**原因。** `pass-registry -Rebuild` 强制编译源根目录下的每个 `.dsp`，而此失败；消息以编译报告结尾。其管线保留注册表中为其保留的槽位 —— 如果此次重建重置了不可读的注册表（DSH9203），则为无槽位 —— 其资产不会更新。本次运行失败（退出代码 `1`），但仍完成其余步骤。
 
-**修复。** 根据报告修复 `.dsp` 并编译它（`./dsc.ps1 compile <file>.dsp`）：这会在重建的注册表上
-规划其槽位并更新其资产。DSH9205 会列出其每个指向
-不再拥有的槽位的通道，而 DSH8337 会列出其每个没有快照的槽位。
+**修复。** 根据报告修复 `.dsp` 并编译它（`./dsc.ps1 compile <file>.dsp`）：这会在重建的注册表上规划其槽位并更新其资产。DSH9205 会列出其每个指向不再拥有的槽位的通道，而 DSH8337 会列出其每个没有快照的槽位。
 
 <a id="dsh9205"></a>
 
@@ -2116,14 +2036,9 @@ Pass '{1}' of '{0}' points at {2} slot {3}, which the registry {4}. Its source '
 **由以下触发** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:314`
 <!-- generated:end DSH9205 -->
 
-**原因。** 在 `pass-registry -Rebuild` 之后，重建中 `.dsp` 失败的管线（DSH9204）有一个
-通道指向注册表现在分配给另一通道的槽位，或该槽位被留空 —— 通常是因为
-重建重置了不可读的注册表并重新分配了每个槽位。资产未更新，因此
-在其源编译之前，该通道会分派槽位中当前的任何内容：另一通道的着色器搭配本
-通道的绑定，或空存根。
+**原因。** 在 `pass-registry -Rebuild` 之后，重建中 `.dsp` 失败的管线（DSH9204）有一个通道指向注册表现在分配给另一通道的槽位，或该槽位被留空 —— 通常是因为重建重置了不可读的注册表并重新分配了每个槽位。资产未更新，因此在其源编译之前，该通道会分派槽位中当前的任何内容：另一通道的着色器搭配本通道的绑定，或空存根。
 
-**修复。** 修复消息中指出的 `.dsp` 并编译它；编译会为该通道分配自己的槽位
-并写入资产。在此之前，`r.DreamPass.DisablePipelines` 会阻止该管线运行。
+**修复。** 修复消息中指出的 `.dsp` 并编译它；编译会为该通道分配自己的槽位并写入资产。在此之前，`r.DreamPass.DisablePipelines` 会阻止该管线运行。
 
 <a id="dsh9206"></a>
 
@@ -2141,13 +2056,9 @@ No .dsp under the source roots; the registry is rewritten from Registry.json as 
 **由以下触发** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:363`
 <!-- generated:end DSH9206 -->
 
-**原因。** 信息性。`pass-registry -Rebuild` 在源根目录下未发现 `.dsp`（已排除 `Packages`
-文件夹），因此没有要编译的内容。重建的其余部分仍会运行：不再由任何 `.dsp` 构建的
-管线的槽位会被释放 —— 记录的 `.dsp` 仍在磁盘上的槽位会保留 —— 并且
-注册表文件会根据 `Registry.json` 重写。
+**原因。** 信息性。`pass-registry -Rebuild` 在源根目录下未发现 `.dsp`（已排除 `Packages` 文件夹），因此没有要编译的内容。重建的其余部分仍会运行：不再由任何 `.dsp` 构建的管线的槽位会被释放 —— 记录的 `.dsp` 仍在磁盘上的槽位会保留 —— 并且注册表文件会根据 `Registry.json` 重写。
 
-**修复。** 当项目没有管线时无需处理。如果有，则源根目录未到达其
-`.dsp` 文件：检查 *Source Directory* 项目设置和插件的 `DShader` 文件夹。
+**修复。** 当项目没有管线时无需处理。如果有，则源根目录未到达其 `.dsp` 文件：检查 *Source Directory* 项目设置和插件的 `DShader` 文件夹。
 
 <a id="dsh9208"></a>
 
@@ -2165,17 +2076,9 @@ The snapshot of {0} slot {1} (pass '{2}' of '{3}') is not on disk, and the regis
 **由以下触发** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:114`
 <!-- generated:end DSH9208 -->
 
-**原因。** `Registry.json` 为此槽位记录了快照，而其文件不在
-`.dreampass/Slots/` 下 —— 一个未提交或未同步的 `Slots` 文件夹 —— 且注册表文件
-仍包含它们。在其下次启动时，DreamShaderPass 模块会将此类区段从
-注册表文件中移除（日志中会出现一个错误），该通道在 `.dsp` 再次编译之前不会做任何事。只有
-只读的注册表文件 —— 未检出 —— 无法以这种方式重写：它会继续包含
-缺失的文件，随后全局着色器编译失败，这是致命的。由列表和 `-Gc` 触发；
-`-Rebuild` 会自行保留此类槽位（DSH8337）。
+**原因。** `Registry.json` 为此槽位记录了快照，而其文件不在 `.dreampass/Slots/` 下 —— 一个未提交或未同步的 `Slots` 文件夹 —— 且注册表文件仍包含它们。在其下次启动时，DreamShaderPass 模块会将此类区段从注册表文件中移除（日志中会出现一个错误），该通道在 `.dsp` 再次编译之前不会做任何事。只有只读的注册表文件 —— 未检出 —— 无法以这种方式重写：它会继续包含缺失的文件，随后全局着色器编译失败，这是致命的。由列表和 `-Gc` 触发； `-Rebuild` 会自行保留此类槽位（DSH8337）。
 
-**修复。** 编译消息中指出的 `.dsp`：这会写回快照及
-相应区段。`./dsc.ps1 pass-registry -Rebuild` 一次处理所有槽位。将 `Slots` 文件夹与注册表一起
-提交。如果注册表文件为只读，请在编辑器下次启动前检出它们。
+**修复。** 编译消息中指出的 `.dsp`：这会写回快照及相应区段。`./dsc.ps1 pass-registry -Rebuild` 一次处理所有槽位。将 `Slots` 文件夹与注册表一起提交。如果注册表文件为只读，请在编辑器下次启动前检出它们。
 
 <a id="dsh9209"></a>
 
@@ -2193,13 +2096,9 @@ The snapshot of {0} slot {1} (pass '{2}' of '{3}') is not on disk, and the regis
 **由以下触发** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:124`
 <!-- generated:end DSH9209 -->
 
-**原因。** 拥有此槽位的 `.dsp` 编译不够深入，无法判断它是否仍在该表中以
-HLSL 运行该通道：其前端失败、其管线的资产路径无法解析，或文件
-在磁盘上但未能进入产品索引（预处理错误会停止索引的解析）。
-槽位仅在证据确凿时才会被释放，因此此槽位会保留。由列表、`-Gc` 和 `-Rebuild` 触发。
+**原因。** 拥有此槽位的 `.dsp` 编译不够深入，无法判断它是否仍在该表中以 HLSL 运行该通道：其前端失败、其管线的资产路径无法解析，或文件在磁盘上但未能进入产品索引（预处理错误会停止索引的解析）。槽位仅在证据确凿时才会被释放，因此此槽位会保留。由列表、`-Gc` 和 `-Rebuild` 触发。
 
-**修复。** 修复 `.dsp` —— `./dsc.ps1 check <file>.dsp` 会说明问题所在 —— 并编译它；列表
-随后就能判断该槽位。如果该 `.dsp` 本应移除，删除它，`-Gc` 会释放其槽位。
+**修复。** 修复 `.dsp` —— `./dsc.ps1 check <file>.dsp` 会说明问题所在 —— 并编译它；列表随后就能判断该槽位。如果该 `.dsp` 本应移除，删除它，`-Gc` 会释放其槽位。
 
 <a id="dsh9210"></a>
 
@@ -2217,12 +2116,9 @@ HLSL 运行该通道：其前端失败、其管线的资产路径无法解析，
 **由以下触发** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderIRDecompiler.cpp:247`
 <!-- generated:end DSH9210 -->
 
-**原因。** 管线反编译为 `.dsp` 文本，而请求的输出文件 —— `-Out`，或
-请求的输出路径 —— 具有其他扩展名。（`-Format=Legacy`，或以 `.dsm` /
-`.dsf` 结尾的 `-Out`，会将管线交给 1.x 反编译器，而它拒绝该管线：管线没有 1.x 文本。）
+**原因。** 管线反编译为 `.dsp` 文本，而请求的输出文件 —— `-Out`，或请求的输出路径 —— 具有其他扩展名。（`-Format=Legacy`，或以 `.dsm` / `.dsf` 结尾的 `-Out`，会将管线交给 1.x 反编译器，而它拒绝该管线：管线没有 1.x 文本。）
 
-**修复。** 让 `-Out` 以 `.dsp` 结尾，或省略它：默认为
-`<SourceDirectory>/Decompiled/Pipelines/<package path>.dsp`。
+**修复。** 让 `-Out` 以 `.dsp` 结尾，或省略它：默认为 `<SourceDirectory>/Decompiled/Pipelines/<package path>.dsp`。
 
 <a id="dsh9211"></a>
 
@@ -2240,13 +2136,9 @@ The pass '{0}' has neither a material nor a shader, so the text names neither, a
 **由以下触发** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:435`
 <!-- generated:end DSH9211 -->
 
-**原因。** 管线的某个全屏通道既没有材质也没有着色器 —— 它指定的材质
-不再加载，或二者都在管线的详细信息面板中被清除。`.dsp` 全屏通道会指定
-二者之一，因此文本二者都未指定，在提供其一之前不会构建。`dsc decompile` 会将
-该警告写在文件开头；Adopt 会拒绝该管线且不写入任何内容。
+**原因。** 管线的某个全屏通道既没有材质也没有着色器 —— 它指定的材质不再加载，或二者都在管线的详细信息面板中被清除。`.dsp` 全屏通道会指定二者之一，因此文本二者都未指定，在提供其一之前不会构建。`dsc decompile` 会将该警告写在文件开头；Adopt 会拒绝该管线且不写入任何内容。
 
-**修复。** 在详细信息面板中为该通道指定其材质，或指定其着色器和入口，然后再次反编译或
-采用 —— 或者在反编译后，将 `Material`（或 `Shader` 和 `Entry`）写入文本。
+**修复。** 在详细信息面板中为该通道指定其材质，或指定其着色器和入口，然后再次反编译或采用 —— 或者在反编译后，将 `Material`（或 `Shader` 和 `Entry`）写入文本。
 
 <a id="dsh9212"></a>
 
@@ -2567,3 +2459,4 @@ DSH9228: '{0}' builds no pass pipeline any more, so '{1}' has nothing to be spli
 **原因。** 管线所戳记的 `.dsp` 检查通过 —— 它能够解析、绑定并降级 —— 且它所构建的内容都不是传递管线，因此没有可将资产的值拼接进去的位置。检查通过的 `.dsp` 始终只构建一条管线，以文件命名，因此此处防范的是文件通常不会触及的情况。没有写入任何内容。
 
 **修复。** 运行 `./dsc.ps1 dump-ir <file>.dsp` 以查看该文件构建的内容，并随该文件一同报告。
+

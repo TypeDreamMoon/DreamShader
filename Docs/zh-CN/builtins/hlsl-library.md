@@ -1,8 +1,3 @@
----
-title: "DreamShaderBuiltins.ush"
-description: "DreamShaderBuiltins.ush"
----
-
 <a id="dreamshaderbuiltinsush"></a>
 
 # DreamShaderBuiltins.ush
@@ -99,23 +94,12 @@ description: "DreamShaderBuiltins.ush"
 > **将 `#include` 放在最前面。** 写在 `Function` 主体顶部的 `#include`（其前只有空白和注释）会从主体中取出并放到 Custom 节点的 include 列表中，引擎会在所生成函数之外包含它 —— 参见[函数 ▸ 包含](../language/function.md#includes) —— 因此该头文件的函数定义可以正常编译。而在某条语句之后、或任何其他 `#` 行之后出现的 `#include`，会留在主体内，引擎会将其粘贴到某个函数内部；在那里 22 个宏仍然可用（`#define` 在任何位置都合法），但三个函数定义（`DS_TexCoord`、`DS_VertexColor`、`DS_Panner`）在另一个函数体内不合法。
 
 > [!WARNING]
-> **`DS_TexCoord` 和 `DS_VertexColor` 依赖翻译器副作用，而现在已经没有任何东西安排这些副作用了。** `DS_TexCoord` 读取 `Parameters.TexCoords[…]`，后者仅在材质翻译期间分配了至少一个插值器槽位时才存在
-> （`NUM_TEX_COORD_INTERPOLATORS` > 0）；没有分配槽位时，该函数可以编译并返回
-> `float2(0, 0)`。`DS_VertexColor` 读取 `Parameters.VertexColor`，而后者仅在材质以顶点色用法设置进行翻译时才会被写入。已退役的 Instance 后端通过
-> 编译匹配的 dummy 输入块来安排这两者。在 `Graph` 和 `ThinCustom` 后端下没有任何东西这样做，因此
-> 请改用 [`UE.TexCoord`](ue.md) 和 [`UE.VertexColor`](ue.md) —— 或者一个连线的 `Function` 输入 —— 而不是
-> 这两个。
+> **`DS_TexCoord` 和 `DS_VertexColor` 依赖翻译器副作用，而现在已经没有任何东西安排这些副作用了。** `DS_TexCoord` 读取 `Parameters.TexCoords[…]`，后者仅在材质翻译期间分配了至少一个插值器槽位时才存在（`NUM_TEX_COORD_INTERPOLATORS` > 0）；没有分配槽位时，该函数可以编译并返回 `float2(0, 0)`。`DS_VertexColor` 读取 `Parameters.VertexColor`，而后者仅在材质以顶点色用法设置进行翻译时才会被写入。已退役的 Instance 后端通过编译匹配的 dummy 输入块来安排这两者。在 `Graph` 和 `ThinCustom` 后端下没有任何东西这样做，因此请改用 [`UE.TexCoord`](ue.md) 和 [`UE.VertexColor`](ue.md) —— 或者一个连线的 `Function` 输入 —— 而不是这两个。
 
-- 其余的读取都是无副作用的。它们接触的每个字段和 `Get*(Parameters)` 辅助函数都在
-  像素入口处无条件填充，因此它们可以在任何不透明 Surface 像素求值中编译，无需使用标志或插值器请求。
-- `DS_PerInstanceRandom` 和 `DS_PerInstanceFadeAmount` 仅对实例化或
-  GPU 剔除的绘制有意义。在普通网格体上，它们会读回安全常量（分别为 `0` 和 `1`），且不会
-  产生编译错误。
-- 该头文件由 `DREAMSHADER_BUILTINS_USH` 保护，因此在同一
-  翻译单元中包含多次是无害的。
-- 在 `Function` 主体内部，GLSL 别名处理会在主体生成之前重写整个标识符
-  —— `vec3` → `float3`、`mix` → `lerp`、`fract` → `frac`、`mod` → `fmod`，等等。它会跳过字符串
-  字面量和注释，因此 `#include "…"` 中的 include 路径永远不会被重写。
+- 其余的读取都是无副作用的。它们接触的每个字段和 `Get*(Parameters)` 辅助函数都在像素入口处无条件填充，因此它们可以在任何不透明 Surface 像素求值中编译，无需使用标志或插值器请求。
+- `DS_PerInstanceRandom` 和 `DS_PerInstanceFadeAmount` 仅对实例化或 GPU 剔除的绘制有意义。在普通网格体上，它们会读回安全常量（分别为 `0` 和 `1`），且不会产生编译错误。
+- 该头文件由 `DREAMSHADER_BUILTINS_USH` 保护，因此在同一翻译单元中包含多次是无害的。
+- 在 `Function` 主体内部，GLSL 别名处理会在主体生成之前重写整个标识符 —— `vec3` → `float3`、`mix` → `lerp`、`fract` → `frac`、`mod` → `fmod`，等等。它会跳过字符串字面量和注释，因此 `#include "…"` 中的 include 路径永远不会被重写。
 
 <a id="example"></a>
 
@@ -132,8 +116,7 @@ Function vec2 Wobble(in vec2 uv, in float speed)
 }
 ```
 
-该 include 通过注册的虚拟目录解析，并且 `DS_TIME` 展开为
-`(View.GameTime)`。
+该 include 通过注册的虚拟目录解析，并且 `DS_TIME` 展开为 `(View.GameTime)`。
 
 基于节点的等价写法，完全不需要 include，也不需要任何 HLSL 辅助函数：
 

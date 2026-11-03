@@ -1,8 +1,3 @@
----
-title: "构造函数"
-description: "构造函数"
----
-
 <a id="constructors"></a>
 
 # 构造函数
@@ -25,18 +20,15 @@ description: "构造函数"
 <constructor-call> := <constructor-name> ( <expression> [ , <expression> ] … )
 ```
 
-命名参数会被拒绝。[花括号初始化器](declarations.md#brace-initializers) 正是
-构造函数调用：`vec3 rgb = {r, g, b};` 会被重写为 `vec3(r, g, b)` 并遵守本页的所有规则。
+命名参数会被拒绝。[花括号初始化器](declarations.md#brace-initializers) 正是构造函数调用：`vec3 rgb = {r, g, b};` 会被重写为 `vec3(r, g, b)` 并遵守本页的所有规则。
 
-解析器将构造函数名称读取为**类型** *(自 2.0.0 起)*：该调用不会进入函数查找，
-绑定器会像检查 `.dss` 构造函数那样检查它。
+解析器将构造函数名称读取为**类型** *(自 2.0.0 起)*：该调用不会进入函数查找，绑定器会像检查 `.dss` 构造函数那样检查它。
 
 <a id="constructor-names"></a>
 
 ## 构造函数名称
 
-**34 个名称**，全部**不区分大小写**地匹配（`FLOAT3(…)` 也可用）。分量数是名称末尾的
-数字；没有数字，或数字为 `1` 的名称是标量。
+**34 个名称**，全部**不区分大小写**地匹配（`FLOAT3(…)` 也可用）。分量数是名称末尾的数字；没有数字，或数字为 `1` 的名称是标量。
 
 | 名称 | 分量 | 种类 | 家族 |
 | :-- | :-- | :-- | :-- |
@@ -75,8 +67,7 @@ description: "构造函数"
 | `bvec3` | 3 | bool | GLSL 布尔向量 |
 | `bvec4` | 4 | bool | GLSL 布尔向量 |
 
-*(自 2.0.0 起)* 解析器接受 HLSL 类型语法中的每种拼写，不区分大小写，因此还有少数
-名称也是构造函数：
+*(自 2.0.0 起)* 解析器接受 HLSL 类型语法中的每种拼写，不区分大小写，因此还有少数名称也是构造函数：
 
 | 名称 | 分量 | 备注 |
 | :-- | :-- | :-- |
@@ -96,34 +87,22 @@ description: "构造函数"
 | `dvec2`、`dvec3`、`dvec4` | 没有 GLSL double 家族 |
 | `Scalar`、`Vector`、`Color` | 已移除的类型别名；见 [类型](../language/types.md) |
 
-上述每个名称都作为普通标识符进行词法分析，并且由于它不是类型，会落到
-函数查找 — [`DSH4208`](../diagnostics/DSH4xxx.md#dsh4208)，除非声明了该名称的函数。
+上述每个名称都作为普通标识符进行词法分析，并且由于它不是类型，会落到函数查找 — [`DSH4208`](../diagnostics/DSH4xxx.md#dsh4208)，除非声明了该名称的函数。
 
-`MaterialAttributes`、`Substrate`、纹理类型和 `SamplerState` 也是类型名称，但无法
-构造它们的任何值：`Texture2D(…)` 是 [`DSH4223`](../diagnostics/DSH4xxx.md#dsh4223)。
+`MaterialAttributes`、`Substrate`、纹理类型和 `SamplerState` 也是类型名称，但无法构造它们的任何值：`Texture2D(…)` 是 [`DSH4223`](../diagnostics/DSH4xxx.md#dsh4223)。
 
 > [!WARNING]
-> **构造函数名称会遮蔽一切。** 构造函数名称在解析调用时就被读取为类型 — 早于对 `UE.*`
-> 内置函数、`Substrate.*` 内置函数、数学内置函数、参数以及所有用户定义的查找。一个名为
-> `float3`、`int`、`bool4`、`vec2`（或表中任何其他名称）的
-> `Function`、`GraphFunction`、`ShaderFunction` 或 `VirtualFunction` 可以在没有诊断的情况下声明，
-> 但永远无法被调用 — 每个调用点都会构建一个构造函数。见
-> [名称解析](name-resolution.md)。
+> **构造函数名称会遮蔽一切。** 构造函数名称在解析调用时就被读取为类型 — 早于对 `UE.*` 内置函数、`Substrate.*` 内置函数、数学内置函数、参数以及所有用户定义的查找。一个名为 `float3`、`int`、`bool4`、`vec2`（或表中任何其他名称）的 `Function`、`GraphFunction`、`ShaderFunction` 或 `VirtualFunction` 可以在没有诊断的情况下声明，但永远无法被调用 — 每个调用点都会构建一个构造函数。见[名称解析](name-resolution.md)。
 
 <a id="integer-constructors"></a>
 
 ### 整数构造函数
 
-整数名称为 `int`、`int1..4`、`ivec2..4`、`uint`、`uint1..4` 和 `uvec2..4`。对编译器而言，它们的结果
-是 `int` 或 `uint` 值。
+整数名称为 `int`、`int1..4`、`ivec2..4`、`uint`、`uint1..4` 和 `uvec2..4`。对编译器而言，它们的结果是 `int` 或 `uint` 值。
 
-该种类只做一件事：当**两个**操作数都是整数构造函数调用时，`/`
-会被拒绝（[`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243)），与 1.x 中一样。它不执行截断、不舍入，
-也不做范围限制 — 整数构造函数生成的浮点值图与其 `float`
-对应物相同，而 `int(7.9)` 为 7.9。见 [整数除法](expressions.md#integer-division)。
+该种类只做一件事：当**两个**操作数都是整数构造函数调用时，`/` 会被拒绝（[`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243)），与 1.x 中一样。它不执行截断、不舍入，也不做范围限制 — 整数构造函数生成的浮点值图与其 `float` 对应物相同，而 `int(7.9)` 为 7.9。见 [整数除法](expressions.md#integer-division)。
 
-该种类来自构造函数自身的名称，因此用非整数构造函数包裹会清除它：
-`float(int(7))` 是 float。
+该种类来自构造函数自身的名称，因此用非整数构造函数包裹会清除它： `float(int(7))` 是 float。
 
 <a id="argument-rules"></a>
 
@@ -165,19 +144,13 @@ description: "构造函数"
 | `float3()` | 0 | **否** | `DSH4221` |
 
 > [!NOTE]
-> **构造函数从不收窄**，在 1.x 源码中也是如此。`float3(rgba)` 是错误，而不是截断；请编写 `rgba.rgb`。收窄只发生在转换位置——参见
-> [转换](conversions.md#narrowing)。加宽只从标量发生（规则 5）；
-> `float3(uv)` 不会补零。
+> **构造函数从不收窄**，在 1.x 源码中也是如此。`float3(rgba)` 是错误，而不是截断；请编写 `rgba.rgb`。收窄只发生在转换位置——参见[转换](conversions.md#narrowing)。加宽只从标量发生（规则 5）； `float3(uv)` 不会补零。
 
 <a id="constant-folding"></a>
 
 ## 常量折叠
 
-当每个参数都是常量时，整个调用是一个常量节点，而不是 `N` 个 `Constant`
-节点加上 `AppendVector` 个节点：一个持有这些值的 `Constant` / `Constant2Vector` / `Constant3Vector` /
-`Constant4Vector`。常量是数字字面量、其取负形式、一个 `const`
-属性、持有常量的变量，或对常量的任何算术运算：折叠过程会折叠
-操作数全为常量的运算符、构造函数和 swizzle *(自 2.0.0 起)*。
+当每个参数都是常量时，整个调用是一个常量节点，而不是 `N` 个 `Constant` 节点加上 `AppendVector` 个节点：一个持有这些值的 `Constant` / `Constant2Vector` / `Constant3Vector` / `Constant4Vector`。常量是数字字面量、其取负形式、一个 `const` 属性、持有常量的变量，或对常量的任何算术运算：折叠过程会折叠操作数全为常量的运算符、构造函数和 swizzle *(自 2.0.0 起)*。
 
 | 编写 | 折叠为 |
 | :-- | :-- |
@@ -187,27 +160,19 @@ description: "构造函数"
 | `int3(1, 2, 3)` | `Constant3Vector(1, 2, 3)` *(自 2.0.0 起)*；对编译器而言该值仍为 `int3` |
 | `vec3(K, 0.0, 0.0)` | 当 `K` 是参数时不折叠——两个 `AppendVector` 节点 |
 
-每个值都具有其类型的宽度；折叠后的构造函数没有自己的宽度，不会
-覆盖声明 *(自 2.0.0 起)*。参见
-[转换](conversions.md#authoritative-component-counts)。
+每个值都具有其类型的宽度；折叠后的构造函数没有自己的宽度，不会覆盖声明 *(自 2.0.0 起)*。参见[转换](conversions.md#authoritative-component-counts)。
 
-相等的常量是同一个节点：写入五次的 `vec3(0.5)` 只产生一个 `Constant3Vector`。参见
-[节点复用](node-reuse.md)。
+相等的常量是同一个节点：写入五次的 `vec3(0.5)` 只产生一个 `Constant3Vector`。参见[节点复用](node-reuse.md)。
 
 <a id="notes"></a>
 
 ## 说明
 
-- 规则 4 **不创建任何节点**。`float3(SomeFloat3)` 是空操作包装；`float3(SomeInt3)` 只
-  将种类改为 float。
+- 规则 4 **不创建任何节点**。`float3(SomeFloat3)` 是空操作包装；`float3(SomeInt3)` 只将种类改为 float。
 - 构造函数调用是普通后缀表达式，可以进行 swizzle：`vec4(uv, 0, 1).xy`。
-- 空主体的花括号初始化器（`float3 v = {};`）根本不会到达构造函数——它
-  产生该类型的零值。参见 [声明](declarations.md)。
-- 不支持嵌套花括号初始化器：`float4 m = {{1,2},{3,4}};` 会被重写为
-  `float4({1,2},{3,4})`，而作为参数的花括号列表是
-  [`DSH2214`](../diagnostics/DSH2xxx.md#dsh2214)。
-- 构造函数上的输出选择器（`Output=`、`OutputIndex=`）
-  [`DSH5253`](../diagnostics/DSH5xxx.md#dsh5253)。
+- 空主体的花括号初始化器（`float3 v = {};`）根本不会到达构造函数——它产生该类型的零值。参见 [声明](declarations.md)。
+- 不支持嵌套花括号初始化器：`float4 m = {{1,2},{3,4}};` 会被重写为 `float4({1,2},{3,4})`，而作为参数的花括号列表是 [`DSH2214`](../diagnostics/DSH2xxx.md#dsh2214)。
+- 构造函数上的输出选择器（`Output=`、`OutputIndex=`） [`DSH5253`](../diagnostics/DSH5xxx.md#dsh5253)。
 
 <a id="diagnostics"></a>
 

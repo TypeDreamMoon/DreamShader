@@ -1,8 +1,3 @@
----
-title: "Shader"
-description: "Shader"
----
-
 <a id="shader"></a>
 
 # Shader
@@ -227,8 +222,7 @@ on disk     <Project>/Content/Materials/M_Emissive.uasset      (once Materialize
 ```
 
 > [!NOTE]
-> `BaseTex` 被声明为 `TextureSampleParameter2D`，而不是紧凑的 `Texture2D`，因为只有 sample-parameter 系列拥有 `BaseTex(Coordinates = UV)` 调用形式所连接的输入引脚。紧凑的 `Texture2D` 会生成一个纹理 *对象* 参数，而它没有这样的引脚；调用它会落到函数分发器并失败。请参阅
-> [在 Graph 中使用参数](../../parameters/graph-usage.md#the-pin-call-form)。
+> `BaseTex` 被声明为 `TextureSampleParameter2D`，而不是紧凑的 `Texture2D`，因为只有 sample-parameter 系列拥有 `BaseTex(Coordinates = UV)` 调用形式所连接的输入引脚。紧凑的 `Texture2D` 会生成一个纹理 *对象* 参数，而它没有这样的引脚；调用它会落到函数分发器并失败。请参阅[在 Graph 中使用参数](../parameters/graph-usage.md#the-pin-call-form)。
 
 <a id="see-also"></a>
 
