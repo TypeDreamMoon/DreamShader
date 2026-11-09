@@ -1,14 +1,8 @@
----
-title: "DSH4xxx --- 图语句与表达式"
-description: "DSH4xxx --- 图语句与表达式"
----
-
 <a id="dsh4xxx-----graph-statements-and-expressions"></a>
 
 # DSH4xxx --- 图语句与表达式
 
-> 生成的标记之间的内容由 `.skill/gen-diagnostics.ps1` 写入。
-> 标记下方的所有内容均为手工编写，并在重新生成后保留。
+> 生成的标记之间的内容由 `.skill/gen-diagnostics.ps1` 写入。标记下方的所有内容均为手工编写，并在重新生成后保留。
 
 <a id="dsh4200"></a>
 
@@ -550,7 +544,7 @@ A constructor takes its components in order; named arguments belong on 'UE.' nod
 
 **原因。** 某个值无法放入其所存储的位置：``=`` 的右侧、初始化器、参数默认值或 ``return``。消息中会给出这两种类型。
 
-**修复。** 同 `DSH4226` —— 用 swizzle 或构造函数调整宽度。将 ``int`` 用在期望 ``float`` 的位置会静默转换，绝不会产生此错误。
+**修复。** 同 DSH4226 —— 用 swizzle 或构造函数调整宽度。将 `int` 用在期望 `float` 的位置会静默转换，绝不会产生此错误。
 
 <a id="dsh4229"></a>
 
@@ -1078,11 +1072,7 @@ Node {0} reads {1} from node {2}, which is a statement and produces no value.
 
 **原因。** 有两种情况。要么某个节点读取了输出少于 *k*+1 个的节点的输出 *k*——多输出节点（`TextureSample`、具有多个输出的类上的 `Reflected`、带附加输出的 `Custom`、`GetMaterialAttributes`）是唯一具有非 0 输出的节点，因此这通常是解析到错误输出索引的成员访问——要么某个节点读取了**语句**，而语句根本不产生值。语句是材质汇点、函数输出，或反射的自定义输出类，例如 `UE.VolumetricAdvancedMaterialOutput`（`FIRNode::IsStatement()`）。
 
-**修复。** 作者侧：自定义输出节点是一条语句，而不是一个值——将其写在
-`UE.ClearCoatNormalCustomOutput(Input = n);` 单独一行，而不是将其赋值给某个东西。
-绑定器将该拼写报告为 DSH4231，因此在此处看到它意味着该节点无论如何都被构建了。
-编译器侧：将 `NodeOutput` 访问的 `FBoundExpr::FieldIndex` 与
-构建器赋予该节点的 `Outputs` 进行比较；对于反射类，目录条目的 `Outputs` 数组是权威依据。
+**修复。** 作者侧：自定义输出节点是一条语句，而不是一个值——将其写在 `UE.ClearCoatNormalCustomOutput(Input = n);` 单独一行，而不是将其赋值给某个东西。绑定器将该拼写报告为 DSH4231，因此在此处看到它意味着该节点无论如何都被构建了。编译器侧：将 `NodeOutput` 访问的 `FBoundExpr::FieldIndex` 与构建器赋予该节点的 `Outputs` 进行比较；对于反射类，目录条目的 `Outputs` 数组是权威依据。
 
 <a id="dsh4302"></a>
 
@@ -1100,12 +1090,9 @@ Node {0} has {1} operand(s); this op takes exactly {2}.
 **引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:382`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:393`
 <!-- generated:end DSH4302 -->
 
-**原因。** 该节点的操作数比其 op 所接受的更多或更少。元数来自
-`GetCoreOpInfo`，这是唯一拥有该信息的表，因此不匹配意味着构建器是
-手动组装该节点，而不是从该表构建。
+**原因。** 该节点的操作数比其 op 所接受的更多或更少。元数来自 `GetCoreOpInfo`，这是唯一拥有该信息的表，因此不匹配意味着构建器是手动组装该节点，而不是从该表构建。
 
-**修复。** 编译器侧：使用 `FIRCoreOpInfo::MinArity`/`MaxArity` 构建核心节点，而不是使用
-字面量计数。作者侧：报告该文件，并附上诊断所指向的表达式。
+**修复。** 编译器侧：使用 `FIRCoreOpInfo::MinArity`/`MaxArity` 构建核心节点，而不是使用字面量计数。作者侧：报告该文件，并附上诊断所指向的表达式。
 
 <a id="dsh4303"></a>
 
@@ -1123,13 +1110,9 @@ Node {0} has nothing connected to {1}; every operand of this op must carry a val
 **引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:209`
 <!-- generated:end DSH4303 -->
 
-**原因。** 一个必须携带值的操作数槽为空。整个 IR 中只有两个槽可以
-保持未设置：`Compare` 的操作数 3（引擎 If 节点的可选 `AEqualsB` 引脚）以及
-`TextureSample` 的操作数 2 和 3（可选的采样器和 mip 值）。其他所有内容都是发射器
-无法填补的漏洞。
+**原因。** 一个必须携带值的操作数槽为空。整个 IR 中只有两个槽可以保持未设置：`Compare` 的操作数 3（引擎 If 节点的可选 `AEqualsB` 引脚）以及 `TextureSample` 的操作数 2 和 3（可选的采样器和 mip 值）。其他所有内容都是发射器无法填补的漏洞。
 
-**修复。** 编译器侧：一个表达式被降低为 `FIRValue::None()` 但没有诊断——查找
-在未报告的错误上提前返回的降低路径。作者侧：报告该文件。
+**修复。** 编译器侧：一个表达式被降低为 `FIRValue::None()` 但没有诊断——查找在未报告的错误上提前返回的降低路径。作者侧：报告该文件。
 
 <a id="dsh4304"></a>
 
@@ -1147,15 +1130,9 @@ Node {0} carries {1} positional operand(s); this op takes {2}.
 **引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:347`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:364`
 <!-- generated:end DSH4304 -->
 
-**原因。** 该节点为其 op 使用了错误的连接风格。`IR.h` 针对每个 op 修正了这一点：核心
-数学 op、`Swizzle`、`Append`、`Select`、`Compare`、`StaticSwitch`、`TextureSample`、
-`FunctionOutput`、`Convert` 和 `Broadcast` 使用位置操作数；`Reflected`、`FunctionCall`、
-`Custom`、三个材质属性 op 和 `MaterialSink` 使用命名输入；四个叶子
-（`Constant`、`Parameter`、`TextureParameter`、`FunctionInput`）两者都不使用。
+**原因。** 该节点为其 op 使用了错误的连接风格。`IR.h` 针对每个 op 修正了这一点：核心数学 op、`Swizzle`、`Append`、`Select`、`Compare`、`StaticSwitch`、`TextureSample`、 `FunctionOutput`、`Convert` 和 `Broadcast` 使用位置操作数；`Reflected`、`FunctionCall`、 `Custom`、三个材质属性 op 和 `MaterialSink` 使用命名输入；四个叶子（`Constant`、`Parameter`、`TextureParameter`、`FunctionInput`）两者都不使用。
 
-**修复。** 编译器侧：一个使用 `Operands` 构建的节点，而发射器将在 `Inputs` 中查找（或
-反之），会静默地发射一个未连接任何内容的引擎节点，这就是为什么这会被检查
-而不是被容忍。作者侧：报告该文件。
+**修复。** 编译器侧：一个使用 `Operands` 构建的节点，而发射器将在 `Inputs` 中查找（或反之），会静默地发射一个未连接任何内容的引擎节点，这就是为什么这会被检查而不是被容忍。作者侧：报告该文件。
 
 <a id="dsh4305"></a>
 
@@ -1173,14 +1150,9 @@ Node {0} has a named input with no pin name.
 **引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:948`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:961`
 <!-- generated:end DSH4305 -->
 
-**原因。** 命名输入的引脚名称为空，或者同一引脚名称在一个节点上出现两次。一个
-引擎 `FExpressionInput` 恰好接受一个连接，因此对同一引脚的第二次绑定将
-意味着两个值中的一个被无声地丢弃。
+**原因。** 命名输入的引脚名称为空，或者同一引脚名称在一个节点上出现两次。一个引擎 `FExpressionInput` 恰好接受一个连接，因此对同一引脚的第二次绑定将意味着两个值中的一个被无声地丢弃。
 
-**修复。** 编译器侧：这通常是一个参数被匹配了两次——一次是通过
-`PositionalParameters` 按位置匹配，一次是按名称匹配。`FBoundArgument::Target` 是去重点。
-作者侧：检查你是否在 `UE.*`
-调用中同时按位置和按名称传递了同一参数；如果你没有，请报告该文件。
+**修复。** 编译器侧：这通常是一个参数被匹配了两次——一次是通过 `PositionalParameters` 按位置匹配，一次是按名称匹配。`FBoundArgument::Target` 是去重点。作者侧：检查你是否在 `UE.*` 调用中同时按位置和按名称传递了同一参数；如果你没有，请报告该文件。
 
 <a id="dsh4306"></a>
 
@@ -1198,14 +1170,9 @@ Node {0} does arithmetic on operand {1}, which is a {2}; the graph carries only 
 **引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:690`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:704`
 <!-- generated:end DSH4306 -->
 
-**原因。** 一个数学节点读取或产生了一个材质图表没有连线对应的值。该图表
-携带 `float1` 到 `float4` 以及除此之外什么都没有：矩阵、纹理对象、采样器、一个 `material`
-以及一个 `Substrate` 值对 `FIRType::GraphComponentCount()` 都回答 0。
+**原因。** 一个数学节点读取或产生了一个材质图表没有连线对应的值。该图表携带 `float1` 到 `float4` 以及除此之外什么都没有：矩阵、纹理对象、采样器、一个 `material` 以及一个 `Substrate` 值对 `FIRType::GraphComponentCount()` 都回答 0。
 
-**修复。** 作者侧：这是 DSH4361 的 IR 级回显——一个矩阵进入了算术。将
-表达式移入一个 `/// @custom` 函数，其主体是逐字 HLSL，可以自由使用矩阵。
-编译器侧：绑定器本应在降低之前拒绝这一点；如果它没有，则它
-赋予操作数的类型是错误的。
+**修复。** 作者侧：这是 DSH4361 的 IR 级回显——一个矩阵进入了算术。将表达式移入一个 `/// @custom` 函数，其主体是逐字 HLSL，可以自由使用矩阵。编译器侧：绑定器本应在降低之前拒绝这一点；如果它没有，则它赋予操作数的类型是错误的。
 
 <a id="dsh4307"></a>
 
@@ -1223,16 +1190,11 @@ Node {0} is a statement and must have no outputs, but it declares {1}.
 **引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:289`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:300`
 <!-- generated:end DSH4307 -->
 
-**原因。** 要么一个值节点没有声明任何输出——没有任何东西可以读取它，因此它不可能
-是为了某个原因而被构建的——要么一个语句节点声明了一些输出。
+**原因。** 要么一个值节点没有声明任何输出——没有任何东西可以读取它，因此它不可能是为了某个原因而被构建的——要么一个语句节点声明了一些输出。
 
-语句是 `MaterialSink`、`FunctionOutput`，或一个具有零个输出的 `Reflected` 节点，这
-就是自定义输出类（`UE.VolumetricAdvancedMaterialOutput`、`UE.ClearCoatNormalCustomOutput`）
-被建模的方式。第三种形态是合法的根，并且**不会**在此处被报告；
-测试是 `FIRNode::IsStatement()`，从不是 op 列表。
+语句是 `MaterialSink`、`FunctionOutput`，或一个具有零个输出的 `Reflected` 节点，这就是自定义输出类（`UE.VolumetricAdvancedMaterialOutput`、`UE.ClearCoatNormalCustomOutput`）被建模的方式。第三种形态是合法的根，并且**不会**在此处被报告；测试是 `FIRNode::IsStatement()`，从不是 op 列表。
 
-**修复。** 编译器侧：每个添加节点的构建器路径都必须在返回
-该值之前填充 `Outputs`；一个先添加后定型的节点是常见的来源。作者侧：报告该文件。
+**修复。** 编译器侧：每个添加节点的构建器路径都必须在返回该值之前填充 `Outputs`；一个先添加后定型的节点是常见的来源。作者侧：报告该文件。
 
 <a id="dsh4308"></a>
 
@@ -1250,12 +1212,9 @@ Node {0} has {1} output name(s) for {2} output(s); the two lists are either para
 **引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:311`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:331`
 <!-- generated:end DSH4308 -->
 
-**原因。** `OutputNames` 的存在是为了命名多输出节点，它要么为空（该节点的
-输出是按位置的），要么恰好与 `Outputs` 一样长。列表过短意味着发射器会读取
-超过其末尾；两个具有相同名称的输出意味着成员访问无法在它们之间进行选择。
+**原因。** `OutputNames` 的存在是为了命名多输出节点，它要么为空（该节点的输出是按位置的），要么恰好与 `Outputs` 一样长。列表过短意味着发射器会读取超过其末尾；两个具有相同名称的输出意味着成员访问无法在它们之间进行选择。
 
-**修复。** 编译器侧：在同一位置填充两个列表。对于反射节点，逐字复制目录
-条目的 `Outputs` 名称。作者侧：报告该文件。
+**修复。** 编译器侧：在同一位置填充两个列表。对于反射节点，逐字复制目录条目的 `Outputs` 名称。作者侧：报告该文件。
 
 <a id="dsh4309"></a>
 
@@ -1273,15 +1232,9 @@ Node {0} is a reflected node with catalog index {1}, which is not an entry of th
 **引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1038`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:721`
 <!-- generated:end DSH4309 -->
 
-**原因。** 同一错误的两种形态。要么一个 `Reflected` 节点的 `CatalogIndex` 没有
-指向内置目录中的某个条目——因此发射器无法知道要创建哪个类——要么一个
-*并非*反射的节点携带了目录索引，这会使发射器对 `Multiply` 走
-反射路径。
+**原因。** 同一错误的两种形态。要么一个 `Reflected` 节点的 `CatalogIndex` 没有指向内置目录中的某个条目——因此发射器无法知道要创建哪个类——要么一个*并非*反射的节点携带了目录索引，这会使发射器对 `Multiply` 走反射路径。
 
-**修复。** 编译器侧：`CatalogIndex` 仅在构建 `Reflected` 节点时设置，来自
-绑定器记录的 `FBoundExpr::Index`。过期的索引通常意味着节点被复制且其 op
-被更改。作者侧：如果目录是从导出的清单加载的，请重新导出它——索引
-是按位置的，旧清单与新引擎不匹配。
+**修复。** 编译器侧：`CatalogIndex` 仅在构建 `Reflected` 节点时设置，来自绑定器记录的 `FBoundExpr::Index`。过期的索引通常意味着节点被复制且其 op 被更改。作者侧：如果目录是从导出的清单加载的，请重新导出它——索引是按位置的，旧清单与新引擎不匹配。
 
 <a id="dsh4310"></a>
 
@@ -1299,14 +1252,9 @@ Node {0} connects pin '{1}', which '{2}' does not have.
 **引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:758`
 <!-- generated:end DSH4310 -->
 
-**原因。** 一个反射节点连接了该类没有的引脚。目录的 `Inputs` 列表
-是从该类的 `FExpressionInput` 成员构建的，因此不在其中的引脚在该引擎类上
-不存在。
+**原因。** 一个反射节点连接了该类没有的引脚。目录的 `Inputs` 列表是从该类的 `FExpressionInput` 成员构建的，因此不在其中的引脚在该引擎类上不存在。
 
-**修复。** 作者侧：检查拼写——引脚匹配区分大小写，并且名称是 C++
-成员名称（在 TextureSample 上是 `Coordinates`，而不是 `UVs`；在 Normalize 上是 `VectorInput`）。
-材质编辑器的节点工具提示显示引脚名称。编译器侧：如果该引脚*确实*存在，则
-反射导出器跳过了它——检查 `IsMaterialExpressionInputProperty`。
+**修复。** 作者侧：检查拼写——引脚匹配区分大小写，并且名称是 C++ 成员名称（在 TextureSample 上是 `Coordinates`，而不是 `UVs`；在 Normalize 上是 `VectorInput`）。材质编辑器的节点工具提示显示引脚名称。编译器侧：如果该引脚*确实*存在，则反射导出器跳过了它——检查 `IsMaterialExpressionInputProperty`。
 
 <a id="dsh4311"></a>
 
@@ -1706,9 +1654,7 @@ Material instance product {0} needs the material it is an instance of, and its p
 **引发自** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1377`
 <!-- generated:end DSH4330 -->
 
-**原因。** 某 MaterialInstance 产物没有父引用。绑定器在缺少
-`Parent`（DSH7250、DSH7252）时会拒绝 `.dsi`，
-因此触发此错误属于内部错误。
+**原因。** 某 MaterialInstance 产物没有父引用。绑定器在缺少 `Parent`（DSH7250、DSH7252）时会拒绝 `.dsi`，因此触发此错误属于内部错误。
 
 **修复。** 连同产生它的源一同上报。
 
@@ -1728,10 +1674,7 @@ Override '{0}' of product {1} is a {2} override holding a {3} value, and a {2} o
 **引发自** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1403`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1416`
 <!-- generated:end DSH4331 -->
 
-**原因。** 某实例覆写所持有的值类型与其参数类型不符 ——
-Scalar 是一个数，Vector 是四个，StaticSwitch 是 bool，资源类则是对象路径 —— 或者某
-Font 覆写指定了负数页。这是内部一致性检查：绑定器在源中会拒绝二者
-（`DSH7259`、`DSH7266`）。
+**原因。** 某实例覆写所持有的值类型与其参数类型不符 —— Scalar 是一个数，Vector 是四个，StaticSwitch 是 bool，资源类则是对象路径 —— 或者某 Font 覆写指定了负数页。这是内部一致性检查：绑定器在源中会拒绝二者（`DSH7259`、`DSH7266`）。
 
 **修复。** 连同产生它的源一同上报。
 
@@ -1751,8 +1694,7 @@ Product {0} overrides '{1}' twice, and an instance sets each parameter once.
 **引发自** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1433`
 <!-- generated:end DSH4332 -->
 
-**原因。** 某个参数在某实例产物中被覆写了两次。绑定器会在源上报告同样的问题
-（DSH7261）；这是验证器的兜底。
+**原因。** 某个参数在某实例产物中被覆写了两次。绑定器会在源上报告同样的问题（DSH7261）；这是验证器的兜底。
 
 **修复。** 从 `.dsi` 中移除该名称的两个 `uniform` 行之一。
 
@@ -1772,9 +1714,7 @@ Override '{0}' of product {1} names a parameter, and the parent schema the produ
 **引发自** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1449`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1459`
 <!-- generated:end DSH4333 -->
 
-**原因。** 某实例产物覆写了一个其父架构未列出的参数，或以另一种类型列出了该参数。绑定器会
-针对同一架构检查二者（`DSH7258`、`DSH7259`），因此触发此错误意味着二者
-看到的是不同的架构。
+**原因。** 某实例产物覆写了一个其父架构未列出的参数，或以另一种类型列出了该参数。绑定器会针对同一架构检查二者（`DSH7258`、`DSH7259`），因此触发此错误意味着二者看到的是不同的架构。
 
 **修复。** 先重建父，再重建实例；若问题依旧，请上报。
 
@@ -1794,8 +1734,7 @@ This module holds a material instance and {0} other product(s), and a material i
 **引发自** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1613`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1627`
 <!-- generated:end DSH4334 -->
 
-**原因。** 某模块将材质实例与其他产物放在一起。一个 `.dsi` 就是一个实例，
-别无其他；前端会拒绝其中的函数与其他声明，因此这是验证器的兜底。
+**原因。** 某模块将材质实例与其他产物放在一起。一个 `.dsi` 就是一个实例，别无其他；前端会拒绝其中的函数与其他声明，因此这是验证器的兜底。
 
 **修复。** 将每个实例放在其各自独立的 `.dsi` 中。
 
@@ -1815,8 +1754,7 @@ Material instance product {0} carries backend {1}, and an instance is a plain ma
 **引发自** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1387`
 <!-- generated:end DSH4335 -->
 
-**原因。** 某 MaterialInstance 产物携带了后端。`Backend` 是材质的属性；实例
-始终是普通的 UMaterialInstanceConstant。
+**原因。** 某 MaterialInstance 产物携带了后端。`Backend` 是材质的属性；实例始终是普通的 UMaterialInstanceConstant。
 
 **修复。** 从 `#pragma instance(...)` 中移除 `Backend`。
 
@@ -1836,21 +1774,11 @@ The IR builder cannot read '{0}' here: the binder typed what it is read from as 
 **引发自** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:386`、`Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:516`
 <!-- generated:end DSH4350 -->
 
-**原因。** IR 构建器遇到了一个其 `EBoundExprKind` 没有对应分支的已绑定表达式。
-这属于内部错误，而非编写错误：绑定器产出了构建器未曾针对其编写的记录，
-当 `LangBound.h` 新增了一种表达式种类而只有两侧之一被更新时，就会发生
-这种情况。
+**原因。** IR 构建器遇到了一个其 `EBoundExprKind` 没有对应分支的已绑定表达式。这属于内部错误，而非编写错误：绑定器产出了构建器未曾针对其编写的记录，当 `LangBound.h` 新增了一种表达式种类而只有两侧之一被更新时，就会发生这种情况。
 
-此代码下的第二条消息是同一类接缝：某字段读取，例如 `X.Roughness`，
-绑定器将其对象类型定为 `material`，但它并未被降级为该类型。每个 `material`
-值的产生者 —— `material` 参数、反射节点的 MaterialAttributes 输出
-（`UE.BlendMaterialAttributes(...)`）、函数调用的 `material` 结果、写回的 `out material`
-—— 都以属性映射的形式交出该值并以该输出作为其源，因此触发此消息意味着
-某产生者只在一侧被添加或修改。
+此代码下的第二条消息是同一类接缝：某字段读取，例如 `X.Roughness`，绑定器将其对象类型定为 `material`，但它并未被降级为该类型。每个 `material` 值的产生者 —— `material` 参数、反射节点的 MaterialAttributes 输出（`UE.BlendMaterialAttributes(...)`）、函数调用的 `material` 结果、写回的 `out material` —— 都以属性映射的形式交出该值并以该输出作为其源，因此触发此消息意味着某产生者只在一侧被添加或修改。
 
-**修复。** 作者在源中无能为力。请上报文件和行号；修复方法是在 `FIRBuilder::LowerExpr` 中
-新增分支（对于字段读取，则是那个交回裸值的产生者）。
-在此之前，以更简单的形式重写表达式通常可避开没有降级的那种。
+**修复。** 作者在源中无能为力。请上报文件和行号；修复方法是在 `FIRBuilder::LowerExpr` 中新增分支（对于字段读取，则是那个交回裸值的产生者）。在此之前，以更简单的形式重写表达式通常可避开没有降级的那种。
 
 <a id="dsh4352"></a>
 
@@ -1870,27 +1798,13 @@ This module was bound without a builtin catalog, so no 'UE.*' call and no materi
 
 **原因。** 有三种形态，可通过消息指向的位置加以区分。
 
-文件顶部：`BuildDreamShaderIR` 在完全没有内建目录的情况下运行 —— 既没有
-`FBoundModule::Catalog`（由绑定器设置），也没有 `FIRBuildOptions::Catalog` 覆写。目录是引擎知识 ——
-表达式类、其插针、材质属性表 —— 而 `DreamShaderLang` 无法自行查询其中任何一项，
-因此任何需要命名的内容都无法降级：没有 `UE.*` 或 `Substrate.*` 调用，没有诸如
-`m.BaseColor` 的材质属性。它针对整个模块报告一次，而非每一行报告一次。
+文件顶部：`BuildDreamShaderIR` 在完全没有内建目录的情况下运行 —— 既没有 `FBoundModule::Catalog`（由绑定器设置），也没有 `FIRBuildOptions::Catalog` 覆写。目录是引擎知识 —— 表达式类、其插针、材质属性表 —— 而 `DreamShaderLang` 无法自行查询其中任何一项，因此任何需要命名的内容都无法降级：没有 `UE.*` 或 `Substrate.*` 调用，没有诸如 `m.BaseColor` 的材质属性。它针对整个模块报告一次，而非每一行报告一次。
 
-在某个特定属性或 `UE.*` 调用处：目录**确实**存在，但不含绑定器所记录的属性或
-表达式索引，这意味着绑定与构建读取了不同的目录 —— 最常见的情况是过期的导出清单
-对上较新的引擎。
+在某个特定属性或 `UE.*` 调用处：目录**确实**存在，但不含绑定器所记录的属性或表达式索引，这意味着绑定与构建读取了不同的目录 —— 最常见的情况是过期的导出清单对上较新的引擎。
 
-在材质的入口函数处：入口的 `material` 被整体替换了 —— `m =
-UE.BlendMaterialAttributes(...)`, or `m` 被交给了某个会写回
-`inout material` 的材质函数 —— 因此到达材质输出的是一个属性集，它通过材质的
-`MaterialAttributes` 输入进入，而目录的属性表中没有
-`MaterialAttributes` 条目来为该输入命名。
+在材质的入口函数处：入口的 `material` 被整体替换了 —— `m = UE.BlendMaterialAttributes(...)`, or `m` 被交给了某个会写回 `inout material` 的材质函数 —— 因此到达材质输出的是一个属性集，它通过材质的 `MaterialAttributes` 输入进入，而目录的属性表中没有 `MaterialAttributes` 条目来为该输入命名。
 
-**修复。** 在一次编译内，这三种情况都不可能发生；管线针对同一份由反射填充的目录进行
-绑定与构建，而反射总会添加 `MaterialAttributes` 条目。从工具调用时，请传入该目录：`dsc export-catalog` 写入 JSON 形式，
-`LoadBuiltinCatalogFromJson` 将其读回，且**同一个**目录必须同时到达
-`FBindOptions::Catalog` 与构建。引擎升级后请重新导出清单。目录
-存在但为空，意味着反射过程在引擎的材质表达式类加载之前就运行了。
+**修复。** 在一次编译内，这三种情况都不可能发生；管线针对同一份由反射填充的目录进行绑定与构建，而反射总会添加 `MaterialAttributes` 条目。从工具调用时，请传入该目录：`dsc export-catalog` 写入 JSON 形式， `LoadBuiltinCatalogFromJson` 将其读回，且**同一个**目录必须同时到达 `FBindOptions::Catalog` 与构建。引擎升级后请重新导出清单。目录存在但为空，意味着反射过程在引擎的材质表达式类加载之前就运行了。
 
 <a id="dsh4360"></a>
 
@@ -1908,16 +1822,9 @@ This loop runs a number of times the compiler cannot fix at {0} or fewer, and a 
 **引发自** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:425`
 <!-- generated:end DSH4360 -->
 
-**原因。** 某个 `for`、`while` 或 `do`，其循环次数绑定器无法证明为常量，
-或证明其大于 `MaxUnrolledIterations`（默认为 64）。材质图完全没有循环：
-其中唯一能存在循环的方式是在编译期展开，而这需要一个在着色器运行之前
-就已知的计数。
+**原因。** 某个 `for`、`while` 或 `do`，其循环次数绑定器无法证明为常量，或证明其大于 `MaxUnrolledIterations`（默认为 64）。材质图完全没有循环：其中唯一能存在循环的方式是在编译期展开，而这需要一个在着色器运行之前就已知的计数。
 
-**修复。** 给循环一个常量边界 —— `for (int i = 0; i < 8; ++i)`，其中 `8` 是字面量或
-`static const`，以及一个绑定器能够遵循的步长。以 `uniform` 计数进行的循环从定义上
-就无法展开；请将其移入 `/// @custom` 函数，那里的主体是 HLSL，由着色器
-编译器来正确地处理循环。非常长的展开（数百次迭代）即使合法，通常也是图中的
-错误：它会为每次迭代在资源中放入一个节点。
+**修复。** 给循环一个常量边界 —— `for (int i = 0; i < 8; ++i)`，其中 `8` 是字面量或 `static const`，以及一个绑定器能够遵循的步长。以 `uniform` 计数进行的循环从定义上就无法展开；请将其移入 `/// @custom` 函数，那里的主体是 HLSL，由着色器编译器来正确地处理循环。非常长的展开（数百次迭代）即使合法，通常也是图中的错误：它会为每次迭代在资源中放入一个节点。
 
 <a id="dsh4361"></a>
 
@@ -1935,9 +1842,7 @@ This expression is {0} and the material graph has no matrices; compute it inside
 **引发自** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:254`
 <!-- generated:end DSH4361 -->
 
-**原因。** 某个表达式是矩阵（`float3x3`、`float4x4`），而有东西需要它的值。
-材质图没有矩阵插针：引擎的变换节点接受向量和基，而非矩阵，因此没有地方
-可以放置它。
+**原因。** 某个表达式是矩阵（`float3x3`、`float4x4`），而有东西需要它的值。材质图没有矩阵插针：引擎的变换节点接受向量和基，而非矩阵，因此没有地方可以放置它。
 
 **修复。** 对于坐标空间变换，请使用 `UE.Transform` / `UE.TransformPosition`，这是图提供的替代矩阵的方式。对于真正的矩阵运算，请将整个计算移入 `/// @custom` 函数，并将向量传入传出；这样矩阵就存在于 HLSL 内部，在那里它不受限制。
 
@@ -2161,8 +2066,7 @@ The two sides of this branch end with a different whole material, and DreamShade
 
 **原因。** 一个 `if` 的两个分支——或一个 `?:` 的两侧，或一个 `if` 内部的 `return` 及其之后的代码——在同一个变量中留下了不同的*完整*材质。一个分支替换了该材质（`m = UE.BlendMaterialAttributes(...)`、`R = A`，或一次会写回 `inout material` 的材质函数调用），而另一个分支没有，或者每个分支用不同的材质替换了它。分支的降级方式是通过逐个属性在两条分支留下的内容之间进行选择；完整材质不是属性值，而在没有替换材质的那一侧，没人写入的属性没有值可供编译器命名并与之比较。这在下移一个属性时同样成立：`m.MaterialAttributes` 持有一个完整材质，因此在每个分支中向其写入不同的材质同样会触发此错误——绝不是对两个材质进行数值条件判断。
 
-**修复。** 在两条分支中都写入你需要的属性，而不是在其中一条中替换材质。要在两个完整材质之间选择，请混合它们：`m = UE.BlendMaterialAttributes(A = First,
-B = Second, Alpha = Mask);`，掩码设为 0 或 1 即可实现该分支的意图。在两个完整材质之间的静态开关（一个针对 MaterialAttributes 的 `StaticSwitch`）在此版本中不会生成。
+**修复。** 在两条分支中都写入你需要的属性，而不是在其中一条中替换材质。要在两个完整材质之间选择，请混合它们：`m = UE.BlendMaterialAttributes(A = First, B = Second, Alpha = Mask);`，掩码设为 0 或 1 即可实现该分支的意图。在两个完整材质之间的静态开关（一个针对 MaterialAttributes 的 `StaticSwitch`）在此版本中不会生成。
 
 <a id="dsh4376"></a>
 
@@ -2282,15 +2186,9 @@ This branch becomes a 'Substrate.Select', which parameter-blends its two inputs;
 **由以下抛出** `Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:507`
 <!-- generated:end DSH4381 -->
 
-**原因。** Substrate 调用的一个虚参 —— `BaseColor` / `Metallic` / `Specular`、
-`Haziness`、`Transmittance` / `Thickness` —— 代表 BSDF 前面的一个转换节点
-（`Substrate.MetalnessToDiffuseAlbedoF0`、`Substrate.HazinessToSecondaryRoughness`、
-`Substrate.TransmittanceToMFP`），而此引擎的目录中没有这样的节点。绑定器
-接受了这个参数，因为节点名称是已知的；但构建器找不到任何东西可做。
+**原因。** Substrate 调用的一个虚参 —— `BaseColor` / `Metallic` / `Specular`、 `Haziness`、`Transmittance` / `Thickness` —— 代表 BSDF 前面的一个转换节点（`Substrate.MetalnessToDiffuseAlbedoF0`、`Substrate.HazinessToSecondaryRoughness`、 `Substrate.TransmittanceToMFP`），而此引擎的目录中没有这样的节点。绑定器接受了这个参数，因为节点名称是已知的；但构建器找不到任何东西可做。
 
-**修复。** 将转换本应馈入的引脚直接接上（`DiffuseAlbedo` 和 `F0`、
-`SecondRoughness` 和 `SecondRoughnessWeight`、`SSSMFP`）。如果引擎确实有这个节点，那么
-目录已过期：再次运行 `dsc export-catalog`。
+**修复。** 将转换本应馈入的引脚直接接上（`DiffuseAlbedo` 和 `F0`、 `SecondRoughness` 和 `SecondRoughnessWeight`、`SSSMFP`）。如果引擎确实有这个节点，那么目录已过期：再次运行 `dsc export-catalog`。
 
 <a id="dsh4382"></a>
 
@@ -2308,14 +2206,9 @@ This material drives FrontMaterial and says 'Substrate = Native', and Substrate 
 **引发者** `Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:416`
 <!-- generated:end DSH4382 -->
 
-**原因。** 材质写着 `#pragma material(Substrate = Native)`、驱着 `FrontMaterial`，而
-此项目中的 Substrate 处于关闭状态（`r.Substrate`，即内置定义 `DS_SUBSTRATE`）。引擎
-无法编译这样的资产，因此在这里被拒绝，此处的消息可以说出原因，而不是作为
-稍后的着色器错误。
+**原因。** 材质写着 `#pragma material(Substrate = Native)`、驱着 `FrontMaterial`，而此项目中的 Substrate 处于关闭状态（`r.Substrate`，即内置定义 `DS_SUBSTRATE`）。引擎无法编译这样的资产，因此在这里被拒绝，此处的消息可以说出原因，而不是作为稍后的着色器错误。
 
-**修复。** 在项目中开启 Substrate，或者针对旧版属性编写材质并
-写入 `Substrate = Bridge`：这样在 Substrate 关闭时按原样构建，在开启时构建为一个
-`Substrate.ShadingModels` 节点。
+**修复。** 在项目中开启 Substrate，或者针对旧版属性编写材质并写入 `Substrate = Bridge`：这样在 Substrate 关闭时按原样构建，在开启时构建为一个 `Substrate.ShadingModels` 节点。
 
 <a id="dsh4383"></a>
 
@@ -2333,15 +2226,9 @@ This material drives FrontMaterial and says 'Substrate = Native', and Substrate 
 **引发者** `Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:201`、`Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:247`、`Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:277`、`Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:304`
 <!-- generated:end DSH4383 -->
 
-**原因。** 一个逐成员构建的 Substrate 值（`Substrate S = Substrate.Slab();
-S.Roughness = r;`）遇到了会转回来的循环。绑定器按源代码顺序检查构建器，
-看不到循环的第二轮，因此图形的构建器会在四种情况下报告：在循环的早先一轮已经使用了该值之后某个成员被写入（其节点是当时的样子）；
-在早先一轮将局部变量赋为整值时某个成员被访问，而整值没有成员；
-在写入该成员的行未运行的路径上，某个成员被读取，或作为 `*=` 及其同类表达式的左侧。
+**原因。** 一个逐成员构建的 Substrate 值（`Substrate S = Substrate.Slab(); S.Roughness = r;`）遇到了会转回来的循环。绑定器按源代码顺序检查构建器，看不到循环的第二轮，因此图形的构建器会在四种情况下报告：在循环的早先一轮已经使用了该值之后某个成员被写入（其节点是当时的样子）；在早先一轮将局部变量赋为整值时某个成员被访问，而整值没有成员；在写入该成员的行未运行的路径上，某个成员被读取，或作为 `*=` 及其同类表达式的左侧。
 
-**修复。** 在循环内声明该值——在循环体中声明的构建器每一轮
-都是新值——或者在循环开始前完成写入。对于后两种情况，在读取成员之前
-在其所经的每条路径上都为其赋值。
+**修复。** 在循环内声明该值——在循环体中声明的构建器每一轮都是新值——或者在循环开始前完成写入。对于后两种情况，在读取成员之前在其所经的每条路径上都为其赋值。
 
 <a id="dsh4390"></a>
 
@@ -2359,14 +2246,9 @@ S.Roughness = r;`）遇到了会转回来的循环。绑定器按源代码顺序
 **引发者** `Source/DreamShaderLang/Private/IR/IRPasses.cpp:872`
 <!-- generated:end DSH4390 -->
 
-**原因。** 信息。声明了一个 `uniform` 但文件中没有任何地方读取它，因此没有生成参数
-节点，材质也就没有这样的参数。这些遍历在剪除之后报告，因此
-它也会对只被本身被证明是死代码的代码读取的 uniform 触发。
+**原因。** 信息。声明了一个 `uniform` 但文件中没有任何地方读取它，因此没有生成参数节点，材质也就没有这样的参数。这些遍历在剪除之后报告，因此它也会对只被本身被证明是死代码的代码读取的 uniform 触发。
 
-**修复。** 删除声明，或使用它。如果本意是让材质实例驱动该参数，
-请注意：不馈入任何东西的参数什么也不做：该实例会显示一个没有
-效果的旋钮，这就是它不被生成的原因。如果它只在当前关闭的 `#if` 文本内被读取，
-该消息是预期的。
+**修复。** 删除声明，或使用它。如果本意是让材质实例驱动该参数，请注意：不馈入任何东西的参数什么也不做：该实例会显示一个没有效果的旋钮，这就是它不被生成的原因。如果它只在当前关闭的 `#if` 文本内被读取，该消息是预期的。
 
 <a id="dsh4400"></a>
 
@@ -2386,20 +2268,13 @@ Buffer '{0}' is declared twice; the declaration on line {1} already makes it.
 
 **原因。** 一个缓冲区以一个已被占用的名称声明。三条消息：
 
-- 相同的名称之前已作为缓冲区声明过；第一个声明有效，此声明被
-  丢弃；
-- 该名称与之前声明的缓冲区仅在大小写上不同
-  （`Buffer 'mask' differs from 'Mask', declared on line 2, in case only; ...`）：在源代码中名称区分大小写，但管线资产将缓冲区名称保存为 Unreal 名称，
-  比较时忽略大小写，因此二者在那里会是同一个缓冲区。第一个声明有效；
-- 该名称是管线的 `uniform` 或 `static const`，或是 `DreamPassWeight`
-  （`'Mask' already names a parameter or a constant of this pipeline; ...`）：缓冲区、参数和
-  常量共用一个命名空间，无论缓冲区在文件中处于什么位置，被拒绝的都是缓冲区。
+- 相同的名称之前已作为缓冲区声明过；第一个声明有效，此声明被丢弃；
+- 该名称与之前声明的缓冲区仅在大小写上不同（`Buffer 'mask' differs from 'Mask', declared on line 2, in case only; ...`）：在源代码中名称区分大小写，但管线资产将缓冲区名称保存为 Unreal 名称，比较时忽略大小写，因此二者在那里会是同一个缓冲区。第一个声明有效；
+- 该名称是管线的 `uniform` 或 `static const`，或是 `DreamPassWeight` （`'Mask' already names a parameter or a constant of this pipeline; ...`）：缓冲区、参数和常量共用一个命名空间，无论缓冲区在文件中处于什么位置，被拒绝的都是缓冲区。
 
-被拒绝的声明什么也不产生：同名绑定绑定第一个缓冲区；对仅大小写不同的被拒绝拼写的绑定，
-或对某参数已有名称的绑定，为 DSH4403。
+被拒绝的声明什么也不产生：同名绑定绑定第一个缓冲区；对仅大小写不同的被拒绝拼写的绑定，或对某参数已有名称的绑定，为 DSH4403。
 
-**修复。** 重命名二者之一，或合并同一缓冲区的两个声明——它们的参数放入一个
-列表：`buffer Mask : R8(Clear = 0, Scale = 0.5);`。
+**修复。** 重命名二者之一，或合并同一缓冲区的两个声明——它们的参数放入一个列表：`buffer Mask : R8(Clear = 0, Scale = 0.5);`。
 
 <a id="dsh4401"></a>
 
@@ -2417,14 +2292,9 @@ A pass named '{0}' is already declared on line {1}; RDG events and stats are nam
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1811`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1824`
 <!-- generated:end DSH4401 -->
 
-**原因。** 同一条管线的两个通道名称相同，或名称仅在大小写上不同
-（`Pass 'blur' differs from 'Blur', declared on line 7, in case only; ...`）：管线资产将
-通道名称保存为 Unreal 名称，比较时忽略大小写，因此 `Blur` 和 `blur` 在那里会是同一个通道。
-运行时会以通道命名其 GPU 事件和统计（`<Pipeline>.<Pass>`），因此一个名称
-必须指向一个通道。第二个通道会被整体跳过：在重命名之前，其中的任何内容都不会被检查或构建。
+**原因。** 同一条管线的两个通道名称相同，或名称仅在大小写上不同（`Pass 'blur' differs from 'Blur', declared on line 7, in case only; ...`）：管线资产将通道名称保存为 Unreal 名称，比较时忽略大小写，因此 `Blur` 和 `blur` 在那里会是同一个通道。运行时会以通道命名其 GPU 事件和统计（`<Pipeline>.<Pass>`），因此一个名称必须指向一个通道。第二个通道会被整体跳过：在重命名之前，其中的任何内容都不会被检查或构建。
 
-**修复。** 重命名二者之一，最好按其功能命名：`BlurH` 和 `BlurV`，而不是两个
-`Blur`。
+**修复。** 重命名二者之一，最好按其功能命名：`BlurH` 和 `BlurV`，而不是两个 `Blur`。
 
 <a id="dsh4402"></a>
 
@@ -2442,14 +2312,9 @@ A pass named '{0}' is already declared on line {1}; RDG events and stats are nam
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1530`
 <!-- generated:end DSH4402 -->
 
-**原因。** 一个 `buffer` 声明使用了内置纹理的名称：`SceneColor`、`SceneDepth`、
-`CustomDepth`、`CustomStencil`、`GBufferA` 到 `GBufferF`、`Velocity` 或 `Translucency`。通道无需声明
-即按名称绑定这些纹理，因此同名的缓冲区无法与
-渲染器的纹理区分开。该声明被丢弃，对该名称的绑定仍然绑定内置纹理。
+**原因。** 一个 `buffer` 声明使用了内置纹理的名称：`SceneColor`、`SceneDepth`、 `CustomDepth`、`CustomStencil`、`GBufferA` 到 `GBufferF`、`Velocity` 或 `Translucency`。通道无需声明即按名称绑定这些纹理，因此同名的缓冲区无法与渲染器的纹理区分开。该声明被丢弃，对该名称的绑定仍然绑定内置纹理。
 
-**修复。** 给缓冲区一个自己的名称。若要复制内置纹理，声明该缓冲区并用一个 `copy` 通道
-填充它（`read SceneColor; write Grab;`）；若要网格通道的私有深度，声明
-`buffer MaskDepth : Depth32;` 并写入 `Depth = Own(MaskDepth);`。
+**修复。** 给缓冲区一个自己的名称。若要复制内置纹理，声明该缓冲区并用一个 `copy` 通道填充它（`read SceneColor; write Grab;`）；若要网格通道的私有深度，声明 `buffer MaskDepth : Depth32;` 并写入 `Depth = Own(MaskDepth);`。
 
 <a id="dsh4403"></a>
 
@@ -2467,15 +2332,9 @@ A pass named '{0}' is already declared on line {1}; RDG events and stats are nam
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1509`
 <!-- generated:end DSH4403 -->
 
-**原因。** 通道指定了一个不存在的缓冲区：在 `read` 或 `write` 绑定中，在
-`Dispatch = <Buffer>`（或 `<Buffer> / n`、`<Buffer> * n`）中，或在 `Depth = Own(<Buffer>)` 中。名称
-区分大小写；当已声明的缓冲区或内置纹理仅大小写不同时，消息
-会提示它（`read sceneColor;`）。通道只绑定管线自身的缓冲区和内置纹理：
-`Texture2D` 参数，或另一条管线的缓冲区，在这里都不是缓冲区。声明被拒绝的缓冲区
-（DSH4400）也未被声明，因此其绑定也会落到这里。
+**原因。** 通道指定了一个不存在的缓冲区：在 `read` 或 `write` 绑定中，在 `Dispatch = <Buffer>`（或 `<Buffer> / n`、`<Buffer> * n`）中，或在 `Depth = Own(<Buffer>)` 中。名称区分大小写；当已声明的缓冲区或内置纹理仅大小写不同时，消息会提示它（`read sceneColor;`）。通道只绑定管线自身的缓冲区和内置纹理： `Texture2D` 参数，或另一条管线的缓冲区，在这里都不是缓冲区。声明被拒绝的缓冲区（DSH4400）也未被声明，因此其绑定也会落到这里。
 
-**修复。** 声明该缓冲区——`buffer Blurred : R8(Scale = 0.5);`——或更正名称。若要将
-纹理参数交给通道，请用材质绘制该通道并通过 `param` 将其交给材质。
+**修复。** 声明该缓冲区——`buffer Blurred : R8(Scale = 0.5);`——或更正名称。若要将纹理参数交给通道，请用材质绘制该通道并通过 `param` 将其交给材质。
 
 <a id="dsh4404"></a>
 
@@ -2495,18 +2354,12 @@ A pass named '{0}' is already declared on line {1}; RDG events and stats are nam
 
 **原因。** 管线值中的某个名称未声明。有两个地方会引发它：
 
-- `Enabled = <Name>`，在 `#pragma pipeline(...)` 中或在某个 pass 中，既不指向 `uniform`，也不指向
-  `static const`。`true` 和 `false` 为小写：`Enabled = True` 是一个名称。
-- 一个 `param` 表达式使用了不是 `uniform`、`static const` 或 `DreamPassWeight` 的名称
-  （`'Radius' is not a 'uniform' or 'static const' of this pipeline, nor 'DreamPassWeight'.`）：拼错的参数、一个缓冲区（`param Size = Mask;`）、只有该 pass 的着色器或材质
-  才知道的名称。
+- `Enabled = <Name>`，在 `#pragma pipeline(...)` 中或在某个 pass 中，既不指向 `uniform`，也不指向 `static const`。`true` 和 `false` 为小写：`Enabled = True` 是一个名称。
+- 一个 `param` 表达式使用了不是 `uniform`、`static const` 或 `DreamPassWeight` 的名称（`'Radius' is not a 'uniform' or 'static const' of this pipeline, nor 'DreamPassWeight'.`）：拼错的参数、一个缓冲区（`param Size = Mask;`）、只有该 pass 的着色器或材质才知道的名称。
 
-被 DSH3316 拒绝的变量同样不会被声明。当某个已声明的名称仅大小写不同时，消息会
-给出建议。
+被 DSH3316 拒绝的变量同样不会被声明。当某个已声明的名称仅大小写不同时，消息会给出建议。
 
-**修复。** 更正名称，或在文件作用域声明该值：为 `Enabled` 声明一个 `uniform bool`，为
-`param` 声明一个 `uniform` 或 `static const`。缓冲区通过 `read` 到达 pass，在 HLSL
-pass 中它还会将其大小定义为 `<Name>Size`。
+**修复。** 更正名称，或在文件作用域声明该值：为 `Enabled` 声明一个 `uniform bool`，为 `param` 声明一个 `uniform` 或 `static const`。缓冲区通过 `read` 到达 pass，在 HLSL pass 中它还会将其大小定义为 `<Name>Size`。
 
 <a id="dsh4405"></a>
 
@@ -2524,8 +2377,7 @@ pass 中它还会将其大小定义为 `<Name>Size`。
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1070`
 <!-- generated:end DSH4405 -->
 
-**原因。** `Enabled` 在 `#pragma pipeline(...)` 中或在某个 pass 中指向了一个已声明的值，而该值不是
-`bool`：一个 `uniform float`、一个 `int`、一个向量。管线或 pass 仅由 bool 切换。
+**原因。** `Enabled` 在 `#pragma pipeline(...)` 中或在某个 pass 中指向了一个已声明的值，而该值不是 `bool`：一个 `uniform float`、一个 `int`、一个向量。管线或 pass 仅由 bool 切换。
 
 **修复。** 声明一个 `uniform bool` 并为其命名：
 
@@ -2535,8 +2387,7 @@ pass 中它还会将其大小定义为 `<Name>Size`。
 uniform bool bShowOutline = true;
 ```
 
-管线不需要 `Enabled` 来淡出：它不会以权重 0 运行，并且每个 pass 都会收到该
-权重（在材质中为 `DreamPassWeight`，在 `.usf` 中为 `DP_Weight`）。
+管线不需要 `Enabled` 来淡出：它不会以权重 0 运行，并且每个 pass 都会收到该权重（在材质中为 `DreamPassWeight`，在 `.usf` 中为 `DP_Weight`）。
 
 <a id="dsh4406"></a>
 
@@ -2554,17 +2405,9 @@ No material '{0}' was found: a bare name is the material a '.dss' under the same
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3530`
 <!-- generated:end DSH4406 -->
 
-**原因。** 全屏 pass 或网格 pass 的 `Material` 解析不到任何内容。裸名称
-（`"PP_Outline"`）会在 `.dsp` 的源根目录下的 DreamShader 源产物中查找——
-`.dss` 导出的材质，或一个 `.dsi`——必须完全按拼写匹配，包括大小写；材质
-函数不算。对象路径（`"/Game/FX/PP_Outline.PP_Outline"`）必须指向一个存在的资产，
-或源根目录下的某个源所构建的资产。该检查需要宿主来查找
-材质，编辑器中的编译或通过 `dsc` 的编译会进行此操作；否则会跳过
-（DSH7360）。
+**原因。** 全屏 pass 或网格 pass 的 `Material` 解析不到任何内容。裸名称（`"PP_Outline"`）会在 `.dsp` 的源根目录下的 DreamShader 源产物中查找—— `.dss` 导出的材质，或一个 `.dsi`——必须完全按拼写匹配，包括大小写；材质函数不算。对象路径（`"/Game/FX/PP_Outline.PP_Outline"`）必须指向一个存在的资产，或源根目录下的某个源所构建的资产。该检查需要宿主来查找材质，编辑器中的编译或通过 `dsc` 的编译会进行此操作；否则会跳过（DSH7360）。
 
-**修复。** 对照构建该材质的 `export` 检查名称，或写出对象路径，
-这是此源根目录之外的材质所需要的——比如手工制作的材质，或另一个插件的
-源所构建的材质。由多个源构建的裸名称属于 DSH8330。
+**修复。** 对照构建该材质的 `export` 检查名称，或写出对象路径，这是此源根目录之外的材质所需要的——比如手工制作的材质，或另一个插件的源所构建的材质。由多个源构建的裸名称属于 DSH8330。
 
 <a id="dsh4407"></a>
 
@@ -2582,13 +2425,9 @@ No material '{0}' was found: a bare name is the material a '.dss' under the same
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2026`
 <!-- generated:end DSH4407 -->
 
-**原因。** `Shader =` 指向的文件扩展名不是 `.usf` 或 `.ush`（任意大小写）：完全没有扩展名
-（`"Passes/Blur"`）、`.hlsl`，或 DreamShader 源（`"PP_Blur.dss"`）。引擎的着色器编译器
-只读取这两种文件。
+**原因。** `Shader =` 指向的文件扩展名不是 `.usf` 或 `.ush`（任意大小写）：完全没有扩展名（`"Passes/Blur"`）、`.hlsl`，或 DreamShader 源（`"PP_Blur.dss"`）。引擎的着色器编译器只读取这两种文件。
 
-**修复。** 为该着色器文件指定 `.usf` 扩展名，并在路径中写出：
-`Shader = "BoxBlur.usf";`。材质不是着色器文件：全屏 pass 使用
-`Material = "..."` 绘制一个 `.dss`。
+**修复。** 为该着色器文件指定 `.usf` 扩展名，并在路径中写出： `Shader = "BoxBlur.usf";`。材质不是着色器文件：全屏 pass 使用 `Material = "..."` 绘制一个 `.dss`。
 
 <a id="dsh4408"></a>
 
@@ -2606,15 +2445,9 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3735`
 <!-- generated:end DSH4408 -->
 
-**原因。** `Shader =` 指向的文件不存在。不以 `/` 开头的路径相对于
-`.dsp` 所在的文件夹——`"BoxBlur.usf"` 与它相邻，`"../Shared/Blur.usf"` 位于其上一级
-文件夹；以 `/` 开头的路径是虚拟着色器路径，只能通过引擎映射的目录
-解析（`/Engine/...`、`/Plugin/<Name>/...`，或模块通过
-`AddShaderSourceDirectoryMapping` 添加的映射）。在 DSH4406 所在之处检查。
+**原因。** `Shader =` 指向的文件不存在。不以 `/` 开头的路径相对于 `.dsp` 所在的文件夹——`"BoxBlur.usf"` 与它相邻，`"../Shared/Blur.usf"` 位于其上一级文件夹；以 `/` 开头的路径是虚拟着色器路径，只能通过引擎映射的目录解析（`/Engine/...`、`/Plugin/<Name>/...`，或模块通过 `AddShaderSourceDirectoryMapping` 添加的映射）。在 DSH4406 所在之处检查。
 
-**修复。** 更正路径或移动文件。放在 `.dsp` 旁边是常见做法，且不需要
-映射目录：引擎编译的是该文件的快照，而非原始文件。仅对已经位于映射目录中的
-着色器使用虚拟路径。
+**修复。** 更正路径或移动文件。放在 `.dsp` 旁边是常见做法，且不需要映射目录：引擎编译的是该文件的快照，而非原始文件。仅对已经位于映射目录中的着色器使用虚拟路径。
 
 <a id="dsh4410"></a>
 
@@ -2634,35 +2467,18 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 
 **原因。** HLSL pass 的 `Entry` 未指向该 pass 可运行的函数。共有两种消息：
 
-- `'<file>' does not define a function '<Entry>'.` —— 在检查所读取的内容中未定义该名称的函数：
-  `.usf`、它通过相对路径包含的每个文件，以及它通过
-  映射的着色器目录解析的虚拟路径包含的每个文件（`/Project/...`、插件的 `/Plugin/...`），每个
-  文件再依次跟进其自身的包含。引擎自带的头文件（`/Engine/`、`/ThirdParty/`）
-  不会被读取。注释和 `#` 行会被跳过，函数在有函数体时才算数，并且名称
-  区分大小写。当文件包含了检查无法跟进的内容时——没有
-  映射目录覆盖的虚拟路径、不指向任何文件的相对路径、`#include MACRO`——未找到的条目
-  不会被报告，因为它可能存在于未被读取的内容中；此时 compute pass 需要
-  `Threads`（DSH4411）。
-- `'<Entry>' in '<file>' is a compute shader entry ...` —— 一个 `fullscreen` pass 指向的函数
-  前面带有 `[numthreads(...)]`。全屏 pass 将其 `Entry` 作为其插槽的
-  像素着色器运行，而计算着色器的入口不是像素着色器。
+- `'<file>' does not define a function '<Entry>'.` —— 在检查所读取的内容中未定义该名称的函数： `.usf`、它通过相对路径包含的每个文件，以及它通过映射的着色器目录解析的虚拟路径包含的每个文件（`/Project/...`、插件的 `/Plugin/...`），每个文件再依次跟进其自身的包含。引擎自带的头文件（`/Engine/`、`/ThirdParty/`）不会被读取。注释和 `#` 行会被跳过，函数在有函数体时才算数，并且名称区分大小写。当文件包含了检查无法跟进的内容时——没有映射目录覆盖的虚拟路径、不指向任何文件的相对路径、`#include MACRO`——未找到的条目不会被报告，因为它可能存在于未被读取的内容中；此时 compute pass 需要 `Threads`（DSH4411）。
+- `'<Entry>' in '<file>' is a compute shader entry ...` —— 一个 `fullscreen` pass 指向的函数前面带有 `[numthreads(...)]`。全屏 pass 将其 `Entry` 作为其插槽的像素着色器运行，而计算着色器的入口不是像素着色器。
 
 对于写在 `.dsp` 中的 HLSL，会对该块的文本进行同样的检查，无需读取文件：
 
-- `The 'hlsl' block of pass '<Pass>' does not define a function '<Entry>' ...` —— 该 pass 自身的块包含完整的
-  函数，但没有一个具有 `Entry` 给出的名称；或者，在没有 `Entry` 时，没有一个函数是 `Main`，即
-  块默认的入口。入口是该块自身的函数，而不是该块所包含文件的函数；
-- `The file's 'hlsl' block does not define a function '<Entry>' ...`，以及 `... names a function of the file's 'hlsl'
-  block, and this '.dsp' has none` -- a pass with no `Shader`，并且它自身没有块来运行该文件的
-  块中 `Entry` 所指的入口；
+- `The 'hlsl' block of pass '<Pass>' does not define a function '<Entry>' ...` —— 该 pass 自身的块包含完整的函数，但没有一个具有 `Entry` 给出的名称；或者，在没有 `Entry` 时，没有一个函数是 `Main`，即块默认的入口。入口是该块自身的函数，而不是该块所包含文件的函数；
+- `The file's 'hlsl' block does not define a function '<Entry>' ...`，以及 `... names a function of the file's 'hlsl' block, and this '.dsp' has none` -- a pass with no `Shader`，并且它自身没有块来运行该文件的块中 `Entry` 所指的入口；
 - `'<Entry>' is a compute shader entry ...` —— 同上，针对全屏 pass。
 
 在 DSH4406 所在之处检查，在找到文件后执行；对于 `.dsp` 中的代码，则在管线绑定时执行。
 
-**修复。** 按 HLSL 中函数的拼写来拼写 `Entry` —— `Entry = BlurCS;` —— 并在
-`.usf` 或它包含的文件中定义该函数；对于 `.dsp` 中的代码，在查找它所在的块中定义——
-即该 pass 自身的块，或当该 pass 既没有 `Shader` 也没有块时该文件的块。全屏 pass 指向其像素着色器函数，
-即返回 `SV_Target0` 的那个；要运行 `[numthreads]` 函数，请将该 pass 设为 `compute`。
+**修复。** 按 HLSL 中函数的拼写来拼写 `Entry` —— `Entry = BlurCS;` —— 并在 `.usf` 或它包含的文件中定义该函数；对于 `.dsp` 中的代码，在查找它所在的块中定义—— 即该 pass 自身的块，或当该 pass 既没有 `Shader` 也没有块时该文件的块。全屏 pass 指向其像素着色器函数，即返回 `SV_Target0` 的那个；要运行 `[numthreads]` 函数，请将该 pass 设为 `compute`。
 
 <a id="dsh4411"></a>
 
@@ -2680,21 +2496,13 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3790`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3816`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4069`
 <!-- generated:end DSH4411 -->
 
-**原因。** 某个 compute pass 的 `Entry` 具有编译器无法读取的线程组大小，并且该 pass
-未提供 `Threads` 来说明这一点。调度按该大小的组来计数。共有两种消息：
+**原因。** 某个 compute pass 的 `Entry` 具有编译器无法读取的线程组大小，并且该 pass 未提供 `Threads` 来说明这一点。调度按该大小的组来计数。共有两种消息：
 
-- `'<Entry>' in '<file>' has no '[numthreads(x, y, z)]' ...` -- 函数存在，但其前面没有
-  `[numthreads(...)]`，或者它的三个值不是普通的整数 -- 通常
-  是宏 `[numthreads(THREADGROUP_SIZE, THREADGROUP_SIZE, 1)]`。
-- `'<Entry>' is not in what the compiler could read of '<file>', which includes a file it cannot
-  follow ...` -- 未找到该函数，并且文件中包含了检查无法读取的内容
-  （DSH4410 列出了具体内容），因此该函数可能定义在那里，其组大小无人读取。
-- `'<Entry>' has no '[numthreads(x, y, z)]' in front of it ...` -- 与第一个相同，针对以
-  `.dsp` 编写的入口。
+- `'<Entry>' in '<file>' has no '[numthreads(x, y, z)]' ...` -- 函数存在，但其前面没有 `[numthreads(...)]`，或者它的三个值不是普通的整数 -- 通常是宏 `[numthreads(THREADGROUP_SIZE, THREADGROUP_SIZE, 1)]`。
+- `'<Entry>' is not in what the compiler could read of '<file>', which includes a file it cannot follow ...` -- 未找到该函数，并且文件中包含了检查无法读取的内容（DSH4410 列出了具体内容），因此该函数可能定义在那里，其组大小无人读取。
+- `'<Entry>' has no '[numthreads(x, y, z)]' in front of it ...` -- 与第一个相同，针对以 `.dsp` 编写的入口。
 
-**修复。** 在着色器中以数字形式写入组大小 -- `[numthreads(8, 8, 1)]` -- 或者保留宏，
-并在 pass 中给出相同的大小：`Threads = uint3(8, 8, 1);`。对于第二条消息，同时给出
-`Threads`，或者以编译器能够跟随的路径包含该文件。
+**修复。** 在着色器中以数字形式写入组大小 -- `[numthreads(8, 8, 1)]` -- 或者保留宏，并在 pass 中给出相同的大小：`Threads = uint3(8, 8, 1);`。对于第二条消息，同时给出 `Threads`，或者以编译器能够跟随的路径包含该文件。
 
 <a id="dsh4412"></a>
 
@@ -2712,16 +2520,9 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3510`
 <!-- generated:end DSH4412 -->
 
-**原因。** 网格 pass 的 `Filter` 通过 `Layer(...)` 选择了一个项目并不具有的名称。Pass
-层是项目自己的：Project Settings ▸
-DreamPlugin ▸ DreamShader Custom Pass 的 **Layer Names** 列表的前 32 个名称，即消息中所指出的；只有这些名称具有位，因此列表中更靠后的名称也不是层。名称的比较区分大小写，当某个层仅在其大小写上与之不同时，消息会改为建议那一个
-（`'<Layer>' is not a pass layer of this project; did you mean '<Name>'?`）。每个
-未知名称产生一个错误，位于 `Filter` 行。在 DSH4406 处检查。
+**原因。** 网格 pass 的 `Filter` 通过 `Layer(...)` 选择了一个项目并不具有的名称。Pass 层是项目自己的：Project Settings ▸ DreamPlugin ▸ DreamShader Custom Pass 的 **Layer Names** 列表的前 32 个名称，即消息中所指出的；只有这些名称具有位，因此列表中更靠后的名称也不是层。名称的比较区分大小写，当某个层仅在其大小写上与之不同时，消息会改为建议那一个（`'<Layer>' is not a pass layer of this project; did you mean '<Name>'?`）。每个未知名称产生一个错误，位于 `Filter` 行。在 DSH4406 处检查。
 
-**修复。** 将该层添加到该列表中，位于其前 32 个名称之内，或者更正该名称。列表的
-顺序即层的位顺序，因此请将新名称添加到末尾：移动某个名称会重新定位每个已编译的
-、引用它的管线，直到该管线再次编译。`List(Name)` 在此处不检查 -- 列表
-在运行时由 `UDreamPassSubsystem::AddToList` 填充。
+**修复。** 将该层添加到该列表中，位于其前 32 个名称之内，或者更正该名称。列表的顺序即层的位顺序，因此请将新名称添加到末尾：移动某个名称会重新定位每个已编译的、引用它的管线，直到该管线再次编译。`List(Name)` 在此处不检查 -- 列表在运行时由 `UDreamPassSubsystem::AddToList` 填充。
 
 <a id="dsh4413"></a>
 
@@ -2739,14 +2540,9 @@ DreamPlugin ▸ DreamShader Custom Pass 的 **Layer Names** 列表的前 32 个�
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3775`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4056`
 <!-- generated:end DSH4413 -->
 
-**原因。** 一个计算 pass 写入 `Threads = uint3(...)`，而其入口的 `[numthreads(...)]`
-（编译器可以读取 -- 在 `.usf` 中，或者当入口编写在那里时在 `.dsp` 中）表示的是其他
-数字（消息中给出了两者）。组数是
-根据 `Threads` 计算出来的，而着色器以 `[numthreads]` 的组运行，因此该 pass 会覆盖
-其缓冲区过多或过少的内容。`Threads = uint2(x, y)` 计为 `z = 1`。
+**原因。** 一个计算 pass 写入 `Threads = uint3(...)`，而其入口的 `[numthreads(...)]` （编译器可以读取 -- 在 `.usf` 中，或者当入口编写在那里时在 `.dsp` 中）表示的是其他数字（消息中给出了两者）。组数是根据 `Threads` 计算出来的，而着色器以 `[numthreads]` 的组运行，因此该 pass 会覆盖其缓冲区过多或过少的内容。`Threads = uint2(x, y)` 计为 `z = 1`。
 
-**修复。** 省略 `Threads`：组大小从 `[numthreads]` 读取。`Threads` 用于组大小是宏的入口
-（DSH4411），此时它声明宏所给出的大小。
+**修复。** 省略 `Threads`：组大小从 `[numthreads]` 读取。`Threads` 用于组大小是宏的入口（DSH4411），此时它声明宏所给出的大小。
 
 <a id="dsh4414"></a>
 
@@ -2764,14 +2560,9 @@ DreamPlugin ▸ DreamShader Custom Pass 的 **Layer Names** 列表的前 32 个�
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:838`
 <!-- generated:end DSH4414 -->
 
-**原因。** `.dsp` 的 `uniform` 或 `static const` 被命名为 `DreamPassWeight`。该名称是
-管线在视图中的权重 -- 其激活中的最大权重，也就是体积的淡入
-到达特效的方式 -- 由运行时提供。该声明会被丢弃。该名称的缓冲区
-DSH4400。
+**原因。** `.dsp` 的 `uniform` 或 `static const` 被命名为 `DreamPassWeight`。该名称是管线在视图中的权重 -- 其激活中的最大权重，也就是体积的淡入到达特效的方式 -- 由运行时提供。该声明会被丢弃。该名称的缓冲区 DSH4400。
 
-**修复。** 重命名该声明。权重不需要：每个 pass 都会收到它，材质以标量参数 `DreamPassWeight` 的形式接收，
-`.usf` 以 `DP_Weight` 的形式接收，
-`param Fade = DreamPassWeight * 0.5;` 则以另一个名称、按比例将其传递下去。
+**修复。** 重命名该声明。权重不需要：每个 pass 都会收到它，材质以标量参数 `DreamPassWeight` 的形式接收， `.usf` 以 `DP_Weight` 的形式接收， `param Fade = DreamPassWeight * 0.5;` 则以另一个名称、按比例将其传递下去。
 
 <a id="dsh4415"></a>
 
@@ -2789,16 +2580,12 @@ DSH4400。
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2497`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2507`
 <!-- generated:end DSH4415 -->
 
-**原因。** `read` 命名了 `.Previous`，即某个不保留内容的纹理的上一帧内容。两
-条消息：
+**原因。** `read` 命名了 `.Previous`，即某个不保留内容的纹理的上一帧内容。两条消息：
 
-- 内置纹理，如 `read SceneColor.Previous;` 中那样 -- 渲染器的纹理仅保留当
-  前帧；
-- 管线中未声明 `History = true` 的缓冲区
-  （`'Mask.Previous' reads last frame's 'Mask', and 'Mask' keeps none; ...`）。
+- 内置纹理，如 `read SceneColor.Previous;` 中那样 -- 渲染器的纹理仅保留当前帧；
+- 管线中未声明 `History = true` 的缓冲区（`'Mask.Previous' reads last frame's 'Mask', and 'Mask' keeps none; ...`）。
 
-**修复。** 对于缓冲区，在其声明中添加 `History = true`。对于内置纹理，请保留一份
-自己的、带历史的副本，并读取该副本的 `.Previous`：
+**修复。** 对于缓冲区，在其声明中添加 `History = true`。对于内置纹理，请保留一份自己的、带历史的副本，并读取该副本的 `.Previous`：
 
 ```hlsl
 buffer LastColor : RGBA16F(History = true);
@@ -2812,3 +2599,4 @@ pass Keep : copy
 ```
 
 之后，pass 使用 `read Prev = LastColor.Previous;` 读取上一帧的画面。
+

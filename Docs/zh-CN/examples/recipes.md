@@ -1,11 +1,9 @@
 ---
-title: "完整示例"
-description: "可直接编译的完整 DreamShaderLang 材质 —— 动画着色、UV 平移、分支、静态开关变体、半透明 UI、PBR、MaterialAttributes、Substrate、参数集合、多输出 helper、Settings 一览与 Runtime Virtual Texture，每个都有 .dsm 和 .dss 两种写法。"
+title: 完整示例
+description: 可直接编译的完整 DreamShaderLang 材质 —— 动画着色、UV 平移、分支、静态开关变体、半透明 UI、PBR、MaterialAttributes、Substrate、参数集合、多输出 helper、Settings 一览与 Runtime Virtual Texture，每个都有 .dsm 和 .dss 两种写法。
 ---
 
-下面每个配方都是一个能独立编译的完整 `.dsm`，后面跟着同一个材质的 `.dss` 写法。
-它们按"参数、设置、输出、图"的顺序写，方便从上往下读。凡是有坑的地方，
-都直接写在代码旁边，而不是留给你自己踩。
+下面每个配方都是一个能独立编译的完整 `.dsm`，后面跟着同一个材质的 `.dss` 写法。它们按"参数、设置、输出、图"的顺序写，方便从上往下读。凡是有坑的地方，都直接写在代码旁边，而不是留给你自己踩。
 
 | | |
 | :-- | :-- |
@@ -14,16 +12,13 @@ description: "可直接编译的完整 DreamShaderLang 材质 —— 动画着�
 | 假定源码根目录 | `<Project>/DShader` |
 | 生成产物 | `Graph` backend 的材质每次构建都存盘；`ThinCustom`（默认）材质只在内存里 —— 见[内存材质](../generation/ephemeral.md) |
 
-一个 `.dss` 和同名的 `.dsm` 构建出同一个资产路径，两者留一个。诊断写码，
-读法见[错误速查](../diagnostics/index.md)。想看这些材质是由哪些语言构件拼出来的，见
-[常用写法](patterns.md)。
+一个 `.dss` 和同名的 `.dsm` 构建出同一个资产路径，两者留一个。诊断写码，读法见[错误速查](../diagnostics/index.md)。想看这些材质是由哪些语言构件拼出来的，见[常用写法](patterns.md)。
 
 <a id="animated-tint"></a>
 
 ## 动画着色
 
-`UE.Time()` 给出一个标量时钟；`sin` 是[数学内置](../builtins/math.md)之一，所以裸调用、
-按位置传参。
+`UE.Time()` 给出一个标量时钟；`sin` 是[数学内置](../builtins/math.md)之一，所以裸调用、按位置传参。
 
 ```c
 // DShader/Materials/M_Pulse.dsm
@@ -52,11 +47,8 @@ Shader(Name="Materials/M_Pulse")
 }
 ```
 
-- `sin` 建出一个 `Sine` 节点，其 `Period` 保持默认值 1，所以它按**周期**计、不按弧度：`Speed = 2.0` 就是每秒两次
-  脉冲。常量折叠也按周期 （自 2.1.2 起）。要别的周期，直接调用节点：
-  `UE.Sine(Input = x, Period = 2.0)`。
-- 两个相同的调用就是一个节点，不论是数学内置还是 `UE.*` （自 2.0.0 起）：写两次 `UE.Time()` 只会有
-  一个 `Time` 节点。
+- `sin` 建出一个 `Sine` 节点，其 `Period` 保持默认值 1，所以它按**周期**计、不按弧度：`Speed = 2.0` 就是每秒两次脉冲。常量折叠也按周期 （自 2.1.2 起）。要别的周期，直接调用节点： `UE.Sine(Input = x, Period = 2.0)`。
+- 两个相同的调用就是一个节点，不论是数学内置还是 `UE.*` （自 2.0.0 起）：写两次 `UE.Time()` 只会有一个 `Time` 节点。
 
 <a id="written-as-a-dss"></a>
 
@@ -113,10 +105,7 @@ Shader(Name="Materials/M_Panned")
 
 **提示：**
 
-`UE.Panner` 的参数分两类。`Coordinate`、`Time` 和 `Speed` 是**输入 pin**，接受表达式 ——
-所以上面能用 `PanSpeed` 驱动平移。而 `SpeedX`、`SpeedY` 和 `FractionalPart` 是节点上的**字面量属性**，
-只接常量：`SpeedX = PanSpeed` 是 `DSH4373`。拼错的参数名在 1.x 源文件里被丢掉并给出 warning
-`DSH5254`，在 `.dss` 里是错误 `DSH5213`。见 [UE.Panner](../builtins/ue.md#uepanner)。
+`UE.Panner` 的参数分两类。`Coordinate`、`Time` 和 `Speed` 是**输入 pin**，接受表达式 —— 所以上面能用 `PanSpeed` 驱动平移。而 `SpeedX`、`SpeedY` 和 `FractionalPart` 是节点上的**字面量属性**，只接常量：`SpeedX = PanSpeed` 是 `DSH4373`。拼错的参数名在 1.x 源文件里被丢掉并给出 warning `DSH5254`，在 `.dss` 里是错误 `DSH5213`。见 [UE.Panner](../builtins/ue.md#uepanner)。
 
 <a id="written-as-a-dss-1"></a>
 
@@ -139,15 +128,13 @@ export void M_Panned(inout material m)
 }
 ```
 
-`.Sample` 建出一个 `TextureObjectParameter` 和一个 `TextureSample`，而 1.x 的 token 建的是一个
-`TextureSampleParameter2D`；材质看到的结果相同。
+`.Sample` 建出一个 `TextureObjectParameter` 和一个 `TextureSample`，而 1.x 的 token 建的是一个 `TextureSampleParameter2D`；材质看到的结果相同。
 
 <a id="branching-on-a-threshold"></a>
 
 ## 按阈值分支
 
-两个分支都会被建进图里，每个被改动的变量一个条件节点 —— `UMaterialExpressionIf`，或者条件是 static bool 时的
-`StaticSwitch` —— 在运行时二选一。条件必须带括号，每个分支体必须带花括号。
+两个分支都会被建进图里，每个被改动的变量一个条件节点 —— `UMaterialExpressionIf`，或者条件是 static bool 时的 `StaticSwitch` —— 在运行时二选一。条件必须带括号，每个分支体必须带花括号。
 
 ```c
 // DShader/Materials/M_Branch.dsm
@@ -190,23 +177,16 @@ Shader(Name="Materials/M_Branch")
 | `a > b`、`a < b`、`a >= b`、`a <= b`、`a == b`、`a != b` | 六个比较运算符 |
 | `if (x)` | 真值判断 —— 等同于 `x != 0`，所以**负值**走 then 分支 |
 
-- 条件比较的是两个数：比较两个向量是 `DSH4260`，不是数字的操作数是
-  `DSH4226`。
-- 在 `if` 之前声明、只在一个分支里改过的变量，和它在 `if` 之前的值合并。
-  `if` 之前没有值、又只在一个分支里赋值的变量，在 `if` 之后被读取的地方报 `DSH4372`。
-- 在分支*里*声明的变量只属于那个分支 （自 2.0.0 起）：它不参与合并，`if` 之后它的名字是
-  未知的。
-- 每次赋值都会把值转换成变量声明的类型，所以同一个变量的两个分支值
-  总是一致的。
+- 条件比较的是两个数：比较两个向量是 `DSH4260`，不是数字的操作数是 `DSH4226`。
+- 在 `if` 之前声明、且只在一个分支中更改的变量，会与它在 `if` 之前的值合并。在它之前没有值、且只在一个分支中赋值的变量，在 `if` 之后读取它时即为 `DSH4372`。
+- 在分支*里*声明的变量只属于那个分支 （自 2.0.0 起）：它不参与合并，`if` 之后它的名字是未知的。
+- 每次赋值都会把值转换成变量声明的类型，所以同一个变量的两个分支值总是一致的。
 - 在分支里读参数没问题 —— 参数永远不是分支输出。
 - `if` **区分大小写**：`If (x) { … }` 是对一个叫 `If` 的函数的调用，后面的 `{` 报 `DSH2154`。
 
 **警告：**
 
-1.x 条件里的 `&&` 和 `||` 被拒绝 （自 2.0.0 起）：`DSH2210`。1.x 会一声不吭地丢掉第一个
-比较之后的一切，所以 `if (a > 0 && b > 0)` 测的是 `a > 0`。请改成两层嵌套的 `if`。1.x
-会截断的其他写法 —— `%`、`?:`、`&`、`|`、`^`、`<<`、`v[i]` —— 在表达式的任何位置都是错误
-（`DSH2200`–`DSH2202`）；见[不支持的写法](../graph/unsupported.md#operators-1x-truncated)。`.dss` 里这些运算符都有。
+1.x 条件里的 `&&` 和 `||` 被拒绝 （自 2.0.0 起）：`DSH2210`。1.x 会一声不吭地丢掉第一个比较之后的一切，所以 `if (a > 0 && b > 0)` 测的是 `a > 0`。请改成两层嵌套的 `if`。1.x 会截断的其他写法 —— `%`、`?:`、`&`、`|`、`^`、`<<`、`v[i]` —— 在表达式的任何位置都是错误（`DSH2200`–`DSH2202`）；见[不支持的写法](../graph/unsupported.md#operators-1x-truncated)。`.dss` 里这些运算符都有。
 
 <a id="written-as-a-dss-2"></a>
 
@@ -585,15 +565,10 @@ Shader(Name="Materials/M_Wind")
 }
 ```
 
-- `Collection`（别名 `Asset`）和 `Parameter`（别名 `ParameterName`）都是**必填**。`UE.CollectionParameter`
-  是引擎的名字，和 `UE.CollectionParam` 是同一个类（自 2.1.1 起）（2.0.0 – 2.1.0 在 `Graph` 中拒绝
-  `UE.CollectionParam`，并给出 `DSH5210`）。
+- `Collection`（别名 `Asset`）和 `Parameter`（别名 `ParameterName`）都是**必填**。`UE.CollectionParameter` 是引擎的名字，和 `UE.CollectionParam` 是同一个类（自 2.1.1 起）（2.0.0 – 2.1.0 在 `Graph` 中拒绝 `UE.CollectionParam`，并给出 `DSH5210`）。
 - 集合资产在建节点时加载，参数按名字在里面查找：集合解析不了或加载不了是 `DSH8213`，名字既不是标量参数也不是向量参数是 `DSH8254`。
-- 引擎没给这个节点的输出定类型，所以值和它被读入的位置一样宽
-  （自 2.0.0 起）：这里读进一个 `float`。
-- `Group` 和 `SortPriority` 只在运行中引擎的类有它们时才接受（（自 UE 5.7 起））；类
-  没有时 `Group` 是 `DSH5213`，`SortPriority` 建节点时以 `DSH8212` 失败。见
-  [UE.CollectionParam](../builtins/ue.md#uecollectionparam)。
+- 引擎没给这个节点的输出定类型，所以值和它被读入的位置一样宽（自 2.0.0 起）：这里读进一个 `float`。
+- `Group` 和 `SortPriority` 只在运行中引擎的类有它们时才接受（（自 UE 5.7 起））；类没有时 `Group` 是 `DSH5213`，`SortPriority` 建节点时以 `DSH8212` 失败。见 [UE.CollectionParam](../builtins/ue.md#uecollectionparam)。
 
 <a id="written-as-a-dss-8"></a>
 
@@ -653,8 +628,7 @@ Shader(Name="Materials/M_Brightness")
 
 - 函数体是 **HLSL**，所以这里的 `max` 是 HLSL 内建函数，不是 `Graph` 的数学内置。
 - 1.x 的 `Function` 要么有返回类型、要么有 `out` 参数，两者都有是 `DSH6304`，两者都没有是 `DSH6305`。
-- 没人声明过的 out 目标由调用声明（info `DSH5283`）。按值调用 ——
-  `vec3 n = SplitBrightness(Tint);` —— 拿到的是第一个 `out`（自 2.0.0 起）。
+- 没人声明过的 out 目标由调用声明（info `DSH5283`）。按值调用 —— `vec3 n = SplitBrightness(Tint);` —— 拿到的是第一个 `out`（自 2.0.0 起）。
 
 <a id="written-as-a-dss-9"></a>
 
@@ -728,21 +702,14 @@ Shader(Name="Materials/M_Glass")
 | `BlendMode` | `RenderType` | `Opaque`, `Masked` / `Cutout`, `Translucent` / `Transparent`, `Additive`, `Modulate`, `AlphaComposite` / `PremultipliedAlpha` / `Premultiplied`, `AlphaHoldout`, `TranslucentColoredTransmittance` |
 | `Backend` | — | `Graph`, `ThinCustom`；`Instance` 是 `ThinCustom` 的旧拼写，带 warning `DSH7204` |
 
-- 枚举值在比较前会去掉空格、`_` 和 `-`，并且不区分大小写：`"Default Lit"`、`"DefaultLit"`、
-  `"default_lit"` 和 `"DEFAULT-LIT"` 是同一个别名。所有设置值的引号都可省。
-- `MaterialDomain`、`ShadingModel` 和 `BlendMode` 按上表解析；`Backend` 和
-  （自 2.0.0 起）`Substrate` 是 DreamShader 自己的键。**其余每个键都被直接反射到
-  `UMaterial` 上** —— 上面的 `TwoSided` 和 `Wireframe` 就是真实的 `UMaterial` 属性。不是任何属性的键会让
-  构建失败：`DSH8215`，附带 `DSH7118`。
-- 一个键写两遍是 warning `DSH3262` （自 2.0.0 起）（之前不报），后一个值生效。重复的
-  `Settings` section 会合并。
-- 省略 `Backend` 会回退到项目的 **Default Compiler Backend**（出厂是 `ThinCustom`）。
-  `Backend = "Graph"` 时材质是一个普通的 `UMaterial`，每次构建成功都存盘。
+- 枚举值在比较前会去掉空格、`_` 和 `-`，并且不区分大小写：`"Default Lit"`、`"DefaultLit"`、 `"default_lit"` 和 `"DEFAULT-LIT"` 是同一个别名。所有设置值的引号都可省。
+- `MaterialDomain`、`ShadingModel` 和 `BlendMode` 按上表解析；`Backend` 和（自 2.0.0 起）`Substrate` 是 DreamShader 自己的键。**其余每个键都被直接反射到 `UMaterial` 上** —— 上面的 `TwoSided` 和 `Wireframe` 就是真实的 `UMaterial` 属性。不是任何属性的键会让构建失败：`DSH8215`，附带 `DSH7118`。
+- 一个键写两遍是 warning `DSH3262` （自 2.0.0 起）（之前不报），后一个值生效。重复的 `Settings` section 会合并。
+- 省略 `Backend` 会回退到项目的 **Default Compiler Backend**（出厂是 `ThinCustom`）。 `Backend = "Graph"` 时材质是一个普通的 `UMaterial`，每次构建成功都存盘。
 
 **警告：**
 
-`Backend = "";` 是错误 `DSH7201` （自 2.0.0 起）（1.x 把它读成 `Graph`），不是 backend 的值是
-`DSH7202`。只有*省略*这个键才会回退到项目设置。见 [Backend](../settings/backend.md)。
+`Backend = "";` 是错误 `DSH7201` （自 2.0.0 起）（1.x 把它读成 `Graph`），不是 backend 的值是 `DSH7202`。只有*省略*这个键才会回退到项目设置。见 [Backend](../settings/backend.md)。
 
 <a id="written-as-a-dss-10"></a>
 
@@ -763,8 +730,7 @@ export void M_Glass(inout material m)
 }
 ```
 
-`#pragma material` 接受和 `Settings` 一样的键和值，可以分成多行写；同一个键设两次
-在这里是错误 `DSH7200`。
+`#pragma material` 接受和 `Settings` 一样的键和值，可以分成多行写；同一个键设两次在这里是错误 `DSH7200`。
 
 <a id="runtime-virtual-texture-sampling-and-writing"></a>
 
@@ -832,18 +798,12 @@ Shader(Name="Materials/M_RVTSurface", Root="Game")
 | Virtual Texture Feature Switch | `VirtualTextureFeatureSwitch` | `UE.…`，位于 `Graph` |
 | Runtime Virtual Texture Output | `RuntimeVirtualTextureOutput` | `Expression( … ).Pin[i]`，位于 `Outputs` |
 
-- `RuntimeVirtualTextureSample` 带有八个输出：`0` BaseColor、`1` Specular、`2` Roughness、`3` Normal、
-  `4` WorldHeight、`5` Mask、`6` Displacement、`7` Mask4。用 `Output="BaseColor"` 按名字选择，或用 `OutputIndex=` 按位置选择。
+- `RuntimeVirtualTextureSample` 带有八个输出：`0` BaseColor、`1` Specular、`2` Roughness、`3` Normal、 `4` WorldHeight、`5` Mask、`6` Displacement、`7` Mask4。用 `Output="BaseColor"` 按名字选择，或用 `OutputIndex=` 按位置选择。
 - `OutputType` 从每个调用上获取（自 2.0.0 起）；节点目录会为节点设置类型。
-- `RuntimeVirtualTextureOutput` 输入引脚，按 `Pin[i]` 顺序：`0` BaseColor、`1` Specular、`2` Roughness、`3` Normal、
-  `4` WorldHeight、`5` Opacity、`6` Mask、`7` Displacement、`8` Mask4。
-- `VirtualTexture` 是一个反射的资产属性，因此它接受一个 [`Path(...)`](../parameters/path.md) 引用或一个
-  裸的带引号对象路径。`MaterialType` 以及该节点的其他枚举和布尔属性由同一个反射步骤写入，遵循通常的[枚举写法](../settings/material-enums.md)规则。
-- *写入* RVT 的材质保留 `Domain = "Surface"` 并添加输出节点，完全如上所述。单独的
-  `Domain = "RuntimeVirtualTexture"` 写法映射到 `MD_RuntimeVirtualTexture`，引擎将其标记为**已弃用
-  并隐藏**；DreamShader 仍然接受它，以便现有资产可以继续反编译，但新材质不应使用它。
-- `Backend = "Graph"` 在此处固定，因此结果是一个普通的 `UMaterial`，每次构建都会保存，你可以打开其节点
-  并与源码进行对比。节点本身不依赖于后端。
+- `RuntimeVirtualTextureOutput` 输入引脚，按 `Pin[i]` 顺序：`0` BaseColor、`1` Specular、`2` Roughness、`3` Normal、 `4` WorldHeight、`5` Opacity、`6` Mask、`7` Displacement、`8` Mask4。
+- `VirtualTexture` 是一个反射的资产属性，因此它接受一个 [`Path(...)`](../parameters/path.md) 引用或一个裸的带引号对象路径。`MaterialType` 以及该节点的其他枚举和布尔属性由同一个反射步骤写入，遵循通常的[枚举写法](../settings/material-enums.md)规则。
+- *写入* RVT 的材质保留 `Domain = "Surface"` 并添加输出节点，完全如上所述。单独的 `Domain = "RuntimeVirtualTexture"` 写法映射到 `MD_RuntimeVirtualTexture`，引擎将其标记为**已弃用并隐藏**；DreamShader 仍然接受它，以便现有资产可以继续反编译，但新材质不应使用它。
+- `Backend = "Graph"` 在此处固定，因此结果是一个普通的 `UMaterial`，每次构建都会保存，你可以打开其节点并与源码进行对比。节点本身不依赖于后端。
 
 <a id="written-as-a-dss-11"></a>
 
@@ -875,8 +835,7 @@ export void M_RVTSurface(inout material m)
 ## 运行这些文件
 
 1. 把它们保存在 `<Project>/DShader` 下，或者 `SourceDirectory` 指向的位置。
-2. 启用 *Auto Compile On Save*（默认启用）时，编辑器会在源文件保存 0.25 秒后编译它（*Save
-   Debounce Seconds*）。每次成功构建后，`Graph` 后端的材质以及每个材质函数、图层和混合都会保存到磁盘。`ThinCustom` 材质 —— 默认后端 —— 以 Ephemeral 形式构建在内存中，直到 cook、显式 *Materialize*、子材质实例或命令行给它一个 package。
+2. 启用 *Auto Compile On Save*（默认启用）时，编辑器会在源文件保存 0.25 秒后编译它（*Save Debounce Seconds*）。每次成功构建后，`Graph` 后端的材质以及每个材质函数、图层和混合都会保存到磁盘。`ThinCustom` 材质 —— 默认后端 —— 以 Ephemeral 形式构建在内存中，直到 cook、显式 *Materialize*、子材质实例或命令行给它一个 package。
 3. 无头编译单个文件：
 
 ```powershell

@@ -1,8 +1,3 @@
----
-title: "贡献"
-description: "贡献"
----
-
 <a id="contributing"></a>
 
 # 贡献
@@ -35,8 +30,7 @@ description: "贡献"
 
 `<PluginDir>` 是存放 `DreamShader.uplugin` 的目录。`-Package` 必须指向一个不与源码树重叠的目录——UAT 会在那里暂存一份干净的副本。
 
-仅一个引擎无法证明其他引擎的情况，因此请使用
-[`.skill/build-plugin.ps1`](#the-engine-matrix) 运行整个矩阵。
+仅一个引擎无法证明其他引擎的情况，因此请使用 [`.skill/build-plugin.ps1`](#the-engine-matrix) 运行整个矩阵。
 
 <a id="repository-layout"></a>
 
@@ -117,7 +111,7 @@ description: "贡献"
 | `Public/` | 八个导出的头文件。文档位于 [C++ API](../api/index.md)。 |
 | `Private/DreamShaderModule.cpp` | 模块引导：创建源码、包和生成着色器目录，注册 `/DreamShaderGenerated` 和 `/Plugin/DreamShader` 着色器映射，并实现源根、目录获取器、`SanitizeIdentifier`、`NormalizeSourceFilePath` 以及文件分类谓词。 |
 | `Private/DreamShaderSettings.cpp` | `UDreamShaderSettings`：构造函数默认值、`NormalizeMappingKey`、三个 `TryResolve*` 方法、三个 `BuildDefault*Mappings` 别名目录，以及定义修订和 2.0 之前的配置钩子。 |
-| `Private/DreamShaderTypes.cpp` | `NormalizeSettingKey`、`FTextShaderDefinition::TryGetSetting` / `GetSetting`。 |
+| `Private/DreamShaderTypes.cpp` | `NormalizeSettingKey`, `FTextShaderDefinition::TryGetSetting` / `GetSetting`. |
 | `Private/DreamShaderMaterialInstance.cpp` | `UDreamShaderMaterialInstance::HasOverridenBaseProperties` 和 `IsAsset`。 |
 | `Private/DreamShaderDefineResolution.cpp` | 预处理器定义表中面向引擎的那一半：内置 `DS_` 定义、项目设置、C++ 提供程序以及命令行合并到一张表中。 |
 | `Private/DreamShaderCompilerInterface.cpp` | `GetDreamShaderCompiler()` 背后的注册表，编译模块在启动时填充它。 |
@@ -128,9 +122,7 @@ description: "贡献"
 
 ### `Source/DreamShaderPass` — 运行时
 
-*(自 2.1.0 起)* Custom Pass 运行时：`.dsp` 编译成的资产、决定哪些管线应用于某个视图的子系统，以及运行其通道的场景视图扩展。该模块在所有引擎上构建；需要渲染器的部分仅在
-[`DREAMSHADER_WITH_CUSTOM_PASS`](../api/version-compat.md#dreamshader_with_custom_pass) 为 `1` 的地方编译。参见
-[`DreamShaderPass`](../api/pass-module.md) 和 [Custom Pass 运行时](../runtime/index.md)。
+*(自 2.1.0 起)* Custom Pass 运行时：`.dsp` 编译成的资产、决定哪些管线应用于某个视图的子系统，以及运行其通道的场景视图扩展。该模块在所有引擎上构建；需要渲染器的部分仅在 [`DREAMSHADER_WITH_CUSTOM_PASS`](../api/version-compat.md#dreamshader_with_custom_pass) 为 `1` 的地方编译。参见 [`DreamShaderPass`](../api/pass-module.md) 和 [Custom Pass 运行时](../runtime/index.md)。
 
 | 路径 | 职责 |
 | :-- | :-- |
@@ -143,8 +135,7 @@ description: "贡献"
 | `Private/Materials/` | `UMaterialExpressionDreamPassOutput` 和 `UMaterialExpressionDreamPassBuffer` — `UE.DreamPassOutput` 和 `UE.DreamPassBuffer`。 |
 | `Private/Render/` | 渲染器的一半，仅在 5.8 编译：场景视图扩展及其调度器、逐帧快照、缓冲区、全屏、计算、网格、清除和复制通道、槽全局着色器 `FDreamPassCS` / `FDreamPassPS`、导出、缓冲区可视化，以及 `DreamPassRendererInternal.cpp` — 唯一从渲染器的 `Internal` 文件夹包含的文件。 |
 
-这些通道编译的着色器位于插件的 `Shaders/Pass/` 中，挂载在
-`/Plugin/DreamShader`。
+这些通道编译的着色器位于插件的 `Shaders/Pass/` 中，挂载在 `/Plugin/DreamShader`。
 
 <a id="sourcedreamshadercompiler--editor"></a>
 
@@ -211,9 +202,7 @@ description: "贡献"
 
 ### `MaterialAssetGeneration/` 内部
 
-*(在 2.0.0 中移除)* 1.x 生成器——带文本 `import` 内联的源加载、`Graph`
-语句遍历器、各关注点降低单元以及生成的 `.ush` 写入器——已被删除。其各项任务
-现在由谁完成：
+*(在 2.0.0 中移除)* 1.x 生成器——带文本 `import` 内联的源加载、`Graph` 语句遍历器、各关注点降低单元以及生成的 `.ush` 写入器——已被删除。其各项任务现在由谁完成：
 
 | 1.x 任务 | 现在 |
 | :-- | :-- |
@@ -260,12 +249,7 @@ description: "贡献"
 
 每个引擎的完整 UAT 日志都保留在 `<Package>\Logs\<Engine>.log` 下，无论通过还是失败。
 
-每个引擎都会构建到 `<Package>\<Engine>`（`UE_5.8`，来自 `Build.version`），该目录在构建前会被删除，由 `BuildPlugin` 自身清空，并在构建后再次删除，除非设置了
-`-KeepOutput`。因此，在构建或写入任何内容之前，脚本会检查每个引擎的输出
-目录，并在以下情况停止：该目录是驱动器根目录、是或包含或位于某个引擎根目录或
-插件树内（`-Engine C:\UE\UE_5.8 -Package C:\UE` 否则会指向引擎本身），或者
-已存在其中包含并非由脚本放入的文件。它自己的输出目录携带有
-`.build-plugin-output` 标记，因此 `-KeepOutput` 之后的运行会回收它们。
+每个引擎都会构建到 `<Package>\<Engine>`（`UE_5.8`，来自 `Build.version`），该目录在构建前会被删除，由 `BuildPlugin` 自身清空，并在构建后再次删除，除非设置了 `-KeepOutput`。因此，在构建或写入任何内容之前，脚本会检查每个引擎的输出目录，并在以下情况停止：该目录是驱动器根目录、是或包含或位于某个引擎根目录或插件树内（`-Engine C:\UE\UE_5.8 -Package C:\UE` 否则会指向引擎本身），或者已存在其中包含并非由脚本放入的文件。它自己的输出目录携带有 `.build-plugin-output` 标记，因此 `-KeepOutput` 之后的运行会回收它们。
 
 <a id="engine-versions"></a>
 
@@ -274,89 +258,50 @@ description: "贡献"
 | 引擎 | 状态 |
 | :-- | :-- |
 | `5.8` | 已在 `RunUAT BuildPlugin`（`2.2.0`）上验证 |
-| `5.7` | 已在 `RunUAT BuildPlugin` 至 `1.8.0` 上通过 `RunUAT BuildPlugin` 验证；未针对 `2.0.0` 至 `2.2.0` 重新运行，其门控的编写方式使 5.7 不需要自己的答案——见 [向类型询问](../api/version-compat.md#asked-of-the-type)。`2.1.0` 的 Custom Pass 在 5.8 以下被编译排除（`DREAMSHADER_WITH_CUSTOM_PASS` 0）；代码的该侧在开发期间于 5.8 上在门控强制关闭（`Invoke-DreamShaderTests.ps1 -WithoutCustomPass`）的情况下构建；`2.1.2` 在 5.5、5.6 和 5.7 处增加了门控，其中最后一个在 5.7 上采用较新的一侧，未经测试 |
+| `5.7` | 已使用 `RunUAT BuildPlugin` 至 `1.8.0` 验证；未针对 `2.0.0` 至 `2.2.0` 重新运行，其门控的编写方式使 5.7 不需要自己的答案——见 [向类型询问](../api/version-compat.md#asked-of-the-type)。`2.1.0` 的 Custom Pass 在 5.8 以下被编译排除（`DREAMSHADER_WITH_CUSTOM_PASS` 0）；代码的该侧在开发期间是在 5.8 上、门控强制关闭（`Invoke-DreamShaderTests.ps1 -WithoutCustomPass`）的情况下构建的；`2.1.2` 在 5.5、5.6 和 5.7 处增加了门控，其中 5.7 对最后一个采用较新的一侧，未经测试 |
 | `5.6` | 已在 `RunUAT BuildPlugin`（`2.2.0`）上验证 |
 | `5.5` | 已在 `RunUAT BuildPlugin`（`2.2.0`）上验证 |
 | `5.4` | 源码兼容；参见下面的工具链警告 |
 | `5.3` | 源码兼容；参见下面的工具链警告 |
 
 > [!WARNING]
-> **Unreal Engine `5.3` 和 `5.4` 无论你将哪个插件指向它们，都无法在较新的 MSVC 工具链下构建。** `ConcurrentLinearAllocator.h` 写入 `#elif __has_feature(address_sanitizer)`
-> 时没有 `defined()` 保护，位于 `#if PLATFORM_HAS_ASAN_INCLUDE` 内——而它是
-> `__has_include(<sanitizer/asan_interface.h>)`，对于每个附带 ASan 头文件的工具链都为真。MSVC 没有 `__has_feature`，因此该行会引发 `C4668`，而 UBT 编译引擎代码
-> 时使用 `/we4668`。UE 5.5 通过拆分该测试修复了该头文件。
+> **Unreal Engine `5.3` 和 `5.4` 无论你将哪个插件指向它们，都无法在较新的 MSVC 工具链下构建。** `ConcurrentLinearAllocator.h` 写入 `#elif __has_feature(address_sanitizer)` 时没有 `defined()` 保护，位于 `#if PLATFORM_HAS_ASAN_INCLUDE` 内——而它是 `__has_include(<sanitizer/asan_interface.h>)`，对于每个附带 ASan 头文件的工具链都为真。MSVC 没有 `__has_feature`，因此该行会引发 `C4668`，而 UBT 编译引擎代码时使用 `/we4668`。UE 5.5 通过拆分该测试修复了该头文件。
 >
-> 该失败发生在**引擎**代码中，在任何插件源码被触及之前，且 `Source/DreamShader*`
-> 在其中未被提及。Epic 自己的 `ExampleDeviceProfileSelector` 在同一
-> 引擎上会以相同方式失败，这是在特定机器上确认原因的最省事方法。请注意，安装
-> MSVC `14.38` 本身并**不能**解决问题——它也附带 `sanitizer/asan_interface.h`。需要
-> 一个没有那些头文件的工具链，或对引擎头文件打一行补丁。
+> 该失败发生在**引擎**代码中，在任何插件源码被触及之前，且 `Source/DreamShader*` 在其中未被提及。Epic 自己的 `ExampleDeviceProfileSelector` 在同一引擎上会以相同方式失败，这是在特定机器上确认原因的最省事方法。请注意，安装 MSVC `14.38` 本身并**不能**解决问题——它也附带 `sanitizer/asan_interface.h`。需要一个没有那些头文件的工具链，或对引擎头文件打一行补丁。
 
-插件中的每个引擎版本测试都通过 `DreamShaderVersionCompat.h` 中的宏进行；
-在 `Source/` 中任何地方都没有原始的 `ENGINE_MAJOR_VERSION` 或 `UE_VERSION_NEWER_THAN` 用法。当你
-添加依赖版本的代码时，将它加到那里并使用 `DREAMSHADER_UE_VERSION_AT_LEAST(Major, Minor)`
-或 `DREAMSHADER_WITH_SUBSTRATE_BUILTINS`。唯一的例外是 Custom Pass：`DreamShaderPass.Build.cs`
-测试 `Target.Version` 并定义 `DREAMSHADER_WITH_CUSTOM_PASS`，而依赖
-`DreamShaderPass` 的代码使用 `#if` 测试该定义，而不是测试版本。两侧都能在 5.8 机器上编译和
-测试：见 [Custom Pass 门控的两侧](testing.md#both-sides-of-the-custom-pass-gate)。
-当前受门控行为的完整列表见 [版本兼容性](../api/version-compat.md)。
+插件中的每个引擎版本测试都通过 `DreamShaderVersionCompat.h` 中的宏进行；在 `Source/` 中任何地方都没有原始的 `ENGINE_MAJOR_VERSION` 或 `UE_VERSION_NEWER_THAN` 用法。当你添加依赖版本的代码时，将它加到那里并使用 `DREAMSHADER_UE_VERSION_AT_LEAST(Major, Minor)` 或 `DREAMSHADER_WITH_SUBSTRATE_BUILTINS`。唯一的例外是 Custom Pass：`DreamShaderPass.Build.cs` 测试 `Target.Version` 并定义 `DREAMSHADER_WITH_CUSTOM_PASS`，而依赖 `DreamShaderPass` 的代码使用 `#if` 测试该定义，而不是测试版本。两侧都能在 5.8 机器上编译和测试：见 [Custom Pass 门控的两侧](testing.md#both-sides-of-the-custom-pass-gate)。当前受门控行为的完整列表见 [版本兼容性](../api/version-compat.md)。
 
 <a id="localization"></a>
 
 ## 本地化
 
-面向编辑器的文本是 `LOCTEXT`/`NSLOCTEXT`。但线格式不是：`diagnostics.json`、
-`diagnostics/*.json`、`bridge.db`、`preview.json` 以及预览 WebSocket 由 VSCode
-和 Rider 扩展解析，并且在每种编辑器区域性中都必须读取相同内容。
+面向编辑器的文本是 `LOCTEXT`/`NSLOCTEXT`。但线格式不是：`diagnostics.json`、 `diagnostics/*.json`、`bridge.db`、`preview.json` 以及预览 WebSocket 由 VSCode 和 Rider 扩展解析，并且在每种编辑器区域性中都必须读取相同内容。
 
 使两者都成立的原则：
 
-- **到达线格式的文本一路保持为 `FText`**，且写入通过
-  `ToInvariantWireString()`（`Diagnostics/DreamShaderTextWireUtils.h`）进行。该函数在固定区域性中重放
-  `FText` 的历史格式数据——模式、参数、嵌套格式。
-  仅靠 `FTextInspector::GetSourceString` 是不够的：对于 `FText::Format` 结果，它会返回
-  *已本地化*的替换后显示内容。
-- **绝不要在此过程中用 `ToString()` 折叠这样的 `FText`。** `ToString()` 是本地化后的
-  显示内容，而将结果重新包装为 `FText::FromString` 无法恢复英文。因此，错误通道为
-  `FString` 类型的 API——`FDreamShaderPreviewRenderContext`、资产层的
-  `FDreamShaderError`——保留字面量 `FString::Printf` 消息，并标记为 `I18N-EXEMPT`。
+- **到达线格式的文本一路保持为 `FText`**，且写入通过 `ToInvariantWireString()`（`Diagnostics/DreamShaderTextWireUtils.h`）进行。该函数在固定区域性中重放 `FText` 的历史格式数据——模式、参数、嵌套格式。仅靠 `FTextInspector::GetSourceString` 是不够的：对于 `FText::Format` 结果，它会返回*已本地化*的替换后显示内容。
+- **绝不要在此过程中用 `ToString()` 折叠这样的 `FText`。** `ToString()` 是本地化后的显示内容，而将结果重新包装为 `FText::FromString` 无法恢复英文。因此，错误通道为 `FString` 类型的 API——`FDreamShaderPreviewRenderContext`、资产层的 `FDreamShaderError`——保留字面量 `FString::Printf` 消息，并标记为 `I18N-EXEMPT`。
 - 仅到达 Slate 的文本没有此类约束；按常规对其进行本地化。
 
 ```bash
 pwsh -File Tools/Localization/localization_lint.ps1
 ```
 
-检查 `LOCTEXT_NAMESPACE` 的定义/取消定义配对，拒绝在头文件中定义，并标记 gather 无法看到的字面量（`FText::FromString(TEXT(...))`、`FString::Printf(TEXT(...))`）。有意为之的
-非显示字面量通过在**与调用同一行**上的 `I18N-EXEMPT` 注释被豁免——该
-检查读取一行，而不是一段范围。`-IncludeDeferred` 扩大这些字面量规则所运行的文件范围。
+检查 `LOCTEXT_NAMESPACE` 的定义/取消定义配对，拒绝在头文件中定义，并标记 gather 无法看到的字面量（`FText::FromString(TEXT(...))`、`FString::Printf(TEXT(...))`）。有意为之的非显示字面量通过在**与调用同一行**上的 `I18N-EXEMPT` 注释被豁免——该检查读取一行，而不是一段范围。`-IncludeDeferred` 扩大这些字面量规则所运行的文件范围。
 
-`-EmitBaseline` 会重新生成 `Tools/Localization/BASELINE.md`，其 gather 计数就是回归
-检查；它涵盖每个源文件，因为 `GatherText` 也如此。若计数发生变动却没有对应的
-`.locres` 更新，则意味着翻译落后了。
+`-EmitBaseline` 会重新生成 `Tools/Localization/BASELINE.md`，其 gather 计数就是回归检查；它涵盖每个源文件，因为 `GatherText` 也如此。若计数发生变动却没有对应的 `.locres` 更新，则意味着翻译落后了。
 
-目前还没有 `Config/Localization/DreamShader.ini`，因此 Dashboard 无法重新 gather 目标，
-而检入的 `zh-Hans` `.locres` 是手工制作的快照。新的 `LOCTEXT` 会回退到英文，
-直到它被重新生成。
+目前还没有 `Config/Localization/DreamShader.ini`，因此 Dashboard 无法重新 gather 目标，而检入的 `zh-Hans` `.locres` 是手工制作的快照。新的 `LOCTEXT` 会回退到英文，直到它被重新生成。
 
 <a id="notes"></a>
 
 ## 注意事项
 
-- **`DreamShaderEditor` 不导出任何内容。** 它没有 `Public/` 文件夹，并且 `DREAMSHADEREDITOR_API`
-  从不出现在源码中，因此第三方 C++ 无法链接到桥接或反编译器。受支持的 C++ 扩展点是 `IDreamShaderCompiler` —— 声明于 `DreamShader`，实现于
-  `DreamShaderCompiler`，通过 `GetDreamShaderCompiler()` 访问；其他一切只能通过编辑器 UI、[commandlet](../tools/commandlet.md) 或 [桥接](../tools/bridge.md) 访问。
-- **没有模块单例。** 没有模块类具有 `Get()` / `IsAvailable()` 访问器。请使用
-  `FModuleManager::LoadModuleChecked<FDreamShaderModule>(TEXT("DreamShader"))`。公开委托包括
-  `OnDreamShaderSourceGenerated`（编译完成，位于 `DreamShaderCompiler`）、`DreamShaderDefineResolution.h` 的 define-provider
-  委托，以及 `DreamShaderPass` 中的 `FOnDreamPassPipelineChanged`。
-- **编译器是游戏线程的、仅限编辑器的。** 编译管线会打开一个 `FScopedSlowTask`，
-  创建并修改 `UPackage` 和 `UMaterial`，并调用 `PostEditChange()`。
-- **存在三个不同的 "normalize" 辅助函数**，容易混淆：`NormalizeSettingKey`
-  （去空白 + 转小写）、`UDreamShaderSettings::NormalizeMappingKey`（去空白 + 转小写 + 去除空格，
-  `_` 和 `-`），以及 `NormalizeSourceFilePath`（使用 `/` 分隔符的绝对路径）。`SanitizeIdentifier`
-  是标识符清理器，不是键规范化器。
-- 生成的文档站点由 `Docs/` 构建；描述符中的 `DocsURL` 指向
-  <https://shader.toolchain.64hz.cn/>。
+- **`DreamShaderEditor` 不导出任何内容。** 它没有 `Public/` 文件夹，并且 `DREAMSHADEREDITOR_API` 从不出现在源码中，因此第三方 C++ 无法链接到桥接或反编译器。受支持的 C++ 扩展点是 `IDreamShaderCompiler` —— 声明于 `DreamShader`，实现于 `DreamShaderCompiler`，通过 `GetDreamShaderCompiler()` 访问；其他一切只能通过编辑器 UI、[commandlet](../tools/commandlet.md) 或 [桥接](../tools/bridge.md) 访问。
+- **没有模块单例。** 没有模块类具有 `Get()` / `IsAvailable()` 访问器。请使用 `FModuleManager::LoadModuleChecked<FDreamShaderModule>(TEXT("DreamShader"))`。公开委托包括 `OnDreamShaderSourceGenerated`（编译完成，位于 `DreamShaderCompiler`）、`DreamShaderDefineResolution.h` 的 define-provider 委托，以及 `DreamShaderPass` 中的 `FOnDreamPassPipelineChanged`。
+- **编译器是游戏线程的、仅限编辑器的。** 编译管线会打开一个 `FScopedSlowTask`，创建并修改 `UPackage` 和 `UMaterial`，并调用 `PostEditChange()`。
+- **存在三个不同的 "normalize" 辅助函数**，容易混淆：`NormalizeSettingKey` （去空白 + 转小写）、`UDreamShaderSettings::NormalizeMappingKey`（去空白 + 转小写 + 去除空格， `_` 和 `-`），以及 `NormalizeSourceFilePath`（使用 `/` 分隔符的绝对路径）。`SanitizeIdentifier` 是标识符清理器，不是键规范化器。
+- 生成的文档站点由 `Docs/` 构建；描述符中的 `DocsURL` 指向 <https://shader.toolchain.64hz.cn/>。
 
 <a id="example"></a>
 
@@ -390,8 +335,7 @@ D:\Work\Out\DreamShader\
   DreamShader.uplugin
 ```
 
-相同的五个模块名称会出现在 `<Plugin>/Binaries/Win64/` 下的普通项目构建中，
-并伴随其 `.pdb` 文件。
+相同的五个模块名称会出现在 `<Plugin>/Binaries/Win64/` 下的普通项目构建中，并伴随其 `.pdb` 文件。
 
 <a id="see-also"></a>
 
@@ -405,6 +349,4 @@ D:\Work\Out\DreamShader\
 - [Commandlet](../tools/commandlet.md) —— `-run=DreamShader`，无头入口点
 - [编辑器桥接](../tools/bridge.md) —— 请求文件、`bridge.db`、预览 WebSocket
 - [生成管线](../generation/index.md) —— 一次编译从端到端做了什么
-- [项目设置](../settings/project.md) —— `UDreamShaderSettings`，包括源目录
-</content>
-</invoke>
+- [项目设置](../settings/project.md) —— `UDreamShaderSettings`，包括源目录 </content> </invoke>
