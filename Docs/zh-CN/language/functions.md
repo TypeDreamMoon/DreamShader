@@ -1,11 +1,9 @@
 ---
-title: "函数"
-description: "Function、GraphFunction 与 Namespace —— 参数、返回类型、被调函数的内嵌、UE.* 提升，以及调用如何解析。"
+title: 函数
+description: Function、GraphFunction 与 Namespace —— 参数、返回类型、被调函数的内嵌、UE.* 提升，以及调用如何解析。
 ---
 
-`Function` 和 `GraphFunction` 把可复用逻辑从裸的 `Graph` 语句里挪出来。两者都用 C 风格
-签名加一段 HLSL 函数体，每个调用点都变成一个 `Custom` 节点，节点代码就是这段函数体；区别在于函数体里的 `UE.*` 调用怎么处理。legacy 前端把两者都读成 2.0
-`/// @custom` 函数（自 2.0.0 起），`dsc migrate` 也这样写。
+`Function` 和 `GraphFunction` 把可复用逻辑从裸的 `Graph` 语句里挪出来。两者都用 C 风格签名加一段 HLSL 函数体，每个调用点都变成一个 `Custom` 节点，节点代码就是这段函数体；区别在于函数体里的 `UE.*` 调用怎么处理。legacy 前端把两者都读成 2.0 `/// @custom` 函数（自 2.0.0 起），`dsc migrate` 也这样写。
 
 | | `Function` | `GraphFunction` |
 | :-- | :-- | :-- |
@@ -15,8 +13,7 @@ description: "Function、GraphFunction 与 Namespace —— 参数、返回类�
 | 可被另一个 `Function` 函数体调用 | 可以 —— 会被内嵌 | 只有函数体没提升任何 `UE.*` 调用时才行，否则 `DSH6327` |
 | 递归 | `DSH6260` | `DSH6260`；通过提升出的调用回到自己是 `DSH6330` |
 
-不再写共享的 `.ush` include：每个节点的 `Code` 自己带着它需要的全部 HLSL
-（自 2.0.0 起）。`Namespace` 把这两种块归到 `Ns::` 前缀之下。
+不再写共享的 `.ush` include：每个节点的 `Code` 自己带着它需要的全部 HLSL （自 2.0.0 起）。`Namespace` 把这两种块归到 `Ns::` 前缀之下。
 
 <a id="synopsis"></a>
 
@@ -39,21 +36,15 @@ GraphFunction [ ( <attributes> ) ]                                [ <return-type
 | `{ a \| b }` | 多选一——从竖线分隔的写法里取其中一个。 | `{ Node( … ) \| Comment( … ) }` |
 | `…` | 可重复——前一项可以出现任意多次。 | `<property-declaration> …` |
 
-唯一的 `(Key = Value)` 头部是关键字之后那个可选头部（2.1.2 之后）：`Generate`、`Library` 和
-`Description`，它们只在包的头部里有意义 —— 指包从函数生成的材质函数；`Generate = ""` 让函数退出其命名空间的模板。另一个键
-是 `DSH6331`，即模板 `DSH6332` 里非 `{Name}` 的 `{...}`。见
-[包 ▸ 资产头部](../../tools/packages.md#asset-headers)。它没有 `Settings`，也没有任何 section。参数列表之后的 `{ … }`
-是原始 HLSL，原样保留：只读它的花括号，字符串和注释里的花括号不算。
+唯一的 `(Key = Value)` 头部是关键字之后那个可选头部（2.1.2 之后）：`Generate`、`Library` 和 `Description`，它们只在包的头部里有意义 —— 指包从函数生成的材质函数；`Generate = ""` 让函数退出其命名空间的模板。另一个键是 `DSH6331`，即模板 `DSH6332` 里非 `{Name}` 的 `{...}`。见[包 ▸ 资产头部](../tools/packages.md#asset-headers)。它没有 `Settings`，也没有任何 section。参数列表之后的 `{ … }` 是原始 HLSL，原样保留：只读它的花括号，字符串和注释里的花括号不算。
 
-关键字 `Function` 和 `GraphFunction` **大小写敏感**（`function` 是 `DSH2240`）；修饰符、
-`in` / `out` 限定符和所有类型 token 不敏感。
+关键字 `Function` 和 `GraphFunction` **大小写敏感**（`function` 是 `DSH2240`）；修饰符、 `in` / `out` 限定符和所有类型 token 不敏感。
 
 <a id="declaration-order"></a>
 
 ## 声明顺序
 
-解析器从左到右读标识符，靠前瞻消歧：读完一个标识符后，下一个是
-`(` 它就是名字；下一个还是标识符，它就是*返回类型*，再下一个是名字。
+解析器从左到右读标识符，靠前瞻消歧：读完一个标识符后，下一个是 `(` 它就是名字；下一个还是标识符，它就是*返回类型*，再下一个是名字。
 
 | 形式 | 读作 |
 | :-- | :-- |
@@ -67,16 +58,13 @@ GraphFunction [ ( <attributes> ) ]                                [ <return-type
 
 **警告：**
 
-函数不能**取名**为 `Inline` 或 `SelfContained`。`Function SelfContained(in float a,
-out float b) { … }` takes the modifier branch and finds `(` where the name should be: `DSH6300。旧的 section 式函数体
-`Function Name { Inputs = { … } Code = { … } }` 也是 `DSH6300`。
+函数不能**取名**为 `Inline` 或 `SelfContained`。`Function SelfContained(in float a, out float b) { … }` 会走修饰符分支，并在本该是名称的位置找到 `(`：`DSH6300`。旧的 section 式函数体 `Function Name { Inputs = { … } Code = { … } }` 也同样会得到 `DSH6300`。
 
 <a id="parameters"></a>
 
 ## 参数
 
-一个参数是到下一个 `,` 或 `)` 为止的那些单词；任意空白 —— 包括制表符和换行 ——
-都只是分隔。接受 2 或 3 个单词：
+一个参数是到下一个 `,` 或 `)` 为止的那些单词；任意空白 —— 包括制表符和换行 —— 都只是分隔。接受 2 或 3 个单词：
 
 | 单词数 | 形式 | 限定符 |
 | :-- | :-- | :-- |
@@ -114,22 +102,15 @@ out float b) { … }` takes the modifier branch and finds `(` where the name sho
 | `Function U Name(…) { return; }` | **否** | 有返回类型时顶层的裸 `return;`：`DSH6308` |
 | `Function Name(…, out U r) { … return; … }` | **否** | 没有返回类型的函数里任何深度的 `return;`：`DSH6256`（自 2.0.0 起） |
 
-**有返回类型就意味着恰好一个输出，并且禁止任何显式 `out`。** 多输出必须用
-`out` 参数且不写返回类型。
+**有返回类型就意味着恰好一个输出，并且禁止任何显式 `out`。** 多输出必须用 `out` 参数且不写返回类型。
 
 <a id="return-is-no-longer-rewritten"></a>
 
 ### `return` 不再改写
 
-`return` 原样保留（自 2.0.0 起）。1.x 把每个顶层 `return` 改写成对合成
-`__return` 结果的赋值；现在函数体*就是*返回节点第一个输出的那个 HLSL 函数的
-函数体 —— `Custom` 节点自己的，或者被内嵌时 helper 的。所以 `return expr;` 在任何花括号深度都返回值，1.x 里嵌在
-`__return` 中绕过的情况现在和顶层的一样。
+`return` 原样保留（自 2.0.0 起）。1.x 把每个顶层 `return` 改写成对合成 `__return` 结果的赋值；现在函数体*就是*返回节点第一个输出的那个 HLSL 函数的函数体 —— `Custom` 节点自己的，或者被内嵌时 helper 的。所以 `return expr;` 在任何花括号深度都返回值，1.x 里嵌在 `__return` 中绕过的情况现在和顶层的一样。
 
-仍然检查的有：有返回类型时顶层的裸 `return;`（`DSH6308`）、没有返回类型时任何位置的 `return;`
-（`DSH6256`），以及声明了返回类型但函数体里一个 `return` 都没有 —— 这是
-警告 `DSH6257`，输出会是 0。整个函数体只是一个裸表达式时会自动补上 `return`。
-`__return` 这个名字仍然保留。
+仍然检查的有：有返回类型时顶层的裸 `return;`（`DSH6308`）、没有返回类型时任何位置的 `return;` （`DSH6256`），以及声明了返回类型但函数体里一个 `return` 都没有 —— 这是警告 `DSH6257`，输出会是 0。整个函数体只是一个裸表达式时会自动补上 `return`。 `__return` 这个名字仍然保留。
 
 <a id="accepted-parameter-types"></a>
 
@@ -147,8 +128,7 @@ out float b) { … }` takes the modifier branch and finds `(` where the name sho
 | `Substrate` | **不可以** —— `DSH6253` | **不可以** —— `DSH6253` |
 | 矩阵（`float3x3`、`mat3`……） | 不能跨节点引脚：`DSH4361` 出现在 `Graph` 调用时 | 同左 |
 
-生成的 HLSL 用 2.0 的方式书写每个类型：`vec3` 是 `float3`，`MaterialAttributes` 是
-`FMaterialAttributes`，`VolumeTexture` 是 `Texture3D`。
+生成的 HLSL 用 2.0 的方式书写每个类型：`vec3` 是 `float3`，`MaterialAttributes` 是 `FMaterialAttributes`，`VolumeTexture` 是 `Texture3D`。
 
 **警告：**
 
@@ -158,11 +138,9 @@ out float b) { … }` takes the modifier branch and finds `(` where the name sho
 
 ### 纹理参数与采样器
 
-`Texture2D`、`TextureCube`、`Texture2DArray`、`Texture3D` 和 `VolumeTexture` 是*纹理参数*。在节点上，它是一个承载纹理对象的引脚，引擎会在它旁边声明
-`SamplerState <Name>Sampler` —— 在函数体里使用那个名字。被内嵌为 helper 时，它的 HLSL 签名会在每个纹理参数后面多出 `SamplerState <Name>Sampler`，而其他函数体对它的每次调用会在纹理实参之后传入 `<argument>Sampler`；这种调用必须传满每个实参（`DSH6262`），而且它的纹理实参必须是一个纯名字（`DSH6263`）。你自己名为 `<Texture>Sampler` 的参数会和这一对撞上（`DSH6255`）。`SamplerState` **不是**纹理参数，没有伴随参数。
+`Texture2D`、`TextureCube`、`Texture2DArray`、`Texture3D` 和 `VolumeTexture` 是*纹理参数*。在节点上，它是一个承载纹理对象的引脚，引擎会在它旁边声明 `SamplerState <Name>Sampler` —— 在函数体里使用那个名字。被内嵌为 helper 时，它的 HLSL 签名会在每个纹理参数后面多出 `SamplerState <Name>Sampler`，而其他函数体对它的每次调用会在纹理实参之后传入 `<argument>Sampler`；这种调用必须传满每个实参（`DSH6262`），而且它的纹理实参必须是一个纯名字（`DSH6263`）。你自己名为 `<Texture>Sampler` 的参数会和这一对撞上（`DSH6255`）。`SamplerState` **不是**纹理参数，没有伴随参数。
 
-纹理参数上的 `<Texture>.Sample(UV)` —— 以及 `SampleLevel`、`SampleBias`、`SampleGrad` 比 HLSL 自身形式少一个参数时 —— 会被改写成引擎的
-`Texture2DSample(<Texture>, <Texture>Sampler, UV)` 一族（自 2.0.0 起）；原生 HLSL 拼法保持原样。
+纹理参数上的 `<Texture>.Sample(UV)` —— 以及 `SampleLevel`、`SampleBias`、`SampleGrad` 比 HLSL 自身形式少一个参数时 —— 会被改写成引擎的 `Texture2DSample(<Texture>, <Texture>Sampler, UV)` 一族（自 2.0.0 起）；原生 HLSL 拼法保持原样。
 
 ```c
 Function SampleTinted(in Texture2D tex, in vec2 uv, in vec3 tint, out vec3 rgb, out float alpha)
@@ -177,13 +155,11 @@ Function SampleTinted(in Texture2D tex, in vec2 uv, in vec3 tint, out vec3 rgb, 
 
 ## 函数体规范化
 
-每个 `Function` 和 `GraphFunction` 函数体 —— 语言里也只有它们 —— 在存储之前会过一遍标识符级别的改写。扫描会跳过注释和字符串，并做两件事：替换 18 个别名（15 个 GLSL 类型拼法，加上 `mix` → `lerp`、`fract` → `frac`、
-`mod` → `fmod`），以及把 `A::B`（`::` 两边没有空格）压平成净化后的标识符 `A_B`。
+每个 `Function` 和 `GraphFunction` 函数体 —— 语言里也只有它们 —— 在存储之前会过一遍标识符级别的改写。扫描会跳过注释和字符串，并做两件事：替换 18 个别名（15 个 GLSL 类型拼法，加上 `mix` → `lerp`、`fract` → `frac`、 `mod` → `fmod`），以及把 `A::B`（`::` 两边没有空格）压平成净化后的标识符 `A_B`。
 
 **警告：**
 
-因为别名匹配忽略大小写、且作用于函数体内任意位置的整个标识符，你自己名为 `Mix`、`Mod`、`Fract`、`Vec3` 或 `Mat4` 的 helper —— 或者以这些名字命名的*变量* —— 会在产出的 HLSL 里被静默改名。没有任何诊断 —— 针对 GLSL 拼法的 `DSH5277` 警告只覆盖 `Graph` 文本。请改名，或者换一个不会撞上的拼法（`MixColor`、
-`ModValue`）。
+因为别名匹配忽略大小写、且作用于函数体内任意位置的整个标识符，你自己名为 `Mix`、`Mod`、`Fract`、`Vec3` 或 `Mat4` 的 helper —— 或者以这些名字命名的*变量* —— 会在产出的 HLSL 里被静默改名。没有任何诊断 —— 针对 GLSL 拼法的 `DSH5277` 警告只覆盖 `Graph` 文本。请改名，或者换一个不会撞上的拼法（`MixColor`、 `ModValue`）。
 
 压平后的 `Common_Remap01` 正是命名空间函数的名字，所以函数体里的 `Ns::Fn(…)` 调用现在能到达那个函数（自 2.0.0 起）。
 
@@ -255,8 +231,7 @@ return <Out0>;                                   // appended only when the body 
 
 ## `Inline` / `SelfContained`
 
-每个调用点的节点都带着函数自己的函数体，以及这个函数体（传递地）调用的每个其他 `Function`，作为 `generated_wrapper_*` 结构体的成员 —— HLSL 没有嵌套函数，而 `Custom` 节点的代码就是一个函数体。1.x 只对 `SelfContained` 函数这样做，其他情况引用它共享的 include；2.0 没有共享 include，所以每个函数都得到了 `SelfContained` 当初要求的东西，这个修饰符会被读入但不改变任何东西（自 2.1.1 起）。（2.0.0 – 2.1.0 把它读成
-`/// @custom selfcontained`，那表示什么都不内嵌，于是这种函数体里的每个调用都留给 shader 编译器，然后失败。）
+每个调用点的节点都带着函数自己的函数体，以及这个函数体（传递地）调用的每个其他 `Function`，作为 `generated_wrapper_*` 结构体的成员 —— HLSL 没有嵌套函数，而 `Custom` 节点的代码就是一个函数体。1.x 只对 `SelfContained` 函数这样做，其他情况引用它共享的 include；2.0 没有共享 include，所以每个函数都得到了 `SelfContained` 当初要求的东西，这个修饰符会被读入但不改变任何东西（自 2.1.1 起）。（2.0.0 – 2.1.0 把它读成 `/// @custom selfcontained`，那表示什么都不内嵌，于是这种函数体里的每个调用都留给 shader 编译器，然后失败。）
 
 | 方面 | 每个 `Function`，带不带 `Inline` / `SelfContained` 都一样 |
 | :-- | :-- |
@@ -367,7 +342,7 @@ Namespace(Name = "Common") { Function ApplyTint(…) }   →   Common::ApplyTint
 | 查找 | 限定名，或它压平后的拼法 `Common_ApplyTint`。没有 `using`，也没有不限定的回退：裸的 `ApplyTint(…)` 是 `DSH4208`。 |
 | 大小写 | 名字大小写敏感 （自 2.0.0 起）。`common::applytint(…)` 只与一个函数匹配时仍能解析，并给出警告 `DSH5275`。 |
 | 缺名字 | `Common::` 后面什么都没有是 `DSH5260`。 |
-| `Generate`、`Library`、`Description` | （2.1.2 之后）在包的 header 里：每个成员都会生成一个以 `Generate` 模板命名的材质函数（`MF_BL_{Name}`），默认值为 `Library` 和 `Description`。见 [包 ▸ 资产 header](../../tools/packages.md#asset-headers)。 |
+| `Generate`、`Library`、`Description` | （2.1.2 之后）在包的 header 里：每个成员都会生成一个以 `Generate` 模板命名的材质函数（`MF_BL_{Name}`），默认值为 `Library` 和 `Description`。见 [包 ▸ 资产 header](../tools/packages.md#asset-headers)。 |
 | 从 `.dss` | （2.1.2 之后）包含了该 header 的 `.dss` 也能以 `Common::ApplyTint(…)` 调用成员。 |
 
 ```c
@@ -399,10 +374,7 @@ Graph = {
 
 因为 `::` 和 `_` 压平后是同一个东西，`Namespace(Name="Common")` 的成员 `ApplyTint` 和顶层的 `Function Common_ApplyTint` 声明的是同一个名字：`DSH4210`。
 
-**在另一个 `Function` 或 `GraphFunction` 函数体里**，`Ns::Fn(…)` 现在能调用到该函数
-（自 2.0.0 起）：函数体规范化把 `Common::ApplyTint` 改写成 `Common_ApplyTint`，那正是函数自己的名字，于是
-这个调用像其他 `Function` 调用一样被内嵌。在 1.x 里它会作为未定义的 `Common_ApplyTint` 到达 shader
-编译器然后失败。写 `::` 时它两边不能有空格。
+**在另一个 `Function` 或 `GraphFunction` 函数体里**，`Ns::Fn(…)` 现在能调用到该函数（自 2.0.0 起）：函数体规范化把 `Common::ApplyTint` 改写成 `Common_ApplyTint`，那正是函数自己的名字，于是这个调用像其他 `Function` 调用一样被内嵌。在 1.x 里它会作为未定义的 `Common_ApplyTint` 到达 shader 编译器然后失败。写 `::` 时它两边不能有空格。
 
 <a id="calls"></a>
 
@@ -415,10 +387,7 @@ Graph = {
 | `x = Fn(a, b);` —— **值式调用**（自 1.3.1 起） | 传入输入；其值是函数的第一个输出 —— 返回值，或第一个 `out`。多输出的函数也可以这样调用（自 2.0.0 起），其他输出不连线；`Fn(a, b).Out` 或 `Fn(a, b, Output = "Out")` 选另外一个输出。 |
 | `Fn(a, b, OutX, OutY);` —— 语句式调用 | 先全部输入，再按声明顺序每个输出一个接收者。接收者必须是变量（`DSH4239`），类型与输出一致（`DSH4218`）；没人声明过的接收者就地声明，并给出 info `DSH5283`。 |
 
-实参太多是 `DSH4224`；漏掉一个输入是 `DSH4217`。命名参数现在可以用
-（自 2.0.0 起）：它们命名一个参数（没有这个名字是 `DSH4216`），使用了命名参数的调用按名字和声明
-顺序匹配，而不是"先输入后接收者"。修饰后的拼法 `DreamShaderFn_Luma(c)` 不再指向这个函数（自 2.0.0 起）：
-`DSH4208`。
+实参太多是 `DSH4224`；漏掉一个输入是 `DSH4217`。命名参数现在可以用（自 2.0.0 起）：它们命名一个参数（没有这个名字是 `DSH4216`），使用了命名参数的调用按名字和声明顺序匹配，而不是"先输入后接收者"。修饰后的拼法 `DreamShaderFn_Luma(c)` 不再指向这个函数（自 2.0.0 起）： `DSH4208`。
 
 完整的参数规则、`default` 和输出选择器见 [调用](../graph/calls.md)。
 
@@ -426,14 +395,9 @@ Graph = {
 
 ## 说明
 
-- **一个名字只声明一样东西。** 同名的两个函数 —— 同一文件里，或文件和它导入的 header 之间 —— 是
-  `DSH4210`；`A::B` 和 `A_B` 是同一个名字。同名的 `Function` 和
-  `GraphFunction` 同样是 `DSH4210`（自 2.0.0 起）（1.x 把调用报成有歧义）。函数名和内置函数
-  （`lerp`、`saturate`……）相同是 `DSH6206`。没有重载。
-- **名字大小写敏感**（自 2.0.0 起）。`Luma` 和 `luma` 是两个函数；`Graph`
-  调用只差大小写且唯一匹配时仍能解析，并给出警告 `DSH5275`。
-- **header 单独解析。** 导入的 `.dsh` 不会被粘贴进文件；它的函数被登记进文件。见
-  [import 与命名空间](import.md)。
+- **一个名字只声明一样东西。** 同名的两个函数 —— 同一文件里，或文件和它导入的 header 之间 —— 是 `DSH4210`；`A::B` 和 `A_B` 是同一个名字。同名的 `Function` 和 `GraphFunction` 同样是 `DSH4210`（自 2.0.0 起）（1.x 把调用报成有歧义）。函数名和内置函数（`lerp`、`saturate`……）相同是 `DSH6206`。没有重载。
+- **名字大小写敏感**（自 2.0.0 起）。`Luma` 和 `luma` 是两个函数；`Graph` 调用只差大小写且唯一匹配时仍能解析，并给出警告 `DSH5275`。
+- **header 单独解析。** 导入的 `.dsh` 不会被粘贴进文件；它的函数被登记进文件。见 [import 与命名空间](import.md)。
 - 只含 `Function` / `GraphFunction` 块的 `.dsm` 或 `.dsf` 能编译成功且不产出任何东西。
 - UE 5.3 上生成的 `Custom` 节点会在材质图里显示代码；UE 5.4 起 `ShowCode` 被设为 `false`。
 

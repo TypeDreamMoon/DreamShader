@@ -1,6 +1,4 @@
-#dreamdocs-align 1	source=Docs/generation/ephemeral.md	rev=8a7a159022d8	model=deepseek-flash	page=d15ab5f88bad
-meta:title	-	1eef054f	m
-meta:description	-	1eef054f	m
+#dreamdocs-align 1	source=Docs/generation/ephemeral.md	rev=166375290736	model=deepseek-v4.1-flash	page=d15ab5f88bad
 h1	04083bc2a46c	7e5c6642	m
 q	427b2da75f07	90ff45bf	m
 p	c747f2e0b90e	9479cd58	m
@@ -41,7 +39,7 @@ p	737f72bf456d	8cc853ce	m
 p	d5cb97f10eaa	1f5983c1	m
 li	ddc27a718032	0373acfc	m
 li	d1821146ed08	3d311743	m
-li	ff0ccca9820b	17ac11e3	m
+li	ff0ccca9820b	ae1be4fa	m
 h3	98e0c00df612	dccd9c64	m
 row2	e070228b259f	e070228b	s
 row2	408d305839c1	8f1aaf5c	m
@@ -54,7 +52,7 @@ q	7e114b374ba0	41b23861	m
 h2	9c669815af89	ef0eb235	m
 p	3a1c7fc66ce3	be7bc7bf	m
 row2	ee062e64f865	ec96dbcd	m
-row2	a8272f502f63	5a0c7a88	m
+row2	a8272f502f63	ef61613b	m
 row2	8f2fd8be9fff	aa7701c4	m
 row2	d8daf75dbde1	a31e3f06	m
 p	d6d420d81ecd	5987a138	m
@@ -74,7 +72,7 @@ q	953456f4f998	a7985734	m
 p	afba186a7105	c8135a95	m
 p	d9ebf3bfe8f5	66dc3a8c	m
 row2	5b03ba3a8a60	d27ef5c1	m
-row2	-	c9913aac	m
+row2	01fb61a9b4e9	f2970d66	m
 row2	c70a3bece8a2	598044b4	m
 p	40b83c04dc23	9f393775	m
 p	cc2115142d97	b1a8fc12	m
@@ -85,7 +83,7 @@ row2	986eb170a2d5	cf35964e	m
 row2	6b1ebc342557	7140dd9f	m
 row2	b88e9ef3d4cd	88593d0f	m
 row2	f223a2e67e8f	5d749ea0	m
-row2	c87f5dfc29d2	17502bc4	m
+row2	c87f5dfc29d2	4bcd6978	m
 row2	41b3123ada6a	5e7cf72d	m
 row2	cbc4599b30a9	70d1807b	m
 p	b4a17d9c3771	5ee533a5	m
@@ -110,6 +108,6 @@ li	119875baf672	4d4fc2fd	m
 li	a1b22f56940d	fed94537	m
 li	70dd8c06840a	801c732c	m
 li	57c00512dcd6	ef17db98	m
-li	2cb8a300824a	100322be	m
+li	2cb8a300824a	074ef724	m
 li	f2f43bdbb32c	4125f377	m
 li	87c0153bf271	f9380bc2	m

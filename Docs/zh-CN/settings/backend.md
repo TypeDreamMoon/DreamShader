@@ -1,16 +1,10 @@
----
-title: "Backend"
-description: "Backend"
----
-
 <a id="backend"></a>
 
 # Backend
 
 > [DreamShader](../index.md) » [Settings](index.md) » **Backend**
 
-`Shader` 设置，用于选择源文件如何被物化：一个可见的 `UMaterial` 节点图，
-还是隐藏基础材质之上的一个轻量材质实例。
+`Shader` 设置，用于选择源文件如何被物化：一个可见的 `UMaterial` 节点图，还是隐藏基础材质之上的一个轻量材质实例。
 
 | | |
 | :-- | :-- |
@@ -32,9 +26,7 @@ Shader(Name = "<asset-path>")
 }
 ```
 
-该值在去除首尾空白并去除引号后以大小写不敏感方式匹配；引号可选。
-`Backend` 是一个特殊键：它在源文件绑定时被读取，永远不会到达材质或
-反射解析器。2.0 的写法是 `#pragma material(Backend = ThinCustom)`。
+该值在去除首尾空白并去除引号后以大小写不敏感方式匹配；引号可选。 `Backend` 是一个特殊键：它在源文件绑定时被读取，永远不会到达材质或反射解析器。2.0 的写法是 `#pragma material(Backend = ThinCustom)`。
 
 <a id="accepted-values"></a>
 
@@ -50,14 +42,10 @@ Shader(Name = "<asset-path>")
 | 其他任意值 | — | [`DSH7202`](../diagnostics/DSH7xxx.md#dsh7202)，一个错误 |
 
 > [!WARNING]
-> `Backend = "Instance"` **自 1.5.0 起已弃用**。它是 `ThinCustom` 的别名；旧的无图实例后端已退役，
-> 运行时不再存在 `Instance` 后端。该拼写仍然能编译，并且自 2.0.0 起会以 `DSH7204` 警告说明这一点。
-> 请将其替换为 `Backend = "ThinCustom";` —— 或删除该键，让项目默认值生效。
+> `Backend = "Instance"` **自 1.5.0 起已弃用**。它是 `ThinCustom` 的别名；旧的无图实例后端已退役，运行时不再存在 `Instance` 后端。该拼写仍然能编译，并且自 2.0.0 起会以 `DSH7204` 警告说明这一点。请将其替换为 `Backend = "ThinCustom";` —— 或删除该键，让项目默认值生效。
 
 > [!NOTE]
-> `Backend = "";` 是一个错误 *（自 2.0.0 起）*。1.x 将其读作 **`Graph`**，这等于用一个没人写的值
-> 悄悄覆盖了项目默认值。只有*不写*该键才会回落到 *Default Compiler
-> Backend*；如果你想要的就是它，请写 `Graph`。
+> `Backend = "";` 是一个错误 *（自 2.0.0 起）*。1.x 将其读作 **`Graph`**，这等于用一个没人写的值悄悄覆盖了项目默认值。只有*不写*该键才会回落到 *Default Compiler Backend*；如果你想要的就是它，请写 `Graph`。
 
 <a id="precedence"></a>
 
@@ -73,11 +61,9 @@ Shader(Name = "<asset-path>")
 | `"Instance"` | 任意 | `ThinCustom`（`DSH7204`） |
 | `""` | 任意 | —（`DSH7201`） |
 
-显式写的 `Backend` 永远压过项目设置。项目设置见
-[项目设置](project.md#settings)。
+显式写的 `Backend` 永远压过项目设置。项目设置见[项目设置](project.md#settings)。
 
-`Backend` 在源文件绑定时解析，早于任何材质对象存在，也早于 `Settings` 的其余部分被应用。
-无法识别的值是一个绑定错误，因此编译会在那里停止，该文件不会再报告构建期的设置诊断。
+`Backend` 在源文件绑定时解析，早于任何材质对象存在，也早于 `Settings` 的其余部分被应用。无法识别的值是一个绑定错误，因此编译会在那里停止，该文件不会再报告构建期的设置诊断。
 
 <a id="what-each-backend-produces"></a>
 
@@ -116,18 +102,13 @@ Shader(Name = "<asset-path>")
 | `HasOverridenBaseProperties()` | 当父级是 `UMaterial` 时强制为 `true` —— 也就是隐藏基础材质之上的根实例；其他父级走原生实现。因此以 DreamShader 实例为父的子实例会**共享**根实例已编译的 shader map，而不是自己再编一份。 |
 | `IsAsset()` | 当包是新建的**且** *Show Ephemeral Materials* 关闭时为 `false`。纯内存材质因此从内容浏览器、资产注册表枚举和保存选择器中消失。该设置每次调用都实时读取。 |
 
-构建时发现本该是 Ephemeral 的资产却已保存，会记一条警告：
-`'{Asset}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run
-Tools > DreamShader > Make Ephemeral to make it Ephemeral again.` 见
-[内存材质](../generation/ephemeral.md)。
+构建时发现本该是 Ephemeral 的资产却已保存，会记一条警告： `'{Asset}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run Tools > DreamShader > Make Ephemeral to make it Ephemeral again.` 见[内存材质](../generation/ephemeral.md)。
 
 <a id="changing-the-project-default"></a>
 
 ## 修改项目默认值
 
-在编辑器运行时修改 *Default Compiler Backend* 会重建工程的源文件，并记录
-`DreamShader setting '{Setting}' changed; regenerating all source files.`。构建键不受这次修改影响的源文件会被跳过。如果磁盘上还有持久化的生成资产，会弹出提示
-指向清理操作：`{Count} 个先前生成的资产仍保存在磁盘上并遮蔽 Ephemeral 材质。运行 Tools > DreamShader > Make Ephemeral 将其删除。`
+在编辑器运行时修改 *Default Compiler Backend* 会重建工程的源文件，并记录 `DreamShader setting '{Setting}' changed; regenerating all source files.`。不受此更改影响的源文件会按其构建键跳过。如果存在持久化的生成资产，通知会指向清理操作：`{Count} previously generated asset(s) are still saved on disk and shadow the Ephemeral materials. Run Tools > DreamShader > Make Ephemeral to remove them.`
 
 单独给某个材质切换后端会把之前的资产留在原地。接下来你就会撞上上面的复用冲突错误；删掉旧资产再重新生成。
 
