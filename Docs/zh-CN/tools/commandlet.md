@@ -1,8 +1,3 @@
----
-title: "命令行工具"
-description: "命令行工具"
----
-
 <a id="commandlet"></a>
 
 # 命令行工具
@@ -85,9 +80,7 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 其他任何内容都会失败，并输出 `Unknown DreamShader command '{Command}'.` 及用法横幅，然后以 `1` 退出。
 
 > [!WARNING]
-> 第一个裸 token 会**无条件**被当作命令名，在做任何校验之前。把一个不带前导连字符的选项写在*最前面* — `-run=DreamShader Source=X compile`
-> — 会把 `Source=X` 当作命令名消耗掉，并产生 `Unknown DreamShader command 'Source=X'.`
-> 请让命令保持为第一个裸参数。
+> 第一个裸 token 会**无条件**被当作命令名，在做任何校验之前。把一个不带前导连字符的选项写在*最前面* — `-run=DreamShader Source=X compile` — 会把 `Source=X` 当作命令名消耗掉，并产生 `Unknown DreamShader command 'Source=X'.` 请让命令保持为第一个裸参数。
 
 <a id="compile--generate"></a>
 
@@ -131,8 +124,7 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 | 4 | 排序：`.dsf` 函数文件和资产头文件在前（rank 0），其余每种在后（rank 1）；同 rank 按大小写不敏感的路径比较 |
 | 5 | 分轮编译：某个源文件失败时，只要本轮还构建了别的东西就将其暂缓，在下一轮重试；一旦某轮没有构建出任何新内容，仍然失败的就会被报告 *(自 2.1.2 起)* |
 
-调用另一个源文件所生成函数的材质会加载该函数的资产，因此该资产必须先存在。排序覆盖了常见情况——单轮中 `.dsm` 调用 `.dsf` ——但覆盖不了函数调用函数，也覆盖不了另一个源文件调用 `.dss` 所导出的函数；步骤 5 覆盖所有形态，在干净的工作区上也是如此。一直失败的源文件 —— 真实的错误、没有源文件生成的依赖，或者循环 —— 在每个构建出了东西的轮次中最多多尝试一次，并在所有成功之后以其最后一次尝试的消息报告。cook 运行相同的步骤（[Cook 行为](../generation/ephemeral.md#cook-behaviour)）。
-`.dsp` 不需要自己的 rank *(2.1.0)*：它的某个 pass 引用的材质缺失或比其源文件旧时，会先由 `.dsp` 自身的编译来编译。
+调用另一个源文件所生成函数的材质会加载该函数的资产，因此该资产必须先存在。排序覆盖了常见情况——单轮中 `.dsm` 调用 `.dsf` ——但覆盖不了函数调用函数，也覆盖不了另一个源文件调用 `.dss` 所导出的函数；步骤 5 覆盖所有形态，在干净的工作区上也是如此。一直失败的源文件 —— 真实的错误、没有源文件生成的依赖，或者循环 —— 在每个构建出了东西的轮次中最多多尝试一次，并在所有成功之后以其最后一次尝试的消息报告。cook 运行相同的步骤（[Cook 行为](../generation/ephemeral.md#cook-behaviour)）。 `.dsp` 不需要自己的 rank *(2.1.0)*：它的某个 pass 引用的材质缺失或比其源文件旧时，会先由 `.dsp` 自身的编译来编译。
 
 <a id="-define-since-190"></a>
 
@@ -206,8 +198,7 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 | 1 | 每个 `\` 变成 `/` |
 | 2 | 若路径以 `/` 开头且**不含** `.`，追加短名：`/Game/Path/Asset` → `/Game/Path/Asset.Asset` |
 
-先加载归一化后的路径。如果失败**且**归一化确实改变了字符串，
-再原样重试去掉引号的原始输入。
+先加载归一化后的路径。如果失败**且**归一化确实改变了字符串，再原样重试去掉引号的原始输入。
 
 <a id="supported-asset-classes"></a>
 
@@ -223,22 +214,15 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 | `UDreamPassPipeline` *(2.1.0)* | `.dsp` —— 只有 2.0 文本：`-Format=Legacy`，或者以 `.dsm` / `.dsf` 结尾的 `-Out`，会被拒绝；扩展名不是 `.dsp` 的 `-Out` 则被 [`DSH9210`](../diagnostics/DSH9xxx.md) | `<SourceDirectory>/Decompiled/Pipelines/<package path>.dsp` |
 | 其他任何类 | — | 报错 |
 
-路径段会被净化：控制字符和 `< > : " / \ | ? *` 变成 `_`；空目录段
-变成 `Folder<N>`，空资产段变成 `Asset<N>`。输出以 UTF-8 写出，
-不带 BOM。`-Out` 完全绕过计算出来的目标 —— 必要时创建目录。
-反编译器的完整行为见[反编译器](decompiler.md)。
+路径段会被净化：控制字符和 `< > : " / \ | ? *` 变成 `_`；空目录段变成 `Folder<N>`，空资产段变成 `Asset<N>`。输出以 UTF-8 写出，不带 BOM。`-Out` 完全绕过计算出来的目标 —— 必要时创建目录。反编译器的完整行为见[反编译器](decompiler.md)。
 
 <a id="dump-graph-since-190"></a>
 
 ## `dump-graph` *（自 1.9.0 起）*
 
-一个**开发者工具**，不属于正常构建的一部分。它按 `compile` 的方式生成每个源文件，
-然后不保存资产，而是写出一份规范化的 JSON 文件，描述生成所产生的图：
-节点类、它们反射出来的属性、每一条连线，以及引脚顺序。
+一个**开发者工具**，不属于正常构建的一部分。它按 `compile` 的方式生成每个源文件，然后不保存资产，而是写出一份规范化的 JSON 文件，描述生成所产生的图：节点类、它们反射出来的属性、每一条连线，以及引脚顺序。
 
-它存在的理由是[一致性](../contributing/testing.md#graph-baseline-since-190)。一次编译器改动之前做的 JSON 快照，
-是重写的编译器唯一能对照的基准真相，一个源文件一个源文件地比 —— 这是机器可读版的“两个都反编译然后 diff 文本”，
-而且中间没有反编译器自己的意见。两次快照用普通的文本 diff 比较。
+它存在的理由是[一致性](../contributing/testing.md#graph-baseline-since-190)。一次编译器改动之前做的 JSON 快照，是重写的编译器唯一能对照的基准真相，一个源文件一个源文件地比 —— 这是机器可读版的“两个都反编译然后 diff 文本”，而且中间没有反编译器自己的意见。两次快照用普通的文本 diff 比较。
 
 | 选项 | 别名 | 类型 | 必需 | 默认 | 含义 |
 | :-- | :-- | :-- | :-- | :-- | :-- |
@@ -248,27 +232,18 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 | `-Force` | — | 标志 | 否 | 关 | 接受但被**忽略**；导出总是会重新生成 |
 | `-Define=<NAME>[=<value>]` | `-D=<NAME>[=<value>]` | 字符串，可重复 | 否 | — | 与 `compile` 同一 define 层级；导出是按 define 集进行的 |
 
-`-Source` 解析、`-All` 发现以及 `.dsf` 先于 `.dsm` 的顺序，与
-[`compile`](#-all-discovery-and-ordering) 是完全相同的代码。这是刻意的：如果基线覆盖的源文件集
-与编译器覆盖的不同，就会把缺失的文件报告成差异。
+`-Source` 解析、`-All` 发现以及 `.dsf` 先于 `.dsm` 的顺序，与 [`compile`](#-all-discovery-and-ordering) 是完全相同的代码。这是刻意的：如果基线覆盖的源文件集与编译器覆盖的不同，就会把缺失的文件报告成差异。
 
 <a id="it-never-writes-an-asset"></a>
 
 ### 它从不写资产
 
-对工程做基线快照，绝不能是为了读回它们而把每个生成的 `.uasset` 重建并保存一遍。
-因此 `dump-graph` 在整个扫描过程中关闭编译器的写所有权，
-这让生成在旧图被拆除*之前*就拒绝任何会落盘的资产。
+对工程做基线快照，绝不能是为了读回它们而把每个生成的 `.uasset` 重建并保存一遍。因此 `dump-graph` 在整个扫描过程中关闭编译器的写所有权，这让生成在旧图被拆除*之前*就拒绝任何会落盘的资产。
 
 > [!WARNING]
-> 后果是**磁盘上已经存在的资产会按现状导出，而不是重新生成**。在编译过的工作区里，
-> 它们是同一张图。而在过期的工作区里则不是，且是悄无声息的。
-> 一旦源文件可能在资产写出之后变动过，就先跑 `compile -All -Force`。
-> 运行会统计这些并说明：
-> `{N} of them already exist on disk, so dump-graph read them as they stand instead of rebuilding them…`
+> 后果是**磁盘上已经存在的资产会按现状导出，而不是重新生成**。在编译过的工作区里，它们是同一张图。而在过期的工作区里则不是，且是悄无声息的。一旦源文件可能在资产写出之后变动过，就先跑 `compile -All -Force`。运行会统计这些并说明： `{N} of them already exist on disk, so dump-graph read them as they stand instead of rebuilding them…`
 
-资产背后没有文件的源文件 —— 整个测试语料，以及任何尚未编译的东西 ——
-都在内存中生成并从内存导出，所以磁盘上的东西无论如何都不会被碰。
+资产背后没有文件的源文件 —— 整个测试语料，以及任何尚未编译的东西 —— 都在内存中生成并从内存导出，所以磁盘上的东西无论如何都不会被碰。
 
 <a id="output-layout"></a>
 
@@ -278,11 +253,7 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 <Out>/<root>/<source path relative to that root>.<asset leaf>.graph.json
 ```
 
-`<root>` 是拥有该文件的[源码根](../language/source-files.md) —— `Project`，
-或拥有它的插件名；插件自己的测试语料是 `DreamShaderPlugin`，不属于任何源码根的文件是 `External`
-（其相对路径会退化成文件名）。源文件的扩展名被刻意保留在名字中间：
-否则 `M_Foo.dsm` 和 `M_Foo.dsf` 会冲突。相对路径内的路径分隔符仍保持为分隔符，
-所以导出树镜像源文件树；文件名容纳不了的字符变成 `_`。
+`<root>` 是拥有该文件的[源码根](../language/source-files.md) —— `Project`，或拥有它的插件名；插件自己的测试语料是 `DreamShaderPlugin`，不属于任何源码根的文件是 `External` （其相对路径会退化成文件名）。源文件的扩展名被刻意保留在名字中间：否则 `M_Foo.dsm` 和 `M_Foo.dsf` 会冲突。相对路径内的路径分隔符仍保持为分隔符，所以导出树镜像源文件树；文件名容纳不了的字符变成 `_`。
 
 每个**资产**一个文件，而不是每个源文件一个：一个声明了三个 `ShaderFunction` 块的 `.dsf` 会写出三个。
 
@@ -304,17 +275,13 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 | `inputs` / `outputs` | *（函数）*名称、类型、排序优先级、描述、可选标志、预览值 |
 | `instance` | *（ThinCustom）*`parent.kind` 和 `parameters`——即覆盖项、静态开关和静态组件掩码 |
 
-对于 ThinCustom 实例，`nodes`、`properties` 和 `settings` 描述的是该实例所继承的**隐藏基础材质**，
-图实际上就存在于那里。基础材质自身的对象路径被刻意省略：它在编辑器中是瞬态对象，在磁盘上是实例的子对象，
-因此同一张图的两次捕获中该字符串会不同。
+对于 ThinCustom 实例，`nodes`、`properties` 和 `settings` 描述的是该实例所继承的**隐藏基础材质**，图实际上就存在于那里。基础材质自身的对象路径被刻意省略：它在编辑器中是瞬态对象，在磁盘上是实例的子对象，因此同一张图的两次捕获中该字符串会不同。
 
 <a id="a-pipelines-dump"></a>
 
 ### 管线的转储
 
-*(自 2.1.0 起)* `.dsp` 产物没有图，因此它的转储就是运行时读取到的 `UDreamPassPipeline`，
-每个枚举都按 `.dsp` 的拼写方式书写。运行行中写的是 `nodes`，但统计的是 pass 数。
-其导出缓冲区的渲染目标不会获得自己的文件。
+*(自 2.1.0 起)* `.dsp` 产物没有图，因此它的转储就是运行时读取到的 `UDreamPassPipeline`，每个枚举都按 `.dsp` 的拼写方式书写。运行行中写的是 `nodes`，但统计的是 pass 数。其导出缓冲区的渲染目标不会获得自己的文件。
 
 | 键 | 含义 |
 | :-- | :-- |
@@ -324,27 +291,17 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 | `passes` | 按声明顺序——注入点内的执行顺序：`name`、`kind`、`injection`、`enabled`、`reads` / `writes`（`slot`、`buffer`、`previous`）、`params`（`target`、`source` 以及常量，或带 `multiplier` 和 `offset` 的参数）、`description` 以及 `settings`——只包含该 pass 自身类型的键，slot 编号也包含在内 |
 | `slots` | 再次列出每个 HLSL pass：`pass`、`kind`（`compute` 或 `pixel`）、`slot`——该数字可能因重建另一条管线而变化 |
 
-写入守卫同样覆盖 slot 注册表：背后没有文件的管线在内存中构建，其 slot 使用注册表已为其记录的值（无记录处为 `-1`），
-注册表和快照都不会被写入。
+写入守卫同样覆盖 slot 注册表：背后没有文件的管线在内存中构建，其 slot 使用注册表已为其记录的值（无记录处为 `-1`），注册表和快照都不会被写入。
 
-每个节点是 `{ id, class, props, inputs }`，命名重路由用法上还会加上 `reroute`。`id` 是 `n0`、
-`n1`……——按位置排列，绝不是引擎标识符。`class` 是表达式类的完整路径名。
-`inputs` 仅列出**已连接**的引脚，按引脚顺序，格式为 `{ index, name, from, output, mask }`，其中
-`mask` 是 `"rgba"` 风格的字符串或 `null`。命名重路由用法**按名称**链接到其声明，
-因为名称是声明在源码中的身份，而其 GUID 在每次重建时都会重新发放。
+每个节点是 `{ id, class, props, inputs }`，命名重路由用法上还会加上 `reroute`。`id` 是 `n0`、 `n1`……——按位置排列，绝不是引擎标识符。`class` 是表达式类的完整路径名。 `inputs` 仅列出**已连接**的引脚，按引脚顺序，格式为 `{ index, name, from, output, mask }`，其中 `mask` 是 `"rgba"` 风格的字符串或 `null`。命名重路由用法**按名称**链接到其声明，因为名称是声明在源码中的身份，而其 GUID 在每次重建时都会重新发放。
 
-输入的 `name` 是引擎自身的，只有一个例外 *(自 2.0.0 起)*：`BreakMaterialAttributes`、
-`GetMaterialAttributes` 和 `SetMaterialAttributes` 用翻译后的文本命名其输入，因此它们
-被写作 `MaterialAttributes` 以及属性自身的名称（`BaseColor`、`FrontMaterial`）——
-捕获绝不能依赖进行捕获的编辑器的语言。同理，Get 和 Set 在 `props` 中以名称形式携带其属性列表，即 `AttributeGetTypes` 和 `AttributeSetTypes`，
-尽管其他所有 `FGuid` 都被省略：对这两个节点而言，该列表就是行为本身。
+输入的 `name` 是引擎自身的，只有一个例外 *(自 2.0.0 起)*：`BreakMaterialAttributes`、 `GetMaterialAttributes` 和 `SetMaterialAttributes` 用翻译后的文本命名其输入，因此它们被写作 `MaterialAttributes` 以及属性自身的名称（`BaseColor`、`FrontMaterial`）—— 捕获绝不能依赖进行捕获的编辑器的语言。同理，Get 和 Set 在 `props` 中以名称形式携带其属性列表，即 `AttributeGetTypes` 和 `AttributeSetTypes`，尽管其他所有 `FGuid` 都被省略：对这两个节点而言，该列表就是行为本身。
 
 <a id="the-exclusion-list"></a>
 
 ### 排除列表
 
-确定性优先于完整性：同一编译器两次运行之间都会变化的指纹，无法说明两个*不同*编译器之间的任何事。
-因此任何不属于图属性的东西都被省略，而不是被归一化。
+确定性优先于完整性：同一编译器两次运行之间都会变化的指纹，无法说明两个*不同*编译器之间的任何事。因此任何不属于图属性的东西都被省略，而不是被归一化。
 
 | 排除项 | 原因 |
 | :-- | :-- |
@@ -356,10 +313,7 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 | `GraphNode`、`Material`、`Function`、`SubgraphExpression` | 瞬态，或指向所属对象的反向指针 |
 | `FExpressionInput` 属性 | 它们导出的文本是所连接对象的路径；连接改为按节点 id 以结构化方式记录 |
 
-`props` 在其他方面就是插件已经视为*内容*的每个反射 `UPROPERTY`——与[差异摘要](../generation/divergence.md)相同的规则，
-因此二者对何为手动编辑不会产生分歧。参数名称、分组和排序优先级、采样器类型、纹理对象路径、静态开关默认值、`Custom` `Code` / `OutputType` / `AdditionalOutputs` / `IncludeFilePaths`、
-函数调用目标路径、`ComponentMask` 通道标志、常量以及 `Panner`/`Time` 设置
-全部包含在内。无论值是否等于类默认值都会被写出——仅因恰好匹配 CDO 就省略某个值，会在引擎默认值变动时改变转储的形态。
+`props` 在其他方面就是插件已经视为*内容*的每个反射 `UPROPERTY`——与[差异摘要](../generation/divergence.md)相同的规则，因此二者对何为手动编辑不会产生分歧。参数名称、分组和排序优先级、采样器类型、纹理对象路径、静态开关默认值、`Custom` `Code` / `OutputType` / `AdditionalOutputs` / `IncludeFilePaths`、函数调用目标路径、`ComponentMask` 通道标志、常量以及 `Panner`/`Time` 设置全部包含在内。无论值是否等于类默认值都会被写出——仅因恰好匹配 CDO 就省略某个值，会在引擎默认值变动时改变转储的形态。
 
 浮点数格式为 `%.9g`；非有限值会降级为字符串，因为 JSON 无法表示它。
 
@@ -367,8 +321,7 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 
 ### 节点顺序
 
-`nodes` 是**从汇点开始的后序深度优先遍历**，因此一个节点只有在所有为其提供输入的节点都被编号后才被编号，
-并且 `from` 总是引用更早的条目。
+`nodes` 是**从汇点开始的后序深度优先遍历**，因此一个节点只有在所有为其提供输入的节点都被编号后才被编号，并且 `from` 总是引用更早的条目。
 
 | 步骤 | 规则 |
 | :-- | :-- |
@@ -427,8 +380,7 @@ git diff --no-index -- I:/Baseline/before I:/Baseline/after
 | 带 1.x 声明的——一个 `.dsm`、一个 `.dsf`、一个仍带有 `Function` 块的 `.dsh` | 打印器为这些写出来的是 2.0 文本，而把 1.x 变成 2.0 是 [`migrate`](migrate.md)，它在写出之前证明的东西要多得多 | `DSH9042`（info） |
 | 在 `/// @custom` 体之外使用 `#if` 的 | 解析器读取的是预处理后的文本，而 `fmt` 按磁盘上的原样读取文件；重新打印 `#if` 的一侧会删掉另一侧 | `DSH9043`（info） |
 
-运行结束时输出一行：`DreamShader fmt: 3 rewritten, 41 already formatted, 2 left alone, 0 failed
-of 46 file(s). RESULT=OK`。
+运行结束时输出一行：`DreamShader fmt: 3 rewritten, 41 already formatted, 2 left alone, 0 failed of 46 file(s). RESULT=OK`。
 
 <a id="list-generated"></a>
 
@@ -475,20 +427,14 @@ of 46 file(s). RESULT=OK`。
 对 `.dsp` 执行 `check -Shaders` 不会编译任何材质：管线没有材质，而它的 pass 引用的材质由构建它们的源文件来检查。可能编译失败的是 HLSL pass，而它改在全局 shader slot 中预检——即编译所执行的预检，只是有三处不同：
 
 - **每个 HLSL pass，无论改动与否。** 编译只预检快照有变化的 pass。该检查按注册表当前的样子规划 slot——已有 slot 的 pass 保留它，新的 pass 在它将占用的 slot 中检查——并且不提交该规划的任何内容。
-- **`-Platform` 格式**，当运行指定了任何格式时：`SM6` 是 `PCD3D_SM6`，`SM5` 为 `PCD3D_SM5`，`ES3_1`
-  `PCD3D_ES3_1`、`VULKAN_SM6`、`VULKAN_SM5` 和 `METAL_SM5` 为 `SF_` 格式，其他任何 token 都被视为 shader 格式名。不指向本机可编译的任何 shader 格式的 token——包括诸如 `Windows` 这类目标平台名——不会被预检，并会由
-  [`DSH8324`](../diagnostics/DSH8xxx.md) 说明。没有 `-Platform` 时，编译所预检的格式为：活动 feature level 的格式，以及活动目标平台所针对的每个格式，对于本机没有编译器的格式会给出 [`DSH8324`](../diagnostics/DSH8xxx.md)。
-  `-Quality` 和 `-Timeout` 不适用于 slot。
+- **`-Platform` 格式**，当运行指定了任何格式时：`SM6` 是 `PCD3D_SM6`，`SM5` 为 `PCD3D_SM5`，`ES3_1` `PCD3D_ES3_1`、`VULKAN_SM6`、`VULKAN_SM5` 和 `METAL_SM5` 为 `SF_` 格式，其他任何 token 都被视为 shader 格式名。不指向本机可编译的任何 shader 格式的 token——包括诸如 `Windows` 这类目标平台名——不会被预检，并会由 [`DSH8324`](../diagnostics/DSH8xxx.md) 说明。没有 `-Platform` 时，编译所预检的格式为：活动 feature level 的格式，以及活动目标平台所针对的每个格式，对于本机没有编译器的格式会给出 [`DSH8324`](../diagnostics/DSH8xxx.md)。 `-Quality` 和 `-Timeout` 不适用于 slot。
 - **其错误在摘要行中计为 shader 错误。** 编译错误是 `DSH8322`，位于引起它的 `.usf` 所在行；一个没有 HLSL pass 的 `.dsp` 会报告 `DSH8339`（info）并通过。
 
 <a id="pass-registry"></a>
 
 ## `pass-registry`
 
-*（自 2.1.0 起）* 从命令行管理 Custom Pass HLSL slot 注册表。每个 `.dsp` 的每个 HLSL pass
-——一个 `compute` pass，或一个带 `Shader =` 的 `fullscreen` pass——都在全局 shader
-`FDreamPassCS` 和 `FDreamPassPS` 的一个 **slot** 中运行，而把 slot 映射到 pass 的文件随源文件一起提交
-（[HLSL pass](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)）：
+*（自 2.1.0 起）* 从命令行管理 Custom Pass HLSL slot 注册表。每个 `.dsp` 的每个 HLSL pass ——一个 `compute` pass，或一个带 `Shader =` 的 `fullscreen` pass——都在全局 shader `FDreamPassCS` 和 `FDreamPassPS` 的一个 **slot** 中运行，而把 slot 映射到 pass 的文件随源文件一起提交（[HLSL pass](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)）：
 
 ```text
 <DShader>/.dreampass/
@@ -498,12 +444,9 @@ of 46 file(s). RESULT=OK`。
 └─ Slots/C00/, P03/, …    one snapshot per slot that has one
 ```
 
-每个工程有一个注册表，位于工程的 *Source Directory* 下；插件的 `.dsp` 在其中像任何其他源文件一样占用 slot。`Registry.json`（schema `dreamshader-pass-registry`，version `1`）持有两个数组，`compute` 和 `pixel`，每个 slot 一个条目：`slot`、`pipeline`（对象路径）、`pass`、
-`kind`（`compute` 或 `fullscreen`）、`source`（`.dsp`，工程相对）、`shader`（工程相对）、
-`entry`、`hash`、`formats`、`files`（快照的，相对于 slot 目录）以及 `section`（slot 在其注册表文件中的文本）。
+每个工程有一个注册表，位于工程的 *Source Directory* 下；插件的 `.dsp` 在其中像任何其他源文件一样占用 slot。`Registry.json`（schema `dreamshader-pass-registry`，version `1`）持有两个数组，`compute` 和 `pixel`，每个 slot 一个条目：`slot`、`pipeline`（对象路径）、`pass`、 `kind`（`compute` 或 `fullscreen`）、`source`（`.dsp`，工程相对）、`shader`（工程相对）、 `entry`、`hash`、`formats`、`files`（快照的，相对于 slot 目录）以及 `section`（slot 在其注册表文件中的文本）。
 
-编译会让注册表自行保持最新。该命令用于编译看不到的情况：被删除或改名的 `.dsp`、
-弄坏 `Registry.json` 的合并、丢失快照文件的检出。
+编译会让注册表自行保持最新。该命令用于编译看不到的情况：被删除或改名的 `.dsp`、弄坏 `Registry.json` 的合并、丢失快照文件的检出。
 
 | 选项 | 效果 |
 | :-- | :-- |
@@ -511,9 +454,7 @@ of 46 file(s). RESULT=OK`。
 | `-Gc` | 释放每个 `PipelineGone` 和 `PassGone` slot |
 | `-Rebuild` | 把无法读取的 `Registry.json` 移到一旁，重新编译每个 `.dsp`，释放垃圾并重写注册表文件。在旁边加上 `-Gc` 不会增加任何内容 |
 
-这些选项遵循[参数规则](#argument-syntax)：`-Gc`、`--gc` 和 `-Gc=true` 是一个开关，
-同时给出时 `-Rebuild` 胜出。`dsc.ps1` 开关是 `-Gc` 和 `-Rebuild`；在
-PowerShell 提示符下，`./dsc.ps1 pass-registry --gc` 不是该开关——PowerShell 会把 `--gc` 绑定到脚本的位置参数目标，而该命令会忽略它，于是这次运行只会列出。
+这些选项遵循[参数规则](#argument-syntax)：`-Gc`、`--gc` 和 `-Gc=true` 是一个开关，同时给出时 `-Rebuild` 胜出。`dsc.ps1` 开关是 `-Gc` 和 `-Rebuild`；在 PowerShell 提示符下，`./dsc.ps1 pass-registry --gc` 不是该开关——PowerShell 会把 `--gc` 绑定到脚本的位置参数目标，而该命令会忽略它，于是这次运行只会列出。
 
 <a id="the-listing"></a>
 
@@ -546,25 +487,19 @@ LogDreamShader: Display: DreamShader pass-registry: 2 of 32 compute slot(s), 0 o
 | `PassGone` | 它管线的 `.dsp` 能编译，并且不再在该表中以 HLSL 运行那个 pass | **释放它** |
 | `Unknown` | 它管线的 `.dsp` 编不到足以判断。`DSH9209` | 保留它 |
 
-为把 `Live` 与 `PipelineGone`、`PassGone` 和 `Unknown` 区分开，该列表会运行每个拥有槽的
-`.dsp` 的前端；不构建也不写入任何东西。只有在有确凿证据时槽才是垃圾——没有
-源码构建它的管线，或者它管线的源码能编译但没有这样的 pass——所以编不过的源文件保留它所拥有的一切槽。
+为把 `Live` 与 `PipelineGone`、`PassGone` 和 `Unknown` 区分开，该列表会运行每个拥有槽的 `.dsp` 的前端；不构建也不写入任何东西。只有在有确凿证据时槽才是垃圾——没有源码构建它的管线，或者它管线的源码能编译但没有这样的 pass——所以编不过的源文件保留它所拥有的一切槽。
 
 <a id="-gc"></a>
 
 ### `-Gc`
 
-释放每个 `PipelineGone` 和 `PassGone` 槽——它在 `Registry.json` 中的条目、它在注册表
-文件中的 section、它的快照——并删除每个无人命名的槽目录。每个被释放的槽是一条 info，
-`DSH9202`，排在该列表的警告之后。commandlet 中不重编任何东西；下次编辑器启动
-会编译改过的注册表。
+释放每个 `PipelineGone` 和 `PassGone` 槽——它在 `Registry.json` 中的条目、它在注册表文件中的 section、它的快照——并删除每个无人命名的槽目录。每个被释放的槽是一条 info， `DSH9202`，排在该列表的警告之后。commandlet 中不重编任何东西；下次编辑器启动会编译改过的注册表。
 
 ```text
 LogDreamShader: Display: DreamShader pass-registry -Gc: 1 slot(s) freed. RESULT=OK
 ```
 
-在删除或重命名 `.dsp` 之后运行它：它的槽在被回收之前仍被占用，而一次
-发现某张表的所有槽都被占用（`DSH8316`）的编译会点名这个动词。
+在删除或重命名 `.dsp` 之后运行它：它的槽在被回收之前仍被占用，而一次发现某张表的所有槽都被占用（`DSH8316`）的编译会点名这个动词。
 
 <a id="-rebuild"></a>
 
@@ -582,20 +517,15 @@ LogDreamShader: Display: DreamShader pass-registry -Gc: 1 slot(s) freed. RESULT=
 LogDreamShader: Display: DreamShader pass-registry -Rebuild: 4 .dsp compiled, 0 failed, 1 slot(s) freed, 0 slot(s) reserved for a missing snapshot. RESULT=OK
 ```
 
-它像 `compile` 一样构建并保存管线。在 `Registry.json` 出现合并冲突之后运行它——
-编译拒绝覆写解析不了的注册表（`DSH8315`），`-Gc` 也一样
-（`DSH8335`）——或者在丢失了快照文件的检出之后，或每当该列表与源码
-不一致时。把整个 `.dreampass/` 文件夹连同结果一起提交。
+它像 `compile` 一样构建并保存管线。在 `Registry.json` 出现合并冲突之后运行它—— 编译拒绝覆写解析不了的注册表（`DSH8315`），`-Gc` 也一样（`DSH8335`）——或者在丢失了快照文件的检出之后，或每当该列表与源码不一致时。把整个 `.dreampass/` 文件夹连同结果一起提交。
 
-写不出的注册表文件为 `DSH8326`，移不到一旁的为 `DSH8336`；因
-未检出而只读的文件是这两者的常见原因。
+写不出的注册表文件为 `DSH8326`，移不到一旁的为 `DSH8336`；因未检出而只读的文件是这两者的常见原因。
 
 <a id="argument-syntax"></a>
 
 ## 参数语法
 
-所有命令共用。由自动化测试 `DreamShader.Commandlet.Args.SplitAndGet` 和
-`DreamShader.Commandlet.Args.FlagValues` 钉住。
+所有命令共用。由自动化测试 `DreamShader.Commandlet.Args.SplitAndGet` 和 `DreamShader.Commandlet.Args.FlagValues` 钉住。
 
 | 规则 | 行为 |
 | :-- | :-- |
@@ -622,18 +552,12 @@ LogDreamShader: Display: DreamShader pass-registry -Rebuild: 4 .dsp compiled, 0 
 | *（没写）* | 关 |
 | `-Force=<anything else>`，包括空的 `-Force=` | **错误** [`DSH9110`](../diagnostics/DSH9xxx.md#dsh9110) |
 
-错误不会去猜你的意思。命令记 `DSH9110`、**什么都不做**并以 `1` 退出：`migrate -Check=banana` 既不检查也不写，`-All=never` 什么都不选。
-每个命令都在碰任何文件之前读完自己的所有标志。
+错误不会去猜你的意思。命令记 `DSH9110`、**什么都不做**并以 `1` 退出：`migrate -Check=banana` 既不检查也不写，`-All=never` 什么都不选。每个命令都在碰任何文件之前读完自己的所有标志。
 
-引擎的解析器会把每个 `-Name=value` 从开关列表挪进参数表，然后命令才看到它，所以标志的查找顺序与值相同：参数表，然后
-开关，然后裸 token（无短横的 `Force=true` 就是一个 token）。命令不读的标志和其他未知开关一样被忽略：`dump-graph -Force=banana` 照跑，因为 `dump-graph`
-从不读 `-Force`。
+引擎的解析器会把每个 `-Name=value` 从开关列表挪进参数表，然后命令才看到它，所以标志的查找顺序与值相同：参数表，然后开关，然后裸 token（无短横的 `Force=true` 就是一个 token）。命令不读的标志和其他未知开关一样被忽略：`dump-graph -Force=banana` 照跑，因为 `dump-graph` 从不读 `-Force`。
 
 > [!NOTE]
-> 在 2.1.0 及更早版本中，带任何值写的标志会被读成**不存在**：查找只在
-> 开关列表里进行，而引擎从不把 `-Name=value` 留在那里。`-Force=true` 不会强制，
-> `migrate -Source=X -Check=true` 照样写出迁移结果。本页以前说过相反的话——
-> 无法识别的值算开。
+> 在 2.1.0 及更早版本中，带任何值写的标志会被读成**不存在**：查找只在开关列表里进行，而引擎从不把 `-Name=value` 留在那里。`-Force=true` 不会强制， `migrate -Source=X -Check=true` 照样写出迁移结果。本页以前说过相反的话—— 无法识别的值算开。
 
 <a id="exit-codes"></a>
 
@@ -661,29 +585,13 @@ LogDreamShader: Display: DreamShader pass-registry -Rebuild: 4 .dsp compiled, 0 
 
 ## 说明
 
-- **commandlet 里 editor bridge 从不启动。** 编辑器模块一检测到 commandlet 进程就从启动流程返回，
-  所以没有源目录 watcher、没有保存即编译、端口 17864 上没有 WebSocket 服务、没有 `diagnostics.json` 写入、没有
-  `bridge.db`，也没有菜单注册。唯一的例外是 cook commandlet，它会装一个 post-engine-init 钩子。见[编辑器 bridge](bridge.md)。
-- **commandlet 会写出真实 package。** `compile` 要求每个 ThinCustom 产物
-  都 Materialized，所以 `/Game/...` `.uasset` 文件会被创建并保存到磁盘。交互式编辑器
-  把 ThinCustom 产物构建为 Ephemeral（只在内存中），除非它已经保存过；`Graph`
-  材质和材质函数两者都会保存到磁盘。这是在 CI 中物化整个工程源文件的预期做法。见[内存材质](../generation/ephemeral.md)。
-- 因为资产会被持久化，一次 commandlet 运行可能在磁盘上留下资产，遮蔽编辑器的
-  Ephemeral 材质。*Tools ▸ DreamShader ▸ Make Ephemeral* 会删除它们。
-- Cook 是一个单独的 commandlet。只在 cook **director** 上（即 `-run=` 含
-  `Cook` 且不带 `-cookworker` 的进程），DreamShader 会在正式 cook 之前把每个工程源文件物化为
-  持久资产。那里的生成失败是 `Fatal`，会中止 cook：
-  `DreamShader cook generation failed for {Count} source file(s); aborting the cook. See the [Cook] Failed entries above.`
-  属于本工程不往里写的插件 —— 引擎或商城插件 —— 的源文件在那里不计入：它和其他源文件一样编译，失败记成
-  `[Cook] Not this project's to build (plugin '<Name>')` 而不中止，因为那些资产随该插件
-  发布。见[Cook 行为](../generation/ephemeral.md#cook-behaviour)。
-- `-Force` 只绕过 source hash 跳过；它不删除任何东西。见
-  [缓存](../generation/caching.md)。
-- **`.dsp` 编译会写到 `Content/` 之外** *(2.1.0)*：HLSL slot 注册表及其快照在
-  `<DShader>/.dreampass/` 下，它们是要提交的源码 —— 见[版本控制](../generation/source-control.md#notes)。
-  commandlet 写它们但不重编任何 shader；编辑器在它们变化时立刻重编 slot shader。
-- 给*非* commandlet 的自动化运行（例如
-  `-ExecCmds="Automation RunTests …"`）加上 `-NoDreamShaderEditorBridge`，同样能在那边压掉 bridge。
+- **commandlet 里 editor bridge 从不启动。** 编辑器模块一检测到 commandlet 进程就从启动流程返回，所以没有源目录 watcher、没有保存即编译、端口 17864 上没有 WebSocket 服务、没有 `diagnostics.json` 写入、没有 `bridge.db`，也没有菜单注册。唯一的例外是 cook commandlet，它会装一个 post-engine-init 钩子。见[编辑器 bridge](bridge.md)。
+- **commandlet 会写出真实 package。** `compile` 要求每个 ThinCustom 产物都 Materialized，所以 `/Game/...` `.uasset` 文件会被创建并保存到磁盘。交互式编辑器把 ThinCustom 产物构建为 Ephemeral（只在内存中），除非它已经保存过；`Graph` 材质和材质函数两者都会保存到磁盘。这是在 CI 中物化整个工程源文件的预期做法。见[内存材质](../generation/ephemeral.md)。
+- 因为资产会被持久化，一次 commandlet 运行可能在磁盘上留下资产，遮蔽编辑器的 Ephemeral 材质。*Tools ▸ DreamShader ▸ Make Ephemeral* 会删除它们。
+- Cook 是一个单独的 commandlet。只在 cook **director** 上（即 `-run=` 含 `Cook` 且不带 `-cookworker` 的进程），DreamShader 会在正式 cook 之前把每个工程源文件物化为持久资产。那里的生成失败是 `Fatal`，会中止 cook： `DreamShader cook generation failed for {Count} source file(s); aborting the cook. See the [Cook] Failed entries above.` 属于本工程不往里写的插件 —— 引擎或商城插件 —— 的源文件在那里不计入：它和其他源文件一样编译，失败记成 `[Cook] Not this project's to build (plugin '<Name>')` 而不中止，因为那些资产随该插件发布。见[Cook 行为](../generation/ephemeral.md#cook-behaviour)。
+- `-Force` 只绕过 source hash 跳过；它不删除任何东西。见[缓存](../generation/caching.md)。
+- **`.dsp` 编译会写到 `Content/` 之外** *(2.1.0)*：HLSL slot 注册表及其快照在 `<DShader>/.dreampass/` 下，它们是要提交的源码 —— 见[版本控制](../generation/source-control.md#notes)。 commandlet 写它们但不重编任何 shader；编辑器在它们变化时立刻重编 slot shader。
+- 给*非* commandlet 的自动化运行（例如 `-ExecCmds="Automation RunTests …"`）加上 `-NoDreamShaderEditorBridge`，同样能在那边压掉 bridge。
 
 <a id="diagnostics"></a>
 

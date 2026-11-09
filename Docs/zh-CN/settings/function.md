@@ -1,17 +1,10 @@
----
-title: "函数设置"
-description: "函数设置"
----
-
 <a id="function-settings"></a>
 
 # 函数设置
 
 > [DreamShader](../index.md) » [设置](index.md) » **函数设置**
 
-[`ShaderFunction`](../language/shader-function.md)、
-[`ShaderLayer` 或 `ShaderLayerBlend`](../language/shader-layer.md) 块的 `Settings` 部分：用于向材质函数库描述
-所生成 `UMaterialFunction` 的四个键。
+[`ShaderFunction`](../language/shader-function.md)、 [`ShaderLayer` 或 `ShaderLayerBlend`](../language/shader-layer.md) 块的 `Settings` 部分：用于向材质函数库描述所生成 `UMaterialFunction` 的四个键。
 
 | | |
 | :-- | :-- |
@@ -35,15 +28,13 @@ ShaderFunction(Name = "<asset-path>")
 }
 ```
 
-在 `ShaderLayer`、`ShaderLayerBlend` 及其已废弃的 `MaterialLayer` / `MaterialLayerBlend` 拼写中，接受同样的部分，并使用同样的四个键。在 2.0 中，这些键是导出函数的 `/// @desc` 和
-`/// @library` 指令 — 请参阅[2.0 语言](../language-v2/index.md)。
+在 `ShaderLayer`、`ShaderLayerBlend` 及其已废弃的 `MaterialLayer` / `MaterialLayerBlend` 拼写中，接受同样的部分，并使用同样的四个键。在 2.0 中，这些键是导出函数的 `/// @desc` 和 `/// @library` 指令 — 请参阅[2.0 语言](../language-v2/index.md)。
 
 <a id="keys"></a>
 
 ## 键
 
-键在匹配时忽略大小写，因此 `description`、`Description` 和 `DESCRIPTION` 是同一个键。
-此处下划线**不**折叠 — `Expose_To_Library` 不等于 `ExposeToLibrary`。
+键在匹配时忽略大小写，因此 `description`、`Description` 和 `DESCRIPTION` 是同一个键。此处下划线**不**折叠 — `Expose_To_Library` 不等于 `ExposeToLibrary`。
 
 | 键 | 设置的内容 | 值语法 | 键缺失时的值 |
 | :-- | :-- | :-- | :-- |
@@ -52,35 +43,20 @@ ShaderFunction(Name = "<asset-path>")
 | **`ExposeToLibrary`** | `UMaterialFunction::bExposeToLibrary`，连同 `LibraryCategories` | `true` / `false`，不区分大小写；任何其他值都会产生 [`DSH3265`](../diagnostics/DSH3xxx.md#dsh3265) 警告，并且该设置被忽略 | `false` |
 | **`LibraryCategories`** | `UMaterialFunction::LibraryCategoriesText`，连同 `ExposeToLibrary` | 逗号分隔的列表；每个条目都会被修剪，空条目会被丢弃 | 类别列表被清空 |
 
-*(自 2.0.0 起)* `ExposeToLibrary` 和 `LibraryCategories` 作为一个设置起作用，即 2.0 的
-`/// @library <categories>`：当 `ExposeToLibrary`
-为 `true` **且** `LibraryCategories` 不为空时，该函数会以这些类别被公开。仅 `ExposeToLibrary = true;` 会使该函数
-不出现在库中，而没有 `ExposeToLibrary = true;` 的 `LibraryCategories` 会被丢弃。
+*(自 2.0.0 起)* `ExposeToLibrary` 和 `LibraryCategories` 作为一个设置起作用，即 2.0 的 `/// @library <categories>`：当 `ExposeToLibrary` 为 `true` **且** `LibraryCategories` 不为空时，该函数会以这些类别被公开。仅 `ExposeToLibrary = true;` 会使该函数不出现在库中，而没有 `ExposeToLibrary = true;` 的 `LibraryCategories` 会被丢弃。
 
-`LibraryCategories` 在解析前会清空列表，因此该设置始终会替换资产的
-类别，而不是追加到它们之上。`LibraryCategories = "A,,  B ,";` 恰好产生 `A` 和
-`B`。
+`LibraryCategories` 在解析前会清空列表，因此该设置始终会替换资产的类别，而不是追加到它们之上。`LibraryCategories = "A,,  B ,";` 恰好产生 `A` 和 `B`。
 
-每个值上的引号都是可选的，就像 `Settings` 块中各处一样：
-`Description = Tint helper;` 和 `Description = "Tint helper";` 完全相同。
+每个值上的引号都是可选的，就像 `Settings` 块中各处一样： `Description = Tint helper;` 和 `Description = "Tint helper";` 完全相同。
 
 > [!NOTE]
-> **当键缺失时，此处的每个键都会被重置。** 省略 `ExposeToLibrary` 会将其设为 `false`；
-> 省略 `Description` 会将其清空。在生成资产上手动编辑的属性会在
-> 下次重新生成时被丢弃 — 但标题除外，2.0 完全不会写入它。请参阅
-> [重新生成](../generation/regeneration.md)。
+> **当键缺失时，此处的每个键都会被重置。** 省略 `ExposeToLibrary` 会将其设为 `false`；省略 `Description` 会将其清空。在生成资产上手动编辑的属性会在下次重新生成时被丢弃 — 但标题除外，2.0 完全不会写入它。请参阅[重新生成](../generation/regeneration.md)。
 
 > [!WARNING]
-> **任何其他键都会被忽略**，并产生 [`DSH3263`](../diagnostics/DSH3xxx.md#dsh3263) 警告
-> *(自 2.0.0 起；1.x 不会给出任何提示)*。只会查找这四个名称：`Backend`、`Domain`、
-> `ShadingModel`、`BlendMode`、`TwoSided` 以及所有其他 [`Shader` 设置](material.md) 在 `ShaderFunction` 块中
-> 都**不起作用**，而这四个名称之一的拼写错误 — `Descriptions`、
-> `Expose_To_Library`、`LibraryCategory` — 也会产生同样的警告。
+> **任何其他键都会被忽略**，并产生 [`DSH3263`](../diagnostics/DSH3xxx.md#dsh3263) 警告*(自 2.0.0 起；1.x 不会给出任何提示)*。只会查找这四个名称：`Backend`、`Domain`、 `ShadingModel`、`BlendMode`、`TwoSided` 以及所有其他 [`Shader` 设置](material.md) 在 `ShaderFunction` 块中都**不起作用**，而这四个名称之一的拼写错误 — `Descriptions`、 `Expose_To_Library`、`LibraryCategory` — 也会产生同样的警告。
 
 > [!WARNING]
-> 在将
-> `UMaterialFunction` 导出到 `.dsf` 时，[反编译器](../tools/decompiler.md) 不会生成 `Settings` 块。`Description`、`UserExposedCaption`、`ExposeToLibrary` 和
-> `LibraryCategories` 会在该往返过程中丢失，必须手动重新添加。
+> 在将 `UMaterialFunction` 导出到 `.dsf` 时，[反编译器](../tools/decompiler.md) 不会生成 `Settings` 块。`Description`、`UserExposedCaption`、`ExposeToLibrary` 和 `LibraryCategories` 会在该往返过程中丢失，必须手动重新添加。
 
 <a id="related-validation"></a>
 
@@ -97,24 +73,16 @@ ShaderFunction(Name = "<asset-path>")
 | 主体部分是 `Graph`，而不是 `Code` | [`DSH2246`](../diagnostics/DSH2xxx.md#dsh2246) |
 | 文件的两个属性不共享同一名称 | [`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210) |
 
-生成资产的用途遵循块类型：`ShaderFunction` 产生普通材质
-函数，`ShaderLayer` 产生材质层函数，`ShaderLayerBlend` 产生层混合函数。
+生成资产的用途遵循块类型：`ShaderFunction` 产生普通材质函数，`ShaderLayer` 产生材质层函数，`ShaderLayerBlend` 产生层混合函数。
 
 <a id="notes"></a>
 
 ## 备注
 
-- [`VirtualFunction`](../language/virtual-function.md) 块也接受名为
-  `Settings` 的部分，但它是 `Options` 的同义词，并且采用完全不同的键集 — `Asset` 和
-  `Description`。请参阅[选项](../language/options.md)。
-- [`Function`](../language/function.md) 和 [`GraphFunction`](../language/graph-function.md) 块
-  完全没有 `Settings` 部分；它们仅有的部分是 `Inputs` / `Properties`、
-  `Outputs` / `Results` 和 `Code` / `Graph`。
-- 一个块中的多个 `Settings` 部分会合并，后出现的键获胜，并产生
-  [`DSH3262`](../diagnostics/DSH3xxx.md#dsh3262) 警告，与 `Shader` 块中完全相同。请参阅
-  [设置](index.md#how-a-statement-is-parsed)。
-- 带 `LibraryCategories` 的 `ExposeToLibrary = true;` 会使该函数出现在
-  材质面板的函数库中；类别决定它位于该面板中的位置。
+- [`VirtualFunction`](../language/virtual-function.md) 块也接受名为 `Settings` 的部分，但它是 `Options` 的同义词，并且采用完全不同的键集 — `Asset` 和 `Description`。请参阅[选项](../language/options.md)。
+- [`Function`](../language/function.md) 和 [`GraphFunction`](../language/graph-function.md) 块完全没有 `Settings` 部分；它们仅有的部分是 `Inputs` / `Properties`、 `Outputs` / `Results` 和 `Code` / `Graph`。
+- 一个块中的多个 `Settings` 部分会合并，后出现的键获胜，并产生 [`DSH3262`](../diagnostics/DSH3xxx.md#dsh3262) 警告，与 `Shader` 块中完全相同。请参阅[设置](index.md#how-a-statement-is-parsed)。
+- 带 `LibraryCategories` 的 `ExposeToLibrary = true;` 会使该函数出现在材质面板的函数库中；类别决定它位于该面板中的位置。
 
 <a id="diagnostics"></a>
 

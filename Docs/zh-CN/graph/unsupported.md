@@ -1,8 +1,3 @@
----
-title: "不支持的写法"
-description: "不支持的写法"
----
-
 <a id="unsupported-constructs"></a>
 
 # 不支持的写法
@@ -16,12 +11,9 @@ description: "不支持的写法"
 | 声明于 | `.dsm`、`.dsf`——适用于每一个 `Graph { … }` 块体、`Outputs` 绑定表达式和 `Outputs` 声明的默认值 |
 | 类型 | 被拒绝语法的参考 |
 
-`Graph` 块是**节点图构建器**，不是着色器编译器。它只有固定的几种语句形式、四个算术运算符，除 `if` 之外没有任何控制流。其余一切都会带诊断码被拒绝。不会再有任何写法被编译成比你写下来的更少的东西*（自 2.0.0 起）*：
-1.x 生成器遇到第一个不认识的运算符就静默丢掉表达式的其余部分
-（`a % b` 构建出 `a`），而现在每一种这样的写法都是错误，信息里还会说明 1.x 当时做了什么。
+`Graph` 块是**节点图构建器**，不是着色器编译器。它只有固定的几种语句形式、四个算术运算符，除 `if` 之外没有任何控制流。其余一切都会带诊断码被拒绝。不会再有任何写法被编译成比你写下来的更少的东西*（自 2.0.0 起）*： 1.x 生成器遇到第一个不认识的运算符就静默丢掉表达式的其余部分（`a % b` 构建出 `a`），而现在每一种这样的写法都是错误，信息里还会说明 1.x 当时做了什么。
 
-想写循环、`?:`、`&&` 或位运算，请把代码搬进 [`Function`](../language/function.md)，
-或用 [`dsc migrate`](../tools/migrate.md) 把文件迁到 `.dss`——那里有这些写法。
+想写循环、`?:`、`&&` 或位运算，请把代码搬进 [`Function`](../language/function.md)，或用 [`dsc migrate`](../tools/migrate.md) 把文件迁到 `.dss`——那里有这些写法。
 
 <a id="how-a-construct-is-refused"></a>
 
@@ -75,8 +67,7 @@ if (Color.r > 0.5) {
 }
 ```
 
-限制检查对一个被拒绝的写法只报一次、不再看它内部，所以 `a % b % c`
-是一条诊断；`a % b + c % d` 是两条。
+限制检查对一个被拒绝的写法只报一次、不再看它内部，所以 `a % b % c` 是一条诊断；`a % b + c % d` 是两条。
 
 <a id="statement-level-constructs"></a>
 
@@ -87,7 +78,7 @@ if (Color.r > 0.5) {
 | `return Color;`、`return;` | [`DSH2208`](../diagnostics/DSH2xxx.md#dsh2208) | 给声明的输出变量赋值：`Color = …;` |
 | `for (int i = 0; i < 3; i = i + 1) {}` | `DSH2208` | 手工展开，或把循环搬进函数体是真 HLSL 的 [`Function`](../language/function.md) |
 | `while (t) {}`、`do {} while (t);` | `DSH2208` | 同上 |
-| `break;`、`continue;`、`discard;` | `DSH2208` | —— |
+| `break;`, `continue;`, `discard;` | `DSH2208` | — |
 | `switch (Mode) {}` | [`DSH2160`](../diagnostics/DSH2xxx.md#dsh2160) | 嵌套 [`if`](if.md) 语句，或一次 [`StaticSwitchParameter` 调用](calls.md#staticswitchparameter) |
 | `float Foo(float x) { return x; }` | [`DSH2154`](../diagnostics/DSH2xxx.md#dsh2154)，在本该放声明 `;` 的 `(` 处 | 在顶层声明成 [`Function`](../language/function.md) 或 [`GraphFunction`](../language/graph-function.md) 再调用 |
 | `struct S { float a; }` | [`DSH2151`](../diagnostics/DSH2xxx.md#dsh2151)：`struct` 不能开始一个表达式 | 用 [`MaterialAttributes`](material-attributes.md)，或把结构体放进 `Function` 函数体 |
@@ -98,8 +89,7 @@ if (Color.r > 0.5) {
 | `#include "X.ush"`、`#pragma …` | [`DSH1035`](../diagnostics/DSH1xxx.md#dsh1035)：`.dsm` / `.dsf` 的预处理器不认识这样的行 | 文件级 [`import`](../language/import.md)，或一个使用该 include 的 `Function` |
 | `#define K 2` | Graph 里没有诊断：这一行属于[预处理器](../language/preprocessor.md)，它在 `#if` 条件里使用 define | 一个 `const` 属性 |
 
-`Graph` 块体按语句读取，而不是按文本在 `;` 处切分，所以带花括号的写法后面的代码不会再被吞进同一条语句
-*（自 2.0.0 起）*。
+`Graph` 块体按语句读取，而不是按文本在 `;` 处切分，所以带花括号的写法后面的代码不会再被吞进同一条语句*（自 2.0.0 起）*。
 
 <a id="expression-level-constructs"></a>
 
@@ -109,11 +99,11 @@ if (Color.r > 0.5) {
 | :-- | :-- |
 | `x = a == b;` | `DSH2200` |
 | `a == b;` *（作为语句）* | `DSH2211`——比较的值无处可去 |
-| `x = a++;`、`a++;`、`--a;` | [`DSH2207`](../diagnostics/DSH2xxx.md#dsh2207) |
+| `x = a++;`, `a++;`, `--a;` | [`DSH2207`](../diagnostics/DSH2xxx.md#dsh2207) |
 | `x = (float)a;` | [`DSH2203`](../diagnostics/DSH2xxx.md#dsh2203)——没有 C 风格强制转换；请写 `float(a)` |
 | `x = (y = z);` | [`DSH2204`](../diagnostics/DSH2xxx.md#dsh2204) |
 | `x = 0x10;` | [`DSH2222`](../diagnostics/DSH2xxx.md#dsh2222)——没有十六进制字面量；1.x 把 `0x10` 读成 `0` |
-| `x = 1.0fx;`、`x = 0.5.5;` | `DSH2105` |
+| `x = 1.0fx;`, `x = 0.5.5;` | `DSH2105` |
 | `x = "text";` | [`DSH4202`](../diagnostics/DSH4xxx.md#dsh4202) |
 | `x = {1, 2, 3};`、`Attrs.BaseColor = {1, 0, 0};` | [`DSH2162`](../diagnostics/DSH2xxx.md#dsh2162)——花括号列表只作为声明的初始值读取 |
 | `float4 v = {{1,2},{3,4}};` | [`DSH2214`](../diagnostics/DSH2xxx.md#dsh2214)——花括号初始值不能嵌套 |
@@ -129,12 +119,10 @@ if (Color.r > 0.5) {
 
 | 写法 | 码 |
 | :-- | :-- |
-| `a += b;`、`a -= b;`、`a *= b;`、`a /= b;`、`a %= b;` | [`DSH2205`](../diagnostics/DSH2xxx.md#dsh2205) |
-| `a++;`、`a--;`、`++a;`、`--a;` | `DSH2207` |
+| `a += b;`, `a -= b;`, `a *= b;`, `a /= b;`, `a %= b;` | [`DSH2205`](../diagnostics/DSH2xxx.md#dsh2205) |
+| `a++;`, `a--;`, `++a;`, `--a;` | `DSH2207` |
 
-*（自 2.0.0 起）* 空白不再有影响。1.x 把 `a += b;` 读成类型为 `a`、
-名为 `+` 的变量声明，把 `a+=b;` 读成对一个名叫 `a+` 的全新变量的赋值，
-`a` 保持不变且没有任何信息；现在这些都是 `DSH2205`。请写展开形式：`a = a + b;`。
+*（自 2.0.0 起）* 空白不再有影响。1.x 把 `a += b;` 读成类型为 `a`、名为 `+` 的变量声明，把 `a+=b;` 读成对一个名叫 `a+` 的全新变量的赋值， `a` 保持不变且没有任何信息；现在这些都是 `DSH2205`。请写展开形式：`a = a + b;`。
 
 ```c
 // Refused (DSH2205).
@@ -148,18 +136,14 @@ Sum = Sum + Tint;
 
 ## 大小写写错的关键字
 
-`if` 和 `else` 是关键字，**区分大小写**，`for`、`while`、`return`、
-`struct` 及其他 HLSL 关键字也一样。大小写写错的拼法是一个名字。
+`if` 和 `else` 是关键字，**区分大小写**，`for`、`while`、`return`、 `struct` 及其他 HLSL 关键字也一样。大小写写错的拼法是一个名字。
 
 | 写法 | 结果 |
 | :-- | :-- |
 | `If (x) {}`、`IF (x) {}` | `If (x)` 是对一个叫 `If` 的函数的调用，本该放这条语句的 `;` 的位置出现了 `{`：`DSH2154` |
 | `if (x) {} Else {}`、`ELSE {}` | `if` 能解析；`Else` 是一个名字，它的 `{` 是 `DSH2154` |
 
-类型 token、构造器名和 `true` / `false` 不区分大小写。其他名字先精确查找，
-再不区分大小写，后者带警告（[`DSH5275`](../diagnostics/DSH5xxx.md#dsh5275)，
-引擎名为 [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276)）；见
-[名称解析](name-resolution.md)。
+类型 token、构造器名和 `true` / `false` 不区分大小写。其他名字先精确查找，再不区分大小写，后者带警告（[`DSH5275`](../diagnostics/DSH5xxx.md#dsh5275)，引擎名为 [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276)）；见[名称解析](name-resolution.md)。
 
 <a id="features-that-simply-do-not-exist"></a>
 
@@ -202,7 +186,7 @@ Sum = Sum + Tint;
 | `DSH2204` | 表达式内赋值 |
 | `DSH2205` | 复合赋值 |
 | `DSH2207` | `++` 或 `--` |
-| `DSH2208` | `for`、`while`、`do`、`return`、`break`、`continue`、`discard` |
+| `DSH2208` | `for`, `while`, `do`, `return`, `break`, `continue`, `discard` |
 | `DSH2209` | `if` 或 `else` 的块体不带花括号 |
 | `DSH2210` | `if` 条件里多于一个比较，或用了 `&&` / `\|\|` |
 | `DSH2211` | 值无人接收的表达式语句 |

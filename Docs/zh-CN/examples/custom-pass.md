@@ -1,16 +1,10 @@
----
-title: "Custom Pass 示例"
-description: "Custom Pass 示例"
----
-
 <a id="custom-pass-examples"></a>
 
 # Custom Pass 示例
 
 > [DreamShader](../index.md) » [示例](index.md) » **Custom Pass 示例**
 
-几条完整的管线，各自带着用到的 `.dss` 材质；HLSL pass 的代码都直接写在 `.dsp`
-里，用的是 [HLSL pass](../../runtime/hlsl.md#where-the-code-is) 讲的三种写法。每一条都在测试宿主的演示关卡里跑过 —— 从这些源码构建、在游戏视口里渲染（`Tools/TestHost/PassDemo`）。材质浏览器 **New Source** 的管线模板有两个是它们的精简版 —— 描边的 mesh 遮罩和风场；后处理模板是一个自己的柔光。
+几条完整的管线，各自带着用到的 `.dss` 材质；HLSL pass 的代码都直接写在 `.dsp` 里，用的是 [HLSL pass](../runtime/hlsl.md#where-the-code-is) 讲的三种写法。每一条都在测试宿主的演示关卡里跑过 —— 从这些源码构建、在游戏视口里渲染（`Tools/TestHost/PassDemo`）。材质浏览器 **New Source** 的管线模板有两个是它们的精简版 —— 描边的 mesh 遮罩和风场；后处理模板是一个自己的柔光。
 
 | | |
 | :-- | :-- |
@@ -31,9 +25,7 @@ description: "Custom Pass 示例"
 
 ## 高亮描边
 
-带 `Highlight` pass layer 的物体描一圈橙色轮廓，隔着墙也看得见，它们下面的地面还会发光。
-给这些 actor 加一个 `UDreamPassLayerComponent`，layer 设为 `Highlight`（工程设置 ▸ DreamShader Custom
-Pass ▸ Layers），然后在工程设置里或用体积激活这条管线。
+带 `Highlight` pass layer 的物体描一圈橙色轮廓，隔着墙也看得见，它们下面的地面还会发光。给这些 actor 加一个 `UDreamPassLayerComponent`，layer 设为 `Highlight`（工程设置 ▸ DreamShader Custom Pass ▸ Layers），然后在工程设置里或用体积激活这条管线。
 
 ```hlsl
 // DShader/Passes/CP_Highlight.dsp
@@ -133,11 +125,8 @@ m.EmissiveColor += Glow * float3(1.0, 0.6, 0.0) * 0.5;
 
 要点：
 
-- 地面是不透明的，`Blurred` 写在 `AfterOpaque`，所以地面读到的是**上一帧**的模糊。
-  编译器会这么提示。把 `DrawMask` 和 `Blur` 挪到 `BeforeBasePass` 就是本帧的；那里的 mesh pass
-  只能用 `Depth = None` 或 `Own`，这个正好是后者。
-- `Highlight` layer 里的 Nanite 成员被跳过，并警告一次。在 `Nanite = AssignStencil(200)` 上写
-  `DrawMask` 可以把它们以 stencil 遮罩的形式包含进来。
+- 地面是不透明的，`Blurred` 写在 `AfterOpaque`，所以地面读到的是**上一帧**的模糊。编译器会这么提示。把 `DrawMask` 和 `Blur` 挪到 `BeforeBasePass` 就是本帧的；那里的 mesh pass 只能用 `Depth = None` 或 `Own`，这个正好是后者。
+- `Highlight` layer 里的 Nanite 成员被跳过，并警告一次。在 `Nanite = AssignStencil(200)` 上写 `DrawMask` 可以把它们以 stencil 遮罩的形式包含进来。
 
 <a id="ui-frosted-glass"></a>
 
@@ -386,8 +375,7 @@ pass Pulse : fullscreen
 
 要点：
 
-- 块里是入口的语句：`UV` 是像素在视图里的位置，`Out` 是这个 pass 唯一的 write，即它的 `SV_Target0`，语句运行前清零。
-  一边写 `SceneColor` 一边读它没问题：pass 画进一张临时纹理，再复制回去。
+- 块里是入口的语句：`UV` 是像素在视图里的位置，`Out` 是这个 pass 唯一的 write，即它的 `SV_Target0`，语句运行前清零。一边写 `SceneColor` 一边读它没问题：pass 画进一张临时纹理，再复制回去。
 - `View` 和 `CalcSceneDepth` 从 `BeforeBasePass` 起可用。`DreamPassSceneUV(UV)` 是这个像素在场景纹理里的 UV（经由 `View.ViewRectMin` 和 `View.BufferSizeAndInvSize`）；`DreamPassSample(InColor, UV)` 是视图画面里的颜色。
 - 绑定名会变成宏，所以叫 `PulseTint`、`PulseSpeed`，而不是引擎头文件也在用的 `Color` 或 `Speed`。
 - 加上去的光在预曝光的场景颜色里，所以任何曝光下看起来都一样。覆盖 `PulseColor` 的体积会改变它里面那些视图的光圈颜色。
@@ -522,12 +510,9 @@ export void PP_TaggedComposite(inout material m)
 
 要点：
 
-- `Mode = Own` 用每个选中物体自己的材质来画，读那个材质的
-  `UE.DreamPassOutput`：不用覆盖材质就能拿到逐物体数据。在 base pass 里这个节点什么都不做。
-- `Filter = Stencil(5)` 按 custom stencil 选，需要 `r.CustomDepth=3`，物体上要开 *Render
-  CustomDepth Pass* 并把 *CustomDepth Stencil Value* 设为 5。`Requires = CustomStencil` 让没有它的视图里整条管线关掉。
-- stencil 筛选下 Nanite 成员默认 `Nanite = StencilMask`：它们的像素由 custom
-  stencil 用 `NaniteValue` 填上，而不是用它们的材质画。
+- `Mode = Own` 用每个选中物体自己的材质来画，读那个材质的 `UE.DreamPassOutput`：不用覆盖材质就能拿到逐物体数据。在 base pass 里这个节点什么都不做。
+- `Filter = Stencil(5)` 按 custom stencil 选，需要 `r.CustomDepth=3`，物体上要开 *Render CustomDepth Pass* 并把 *CustomDepth Stencil Value* 设为 5。`Requires = CustomStencil` 让没有它的视图里整条管线关掉。
+- stencil 筛选下 Nanite 成员默认 `Nanite = StencilMask`：它们的像素由 custom stencil 用 `NaniteValue` 填上，而不是用它们的材质画。
 
 <a id="see-also"></a>
 
@@ -535,5 +520,5 @@ export void PP_TaggedComposite(inout material m)
 
 - [Custom Pass 管线 — `.dsp`](../language-v2/passes.md)
 - [Custom Pass 运行时](../runtime/index.md)
-- [HLSL pass](../../runtime/hlsl.md)
+- [HLSL pass](../runtime/hlsl.md)
 - [Custom Pass 材质节点](../builtins/dream-pass.md)

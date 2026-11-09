@@ -1,8 +1,3 @@
----
-title: "Path(…) 资产引用"
-description: "Path(…) 资产引用"
----
-
 <a id="path-asset-references"></a>
 
 # Path(…) 资产引用
@@ -176,16 +171,13 @@ root 和相对路径拼接之后，结果会补全为完整对象路径：如果
 | 插件 `Content` 目录必须存在 | 检查 |
 | 插件内容必须已挂载 | 检查 *（自 UE 5.6 起）* |
 
-纹理声明中根本不是引用的默认值 —— `Texture2D T = Foo;` —— 不再按拼写拒绝，
-只是在构建材质时找不到（`DSH8218`）。
+纹理声明中根本不是引用的默认值 —— `Texture2D T = Foo;` —— 不再按拼写拒绝，只是在构建材质时找不到（`DSH8218`）。
 
 <a id="string-escapes"></a>
 
 ## 字符串转义
 
-带引号的路径是字符串字面量，由词法分析器读取 *（自 2.0.0 起）*：识别 `\\`、`\"`、`\n`、`\r`、`\t` 和
-`\0`，其他 `\X` 报 [`DSH2104`](../diagnostics/DSH2xxx.md#dsh2104) —— 1.x 读作字面的 `X`。因此路径里的反斜杠要写成 `\\`，解析器随后把它折成
-`/`。参见[词法元素](../language/lexical.md)。
+带引号的路径是字符串字面量，由词法分析器读取 *（自 2.0.0 起）*：识别 `\\`、`\"`、`\n`、`\r`、`\t` 和 `\0`，其他 `\X` 报 [`DSH2104`](../diagnostics/DSH2xxx.md#dsh2104) —— 1.x 读作字面的 `X`。因此路径里的反斜杠要写成 `\\`，解析器随后把它折成 `/`。参见[词法元素](../language/lexical.md)。
 
 <a id="load-behaviour"></a>
 
@@ -204,9 +196,7 @@ root 和相对路径拼接之后，结果会补全为完整对象路径：如果
 | `VirtualFunction` 的资产 | `DSH8219` |
 
 > [!WARNING]
-> 要当心的正是静默写 null 的情况：`[Texture = Path(Game, "Typo")]` —— 以及自 2.0.0 起还有
-> `TextureSampleParameter2D T = Path(Game, "Typo");` —— 不产生任何诊断就生成完毕，让
-> 采样器落在一张没人选的纹理上。能解析的路径不等于存在的路径。
+> 要当心的正是静默写 null 的情况：`[Texture = Path(Game, "Typo")]` —— 以及自 2.0.0 起还有 `TextureSampleParameter2D T = Path(Game, "Typo");` —— 不产生任何诊断就生成完毕，让采样器落在一张没人选的纹理上。能解析的路径不等于存在的路径。
 
 <a id="diagnostics"></a>
 
@@ -296,8 +286,7 @@ H  /Game/Textures/T_White.T_White
 I  /Game/Textures/T_White.T_White
 ```
 
-引用在它所属的 property 被构建时才解析。这个 `Graph` 只读 `Wind`，所以那些纹理作为未读取的 property 被丢弃（[`DSH4390`](../diagnostics/DSH4xxx.md#dsh4390)，提示），
-只有集合会被解析；读取它们，每个都会按上面解析。
+引用在它所属的 property 被构建时才解析。这个 `Graph` 只读 `Wind`，所以那些纹理作为未读取的 property 被丢弃（[`DSH4390`](../diagnostics/DSH4xxx.md#dsh4390)，提示），只有集合会被解析；读取它们，每个都会按上面解析。
 
 <a id="see-also"></a>
 

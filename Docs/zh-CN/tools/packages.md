@@ -1,8 +1,3 @@
----
-title: "Package"
-description: "Package"
----
-
 <a id="packages"></a>
 
 # Package
@@ -283,8 +278,7 @@ package `.dsh` 头文件完全可以导入，但从不被扫描 `VirtualFunction
 
 ## 扩展命令
 
-VSCode 扩展提供的命令面板条目。安装和更新需要 `git`
-在 `PATH` 上可用。名称是扩展的，不是插件的。
+VSCode 扩展提供的命令面板条目。安装和更新需要 `git` 在 `PATH` 上可用。名称是扩展的，不是插件的。
 
 | 命令 |
 | :-- |
@@ -303,12 +297,9 @@ VSCode 扩展提供的命令面板条目。安装和更新需要 `git`
 
 ## 说明
 
-- package 目录在模块启动时就会创建，即使它是空的，即使在 commandlet 进程里也一样，
-  与源目录和生成着色器目录一起创建。
-- package 文件就是普通文件。没有任何东西阻止 package 里的 `.dsh` 被原地编辑；
-  扩展的更新命令会把它覆盖掉。
-- 因为排除是路径判定，把非 package 路径指向 package 内容的符号链接或 junction，
-  会按它解析出来的真实路径处理。
+- package 目录在模块启动时就会创建，即使它是空的，即使在 commandlet 进程里也一样，与源目录和生成着色器目录一起创建。
+- package 文件就是普通文件。没有任何东西阻止 package 里的 `.dsh` 被原地编辑；扩展的更新命令会把它覆盖掉。
+- 因为排除是路径判定，把非 package 路径指向 package 内容的符号链接或 junction，会按它解析出来的真实路径处理。
 - 插件从不下载任何东西。安装完全是扩展的 `git` 工作。
 
 <a id="example"></a>

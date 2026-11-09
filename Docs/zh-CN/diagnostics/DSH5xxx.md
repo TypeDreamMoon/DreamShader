@@ -1,14 +1,8 @@
----
-title: "DSH5xxx --- 内置项 -- UE.*、数学、Substrate"
-description: "DSH5xxx --- 内置项 -- UE.*、数学、Substrate"
----
-
 <a id="dsh5xxx-----builtins----ue-math-substrate"></a>
 
 # DSH5xxx --- 内置项 -- UE.*、数学、Substrate
 
-> 生成标记之间的块由 `.skill/gen-diagnostics.ps1` 写入。
-> 标记下方的所有内容均为手工编写，重新生成后仍会保留。
+> 生成标记之间的块由 `.skill/gen-diagnostics.ps1` 写入。标记下方的所有内容均为手工编写，重新生成后仍会保留。
 
 <a id="dsh5200"></a>
 
@@ -630,8 +624,7 @@ Expected 'OutputType' of a Custom expression to be float1 to float4 or MaterialA
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1563`
 <!-- generated:end DSH5261 -->
 
-**原因。** `UE.Expression(Class = "Custom", ...)` 调用的 `OutputType` 不是 Custom
-节点可以返回的类型。
+**原因。** `UE.Expression(Class = "Custom", ...)` 调用的 `OutputType` 不是 Custom 节点可以返回的类型。
 
 **修复。** 使用 `float1` .. `float4`（或 `float` .. `float4`），或 `MaterialAttributes`。
 
@@ -691,8 +684,7 @@ Expected the parameter call '{0}' to take only its inputs, found an output selec
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1125`
 <!-- generated:end DSH5265 -->
 
-**原因。** 对参数节点属性的调用带有 `Output` / `OutputIndex`。这种调用会被
-重写为引脚已连线的节点，而选择器无处可去。
+**原因。** 对参数节点属性的调用带有 `Output` / `OutputIndex`。这种调用会被重写为引脚已连线的节点，而选择器无处可去。
 
 **修复。** 在调用后用成员选择输出：`MyTex(Coordinates = uv).rgb`。
 
@@ -712,8 +704,7 @@ Expected the parameter call '{0}' to take only its inputs, found an output selec
 **引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:83`
 <!-- generated:end DSH5275 -->
 
-**原因。** 规则 L19。1.x 源码中的名称仅在忽略大小写时才匹配声明。1.x
-在比较大多数名称时忽略大小写，因此源码可以构建；而 `.dss` 区分大小写。
+**原因。** 规则 L19。1.x 源码中的名称仅在忽略大小写时才匹配声明。1.x 在比较大多数名称时忽略大小写，因此源码可以构建；而 `.dss` 区分大小写。
 
 **修复。** 按声明的方式拼写名称。`dsc migrate` 会为每个此类名称执行此操作。
 
@@ -733,8 +724,7 @@ Expected the parameter call '{0}' to take only its inputs, found an output selec
 **引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:95`
 <!-- generated:end DSH5276 -->
 
-**原因。** 规则 L19，针对引擎名称：`UE.` 类、引脚、属性或输出仅在
-忽略大小写时才匹配。1.x 在查找这些内容时忽略大小写。
+**原因。** 规则 L19，针对引擎名称：`UE.` 类、引脚、属性或输出仅在忽略大小写时才匹配。1.x 在查找这些内容时忽略大小写。
 
 **修复。** 使用引擎的拼写，消息中会显示。`dsc migrate` 会写出它。
 
@@ -754,8 +744,7 @@ Expected the parameter call '{0}' to take only its inputs, found an output selec
 **引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3020`
 <!-- generated:end DSH5277 -->
 
-**原因。** 规则 L2。1.x 源码中使用了 GLSL 函数或类型拼写（`mix`、`fract`、`mod`、
-`vec3`）。1.x 会重写它们；而 `.dss` 仅接受 HLSL。
+**原因。** 规则 L2。1.x 源码中使用了 GLSL 函数或类型拼写（`mix`、`fract`、`mod`、 `vec3`）。1.x 会重写它们；而 `.dss` 仅接受 HLSL。
 
 **修复。** 编写消息给出的 HLSL 名称。`dsc migrate` 会执行此操作。
 
@@ -775,12 +764,7 @@ Expected the parameter call '{0}' to take only its inputs, found an output selec
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1492`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4052`
 <!-- generated:end DSH5278 -->
 
-**原因。** 规则 L12。枚举值按引擎的方式编写（`PPI_SceneColor`、
-`TRANSFORM_Tangent`、`SAMPLERTYPE_Color`），或带有其 `Enum::` 作用域。1.x 匹配枚举项时
-较为宽松——不考虑前缀、作用域和大小写——而此前端解析相同的值；`.dss`
-采用目录列出的简短形式。第二条消息是由仅 1.x 拥有的名称表示的变换空间
-（`AbsoluteWorld`、`CameraRelativeWorld`、`FirstPerson`、`Particle`、`InstanceParticle`），
-前端会将其写为引擎的形式——参见[变换内置函数](../builtins/transform.md)。
+**原因。** 规则 L12。枚举值按引擎的方式编写（`PPI_SceneColor`、 `TRANSFORM_Tangent`、`SAMPLERTYPE_Color`），或带有其 `Enum::` 作用域。1.x 匹配枚举项时较为宽松——不考虑前缀、作用域和大小写——而此前端解析相同的值；`.dss` 采用目录列出的简短形式。第二条消息是由仅 1.x 拥有的名称表示的变换空间（`AbsoluteWorld`、`CameraRelativeWorld`、`FirstPerson`、`Particle`、`InstanceParticle`），前端会将其写为引擎的形式——参见[变换内置函数](../builtins/transform.md)。
 
 **修复。** 按消息中的拼写编写该值。
 
@@ -800,13 +784,9 @@ Expected the parameter call '{0}' to take only its inputs, found an output selec
 **引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4761`、`Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:403`
 <!-- generated:end DSH5279 -->
 
-**原因。** 规则 L13。某个 `UE.` 节点在 1.x 主体中构建时，有一个引脚保持打开，而引擎将该引脚绘制为
-必需。1.x 仅针对少数手工注册的内置函数检查这一点（变换的 `Input`
-就是其中之一），许多此类源码能够编译，因为节点会读取默认值。在
-`.dss` 中，同样的情况是 DSH5219，也是警告。
+**原因。** 规则 L13。某个 `UE.` 节点在 1.x 主体中构建时，有一个引脚保持打开，而引擎将该引脚绘制为必需。1.x 仅针对少数手工注册的内置函数检查这一点（变换的 `Input` 就是其中之一），许多此类源码能够编译，因为节点会读取默认值。在 `.dss` 中，同样的情况是 DSH5219，也是警告。
 
-**修复。** 如果材质因“缺少输入”而编译失败，则连接该引脚；否则无需
-更改。
+**修复。** 如果材质因“缺少输入”而编译失败，则连接该引脚；否则无需更改。
 
 <a id="dsh5280"></a>
 
@@ -824,9 +804,7 @@ Expected the parameter call '{0}' to take only its inputs, found an output selec
 **引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:592`
 <!-- generated:end DSH5280 -->
 
-**原因。** 1.x 调用在不具有输出的对象（无结果的辅助函数，或既非节点也非
-函数的调用）上选择输出（`Output = ...`、`OutputIndex = ...`，或最后传入的
-接收者）。
+**原因。** 1.x 调用在不具有输出的对象（无结果的辅助函数，或既非节点也非函数的调用）上选择输出（`Output = ...`、`OutputIndex = ...`，或最后传入的接收者）。
 
 **修复。** 移除选择器，或调用具有该输出的对象。
 
@@ -846,8 +824,7 @@ An output is selected by a whole number the compiler knows, and this index is co
 **引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1547`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1582`
 <!-- generated:end DSH5281 -->
 
-**原因。** `node[k]` 读取节点的输出 `k`，而 `k` 不是编译器能够
-求值的常量。连接哪条连线不能取决于运行时值。
+**原因。** `node[k]` 读取节点的输出 `k`，而 `k` 不是编译器能够求值的常量。连接哪条连线不能取决于运行时值。
 
 **修复。** 使用字面量索引，或命名该输出。
 
@@ -867,8 +844,7 @@ This Custom node declares {0} output(s), counted from 0, and this selects output
 **引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1593`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1613`、`Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:611`
 <!-- generated:end DSH5282 -->
 
-**原因。** 输出索引超出了节点或函数声明的输出数量。输出从 0 开始计数；
-Custom 节点的返回值位于索引 0，其额外输出位于其后。
+**原因。** 输出索引超出了节点或函数声明的输出数量。输出从 0 开始计数； Custom 节点的返回值位于索引 0，其额外输出位于其后。
 
 **修复。** 使用范围内的索引，或命名该输出。
 
@@ -888,9 +864,7 @@ Custom 节点的返回值位于索引 0，其额外输出位于其后。
 **引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:652`
 <!-- generated:end DSH5283 -->
 
-**原因。** 规则 L5。1.x 语句调用传入了一个未在任何地方声明的接收者（`F(a, Out)`）。
-1.x 会就地用它所接收输出的类型声明它，前端也做同样的
-事。
+**原因。** 规则 L5。1.x 语句调用传入了一个未在任何地方声明的接收者（`F(a, Out)`）。 1.x 会就地用它所接收输出的类型声明它，前端也做同样的事。
 
 **修复。** 无需更改。`dsc migrate` 会写出该声明。
 
@@ -910,8 +884,7 @@ Custom 节点的返回值位于索引 0，其额外输出位于其后。
 **引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4601`
 <!-- generated:end DSH5284 -->
 
-**原因。** `Custom` 节点调用的某个参数是 Custom 节点输入无法携带的值：
-材质、Substrate 值、采样器。Custom 输入接受数字或纹理。
+**原因。** `Custom` 节点调用的某个参数是 Custom 节点输入无法携带的值：材质、Substrate 值、采样器。Custom 输入接受数字或纹理。
 
 **修复。** 传入代码所需的组件（`m.BaseColor`），而不是整个材质。
 
@@ -931,8 +904,7 @@ Custom 节点的返回值位于索引 0，其额外输出位于其后。
 **引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4376`
 <!-- generated:end DSH5285 -->
 
-**原因。** `Pin[k] = value` 通过引擎索引命名输入引脚，而该类的引脚数量
-少于该索引。
+**原因。** `Pin[k] = value` 通过引擎索引命名输入引脚，而该类的引脚数量少于该索引。
 
 **修复。** 使用该类具有的索引，或命名该引脚。
 
@@ -952,8 +924,7 @@ Custom 节点的返回值位于索引 0，其额外输出位于其后。
 **引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2925`
 <!-- generated:end DSH5286 -->
 
-**原因。** `Pin[k] = value` 被用于既非 `UE.` / `Substrate.` 节点的调用：用户函数、
-内置函数、构造函数。只有反射节点才具有引擎引脚索引。
+**原因。** `Pin[k] = value` 被用于既非 `UE.` / `Substrate.` 节点的调用：用户函数、内置函数、构造函数。只有反射节点才具有引擎引脚索引。
 
 **修复。** 按名称或位置传入参数。
 
@@ -973,14 +944,9 @@ Custom 节点的返回值位于索引 0，其额外输出位于其后。
 **引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1814`
 <!-- generated:end DSH5287 -->
 
-**原因。** 规则 L3c。一个具有多个输出的节点在 1.x 主体中被用作值时，没有说明
-使用哪个输出。1.x 读取第一个输出；本前端也是如此，并且会说明是哪一个。它会在
-目录未给该输出指定宽度时这样做，并且在该节点被直接传递到引脚时
-（`UE.TransformPosition(UE.WorldPosition(), ...)` 接收 `XYZ`）也会这样做，因为 1.x 原本就是这样连接它的，
-而引脚会接收它使用的内容 *（2.0.0 – 2.1.0 以 `DSH5201` 拒绝了引脚情况）*。
+**原因。** 规则 L3c。一个具有多个输出的节点在 1.x 主体中被用作值时，没有说明使用哪个输出。1.x 读取第一个输出；本前端也是如此，并且会说明是哪一个。它会在目录未给该输出指定宽度时这样做，并且在该节点被直接传递到引脚时（`UE.TransformPosition(UE.WorldPosition(), ...)` 接收 `XYZ`）也会这样做，因为 1.x 原本就是这样连接它的，而引脚会接收它使用的内容 *（2.0.0 – 2.1.0 以 `DSH5201` 拒绝了引脚情况）*。
 
-**修复。** 无需更改。`.dss` 会指定输出（`UE.ScreenPosition().ViewportUV`），并且
-`dsc migrate` 会写入它。
+**修复。** 无需更改。`.dss` 会指定输出（`UE.ScreenPosition().ViewportUV`），并且 `dsc migrate` 会写入它。
 
 <a id="dsh5288"></a>
 
@@ -998,8 +964,7 @@ Custom 节点的返回值位于索引 0，其额外输出位于其后。
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4628`
 <!-- generated:end DSH5288 -->
 
-**原因。** 1.x 属性是一个不带 `DefaultValue` 属性的参数节点（例如集合参数），
-并且在 `=` 之后写有默认值。1.x 丢弃了它。
+**原因。** 1.x 属性是一个不带 `DefaultValue` 属性的参数节点（例如集合参数），并且在 `=` 之后写有默认值。1.x 丢弃了它。
 
 **修复。** 移除默认值；在节点接收它的位置（集合资产）设置该值。
 
@@ -1019,13 +984,9 @@ Custom 节点的返回值位于索引 0，其额外输出位于其后。
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1877`
 <!-- generated:end DSH5289 -->
 
-**原因。** 规则 L22。一个值比它所去的位置更宽——例如将 `float4` 参数赋给
-`vec3` 变量、作为 `float3` 实参传递——而 1.x 将其裁剪为其前导分量，
-没有任何提示。仅限将较宽的值放入较窄的位置：不同宽度的两个操作数仍是
-错误（DSH4226）。
+**原因。** 规则 L22。一个值比它所去的位置更宽——例如将 `float4` 参数赋给 `vec3` 变量、作为 `float3` 实参传递——而 1.x 将其裁剪为其前导分量，没有任何提示。仅限将较宽的值放入较窄的位置：不同宽度的两个操作数仍是错误（DSH4226）。
 
-**修复。** 无需更改。写入 swizzle（`Tint.rgb`）即可表达意图，并且 `dsc
-migrate` 会写入它。
+**修复。** 无需更改。写入 swizzle（`Tint.rgb`）即可表达意图，并且 `dsc migrate` 会写入它。
 
 <a id="dsh5290"></a>
 
@@ -1043,13 +1004,9 @@ The asset of this block and a function this file can call are both named '{0}', 
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:866`
 <!-- generated:end DSH5290 -->
 
-**原因。** 规则 L23。一个块构建了一个以此文件可调用的函数命名的资产（例如
-`ShaderFunction(Name = ".../MF_X")` 旁边的 `Function MF_X`）。1.x 将资产和函数保存在两个
-表中，因此两者都存在；2.0 有一个名称表，并且该块的函数被声明为
-`<Name>_Asset`，而资产保留其名称。
+**原因。** 规则 L23。一个块构建了一个以此文件可调用的函数命名的资产（例如 `ShaderFunction(Name = ".../MF_X")` 旁边的 `Function MF_X`）。1.x 将资产和函数保存在两个表中，因此两者都存在；2.0 有一个名称表，并且该块的函数被声明为 `<Name>_Asset`，而资产保留其名称。
 
-**修复。** 无需更改。迁移后的文件会在新标识符下声明导出，并为该资产
-使用 `/// @name`。
+**修复。** 无需更改。迁移后的文件会在新标识符下声明导出，并为该资产使用 `/// @name`。
 
 <a id="dsh5291"></a>
 
@@ -1067,18 +1024,9 @@ The asset of this block and a function this file can call are both named '{0}', 
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4657`
 <!-- generated:end DSH5291 -->
 
-**原因。** 规则 L24。命名参数不是目录为该类列出的引脚或属性。目录是
-从每个类的默认对象读取的，并且某些节点会根据属性命名其引脚
-（MoonToonModifier 根据修改器显示其他引脚，TextureSample 仅在
-`MipValueMode = Derivative` 下显示 `CoordinatesDX`，Landscape 图层混合根据
-其 `Layers` 将其引脚称为 `Layer Grass` / `Height Rock`）。节点一旦存在，引脚就按该名称
-连接到节点上；如果节点未显示此类引脚，则构建会在该处失败（DSH8212）。在 `.dss` 中，这仅适用于
-目录标记为按节点命名引脚的类；在其他情况下，未知名称是 DSH5213。在 `.dss` 中，这样的
-引脚也不固定任何宽度：数值输出的宽度与引脚上的最宽值相同，而引脚上的 `material`
-会使输出成为 `material`。
+**原因。** 规则 L24。命名参数不是目录为该类列出的引脚或属性。目录是从每个类的默认对象读取的，并且某些节点会根据属性命名其引脚（MoonToonModifier 根据修改器显示其他引脚，TextureSample 仅在 `MipValueMode = Derivative` 下显示 `CoordinatesDX`，Landscape 图层混合根据其 `Layers` 将其引脚称为 `Layer Grass` / `Height Rock`）。节点一旦存在，引脚就按该名称连接到节点上；如果节点未显示此类引脚，则构建会在该处失败（DSH8212）。在 `.dss` 中，这仅适用于目录标记为按节点命名引脚的类；在其他情况下，未知名称是 DSH5213。在 `.dss` 中，这样的引脚也不固定任何宽度：数值输出的宽度与引脚上的最宽值相同，而引脚上的 `material` 会使输出成为 `material`。
 
-**修复。** 如果该名称就是节点所显示的名称，则无需处理。引脚自身的属性名称（`ChannelW`）
-始终可解析，不需要查找。
+**修复。** 如果该名称就是节点所显示的名称，则无需处理。引脚自身的属性名称（`ChannelW`）始终可解析，不需要查找。
 
 <a id="dsh5292"></a>
 
@@ -1096,11 +1044,9 @@ The asset of this block and a function this file can call are both named '{0}', 
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2345`
 <!-- generated:end DSH5292 -->
 
-**原因。** 规则 L26。在 1.x 主体中，`x = value;` 会对一个未在任何位置声明的名称进行赋值。1.x 会在该处声明
-该变量，并使用值的类型。
+**原因。** 规则 L26。在 1.x 主体中，`x = value;` 会对一个未在任何位置声明的名称进行赋值。1.x 会在该处声明该变量，并使用值的类型。
 
-**修复。** 无需更改；`dsc migrate` 会写入 `T x = value;`。在 `.dss` 中，未声明的名称
-是错误。
+**修复。** 无需更改；`dsc migrate` 会写入 `T x = value;`。在 `.dss` 中，未声明的名称是错误。
 
 <a id="dsh5293"></a>
 
@@ -1118,14 +1064,9 @@ A Substrate value has no compound assignment; write 'S = S + T' (Substrate.Add) 
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2377`、`Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:274`、`Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:302`
 <!-- generated:end DSH5293 -->
 
-**原因。** 一个 Substrate 值不具备的运算符。它们接受 `A + B`（`Substrate.Add`）、`A *
-w` and `w * A` with a scalar (`Substrate.Weight`) and `lerp(A, B, t)` (`Substrate.HorizontalMix`），
-除此之外没有别的。三条消息：另一个运算符（`A - B`、`A * B`、`-A`）；一个 `lerp`，其前
-两个实参并非都是 Substrate 值或都是数字；一个复合赋值（`A += B`），
-这会使 `A` 的声明表示两个节点。
+**原因。** 一个 Substrate 值不具备的运算符。它们接受 `A + B`（`Substrate.Add`）、`A * w` and `w * A` with a scalar (`Substrate.Weight`) and `lerp(A, B, t)` (`Substrate.HorizontalMix`），除此之外没有别的。三条消息：另一个运算符（`A - B`、`A * B`、`-A`）；一个 `lerp`，其前两个实参并非都是 Substrate 值或都是数字；一个复合赋值（`A += B`），这会使 `A` 的声明表示两个节点。
 
-**修复。** 写出你想要的节点：使用 `Substrate.Layer(Top, Base, Thickness)` 进行分层，使用 `lerp` 进行
-混合，并使用 `A = A + B;` 代替 `A += B;`。
+**修复。** 写出你想要的节点：使用 `Substrate.Layer(Top, Base, Thickness)` 进行分层，使用 `lerp` 进行混合，并使用 `A = A + B;` 代替 `A += B;`。
 
 <a id="dsh5294"></a>
 
@@ -1143,14 +1084,9 @@ w` and `w * A` with a scalar (`Substrate.Weight`) and `lerp(A, B, t)` (`Substrat
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4242`、`Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:148`、`Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:161`
 <!-- generated:end DSH5294 -->
 
-**原因。** 一段 Substrate 语法糖需要此引擎不具备的节点。三条消息：一个
-`Substrate.X(...)` 调用，其节点从之后的 Unreal Engine 版本起存在（消息会说明
-该版本）；一个运算符、一个运行时分支或一个虚拟实参，表示此类节点；以及在
-完全没有 Substrate 节点的引擎上（5.4 之前）出现同样的情况。
+**原因。** 一段 Substrate 语法糖需要此引擎不具备的节点。三条消息：一个 `Substrate.X(...)` 调用，其节点从之后的 Unreal Engine 版本起存在（消息会说明该版本）；一个运算符、一个运行时分支或一个虚拟实参，表示此类节点；以及在完全没有 Substrate 节点的引擎上（5.4 之前）出现同样的情况。
 
-**修复。** 针对具有该节点的引擎进行构建，或使用此引擎拥有的
-节点编写语法糖所表示的内容——对于运行时分支，使用 `/// @static` 条件或 `lerp`。当同一份源需要
-在两者上构建时，用 `#if DS_ENGINE_MINOR >= ...` 守护代码。
+**修复。** 针对具有该节点的引擎进行构建，或使用此引擎拥有的节点编写语法糖所表示的内容——对于运行时分支，使用 `/// @static` 条件或 `lerp`。当同一份源需要在两者上构建时，用 `#if DS_ENGINE_MINOR >= ...` 守护代码。
 
 <a id="dsh5295"></a>
 
@@ -1168,15 +1104,9 @@ w` and `w * A` with a scalar (`Substrate.Weight`) and `lerp(A, B, t)` (`Substrat
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:600`、`Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:631`、`Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:825`
 <!-- generated:end DSH5295 -->
 
-**原因。** 两个实参参数化同一组引脚。`BaseColor` / `Metallic` / `Specular` 通过转换节点
-成为 `DiffuseAlbedo` 和 `F0`，因此同时给出 `DiffuseAlbedo` 或 `F0` 会为一个引脚留下
-两个值；`IOR` 计算 `F0`，因此它与 `F0` 以及金属度
-实参冲突；`Haziness` 成为 `SecondRoughness` 和 `SecondRoughnessWeight`；`Transmittance` 成为
-`SSSMFP`。对于逐成员构建的值同样适用此规则，此时这两次写入位于
-不同行。
+**原因。** 两个实参参数化同一组引脚。`BaseColor` / `Metallic` / `Specular` 通过转换节点成为 `DiffuseAlbedo` 和 `F0`，因此同时给出 `DiffuseAlbedo` 或 `F0` 会为一个引脚留下两个值；`IOR` 计算 `F0`，因此它与 `F0` 以及金属度实参冲突；`Haziness` 成为 `SecondRoughness` 和 `SecondRoughnessWeight`；`Transmittance` 成为 `SSSMFP`。对于逐成员构建的值同样适用此规则，此时这两次写入位于不同行。
 
-**修复。** 只保留一种参数化方式：要么使用旧方式（`BaseColor`、`Metallic`、`Specular`），要么
-使用引脚（`DiffuseAlbedo`、`F0`）。
+**修复。** 只保留一种参数化方式：要么使用旧方式（`BaseColor`、`Metallic`、`Specular`），要么使用引脚（`DiffuseAlbedo`、`F0`）。
 
 <a id="dsh5296"></a>
 
@@ -1194,13 +1124,9 @@ w` and `w * A` with a scalar (`Substrate.Weight`) and `lerp(A, B, t)` (`Substrat
 **引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:454`、`Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:464`、`Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:784`、`Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:840`
 <!-- generated:end DSH5296 -->
 
-**原因。** 一个虚拟实参缺少其对照测量所依据的实参。`Haziness` 会将
-BSDF 自身的 `Roughness` 转换为第二个波瓣，因此它需要 `Roughness`；`Thickness` 是
-`Transmittance` 的测量深度，因此它需要 `Transmittance`。对于逐成员构建的值，
-问题会在该值首次使用时提出：届时必须已经写入其伴随项。
+**原因。** 一个虚拟实参缺少其对照测量所依据的实参。`Haziness` 会将 BSDF 自身的 `Roughness` 转换为第二个波瓣，因此它需要 `Roughness`；`Thickness` 是 `Transmittance` 的测量深度，因此它需要 `Transmittance`。对于逐成员构建的值，问题会在该值首次使用时提出：届时必须已经写入其伴随项。
 
-**修复。** 在同一调用中，或在首次使用该值之前，给出伴随项——`Roughness` 搭配
-`Haziness`，`Transmittance` 搭配 `Thickness`。
+**修复。** 在同一调用中，或在首次使用该值之前，给出伴随项——`Roughness` 搭配 `Haziness`，`Transmittance` 搭配 `Thickness`。
 
 <a id="dsh5297"></a>
 
@@ -1456,10 +1382,8 @@ The pipeline '{0}' comes from '{1}', which failed to compile, so the buffer this
 
 **原因。** 该管线来自一个无法编译的 `.dsp`，因此此材质读取的缓冲区无法被检查。有两条消息，每种运行各一条：
 
-- 构建资产的运行发现管线资产缺失或比其 `.dsp` 更旧，于是先构建了
-  `.dsp`（DSH5320 如此说明），而该编译失败了（`... which failed to compile ...`）；
-- 什么都不构建的运行——即 `dsc check`——未找到任何管线资产，于是读取了其位置上的 `.dsp`，
-  而该 `.dsp` 无法编译（`... which does not compile ...`）。
+- 构建资产的运行发现管线资产缺失或比其 `.dsp` 更旧，于是先构建了 `.dsp`（DSH5320 如此说明），而该编译失败了（`... which failed to compile ...`）；
+- 什么都不构建的运行——即 `dsc check`——未找到任何管线资产，于是读取了其位置上的 `.dsp`，而该 `.dsp` 无法编译（`... which does not compile ...`）。
 
 消息以 `.dsp` 的第一个错误结尾。当该错误为 DSH8333 时，该管线与此材质互相需要对方：即 DSH5325 所描述的循环，从材质这一侧遭遇。
 
@@ -1503,8 +1427,7 @@ The pipeline '{0}' was missing or older than its source, so '{1}' was compiled f
 
 **原因。** 该节点自身的规则拒绝了该缓冲区——其措辞与材质编辑器所用的一致。在管线资产存在的情况下，消息会说明是哪种情况：
 
-- `Buffer` 指定了一个内置纹理（`SceneColor`、`CustomDepth`……），它仅存在于帧的
-  渲染图中；没有任何内容会将它复制出来。
+- `Buffer` 指定了一个内置纹理（`SceneColor`、`CustomDepth`……），它仅存在于帧的渲染图中；没有任何内容会将它复制出来。
 - 该管线没有该名称的缓冲区。
 - 该缓冲区未被导出。
 - 该缓冲区为 `Depth32` 或整数格式，材质无法对其进行采样。
@@ -1630,8 +1553,7 @@ float Halo = UE.UserSceneTexture(UserSceneTexture = "Blurred", Coordinates = UV)
 **引发自** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:923`
 <!-- generated:end DSH5326 -->
 
-**原因。** `Pipeline` 命名了一个存在且并非通道管线的资产：一个材质、一个纹理——
-通常是一个导出的缓冲区所变成的渲染目标，`CP_Highlight_Blurred`，被选中而不是
-管线 `CP_Highlight`。该消息会指出其类。
+**原因。** `Pipeline` 命名了一个存在且并非通道管线的资产：一个材质、一个纹理—— 通常是一个导出的缓冲区所变成的渲染目标，`CP_Highlight_Blurred`，被选中而不是管线 `CP_Highlight`。该消息会指出其类。
 
 **修复。** 将 `Pipeline` 指向该管线资产，或指向其 `.dsp` 的裸名称，并用 `Buffer` 命名该缓冲区。
+

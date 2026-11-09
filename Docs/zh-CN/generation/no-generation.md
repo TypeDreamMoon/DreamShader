@@ -1,8 +1,3 @@
----
-title: "NoGeneration"
-description: "NoGeneration"
----
-
 <a id="nogeneration"></a>
 
 # NoGeneration
@@ -13,9 +8,9 @@ description: "NoGeneration"
 
 | | |
 | :-- | :-- |
-| 写法 | `#pragma nogeneration`（整个文件）· 在 `export` 上写 `/// @nogeneration`（该资产）· 在 1.x 块的头部写 `NoGeneration = true`（该块的资产）|
-| 适用于 | 源构建的每个资产：材质、实例（`.dsi`）、材质函数、图层与混合、Custom Pass 管线（`.dsp`）|
-| 由谁构建 | [材质内容浏览器](../../tools/material-browser.md)中的*编译*、*还原为源*、创建材质的实例、针对该文件的桥接请求、[`compile -Source`](../tools/commandlet.md)、`check -Source -Shaders` |
+| 写法 | `#pragma nogeneration`（整个文件）· 在 `export` 上写 `/// @nogeneration`（该资产）· 在 1.x 块的头部写 `NoGeneration = true`（该块的资产） |
+| 适用于 | 源构建的每个资产：材质、实例（`.dsi`）、材质函数、图层与混合、Custom Pass 管线（`.dsp`） |
+| 由谁构建 | [材质内容浏览器](../tools/material-browser.md)中的*编译*、*还原为源*、创建材质的实例、针对该文件的桥接请求、[`compile -Source`](../tools/commandlet.md)、`check -Source -Shaders` |
 | 不受影响 | 编辑器启动时的扫描、保存、它所依赖的源的重新构建（一个头部、某个 `.dsi` 的父级、某个 `.dsp` 的材质）、*全部重新编译*、`compile -All`、`check -All -Shaders`、cook |
 
 用于重建代价高昂的资产，或由某人在编辑器中手动调整、不应在共享头部每次更改时被重建的资产。
@@ -67,8 +62,7 @@ ShaderFunction(Name = "Noise/MF_Heavy", NoGeneration = true)
 | 已存在 | 保持原样，即使源自其构建以来已经更改 | info [`DSH8277`](../diagnostics/DSH8xxx.md#dsh8277)；结果行 `Skipped <path> from <source>; the source marks it NoGeneration, …` |
 | 从未被构建过 | 不写入任何内容 | warning [`DSH8278`](../diagnostics/DSH8xxx.md#dsh8278)；`Skipped <path> from <source>; … it has never been built.` |
 
-文件的其他资产会照常构建。调用同一文件的 NoGeneration 导出的资产会调用磁盘上的资产；当没有时，会以
-[`DSH8279`](../diagnostics/DSH8xxx.md#dsh8279) 失败。
+文件的其他资产会照常构建。调用同一文件的 NoGeneration 导出的资产会调用磁盘上的资产；当没有时，会以 [`DSH8279`](../diagnostics/DSH8xxx.md#dsh8279) 失败。
 
 <a id="what-uses-it"></a>
 

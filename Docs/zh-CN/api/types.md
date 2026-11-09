@@ -1,8 +1,3 @@
----
-title: "DreamShaderTypes.h"
-description: "DreamShaderTypes.h"
----
-
 <a id="dreamshadertypesh"></a>
 
 # DreamShaderTypes.h
@@ -23,11 +18,7 @@ description: "DreamShaderTypes.h"
 | 引入 | 仅 `CoreMinimal.h` |
 
 > [!NOTE]
-> **这些结构体均不携带 `DREAMSHADER_API`。** 它们是仅头文件的聚合体，具有隐式的
-> 特殊成员函数，因此无需导出符号即可跨模块边界构造、复制或销毁它们。
-> 此头文件中只有三样东西是导出的：
-> `FTextShaderDefinition::TryGetSetting`、`FTextShaderDefinition::GetSetting` 和
-> `NormalizeSettingKey`。
+> **这些结构体均不携带 `DREAMSHADER_API`。** 它们是仅头文件的聚合体，具有隐式的特殊成员函数，因此无需导出符号即可跨模块边界构造、复制或销毁它们。此头文件中只有三样东西是导出的： `FTextShaderDefinition::TryGetSetting`、`FTextShaderDefinition::GetSetting` 和 `NormalizeSettingKey`。
 
 <a id="declaration-index"></a>
 
@@ -84,8 +75,7 @@ enum class ETextShaderPropertyType : uint8
 | `Vector` | `1` | 矢量值属性——`float2` / `float3` / `float4` 系列 |
 | `Texture2D` | `2` | **任意**维度的纹理值属性；维度单独携带于 `ETextShaderTextureType` 中 |
 
-`Texture2D` 枚举值名称是一种历史拼写。`TextureCube` 或 `VolumeTexture` 属性
-也拥有 `Type == Texture2D`。
+`Texture2D` 枚举值名称是一种历史拼写。`TextureCube` 或 `VolumeTexture` 属性也拥有 `Type == Texture2D`。
 
 <a id="etextshadertexturetype"></a>
 
@@ -164,21 +154,14 @@ inline const TCHAR* LexToString(const ETextShaderMaterialFunctionKind Kind);
 | `MaterialLayerBlend` | `2` | **`"ShaderLayerBlend"`** | `UMaterialFunctionMaterialLayerBlend` |
 
 > [!NOTE]
-> 枚举值名称仍使用 1.3.0 之前的 `MaterialLayer*` 拼写，但 `LexToString` 打印
-> 的是当前的 `ShaderLayer*` 拼写。因此生成的消息会说 `ShaderLayer`，而绝不会是
-> `MaterialLayer`，即使源文件使用了已弃用的关键字。`default:` 标签
-> 与 `ShaderFunction` 情形共用，因此超出范围的值也会打印 `"ShaderFunction"`。
+> 枚举值名称仍使用 1.3.0 之前的 `MaterialLayer*` 拼写，但 `LexToString` 打印的是当前的 `ShaderLayer*` 拼写。因此生成的消息会说 `ShaderLayer`，而绝不会是 `MaterialLayer`，即使源文件使用了已弃用的关键字。`default:` 标签与 `ShaderFunction` 情形共用，因此超出范围的值也会打印 `"ShaderFunction"`。
 
 <a id="structures"></a>
 
 ## 结构体
 
 > [!NOTE]
-> 下面的**含义**列说明了 1.x 解析器在每个成员中存储了什么，以及 1.x
-> 生成器如何读取它。自 2.0.0 起，没有任何解析会填充这些结构体；剩下的少数使用者已在
-> 引言和[备注](#notes)下命名。此处提到的解析时检查、警告和源映射
-> 属于已废弃的解析器：1.x 源代码现在由旧版前端诊断，
-> 其 `DSHnnnn` 代码会携带该构造的行号和列号。
+> 下面的**含义**列说明了 1.x 解析器在每个成员中存储了什么，以及 1.x 生成器如何读取它。自 2.0.0 起，没有任何解析会填充这些结构体；剩下的少数使用者已在引言和[备注](#notes)下命名。此处提到的解析时检查、警告和源映射属于已废弃的解析器：1.x 源代码现在由旧版前端诊断，其 `DSHnnnn` 代码会携带该构造的行号和列号。
 
 <a id="ftextshadermetadata"></a>
 
@@ -205,9 +188,7 @@ struct FTextShaderMetadata
 | `Description` | `FString` | `""` | 工具提示 / 描述文本。 |
 | `ReflectedProperties` | `TMap<FString, FString>` | 空 | 来自 `[ … ]` 块的任意反射 `UPROPERTY` 名称 → 字面文本对。**键会使用 `NormalizeSettingKey` 进行规范化**，即去除首尾空白并转为小写。 |
 
-1.x 解析器自行消费（而非放入 `ReflectedProperties`）的键：`Group` /
-`Category`、`Description`、`SortPriority` / `Sort`，以及由 `Slider(min, max)` 生成的
-`SliderMin` / `SliderMax` 对。参见[元数据块](../parameters/metadata.md)。
+1.x 解析器自行消费（而非放入 `ReflectedProperties`）的键：`Group` / `Category`、`Description`、`SortPriority` / `Sort`，以及由 `Slider(min, max)` 生成的 `SliderMin` / `SliderMax` 对。参见[元数据块](../parameters/metadata.md)。
 
 <a id="ftextshaderpropertydefinition"></a>
 
@@ -254,9 +235,7 @@ struct FTextShaderPropertyDefinition
 | `TextureDefaultObjectPath` | `FString` | `""` | 由 `Path(...)` 解析出的对象路径。 |
 | `Metadata` | `FTextShaderMetadata` | 默认构造 | `[ … ]` 块。 |
 
-诸如 `TextureObjectParameter` 之类的标记映射到单个 Unreal 节点类，该类可容纳任意纹理维度。对于这些标记，`bHasExplicitTextureType` 保持为 `false`，`TextureType` 保持其 `Texture2D` 默认值，而 1.x 生成器会从所指定的默认资产推断出真实维度，而不是拒绝它。自 2.0.0 起，1.x 对纹理默认值中所写类与其属性之间的检查在绑定之前针对源进行：
-[`DSH1043`](../diagnostics/DSH1xxx.md#dsh1043) 针对非纹理类，
-[`DSH1044`](../diagnostics/DSH1xxx.md#dsh1044) 针对另一维度的纹理类。
+诸如 `TextureObjectParameter` 之类的标记映射到单个 Unreal 节点类，该类可容纳任意纹理维度。对于这些标记，`bHasExplicitTextureType` 保持为 `false`，`TextureType` 保持其 `Texture2D` 默认值，而 1.x 生成器会从所指定的默认资产推断出真实维度，而不是拒绝它。自 2.0.0 起，1.x 对纹理默认值中所写类与其属性之间的检查在绑定之前针对源进行： [`DSH1043`](../diagnostics/DSH1xxx.md#dsh1043) 针对非纹理类， [`DSH1044`](../diagnostics/DSH1xxx.md#dsh1044) 针对另一维度的纹理类。
 
 <a id="ftextshaderoutputbinding"></a>
 
@@ -554,7 +533,7 @@ struct FTextShaderDefinition
 | 成员 | 类型 | 默认值 | 含义 |
 | :-- | :-- | :-- | :-- |
 | `Name` | `FString` | `""` | 顶层 `Shader(Name="…")`。**为空表示该单元未声明材质** —— 这是判断“这里是否有 `Shader`”的常用测试。 |
-| `Root` | `FString` | `""` | `Shader(Root="…")`。 |
+| `Root` | `FString` | `""` | `Shader(Root="…")`. |
 | `Properties` | `TArray<FTextShaderPropertyDefinition>` | 空 | `Shader` 的 `Properties` 区段。 |
 | `Settings` | `TMap<FString, FString>` | 空 | `Shader` 的 `Settings` 区段。**键会被转为小写。** |
 | `OutputDeclarations` | `TArray<FTextShaderVariableDeclaration>` | 空 | 输出变量声明。 |
@@ -600,9 +579,7 @@ FString GetSetting(const TCHAR* Key, const TCHAR* DefaultValue = TEXT("")) const
 | 返回值 | 存储的值，或 `DefaultValue` |
 | 常量性 | `const`，纯函数，任意线程 |
 
-由于存储的键和查询都会经过 `NormalizeSettingKey`，查找是
-**不区分大小写且会裁剪空白的**。它对内部空格、下划线或连字符
-*不*敏感：`Two Sided` 和 `TwoSided` 仍是不同的键。
+由于存储的键和查询都会经过 `NormalizeSettingKey`，查找是**不区分大小写且会裁剪空白的**。它对内部空格、下划线或连字符*不*敏感：`Two Sided` 和 `TwoSided` 仍是不同的键。
 
 <a id="normalizesettingkey"></a>
 
@@ -622,40 +599,19 @@ DREAMSHADER_API FString NormalizeSettingKey(const FString& InKey);
 | `"Two_Sided"` | `"two_sided"` |
 
 > [!WARNING]
-> `NormalizeSettingKey` 和 [`UDreamShaderSettings::NormalizeMappingKey`](settings.md#normalizemappingkey)
-> 不可互换。后者还会去除所有空格、`_` 和 `-`，并且适用于
-> 设置**值**（枚举别名），而非键。使用错误的一个会让 `Two Sided Foliage` 变成
-> 查找未命中。这四个规范化辅助函数在
-> [`DreamShaderModule.h`](dreamshader-module.md#the-four-normalizers-compared) 中并排比较。
+> `NormalizeSettingKey` 和 [`UDreamShaderSettings::NormalizeMappingKey`](settings.md#normalizemappingkey) 不可互换。后者还会去除所有空格、`_` 和 `-`，并且适用于设置**值**（枚举别名），而非键。使用错误的一个会让 `Two Sided Foliage` 变成查找未命中。这四个规范化辅助函数在 [`DreamShaderModule.h`](dreamshader-module.md#the-four-normalizers-compared) 中并排比较。
 
-此头文件中每一个持有设置或选项的 `TMap<FString, FString>` ——
-`FTextShaderDefinition::Settings`、`FTextShaderMaterialFunctionDefinition::Settings`、
-`FTextShaderVirtualFunctionDefinition::Options` 和 `FTextShaderMetadata::ReflectedProperties` —— 在存储之前
-都会以这种方式对其键进行规范化。只通过规范化键直接读取这些映射。
+此头文件中每一个持有设置或选项的 `TMap<FString, FString>` —— `FTextShaderDefinition::Settings`、`FTextShaderMaterialFunctionDefinition::Settings`、 `FTextShaderVirtualFunctionDefinition::Options` 和 `FTextShaderMetadata::ReflectedProperties` —— 在存储之前都会以这种方式对其键进行规范化。只通过规范化键直接读取这些映射。
 
 <a id="notes"></a>
 
 ## 说明
 
-- **在 2.0 中大多数成员是残留物。** 编译器填充 `FTextShaderDefinition` 的 `Name`、`Root` 和 `Settings`
-  （以及 `FTextShaderMaterialFunctionDefinition` 的 kind、name、root 和 settings）
-  而不填充其他任何内容：属性、输出、图代码和
-  布局都以 IR 形式传递。不要指望从编译器获取的定义能描述源代码。
-  在定义之外，`Classic` 图布局会从 IR 的布局
-  提示填充 `FTextShaderLayout`，而 VirtualFunction 工具会从它们用旧版前端解析的声明中
-  填充 `FTextShaderVirtualFunctionDefinition` /
-  `FTextShaderFunctionParameter`。
-- 这些结构体没有反射、没有 `Serialize`，也没有 `operator==`。它们不会被
-  网络复制、不可保存，并且除非你自己编写比较，否则不可比较。
-- 1.x 解析器在任何内容落入 `Type` 字段之前会规范化类型标记：`vec3` 变为
-  `float3`，`mat4` 变为 `float4x4`，依此类推。自 2.0.0 起，1.x 文本中的 GLSL 拼写会通过 [`DSH5277`](../diagnostics/DSH5xxx.md#dsh5277) 被读取为
-  其 HLSL 类型。参见
-  [类型](../language/types.md)。
-- 容器顺序过去是源顺序，1.x 会从前到后生成 `MaterialFunctions`。自
-  2.0.0 起，一个文件的资产按调用顺序构建 —— 被另一个函数调用的函数会先
-  构建 —— 而相互循环调用的函数会被 [`DSH8299`](../diagnostics/DSH8xxx.md#dsh8299)。
-- 每个结构体都可使用编译器生成的操作进行复制和移动。复制是深层的 ——
-  成员是 `FString`、`TArray` 和 `TMap` 值，而非指针。
+- **在 2.0 中大多数成员是残留物。** 编译器填充 `FTextShaderDefinition` 的 `Name`、`Root` 和 `Settings` （以及 `FTextShaderMaterialFunctionDefinition` 的 kind、name、root 和 settings）而不填充其他任何内容：属性、输出、图代码和布局都以 IR 形式传递。不要指望从编译器获取的定义能描述源代码。在定义之外，`Classic` 图布局会从 IR 的布局提示填充 `FTextShaderLayout`，而 VirtualFunction 工具会从它们用旧版前端解析的声明中填充 `FTextShaderVirtualFunctionDefinition` / `FTextShaderFunctionParameter`。
+- 这些结构体没有反射、没有 `Serialize`，也没有 `operator==`。它们不会被网络复制、不可保存，并且除非你自己编写比较，否则不可比较。
+- 1.x 解析器在任何内容落入 `Type` 字段之前会规范化类型标记：`vec3` 变为 `float3`，`mat4` 变为 `float4x4`，依此类推。自 2.0.0 起，1.x 文本中的 GLSL 拼写会通过 [`DSH5277`](../diagnostics/DSH5xxx.md#dsh5277) 被读取为其 HLSL 类型。参见[类型](../language/types.md)。
+- 容器顺序过去是源顺序，1.x 会从前到后生成 `MaterialFunctions`。自 2.0.0 起，一个文件的资产按调用顺序构建 —— 被另一个函数调用的函数会先构建 —— 而相互循环调用的函数会被 [`DSH8299`](../diagnostics/DSH8xxx.md#dsh8299)。
+- 每个结构体都可使用编译器生成的操作进行复制和移动。复制是深层的 —— 成员是 `FString`、`TArray` 和 `TMap` 值，而非指针。
 
 <a id="example"></a>
 
@@ -695,17 +651,14 @@ void Describe(const FTextShaderDefinition& Definition)
 }
 ```
 
-对于 [生成](../generation/index.md#example) 中的源代码，当 1.x 解析器填充
-该定义时，会打印：
+对于 [生成](../generation/index.md#example) 中的源代码，当 1.x 解析器填充该定义时，会打印：
 
 ```text
 LogDreamShader: Shader 'Materials/M_Emissive' (Root='', Backend=<project default>): 1 propert(ies), 1 binding(s)
 LogDreamShader:   ShaderFunction 'Functions/F_Tint'
 ```
 
-2.0 编译器构建的定义只携带 `Name`、`Root` 和 `Settings` —— 而 `Settings`
-从不持有 `Backend`，绑定器会将其取出放到 IR 产物上 —— 因此它会打印
-`Backend=<project default>`，两个计数都是 `0`，并且不会列出其他任何内容。
+2.0 编译器构建的定义只携带 `Name`、`Root` 和 `Settings` —— 而 `Settings` 从不持有 `Backend`，绑定器会将其取出放到 IR 产物上 —— 因此它会打印 `Backend=<project default>`，两个计数都是 `0`，并且不会列出其他任何内容。
 
 <a id="see-also"></a>
 
@@ -720,4 +673,4 @@ LogDreamShader:   ShaderFunction 'Functions/F_Tint'
 - [布局](../language/layout.md) —— `Node`、`Comment` 和 `#Region`
 - [元数据块](../parameters/metadata.md) —— 落入 `FTextShaderMetadata` 的内容
 - [类型](../language/types.md) —— 填充 `Type` 字段之前应用的标记规范化
-- [设置](../../settings/index.md) —— 从语言侧进行的键规范化
+- [设置](../settings/index.md) —— 从语言侧进行的键规范化

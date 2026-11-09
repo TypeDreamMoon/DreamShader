@@ -1,8 +1,3 @@
----
-title: "元数据块"
-description: "元数据块"
----
-
 <a id="metadata-block"></a>
 
 # 元数据块
@@ -79,7 +74,7 @@ ScalarParameter Roughness = 0.5 [Slider(0, 1)];
 
 | 写法 | 结果 |
 | :-- | :-- |
-| `[Slider(0, 1)]` | `SliderMin = 0`、`SliderMax = 1` |
+| `[Slider(0, 1)]` | `SliderMin = 0`, `SliderMax = 1` |
 | `[SliderMin = 0; SliderMax = 1]` | 完全相同 |
 | `[Slider(0, 1); SliderMin = 0]` | [`DSH3257`](../diagnostics/DSH3xxx.md#dsh3257) |
 | `[Slider(0)]` / `[Slider(0, 1, 2)]` / `[Slider(a, b)]` | `DSH3257` |
@@ -127,15 +122,9 @@ ScalarParameter Rough [ParameterName = "Surface Roughness"];
 1. 该键与每个 UPROPERTY 名称比较，忽略大小写；
 2. 若失败，第二遍会从每个 `FBoolProperty` 名称中去掉开头的一个 `b` 并再次比较。
 
-因此 `[FractionalPart = true]` 绑定 `bFractionalPart`，而 `[UseCustomPrimitiveData = true]` 绑定
-`bUseCustomPrimitiveData`。显式写出 `b` 同样有效。没有属性匹配的键是
-[`DSH8210`](../diagnostics/DSH8xxx.md#dsh8210) **警告**，不写入 *（自 2.0.0 起；1.x
-报错拒绝）*。
+因此 `[FractionalPart = true]` 绑定 `bFractionalPart`，而 `[UseCustomPrimitiveData = true]` 绑定 `bUseCustomPrimitiveData`。显式写出 `b` 同样有效。没有属性匹配的键是 [`DSH8210`](../diagnostics/DSH8xxx.md#dsh8210) **警告**，不写入 *（自 2.0.0 起；1.x 报错拒绝）*。
 
-在**展开 token** 上，键先和类的输入引脚比对，再和它的属性比对，按引擎目录列出它们的顺序（布尔属性不带 `b` 的拼写作为别名）；只差大小写的
-匹配给出 [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276)。两者都不是的键报 [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213) —— 或者，值是数字时，被当作
-以节点属性命名的引脚（[`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291)，提示），
-节点没有这个引脚时在构建材质时被拒绝（`DSH8212`）。
+在**展开 token** 上，键先和类的输入引脚比对，再和它的属性比对，按引擎目录列出它们的顺序（布尔属性不带 `b` 的拼写作为别名）；只差大小写的匹配给出 [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276)。两者都不是的键报 [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213) —— 或者，值是数字时，被当作以节点属性命名的引脚（[`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291)，提示），节点没有这个引脚时在构建材质时被拒绝（`DSH8212`）。
 
 <a id="value-grammar-by-property-type"></a>
 
@@ -156,17 +145,13 @@ ScalarParameter Rough [ParameterName = "Surface Roughness"];
 | 普通 `uint8` | `[0, 255]` 内的整数 | [`DSH7142`](../diagnostics/DSH7xxx.md#dsh7142) |
 | 其他（结构体、数组等） | Unreal 自己的 import 文本，如 `(R=1,G=0,B=0,A=1)` | [`DSH7143`](../diagnostics/DSH7xxx.md#dsh7143) |
 
-数字按 Unreal 的 `LexTryParseString` 读，遇到第一个用不了的字符就停：`"0.5abc"` 是 `0.5`。这些码都包在
-[`DSH8213`](../diagnostics/DSH8xxx.md#dsh8213) 里到达你，它会指出节点和属性并引用这个码。
-在展开 token 上，绑定器先检查值的种类：枚举值按目录检查（见下），名字
-或资产路径要是带引号的字符串，其余要是编译期常量（[`DSH5224`](../diagnostics/DSH5xxx.md#dsh5224)）。
+数字按 Unreal 的 `LexTryParseString` 读，遇到第一个用不了的字符就停：`"0.5abc"` 是 `0.5`。这些码都包在 [`DSH8213`](../diagnostics/DSH8xxx.md#dsh8213) 里到达你，它会指出节点和属性并引用这个码。在展开 token 上，绑定器先检查值的种类：枚举值按目录检查（见下），名字或资产路径要是带引号的字符串，其余要是编译期常量（[`DSH5224`](../diagnostics/DSH5xxx.md#dsh5224)）。
 
 <a id="enum-literals"></a>
 
 ### 枚举字面量
 
-枚举值先 trim、小写，再删除所有空格、`_`、`-`、`:`、
-`.` 和 `/`。每个**未**标记 `UMETA(Hidden)` 的枚举项按四种拼写逐一尝试：
+枚举值先 trim、小写，再删除所有空格、`_`、`-`、`:`、 `.` 和 `/`。每个**未**标记 `UMETA(Hidden)` 的枚举项按四种拼写逐一尝试：
 
 | # | 拼写 | 以 `SAMPLERTYPE_LinearColor` 为例 |
 | :-- | :-- | :-- |
@@ -175,14 +160,9 @@ ScalarParameter Rough [ParameterName = "Surface Roughness"];
 | 3 | `DisplayName` 元数据 | `Linear Color` |
 | 4 | 短名去掉第一个 `_` 及之前的部分 | `LinearColor` |
 
-由于这套规范化，`"LinearColor"`、`"linear color"`、`"linear-color"`、
-`"SAMPLERTYPE_LinearColor"` 和 `"linear.color"` 都是同一个值。这样一个枚举的完整展开表见
-[SamplerType](sampler-type.md)。
+由于这套规范化，`"LinearColor"`、`"linear color"`、`"linear-color"`、 `"SAMPLERTYPE_LinearColor"` 和 `"linear.color"` 都是同一个值。这样一个枚举的完整展开表见 [SamplerType](sampler-type.md)。
 
-这就是声明上的键走的匹配器。在**展开 token** 上，绑定器把值和引擎目录列出的枚举项比较 *（自 2.0.0 起）*：精确的名字通过；上面某种拼写
-规范化后等于枚举项名的，接受并给出
-[`DSH5278`](../diagnostics/DSH5xxx.md#dsh5278) 警告；其他 —— 包括不同时也是枚举项名的 `DisplayName`，如 `Shared: Wrap` —— 报
-[`DSH5215`](../diagnostics/DSH5xxx.md#dsh5215)。
+这就是声明上的键走的匹配器。在**展开 token** 上，绑定器把值和引擎目录列出的枚举项比较 *（自 2.0.0 起）*：精确的名字通过；上面某种拼写规范化后等于枚举项名的，接受并给出 [`DSH5278`](../diagnostics/DSH5xxx.md#dsh5278) 警告；其他 —— 包括不同时也是枚举项名的 `DisplayName`，如 `Shared: Wrap` —— 报 [`DSH5215`](../diagnostics/DSH5xxx.md#dsh5215)。
 
 <a id="object-properties"></a>
 
@@ -198,23 +178,15 @@ ScalarParameter Rough [ParameterName = "Surface Roughness"];
 | 资产加载失败 | [`DSH7138`](../diagnostics/DSH7xxx.md#dsh7138) |
 
 > [!WARNING]
-> **加载失败的纹理会被静默接受。** 当属性是 `UTexture` 子类
-> *且*名字恰好为 `Texture` 或 `TextureObject` 时，加载失败会写入 `nullptr`，并把这次写入
-> 报告为成功。于是 `[Texture = Path(Game, "Typo")]` 不产生任何诊断就生成完毕，
-> 留下一个未绑定的采样器。*（自 2.0.0 起）* 纹理采样
-> token 和 `const` 纹理的默认值也写到这个属性上，同样如此；纹理采样节点随后
-> 取引擎默认纹理。采样器出来不对时，先检查资产路径。
+> **加载失败的纹理会被静默接受。** 当属性是 `UTexture` 子类*且*名字恰好为 `Texture` 或 `TextureObject` 时，加载失败会写入 `nullptr`，并把这次写入报告为成功。于是 `[Texture = Path(Game, "Typo")]` 不产生任何诊断就生成完毕，留下一个未绑定的采样器。*（自 2.0.0 起）* 纹理采样 token 和 `const` 纹理的默认值也写到这个属性上，同样如此；纹理采样节点随后取引擎默认纹理。采样器出来不对时，先检查资产路径。
 
 <a id="organization-fields-that-are-not-reflected"></a>
 
 ## 不走反射的组织字段
 
-`Group`、`SortPriority` 和 `Desc` 存在于 `UMaterialExpressionParameter` 子类上。缺少其中之一的类
-得到 [`DSH8210`](../diagnostics/DSH8xxx.md#dsh8210) **警告**，值
-不写入。能构建的 15 个 token 生成的类都有这三个字段。
+`Group`、`SortPriority` 和 `Desc` 存在于 `UMaterialExpressionParameter` 子类上。缺少其中之一的类得到 [`DSH8210`](../diagnostics/DSH8xxx.md#dsh8210) **警告**，值不写入。能构建的 15 个 token 生成的类都有这三个字段。
 
-*（自 2.0.0 起）* 声明的类缺少的*其他*键也是同一个 `DSH8210` 警告，而 1.x
-会让编译失败。在展开 token 上它是 `DSH5213`。
+*（自 2.0.0 起）* 声明的类缺少的*其他*键也是同一个 `DSH8210` 警告，而 1.x 会让编译失败。在展开 token 上它是 `DSH5213`。
 
 > [!NOTE]
 > `DynamicParameter`，1.x 里三个字段都缺的那个情况，现在是 `DSH3253`，什么都不构建。
@@ -223,8 +195,7 @@ ScalarParameter Rough [ParameterName = "Surface Roughness"];
 
 ## `Group(…)` 作用域与 SortPriority 计数器
 
-`Properties` 段里的一个 [`Group("Name") { … }` 作用域](../language/properties.md)会给
-成员打标记。它与显式元数据条目的交互如下：
+`Properties` 段里的一个 [`Group("Name") { … }` 作用域](../language/properties.md)会给成员打标记。它与显式元数据条目的交互如下：
 
 | 情况 | 结果 |
 | :-- | :-- |
@@ -238,8 +209,7 @@ ScalarParameter Rough [ParameterName = "Surface Roughness"];
 | 成员声明为 `const` | 打标记并占一个槽位，但两个标记都是 [`DSH7224`](../diagnostics/DSH7xxx.md#dsh7224) 警告：常量没有分组和排序 |
 | 作用域之外的声明 | 无分组，`SortPriority` 为 32 |
 
-计数器从 **0** 开始，步长 **10**，并且在整个块内的**所有作用域间共享**，不会
-按分组重置：
+计数器从 **0** 开始，步长 **10**，并且在整个块内的**所有作用域间共享**，不会按分组重置：
 
 ```c
 Properties {
@@ -259,19 +229,11 @@ Properties {
 
 ## 备注
 
-- 同一個 `[ … ]` 块可被 `Inputs` / `Outputs` / `Results` 类型化参数接受，但那里
-  只有 `Description` / `Desc` / `Tooltip` 和 `SortPriority` / `Sort` 有任何效果。`Group` 会被
-  解析并保留但从不应用 —— Unreal 的函数输入/输出节点没有分组字段 ——
-  其余每个键都会被忽略，而不是被反射。输入的 `SortPriority` 默认为其
-  声明序号。参见[输入 / 输出 / 结果](../language/inputs-outputs.md)。
-- **`Shader` 的 `Outputs` 语句上不接受任何元数据块**，`Settings`、`Options`
-  或 `Layout` 条目上也不接受。
-- `const` 声明只保留常量节点所拥有的内容：参见
-  [紧凑类型 token](compact-types.md#notes)。
+- 同一個 `[ … ]` 块可被 `Inputs` / `Outputs` / `Results` 类型化参数接受，但那里只有 `Description` / `Desc` / `Tooltip` 和 `SortPriority` / `Sort` 有任何效果。`Group` 会被解析并保留但从不应用 —— Unreal 的函数输入/输出节点没有分组字段 —— 其余每个键都会被忽略，而不是被反射。输入的 `SortPriority` 默认为其声明序号。参见[输入 / 输出 / 结果](../language/inputs-outputs.md)。
+- **`Shader` 的 `Outputs` 语句上不接受任何元数据块**，`Settings`、`Options` 或 `Layout` 条目上也不接受。
+- `const` 声明只保留常量节点所拥有的内容：参见[紧凑类型 token](compact-types.md#notes)。
 - 显式的 `[SamplerType=…]` 总是覆盖从资产推导出的类型。
-- 引擎枚举的 `_MAX` 哨兵通常不带 `Hidden` 元数据，因此在声明上诸如
-  `"SAMPLERTYPE_MAX"` 的值会解析而不是报错。不要使用它们。展开
-  token 所对照的目录中并不列出它们（`DSH5215`）。
+- 引擎枚举的 `_MAX` 哨兵通常不带 `Hidden` 元数据，因此在声明上诸如 `"SAMPLERTYPE_MAX"` 的值会解析而不是报错。不要使用它们。展开 token 所对照的目录中并不列出它们（`DSH5215`）。
 
 <a id="diagnostics"></a>
 
@@ -371,9 +333,7 @@ Tint         Group="Look"           Desc="Multiplied over base colour"
              bUseCustomPrimitiveData=false           ParameterName="Base Tint"
 ```
 
-`Metallic` 从它自己的条目取得 `SortPriority = 51`。`MetallicMap` 是展开 token，所以
-`Group("11 - Specular")` 作用域不会给它打标记 *（自 2.0.0 起）*：要把它放入该分组，就在它
-自己的块里写 `Group = "11 - Specular"`。
+`Metallic` 从它自己的条目取得 `SortPriority = 51`。`MetallicMap` 是展开 token，所以 `Group("11 - Specular")` 作用域不会给它打标记 *（自 2.0.0 起）*：要把它放入该分组，就在它自己的块里写 `Group = "11 - Specular"`。
 
 <a id="see-also"></a>
 

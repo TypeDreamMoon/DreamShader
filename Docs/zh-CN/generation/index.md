@@ -1,8 +1,3 @@
----
-title: "生成流程"
-description: "生成流程"
----
-
 <a id="generation"></a>
 
 # 生成流程
@@ -22,13 +17,7 @@ description: "生成流程"
 
 ## 流程
 
-*（自 2.0.0 起）* 一个 `.dsm` / `.dsf` 由 **legacy 前端** 读进 `.dss` 解析器
-构建的同一棵树，之后走每种源文件共用的那一条流程
-（`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp`）。一个阶段会报出它找到的**全部**
-错误；报出过错误的阶段会在下一阶段开始前停下整次运行。每条诊断都有
-稳定的码，格式是 `<file>(<line>,<col>): DSHnnnn: <message>` —— 见
-[诊断索引](../diagnostics/index.md)和[码范围](../language-v2/index.md#diagnostics)。
-下面的码是各阶段针对 1.x 源文件会抛出的码。
+*（自 2.0.0 起）* 一个 `.dsm` / `.dsf` 由 **legacy 前端** 读进 `.dss` 解析器构建的同一棵树，之后走每种源文件共用的那一条流程（`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp`）。一个阶段会报出它找到的**全部**错误；报出过错误的阶段会在下一阶段开始前停下整次运行。每条诊断都有稳定的码，格式是 `<file>(<line>,<col>): DSHnnnn: <message>` —— 见[诊断索引](../diagnostics/index.md)和[码范围](../language-v2/index.md#diagnostics)。下面的码是各阶段针对 1.x 源文件会抛出的码。
 
 | # | 阶段 | 做什么 | 失败时 |
 | :-- | :-- | :-- | :-- |
@@ -44,22 +33,17 @@ description: "生成流程"
 | 10 | 发射 | 每个产物一个资产，按依赖顺序 —— 见[下面](#inside-the-emit) | `DSH8200`–`DSH8237`；两个互相调用的导出函数是 [`DSH8299`](../diagnostics/DSH8xxx.md#dsh8299) |
 | 11 | 组装结果 | 每个产物一行，外加一个 `Warnings:` 块 —— 见[成功消息](#success-messages) | — |
 
-`.dsi` 在解析之后解析它的父对象（`DSH8260`–`DSH8265`），而 `.dsp` 解析它的 pass 引用的材质和 shader
-文件；见 [`.dsi`](../language-v2/instances.md)和 [`.dsp`](../language-v2/passes.md)。
+`.dsi` 在解析之后解析它的父对象（`DSH8260`–`DSH8265`），而 `.dsp` 解析它的 pass 引用的材质和 shader 文件；见 [`.dsi`](../language-v2/instances.md)和 [`.dsp`](../language-v2/passes.md)。
 
-失败的编译把第一个错误放在第一行，然后是本次运行的其余诊断：
-错误，再警告，再 info。结果的码就是第一个错误的码。
+失败的编译把第一个错误放在第一行，然后是本次运行的其余诊断：错误，再警告，再 info。结果的码就是第一个错误的码。
 
-*compile material* 入口跑的是和 *compile assets* 同一次编译 *（自 2.0.0 起）*：一个源文件就是
-一个编译单元，它的材质可以调用同一文件里声明的函数，那个函数会先被发射。
+*compile material* 入口跑的是和 *compile assets* 同一次编译 *（自 2.0.0 起）*：一个源文件就是一个编译单元，它的材质可以调用同一文件里声明的函数，那个函数会先被发射。
 
 <a id="inside-the-emit"></a>
 
 ### 发射内部
 
-一个产物 —— 一个 `Shader`、`ShaderFunction`、`ShaderLayer` 或 `ShaderLayerBlend` 块 —— 按这个顺序走。
-资产层的诊断经由发射器的诊断到达结果：发射器的消息引用
-资产层的码和文本。
+一个产物 —— 一个 `Shader`、`ShaderFunction`、`ShaderLayer` 或 `ShaderLayerBlend` 块 —— 按这个顺序走。资产层的诊断经由发射器的诊断到达结果：发射器的消息引用资产层的码和文本。
 
 | # | 子阶段 | 失败时 |
 | :-- | :-- | :-- |
@@ -74,27 +58,18 @@ description: "生成流程"
 | 9 | 打上来源元数据和输出指纹 | — |
 | 10 | 保存，除非产物是 Ephemeral 的 ThinCustom 实例或写入被拒绝 | [`DSH8229`](../diagnostics/DSH8xxx.md#dsh8229) |
 
-1.x 生成器在这里做的检查 —— 存在顶层 `Shader`、`Outputs` 非空、
-`Backend` 认得 —— 现在归前端：没有 `Outputs` 的 `Shader` 是**警告**
-[`DSH2256`](../diagnostics/DSH2xxx.md#dsh2256)，照样构建；既无 `Graph`、`Outputs`
-也什么都没算的 `Shader` 是 [`DSH2255`](../diagnostics/DSH2xxx.md#dsh2255)；
-不是 backend 的 `Backend` 是 [`DSH7202`](../diagnostics/DSH7xxx.md#dsh7202)（空值是
-[`DSH7201`](../diagnostics/DSH7xxx.md#dsh7201)；`Instance` 按 `ThinCustom` 读，并给出
-[`DSH7204`](../diagnostics/DSH7xxx.md#dsh7204)）。
+1.x 生成器在这里做的检查 —— 存在顶层 `Shader`、`Outputs` 非空、 `Backend` 认得 —— 现在归前端：没有 `Outputs` 的 `Shader` 是**警告** [`DSH2256`](../diagnostics/DSH2xxx.md#dsh2256)，照样构建；既无 `Graph`、`Outputs` 也什么都没算的 `Shader` 是 [`DSH2255`](../diagnostics/DSH2xxx.md#dsh2255)；不是 backend 的 `Backend` 是 [`DSH7202`](../diagnostics/DSH7xxx.md#dsh7202)（空值是 [`DSH7201`](../diagnostics/DSH7xxx.md#dsh7201)；`Instance` 按 `ThinCustom` 读，并给出 [`DSH7204`](../diagnostics/DSH7xxx.md#dsh7204)）。
 
 <a id="inside-the-graph-build"></a>
 
 ### 图构建内部
 
-两种 backend 共用。在 ThinCustom backend 下，它作用于隐藏的 base 材质，
-而不是发出的那个实例。
+两种 backend 共用。在 ThinCustom backend 下，它作用于隐藏的 base 材质，而不是发出的那个实例。
 
-1. 清除生成的 `DreamShader: ` 注释框，然后分离现有图 —— 保留它，以便
-   失败时能恢复它（无法生成快照时为 [`DSH8208`](../diagnostics/DSH8xxx.md#dsh8208)）。
+1. 清除生成的 `DreamShader: ` 注释框，然后分离现有图 —— 保留它，以便失败时能恢复它（无法生成快照时为 [`DSH8208`](../diagnostics/DSH8xxx.md#dsh8208)）。
 2. 将每个材质属性重置为其引擎默认值。
 3. 应用 `Settings`（被拒绝时为 [`DSH8215`](../diagnostics/DSH8xxx.md#dsh8215)）。
-4. 逐节点发出 IR 图 —— 参数、表达式、每个 `Function` 调用一个 Custom 节点、每个 `ShaderFunction` 调用一个
-   `MaterialFunctionCall` —— 并通过一对 `DS_<output>` 命名重路由连接每个 `Outputs` 绑定。引擎无法构建的节点为 `DSH8210`–`DSH8228`。
+4. 逐节点发出 IR 图 —— 参数、表达式、每个 `Function` 调用一个 Custom 节点、每个 `ShaderFunction` 调用一个 `MaterialFunctionCall` —— 并通过一对 `DS_<output>` 命名重路由连接每个 `Outputs` 绑定。引擎无法构建的节点为 `DSH8210`–`DSH8228`。
 5. 按项目的 [图布局样式](graph-layout.md#layout-styles) 布局该图。
 6. 提交 —— 被分离的图此时才被销毁 —— 并重新编译材质。
 
@@ -114,15 +89,10 @@ description: "生成流程"
 | Commandlet `-run=DreamShader` | 带 `-Force` 时 | **已实体化** | 按指定 |
 | Cook，仅在 cook director 进程上 | 是 | **已实体化** | 每个项目源文件 |
 
-自动编译由两个项目设置控制：**Auto Compile On Save**（默认开启）和 **Save
-Debounce Seconds**（默认 `0.25`，钳制到 `[0.05, 10.0]`）。见
-[项目设置](../settings/project.md)。
+自动编译由两个项目设置控制：**Auto Compile On Save**（默认开启）和 **Save Debounce Seconds**（默认 `0.25`，钳制到 `[0.05, 10.0]`）。见[项目设置](../settings/project.md)。
 
 > [!NOTE]
-> 只有 **ThinCustom** 产品能存在于内存中。交互式编辑器将其保留在内存中，为临时状态，
-> 直到 cook、commandlet 或显式 *Materialize* 将其写入磁盘。一个 `Graph` 后端的材质
-> 以及每个材质函数、layer 和 blend 都会被每次允许写入的构建保存
-> *（自 2.0.0 起）*。见 [临时材质](ephemeral.md)。
+> 只有 **ThinCustom** 产品能存在于内存中。交互式编辑器将其保留在内存中，为临时状态，直到 cook、commandlet 或显式 *Materialize* 将其写入磁盘。一个 `Graph` 后端的材质以及每个材质函数、layer 和 blend 都会被每次允许写入的构建保存*（自 2.0.0 起）*。见 [临时材质](ephemeral.md)。
 
 <a id="outcomes-that-are-not-assets"></a>
 
@@ -139,8 +109,7 @@ Debounce Seconds**（默认 `0.25`，钳制到 `[0.05, 10.0]`）。见
 
 ## 成功消息
 
-每个产品一行，按产品发出的顺序排列。这些行是一种线格式：
-`.skill/dsc.ps1` 读取 `Generated <Kind> <ObjectPath> from <Source>.` 来列出一次运行写入了什么。
+每个产品一行，按产品发出的顺序排列。这些行是一种线格式： `.skill/dsc.ps1` 读取 `Generated <Kind> <ObjectPath> from <Source>.` 来列出一次运行写入了什么。
 
 | 消息 | 针对 |
 | :-- | :-- |
@@ -152,24 +121,18 @@ Debounce Seconds**（默认 `0.25`，钳制到 `[0.05, 10.0]`）。见
 | `Skipped {ObjectPath} from {File}; the source marks it NoGeneration, and it has never been built.` | *（2.1.2 之后）* 同上，但磁盘上没有资产（`DSH8278`） |
 | `Compiled {File}; it declares no material and no exported function, so no asset was written.` | 没有产品的源文件 |
 
-`{File}` 是完整、规范化的源文件路径。在这些行之下，一个 `Warnings:` 标题以线格式列出
-本次运行的每条警告，然后是生成警告 `DSH8155`、`DSH9011` 和 `DSH9012`。
+`{File}` 是完整、规范化的源文件路径。在这些行之下，一个 `Warnings:` 标题以线格式列出本次运行的每条警告，然后是生成警告 `DSH8155`、`DSH9011` 和 `DSH9012`。
 
 > [!NOTE]
-> *（自 2.0.0 起）* 1.x 的行 `Generated {AssetPath} from {File}.`、`Generated DreamShader thin-custom
-> material …`, the ` (virtual)` 后缀和 helper include 行已消失：每个产品都以其种类说
-> `Generated`，被哈希跳过的函数说 `Skipped` 而不是什么都不说。
+> *（自 2.0.0 起）* 1.x 的行 `Generated {AssetPath} from {File}.`、`Generated DreamShader thin-custom material …`, the ` (virtual)` 后缀和 helper include 行已消失：每个产品都以其种类说 `Generated`，被哈希跳过的函数说 `Skipped` 而不是什么都不说。
 
-本页上的运行时替换显示为 `{Placeholder}`；编译器发出
-替换后的文本。
+本页上的运行时替换显示为 `{Placeholder}`；编译器发出替换后的文本。
 
 <a id="progress-reporting"></a>
 
 ## 进度报告
 
-生成通过 Unreal 的慢任务系统报告。对话框有延迟，因此快速编译绝不会
-闪现一个，它带有一个 **Cancel** 按钮，并且在 `IsRunningCommandlet()` 下不显示。为材质内容浏览器解析源文件的产品时，
-前半部分运行且完全无对话框。
+生成通过 Unreal 的慢任务系统报告。对话框有延迟，因此快速编译绝不会闪现一个，它带有一个 **Cancel** 按钮，并且在 `IsRunningCommandlet()` 下不显示。为材质内容浏览器解析源文件的产品时，前半部分运行且完全无对话框。
 
 | 范围 | 标题 | 帧 | 对话框延迟 |
 | :-- | :-- | :-- | :-- |
@@ -182,15 +145,10 @@ Debounce Seconds**（默认 `0.25`，钳制到 `[0.05, 10.0]`）。见
 
 ### 时间都花在哪里
 
-对于 `.dsm` / `.dsf`，前五帧是前端，且很快。最后一帧
-`Building the graph for '{File}'...` 包含发射 —— 而发射以 shader 编译结束
-（`RecompileMaterial`、ThinCustom 实例的 `UpdateStaticPermutation`、函数的
-`UpdateMaterialFunction`），该过程耗时无上限。*（自 2.0.0 起）* 1.9 的 `Step 1 of 2` / `Step 2 of 2`
-前缀随 1.x 生成器一起消失。
+对于 `.dsm` / `.dsf`，前五帧是前端，且很快。最后一帧 `Building the graph for '{File}'...` 包含发射 —— 而发射以 shader 编译结束（`RecompileMaterial`、ThinCustom 实例的 `UpdateStaticPermutation`、函数的 `UpdateMaterialFunction`），该过程耗时无上限。*（自 2.0.0 起）* 1.9 的 `Step 1 of 2` / `Step 2 of 2` 前缀随 1.x 生成器一起消失。
 
 > [!NOTE]
-> 进度条停在 `Building the graph for …` 上是正常的。Shader 编译发生在
-> 插件之外，单个重型排列可以使其停留数分钟。
+> 进度条停在 `Building the graph for …` 上是正常的。Shader 编译发生在插件之外，单个重型排列可以使其停留数分钟。
 
 <a id="cancelling-since-190"></a>
 
@@ -198,19 +156,14 @@ Debounce Seconds**（默认 `0.25`，钳制到 `[0.05, 10.0]`）。见
 
 在每个阶段之前、每个产品之前，以及在旧图被分离后的发射内部，都会检查取消。取消走的是与失败编译相同的路径：
 
-- 资产被恢复为编译开始前的精确状态 —— 原子重建
-  回滚正是做这件事的，因此绝不会出现半构建的图或被清空的材质函数。
+- 资产被恢复为编译开始前的精确状态 —— 原子重建回滚正是做这件事的，因此绝不会出现半构建的图或被清空的材质函数。
 - 不盖上标记，也不保存任何内容。
-- 编译将 [`DSH8298`](../diagnostics/DSH8xxx.md#dsh8298) 作为错误报告 *（自 2.0.0 起；1.x 期间为
-  `DSH9010`）*。
+- 编译将 [`DSH8298`](../diagnostics/DSH8xxx.md#dsh8298) 作为错误报告 *（自 2.0.0 起；1.x 期间为 `DSH9010`）*。
 
-取消唯一不会恢复的是材质或函数上生成的 `DreamShader: ` 注释框，
-原因与失败重建不恢复它们相同：它们在拍摄快照之前就被销毁了。
-下一次成功编译会重新创建它们，而你自己写的注释绝不会被触碰。
+取消唯一不会恢复的是材质或函数上生成的 `DreamShader: ` 注释框，原因与失败重建不恢复它们相同：它们在拍摄快照之前就被销毁了。下一次成功编译会重新创建它们，而你自己写的注释绝不会被触碰。
 
 > [!WARNING]
-> 取消不会停止 Unreal 已经排队了的 shader。如果你在 shader
-> 编译期间取消，`ShaderCompileWorker.exe` 会继续处理已派发的任何内容。
+> 取消不会停止 Unreal 已经排队了的 shader。如果你在 shader 编译期间取消，`ShaderCompileWorker.exe` 会继续处理已派发的任何内容。
 
 <a id="when-a-shader-compile-takes-too-long-since-190"></a>
 
@@ -219,15 +172,11 @@ Debounce Seconds**（默认 `0.25`，钳制到 `[0.05, 10.0]`）。见
 如果某个资产的 shader 编译超过 **30 秒**，生成过程会发出一次 `DSH9011`，作为日志中的警告，并出现在结果的 `Warnings:` 块中。它从不阻塞或使编译失败 —— 它的作用是说明这种等待通常意味着什么：
 
 - 一个 `Custom` 节点，其循环上界是它的某个**输入** —— 一个 `for` 或 `while`，其界限不是字面量，也不是被 `#define` 的常量。
-- 结合**隐式 mip** 纹理采样 —— `Texture2DSample`、`Texture3DSample` 或
-  `.Sample` —— 出现在发散控制流中。
+- 结合**隐式 mip** 纹理采样 —— `Texture2DSample`、`Texture3DSample` 或 `.Sample` —— 出现在发散控制流中。
 
-编译器从屏幕空间导数推导 mip 级别，而这些导数在发散流中未定义，因此它会完全展开一个迭代次数未知的循环。要确认
-编译仍在工作而不是卡住，请检查任务管理器中的 `ShaderCompileWorker.exe` 是否繁忙。要修复它，用字面量或 `#define` 给循环定界，或者调用 `SampleLevel` /
-`SampleGrad`，它们将 mip 级别作为参数。
+编译器从屏幕空间导数推导 mip 级别，而这些导数在发散流中未定义，因此它会完全展开一个迭代次数未知的循环。要确认编译仍在工作而不是卡住，请检查任务管理器中的 `ShaderCompileWorker.exe` 是否繁忙。要修复它，用字面量或 `#define` 给循环定界，或者调用 `SampleLevel` / `SampleGrad`，它们将 mip 级别作为参数。
 
-生成过程在发射 `Custom` 节点的代码时也会寻找这一组合，并在编译甚至尚未开始之前就提前警告，码为
-`DSH9012`。两者都只是提示；都不会使构建失败。
+生成过程在发射 `Custom` 节点的代码时也会寻找这一组合，并在编译甚至尚未开始之前就提前警告，码为 `DSH9012`。两者都只是提示；都不会使构建失败。
 
 <a id="pages"></a>
 
@@ -248,21 +197,12 @@ Debounce Seconds**（默认 `0.25`，钳制到 `[0.05, 10.0]`）。见
 
 ## 说明
 
-- **解析单元是文件。** *（自 2.0.0 起）* `import` 不内联任何东西：被导入的 `.dsh` 会
-  被单独预处理和解析，它的声明会被声明进导入它的文件。同一个名字声明两次是
-  [`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210)，导入成环是
-  [`DSH4211`](../diagnostics/DSH4xxx.md#dsh4211)。头文件不能包含资产块
-  （[`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249)），所以“一个文件一个 `Shader`”
-  （[`DSH2250`](../diagnostics/DSH2xxx.md#dsh2250)）说的就是这个文件。构建键仍然覆盖每一个
-  被导入的字节。见 [import](../language/import.md)。
-- 每条诊断都带有它所指构造的行和列，位于该构造所在的文件中：在导入的头文件内部引发的诊断会指明该头文件。只有少数文件级诊断，
-  比如无法解析的导入，会报第 1 行。
-- 产物按依赖顺序发射：同一文件的另一个产物所调用的函数会先构建，所以一个 `Shader` 可以调用写在它旁边的 `ShaderFunction`。
-  其他情况按声明顺序。
+- **解析单元是文件。** *（自 2.0.0 起）* `import` 不内联任何东西：被导入的 `.dsh` 会被单独预处理和解析，它的声明会被声明进导入它的文件。同一个名字声明两次是 [`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210)，导入成环是 [`DSH4211`](../diagnostics/DSH4xxx.md#dsh4211)。头文件不能包含资产块（[`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249)），所以“一个文件一个 `Shader`” （[`DSH2250`](../diagnostics/DSH2xxx.md#dsh2250)）说的就是这个文件。构建键仍然覆盖每一个被导入的字节。见 [import](../language/import.md)。
+- 每条诊断都带有它所指构造的行和列，位于该构造所在的文件中：在导入的头文件内部引发的诊断会指明该头文件。只有少数文件级诊断，比如无法解析的导入，会报第 1 行。
+- 产物按依赖顺序发射：同一文件的另一个产物所调用的函数会先构建，所以一个 `Shader` 可以调用写在它旁边的 `ShaderFunction`。其他情况按声明顺序。
 - 警告永远不会使编译失败。它们跟在结果行下面，位于一个 `Warnings:` 标题下。
 - 生成是 editor-only 的。不存在从 DreamShaderLang 构建材质的运行时代码路径。
-- 要用 2.0 语言编写同一个材质，见 [DreamShaderLang 2.0](../language-v2/index.md) 和
-  [`dsc migrate`](../tools/migrate.md)。
+- 要用 2.0 语言编写同一个材质，见 [DreamShaderLang 2.0](../language-v2/index.md) 和 [`dsc migrate`](../tools/migrate.md)。
 
 <a id="example"></a>
 
@@ -313,6 +253,6 @@ Generated Material /Game/Materials/M_Emissive.M_Emissive from I:/.../M_Emissive.
 - [Backend](../settings/backend.md) —— `Graph` 与 `ThinCustom`，以及已弃用的 `Instance` 别名
 - [项目设置](../settings/project.md) —— 自动编译、防抖、默认 backend、路径
 - [Commandlet](../tools/commandlet.md) —— `-run=DreamShader`，无界面生成入口点
-- [Material Content Browser](../../tools/material-browser.md) —— Compile / Materialize 界面
+- [Material Content Browser](../tools/material-browser.md) —— Compile / Materialize 界面
 - [DreamShaderLang 2.0](../language-v2/index.md) —— 该流水线的各阶段和代码范围
 - [诊断索引](../diagnostics/index.md) —— 每一个码

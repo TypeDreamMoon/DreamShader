@@ -1,8 +1,3 @@
----
-title: "差异"
-description: "差异"
----
-
 <a id="divergence"></a>
 
 # 差异
@@ -157,7 +152,7 @@ Adopt Into Source, or Detach From DreamShader.
 | 一轮中超过 **5** 个资产 | 其余的折叠为一条携带 **Open Material Browser** 的摘要 |
 | 新一轮 | 仍然存在分歧的资产会再次被报告 |
 
-一*轮*是你所要求的一批工作：一次保存（连同其防抖窗口扫入的一切），或 *Recompile DSM* / *Clean Generated Shaders* 背后的一次全项目扫描，或从 [材质内容浏览器](../../tools/material-browser.md) 或桥接单独请求的一次编译。一批内部的编译属于该批次的轮，而不是各自开启一轮。
+一*轮*是你所要求的一批工作：一次保存（连同其防抖窗口扫入的一切），或 *Recompile DSM* / *Clean Generated Shaders* 背后的一次全项目扫描，或从 [材质内容浏览器](../tools/material-browser.md) 或桥接单独请求的一次编译。一批内部的编译属于该批次的轮，而不是各自开启一轮。
 
 因此一个拥有五十个手动编辑资产的项目在完全重新编译时最多产生六条通知，而不是五十条。摘要在该轮**结束**时发出，因为只有那时总数才为人所知。
 
@@ -202,7 +197,7 @@ Adopt Into Source, or Detach From DreamShader.
 无论哪种情况，请使用 **Export DSM** 并手工合并到正确的分支。
 
 > [!NOTE]
-> [VirtualFunction 启动同步](../../tools/virtual-function-tools.md#startup-sync-service)也会拒绝条件源文件，并给出 `DSH9001`。它不是本页上的三个操作之一 —— 它是在编辑器启动时无人值守运行的，而不是从菜单中运行的 —— 但它是源文件的另一个写入者，并且它按字节偏移进行拼接，而行数守恒并不能保持这一点。
+> [VirtualFunction 启动同步](../tools/virtual-function-tools.md#startup-sync-service)也会拒绝条件源文件，并给出 `DSH9001`。它不是本页上的三个操作之一 —— 它是在编辑器启动时无人值守运行的，而不是从菜单中运行的 —— 但它是源文件的另一个写入者，并且它按字节偏移进行拼接，而行数守恒并不能保持这一点。
 
 <a id="detach-from-dreamshader"></a>
 
@@ -216,14 +211,14 @@ Adopt Into Source, or Detach From DreamShader.
 
 ## 自定义 Pass 管线
 
-*（自 2.1.0 起）* 一个 `UDreamPassPipeline` 没有图表，是要手工调节的：它的[细节面板](../../tools/editor-integration.md#pass-pipeline-details-panel)会编辑它，下一帧就会运行该编辑。它像其他所有生成资源一样受到保护，而采纳就是调节结果到达其 `.dsp` 的方式。
+*（自 2.1.0 起）* 一个 `UDreamPassPipeline` 没有图表，是要手工调节的：它的[细节面板](../tools/editor-integration.md#pass-pipeline-details-panel)会编辑它，下一帧就会运行该编辑。它像其他所有生成资源一样受到保护，而采纳就是调节结果到达其 `.dsp` 的方式。
 
 | | |
 | :-- | :-- |
 | 摘要 | 资源除其两个源标记（`SourceFilePath`、`SourceHash`）之外的每一个属性，各自完整，以导出文本形式呈现：顺序、默认注入点、视图、需求、启用的参数、参数、缓冲区、带各自槽位的 pass，以及导出渲染目标。模式标签会为管线类及其内容所触达的每一个结构体生成指纹，因此添加了字段的插件更新会被读取为一次 `Unstamped`，而不是一次手工编辑 |
 | 手工编辑 | 细节面板中的任何更改 —— 一个值、一个 pass 被添加、移动或移除 —— 都会被读取为 `Diverged`。面板的 **Source** 行会随变化显示该状态 |
 | 门禁 | 对已更改的 `.dsp` 的下一次编译会被拒绝，并给出[通知](#what-you-see-since-190)及其选项。不会写入任何内容：不写资源，不写槽位注册表，不写快照，不写渲染目标 |
-| 选项 | 通知上的 **Revert to Source**、**Adopt Into Source** 和 **Detach**，以及[材质内容浏览器](../../tools/material-browser.md#pipelines)中的 —— 其 *Provenance* 部分及其上下文菜单；前两个也是细节面板上的按钮。管线没有内容浏览器上下文菜单项 |
+| 选项 | 通知上的 **Revert to Source**、**Adopt Into Source** 和 **Detach**，以及[材质内容浏览器](../tools/material-browser.md#pipelines)中的 —— 其 *Provenance* 部分及其上下文菜单；前两个也是细节面板上的按钮。管线没有内容浏览器上下文菜单项 |
 
 <a id="adopting-into-a-dsp"></a>
 
@@ -232,7 +227,7 @@ Adopt Into Source, or Detach From DreamShader.
 一个 `.dsp` 永远不会被重新打印：采纳会把资源的值拼接进文件，就像它对一个 `.dsi` 所做的那样。
 
 1. 读写文件并像编译那样检查它，在构建任何内容之前停止。
-2. 资源被[反编译](../../tools/decompiler.md#pipelines-dsp)为 `.dsp` 所绑定的载荷。
+2. 资源被[反编译](../tools/decompiler.md#pipelines-dsp)为 `.dsp` 所绑定的载荷。
 3. 资源仍然持有且未变的每个值都会取回文件自身的拼写形式：解析到同一资源或文件的材质或着色器保留其书写时的引用，精度与资源所保持的一致（一个 `float`）的数值保留其字面量或折叠出它的表达式 —— 包括一个 `static const` —— 以相同位设置的标志保留其书写形式，即使某个键陈述的是默认值，只要写出来了就保持写出。参数、缓冲区和 pass 按名称匹配，绑定按位置匹配。
 4. 只重写值不同的声明和键，因此 `//` 注释和文件的顺序得以保留。当有任何更改时，文件会先被复制到 `<file>.bak`。
 5. 管线从该文件重新构建，越过分歧门禁，并保存。

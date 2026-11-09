@@ -1,8 +1,3 @@
----
-title: "编辑器集成"
-description: "编辑器集成"
----
-
 <a id="editor-integration"></a>
 
 # 编辑器集成
@@ -104,11 +99,9 @@ Unreal 里的菜单名是按精确类名索引的，所以同时给两个实例�
 
 ### 材质子菜单
 
-`DreamShader.MaterialActions` —— 标签为 **DreamShader**，工具提示为 "DreamShader actions for this
-Material."，图标为 `Icons.Settings`。仅当唯一选中的资产为 `UMaterial` 时构建。
+`DreamShader.MaterialActions` —— 标签为 **DreamShader**，工具提示为 "DreamShader actions for this Material."，图标为 `Icons.Settings`。仅当唯一选中的资产为 `UMaterial` 时构建。
 
-第 1 节为 `DreamShader.ProvenanceActions`，标题为 **Generated Asset** —— 即下文的
-[生成资产一节](#generated-asset-section)；对于并非由 DreamShader 生成的资产，该节为空。
+第 1 节为 `DreamShader.ProvenanceActions`，标题为 **Generated Asset** —— 即下文的[生成资产一节](#generated-asset-section)；对于并非由 DreamShader 生成的资产，该节为空。
 
 第 2 节为 `DreamShader.DecompileActions`，标题为 **Decompiler**：
 
@@ -121,11 +114,9 @@ Material."，图标为 `Icons.Settings`。仅当唯一选中的资产为 `UMater
 
 ### 材质函数子菜单
 
-`DreamShader.MaterialFunctionActions` —— 标签为 **DreamShader**，工具提示为 "DreamShader actions for this
-Material Function."，图标为 `Icons.Settings`。同一个子菜单也服务于材质层和层混合。
+`DreamShader.MaterialFunctionActions` —— 标签为 **DreamShader**，工具提示为 "DreamShader actions for this Material Function."，图标为 `Icons.Settings`。同一个子菜单也服务于材质层和层混合。
 
-第 1 节为 `DreamShader.ProvenanceActions`，标题为 **Generated Asset** —— 即下文的
-[生成资产一节](#generated-asset-section)。
+第 1 节为 `DreamShader.ProvenanceActions`，标题为 **Generated Asset** —— 即下文的[生成资产一节](#generated-asset-section)。
 
 第 2 节为 `DreamShader.DecompileActions`，标题为 **Decompiler**：
 
@@ -134,30 +125,22 @@ Material Function."，图标为 `Icons.Settings`。同一个子菜单也服务�
 | `DreamShader.ExportFunctionDSS` | **导出 .dss** *（自 2.0.0 起）* | "将此材质函数图表反编译为 2.0 的 DreamShader .dss 源文件。" | `Icons.Save` | 反编译到 `<SourceDirectory>/Decompiled/{Functions,Layers,LayerBlends}/…​.dss` 并打开该文件 | [反编译器](decompiler.md) |
 | `DreamShader.ExportFunctionLegacyDSF` | **导出旧版 .dsf** *（自 2.0.0 起；**导出 DSF** 自 1.3.5 起）* | "使用保留至 2.0.x 的 1.x 反编译器，将此材质函数图表反编译为 1.x 的 .dsf 源文件。" | `Icons.Save` | 反编译到 `<SourceDirectory>/Decompiled/{Functions,Layers,LayerBlends}/…​.dsf` 并打开该文件 | [反编译器](decompiler.md) |
 
-第 3 节为 `DreamShader.VirtualFunctionActions`，标题为 **VirtualFunction** *（自 1.2.1 起）*。其
-内容取决于是否已有 `VirtualFunction` 声明引用此资产 ——
-完整表格见 [VirtualFunction 工具](virtual-function-tools.md#context-menu)。
+第 3 节为 `DreamShader.VirtualFunctionActions`，标题为 **VirtualFunction** *（自 1.2.1 起）*。其内容取决于是否已有 `VirtualFunction` 声明引用此资产 —— 完整表格见 [VirtualFunction 工具](virtual-function-tools.md#context-menu)。
 
 | 声明是否存在？ | 条目 |
 | :-- | :-- |
 | 是 | **OpenVirtualFunction**、**Copy Virtual Function Reference** |
 | 否 | **CopyVirtualFunction**、**CreateVirtualFunction**、**Copy extern Prototype (2.0)**、**Create extern Prototype (2.0)**、**CopyVirtualFunctionCall** |
 
-两个 *extern Prototype* 条目 *（自 2.0.0 起）* 是 `VirtualFunction`
-块的 `.dss` 对应物：函数的 `extern` 原型及其 `/// @asset` 行，复制到剪贴板，或写入
-一个新的 `.dsh`，以供 `.dss` 源文件 `#include`。
+两个 *extern Prototype* 条目 *（自 2.0.0 起）* 是 `VirtualFunction` 块的 `.dss` 对应物：函数的 `extern` 原型及其 `/// @asset` 行，复制到剪贴板，或写入一个新的 `.dsh`，以供 `.dss` 源文件 `#include`。
 
 <a id="material-instance-submenus"></a>
 
 ### 材质实例子菜单
 
-一个 `UDreamShaderMaterialInstance` —— 即 ThinCustom `Shader` 的产物 —— 会得到子菜单
-`DreamShader.MaterialInstanceActions`，标签为 **DreamShader**，工具提示为 "DreamShader actions for this
-generated material."，仅含[生成资产一节](#generated-asset-section)。
+一个 `UDreamShaderMaterialInstance` —— 即 ThinCustom `Shader` 的产物 —— 会得到子菜单 `DreamShader.MaterialInstanceActions`，标签为 **DreamShader**，工具提示为 "DreamShader actions for this generated material."，仅含[生成资产一节](#generated-asset-section)。
 
-任何其他 `UMaterialInstanceConstant` —— 即 [`.dsi`](../language-v2/instances.md) 构建的，或
-手工制作的实例 —— 会得到子菜单 `DreamShader.MaterialInstanceConstantActions`，标签为
-**DreamShader**，工具提示为 "DreamShader actions for this material instance."，图标为 `Icons.Settings`：
+任何其他 `UMaterialInstanceConstant` —— 即 [`.dsi`](../language-v2/instances.md) 构建的，或手工制作的实例 —— 会得到子菜单 `DreamShader.MaterialInstanceConstantActions`，标签为 **DreamShader**，工具提示为 "DreamShader actions for this material instance."，图标为 `Icons.Settings`：
 
 | 节 | 条目 | 标签 | 效果 |
 | :-- | :-- | :-- | :-- |
@@ -168,8 +151,7 @@ generated material."，仅含[生成资产一节](#generated-asset-section)。
 
 ### 生成资产一节
 
-上述每个子菜单的第 `DreamShader.ProvenanceActions` 节。除非该资产带有
-DreamShader 的源元数据，否则该节为空，因此手工编写的资产不会显示其中任何内容。
+上述每个子菜单的第 `DreamShader.ProvenanceActions` 节。除非该资产带有 DreamShader 的源元数据，否则该节为空，因此手工编写的资产不会显示其中任何内容。
 
 | 条目 | 标签 | 效果 | 参考 |
 | :-- | :-- | :-- | :-- |
@@ -183,8 +165,7 @@ DreamShader 的源元数据，否则该节为空，因此手工编写的资产�
 
 ## 材质编辑器工具栏
 
-`DreamShader.MaterialEditorToolbarActions`，是
-`AssetEditor.MaterialEditor.ToolBar` 第 `DreamShader` 节中的一个动态条目 *（自 1.2.1 起）*。
+`DreamShader.MaterialEditorToolbarActions`，是 `AssetEditor.MaterialEditor.ToolBar` 第 `DreamShader` 节中的一个动态条目 *（自 1.2.1 起）*。
 
 | 步骤 | 行为 |
 | :-- | :-- |
@@ -421,8 +402,7 @@ commandlet 运行通过不同途径达到相同状态：每当 `IsRunningCommand
 
 ## `reveal-node` — 反方向
 
-*(自 2.0.0 起)* [bridge](bridge.md) 请求中方向相反的那一个：从一行源码到材质编辑器中的
-节点。它就是 VSCode 扩展的 *Reveal in Material Editor* 命令所发送的内容。
+*(自 2.0.0 起)* [bridge](bridge.md) 请求中方向相反的那一个：从一行源码到材质编辑器中的节点。它就是 VSCode 扩展的 *Reveal in Material Editor* 命令所发送的内容。
 
 | 字段 | 类型 | 备注 |
 | :-- | :-- | :-- |
@@ -430,8 +410,7 @@ commandlet 运行通过不同途径达到相同状态：每当 `IsRunningCommand
 | `file` | string | 必填，非空；绝对路径或相对于工程的路径均可，两种都会归一化 |
 | `line` | number | 必填，从 1 开始 |
 
-同步处理：它会找到带有该源文件标记的资产，挑选跨度落在该行上的表达式，为拥有它们的资产打开材质编辑器，
-并选中第一个。**起始**于该行的节点优先于仅仅是从该处某个调用内联而来的节点。
+同步处理：它会找到带有该源文件标记的资产，挑选跨度落在该行上的表达式，为拥有它们的资产打开材质编辑器，并选中第一个。**起始**于该行的节点优先于仅仅是从该处某个调用内联而来的节点。
 
 响应是普通的 `Responses/<requestId>.json` 信封，外加四个字段：
 
@@ -442,10 +421,7 @@ commandlet 运行通过不同途径达到相同状态：每当 `IsRunningCommand
 | `instanceAssetPath` | string | 仅对 ThinCustom 产物出现：base 所归属的那个实例 |
 | `expressions` | array | 每个匹配表达式的 GUID，带连字符（`FGuid` `DigitsWithHyphens`，即资产元数据使用的写法），选中的那个排在最前 |
 
-失败会以 `ok: false` 返回，原因写在 `diagnostics`（`stage: "navigate"`）中，编码为
-`DSH9050`–`DSH9057`。其中两个值得了解：`DSH9051` 表示来自该源文件的资产没有加载到
-此编辑器中 —— 请先编译该文件 —— 而 `DSH9052` 表示资产存在，但构建于
-节点导航之前，因此它们不携带跨度表，需要一次 `-Force` 重建。
+失败会以 `ok: false` 返回，原因写在 `diagnostics`（`stage: "navigate"`）中，编码为 `DSH9050`–`DSH9057`。其中两个值得了解：`DSH9051` 表示来自该源文件的资产没有加载到此编辑器中 —— 请先编译该文件 —— 而 `DSH9052` 表示资产存在，但构建于节点导航之前，因此它们不携带跨度表，需要一次 `-Force` 重建。
 
 <a id="see-also"></a>
 

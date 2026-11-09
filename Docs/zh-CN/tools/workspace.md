@@ -1,8 +1,3 @@
----
-title: "工作区和编辑器扩展"
-description: "工作区和编辑器扩展"
----
-
 <a id="workspace-and-editor-extensions"></a>
 
 # 工作区和编辑器扩展
@@ -210,21 +205,20 @@ description: "工作区和编辑器扩展"
 
 ### `pass-keys.json`
 
-*（自 2.1.0 起）* [`.dsp`](../language-v2/passes.md) 的词汇表，用于编辑器补全：
-`<Project>/Saved/DreamShader/Bridge/pass-keys.json`，架构 `DreamShader.PassKeys`，版本 `1`，带 `generatedAt` 时间戳。它使用 `settings.json` 写入——在桥接启动时以及 *Open Dream Shader Workspace* 时——因为它结尾的层名是项目设置。它没有 `bridge.db` 表。
+*（自 2.1.0 起）* [`.dsp`](../language-v2/passes.md) 的词汇表，用于编辑器补全： `<Project>/Saved/DreamShader/Bridge/pass-keys.json`，架构 `DreamShader.PassKeys`，版本 `1`，带 `generatedAt` 时间戳。它使用 `settings.json` 写入——在桥接启动时以及 *Open Dream Shader Workspace* 时——因为它结尾的层名是项目设置。它没有 `bridge.db` 表。
 
 | 键 | 内容 |
 | :-- | :-- |
 | `supported` | 在 UE 5.8 及更高版本上为 `true`。在此以下，`false` 带 `unsupportedReason`：`Custom Pass pipelines run on Unreal Engine 5.8 and later.` —— `.dsp` 仍会在那里解析和绑定，且没有任何东西运行它 |
 | `injectionPoints` | 每个注入点，按帧到达它们的顺序：`name`、`order`、`postProcess` 和 `resolution`（`Render` 或 `Output`） |
 | `pipelineKeys` | `#pragma pipeline` 键：`Order`、`Injection`、`Views`、`Requires`、`Enabled` |
-| `bufferFormats` · `bufferKeys` · `bufferResolutions` | `R8` … `Depth32`；`Scale`、`Size`、`Resolution`、`Clear`、`Mips`、`History`、`Export`；`Render`、`Output` |
+| `bufferFormats` · `bufferKeys` · `bufferResolutions` | `R8` … `Depth32`; `Scale`, `Size`, `Resolution`, `Clear`, `Mips`, `History`, `Export`; `Render`, `Output` |
 | `passKinds` | `fullscreen`、`compute`、`mesh`、`clear`、`copy`，每个都有自己的 `keys` 和一个 `detail` |
 | `commonPassKeys` | `Injection` 和 `Enabled`，每种类型都接受它们 |
-| `bindingStatements` | `read`、`write`、`param` |
+| `bindingStatements` | `read`, `write`, `param` |
 | `filterKinds` | `Stencil`、`Layer`、`List`，每个都带编辑器插入的 `snippet`（`Stencil(${1:1})`） |
 | `meshModes` · `depthModes` · `cullModes` · `blendModes` · `nanitePolicies` · `meshUsages` · `viewFlags` · `requirementFlags` · `parameterTypes` | 这些值各自采用的拼写 |
-| `builtinBuffers` | `SceneColor`、`SceneDepth`、`CustomDepth`、`CustomStencil`、`GBufferA` … `GBufferF`、`Velocity`、`Translucency` |
+| `builtinBuffers` | `SceneColor`, `SceneDepth`, `CustomDepth`, `CustomStencil`, `GBufferA` … `GBufferF`, `Velocity`, `Translucency` |
 | `weightParameter` | `DreamPassWeight` |
 | `layerNames` | 项目的通道层，按位顺序——`Layer(...)` 采用的名称 |
 

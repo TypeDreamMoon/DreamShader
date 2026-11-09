@@ -1,8 +1,3 @@
----
-title: "import"
-description: "import"
----
-
 <a id="import"></a>
 
 # import
@@ -125,24 +120,18 @@ import '<path>' [;]          // in a .dsm, .dsf or .dsh
 
 包含检查正是阻止相对 specifier 爬出目录树的机制。`..` 段会在检查之前被解析掉，因此：
 
-- 对于直接位于 `DShader` 下的文件，`import "../Secret.dsh"` 解析到源目录之上，
-  因此候选 1 被跳过；候选 2 和 3 会塌缩同样的 `..` 并落在各自的根之外，因此被同样的检查跳过；
-- 对于位于 `DShader/Packages/@scope/pkg/` 下的文件，`..` 可以在 `DShader/Packages` 内任意穿行，
-  因为那才是为它选定的包含根；
-- 对于不属于任何根的源目录或 packages 目录的源文件，包含根就是它自己的目录，
-  因此没有任何 `..` specifier 能通过候选 1 解析。
+- 对于直接位于 `DShader` 下的文件，`import "../Secret.dsh"` 解析到源目录之上，因此候选 1 被跳过；候选 2 和 3 会塌缩同样的 `..` 并落在各自的根之外，因此被同样的检查跳过；
+- 对于位于 `DShader/Packages/@scope/pkg/` 下的文件，`..` 可以在 `DShader/Packages` 内任意穿行，因为那才是为它选定的包含根；
+- 对于不属于任何根的源目录或 packages 目录的源文件，包含根就是它自己的目录，因此没有任何 `..` specifier 能通过候选 1 解析。
 
 <a id="package-style-paths"></a>
 
 ### Package 风格路径
 
-`@scope/name/…` **不是**一种独立的路径语法。`@` 只是普通的目录名字符，
-像 `"@typedreammoon/dream-noise/Library/Noise.dsh"` 这样的 specifier 能通过候选 3 解析，纯粹是因为磁盘上存在 `DShader/Packages/@typedreammoon/dream-noise/Library/Noise.dsh`。
-没有 scope 注册表，没有版本解析，也没有被特殊处理的根。
+`@scope/name/…` **不是**一种独立的路径语法。`@` 只是普通的目录名字符，像 `"@typedreammoon/dream-noise/Library/Noise.dsh"` 这样的 specifier 能通过候选 3 解析，纯粹是因为磁盘上存在 `DShader/Packages/@typedreammoon/dream-noise/Library/Noise.dsh`。没有 scope 注册表，没有版本解析，也没有被特殊处理的根。
 
 > [!NOTE]
-> 候选 1 和 2 仍然会先被尝试。放在导入方文件旁边、或者放在 `DShader` 下
-> 的同名 `@typedreammoon/dream-noise/Library/Noise.dsh` 文件，会遮蔽 package 里的那一份。
+> 候选 1 和 2 仍然会先被尝试。放在导入方文件旁边、或者放在 `DShader` 下的同名 `@typedreammoon/dream-noise/Library/Noise.dsh` 文件，会遮蔽 package 里的那一份。
 
 这套约定假定的目录布局见 [Package](../tools/packages.md)。
 
@@ -163,18 +152,13 @@ import '<path>' [;]          // in a .dsm, .dsf or .dsh
 | 重建 | 这次编译读到的每个 header 的预处理后文本都计入该源文件的[构建键](../generation/caching.md)；保存一个 header 会把导入它的每个源文件排进重编队列 |
 
 > [!NOTE]
-> **1.9.x 及以前**，加载器在解析之前把整个 import 闭包粘贴成一段文本，所以
-> "一个 `Shader`"的规则是闭包范围的，`.dsh` 可以导入 `.dsf` 并把它的
-> `ShaderFunction` 块作为导入方的一部分编译，每个位置都得从拼装后的文本映射回去。
+> **1.9.x 及以前**，加载器在解析之前把整个 import 闭包粘贴成一段文本，所以 "一个 `Shader`"的规则是闭包范围的，`.dsh` 可以导入 `.dsf` 并把它的 `ShaderFunction` 块作为导入方的一部分编译，每个位置都得从拼装后的文本映射回去。
 
 <a id="source-line-mapping"></a>
 
 ## 源码行映射
 
-没有什么需要映射的了 *（自 2.0.0 起）*。诊断带着它所在的文件 —— header 里的错误就是 header ——
-以及构造的行和列，打印成 `<file>(<line>,<column>): DSHnnnn: <message>`。1.9.x 的位置来自拼装文本里的 `near index`
-偏移，在 section 内部并不可靠；那套机制已经没有了。见
-[诊断](../diagnostics/index.md#message-locations)。
+没有什么需要映射的了 *（自 2.0.0 起）*。诊断带着它所在的文件 —— header 里的错误就是 header —— 以及构造的行和列，打印成 `<file>(<line>,<column>): DSHnnnn: <message>`。1.9.x 的位置来自拼装文本里的 `near index` 偏移，在 section 内部并不可靠；那套机制已经没有了。见[诊断](../diagnostics/index.md#message-locations)。
 
 <a id="diagnostics"></a>
 
@@ -239,13 +223,9 @@ Shader(Name="Materials/M_Water")
 }
 ```
 
-第一条路径没有扩展名，所以会追加 `.dsh`；`M_Water.dsm` 旁边不存在候选 1，
-所以候选 2 在 `DShader` 下找到了它。第二条只有候选 3 能找到。
-两条指令都随意省略或包含 `;`。
+第一条路径没有扩展名，所以会追加 `.dsh`；`M_Water.dsm` 旁边不存在候选 1，所以候选 2 在 `DShader` 下找到了它。第二条只有候选 3 能找到。两条指令都随意省略或包含 `;`。
 
-每个 header 都单独预处理、单独解析；`Common::ApplyTint` 以及 `Noise.dsh`
-声明的任何东西随后都是 `M_Water.dsm` 的名字，`Common.dsh` 里的诊断报在
-`DShader/Shared/Common.dsh(<line>,<column>)`。
+每个 header 都单独预处理、单独解析；`Common::ApplyTint` 以及 `Noise.dsh` 声明的任何东西随后都是 `M_Water.dsm` 的名字，`Common.dsh` 里的诊断报在 `DShader/Shared/Common.dsh(<line>,<column>)`。
 
 同样两行的 `.dss` 写法：
 

@@ -1,8 +1,3 @@
----
-title: "编辑器桥接"
-description: "编辑器桥接"
----
-
 <a id="editor-bridge"></a>
 
 # 编辑器桥接
@@ -142,26 +137,18 @@ writes generated assets to disk.
 | `reveal-node` | `file`、`line` | 查找由该行生成的节点，打开其材质编辑器并选中它 *（自 2.0.0 起）* | 立即，附带资产路径和表达式 GUID |
 
 > [!IMPORTANT]
-> 带 `scope: "file"` 的 `recompile` 是唯一其响应为**延迟**的操作。文件会
-> 进入防抖队列并在若干 tick 之后编译，因此在派发时应答会在任何事情尝试之前
-> 就报告成功。该 id 会被暂存，并由编译本身应答，携带该次编译的诊断信息。
-> 两个客户端请求同一文件都会得到应答。
+> 带 `scope: "file"` 的 `recompile` 是唯一其响应为**延迟**的操作。文件会进入防抖队列并在若干 tick 之后编译，因此在派发时应答会在任何事情尝试之前就报告成功。该 id 会被暂存，并由编译本身应答，携带该次编译的诊断信息。两个客户端请求同一文件都会得到应答。
 >
-> `scope: "all"` 相反，并且明确说明了这一点：它立即以 *已排队* 应答，因为该批次
-> 会跨 tick 排空，结果尚不可知。不要将其视为结果。
+> `scope: "all"` 相反，并且明确说明了这一点：它立即以 *已排队* 应答，因为该批次会跨 tick 排空，结果尚不可知。不要将其视为结果。
 
 > [!NOTE]
-> 错误的 `scope`、缺失的 `sourceFile` 或无法识别的 `action` 现在会返回**错误响应**，
-> 而不再是静默无操作——前提是请求携带了 `requestId`。若没有，则行为
-> 不变：文件被删除，不作任何说明。
+> 错误的 `scope`、缺失的 `sourceFile` 或无法识别的 `action` 现在会返回**错误响应**，而不再是静默无操作——前提是请求携带了 `requestId`。若没有，则行为不变：文件被删除，不作任何说明。
 
 <a id="protocol"></a>
 
 ### 协议
 
-请求可以携带 `protocol`。**缺失**该字段会被视为当前版本，而非不匹配——
-已发布的 VSCode 扩展发送的每个请求都省略该字段，拒绝这些请求会破坏每一台
-安装了该扩展的机器上的功能。若字段存在*且*不同，则会被拒绝：
+请求可以携带 `protocol`。**缺失**该字段会被视为当前版本，而非不匹配—— 已发布的 VSCode 扩展发送的每个请求都省略该字段，拒绝这些请求会破坏每一台安装了该扩展的机器上的功能。若字段存在*且*不同，则会被拒绝：
 
 ```text
 Protocol 3 is not understood; this editor speaks 1. Update the DreamShaderLang extension or the
@@ -172,9 +159,7 @@ plugin so the two match.
 
 ### `Responses/<requestId>.json`
 
-以原子方式写入——先写入目标旁的临时文件，然后重命名——因此出现与完整是同一
-事件。上一会话的过期响应会在启动时删除：一个已无人等待的应答比没有更糟，
-因为重新连接的客户端会对它采取行动。
+以原子方式写入——先写入目标旁的临时文件，然后重命名——因此出现与完整是同一事件。上一会话的过期响应会在启动时删除：一个已无人等待的应答比没有更糟，因为重新连接的客户端会对它采取行动。
 
 | 字段 | 类型 | 说明 |
 | :-- | :-- | :-- |
@@ -185,16 +170,13 @@ plugin so the two match.
 | `message` | string | 不变形式，绝不使用本地化的显示文本 |
 | `diagnostics` | array | `file`、`line`、`column`、`severity`，以及非空时的 `code` / `stage` / `assetPath` |
 
-每条诊断保留各自的文件：一个引入了损坏 `.dsh` 的 `.dsm` 会在 `.dsh` 的
-位置失败，将其归因于 `.dsm` 会把作者引向错误的文件。
+每条诊断保留各自的文件：一个引入了损坏 `.dsh` 的 `.dsm` 会在 `.dsh` 的位置失败，将其归因于 `.dsm` 会把作者引向错误的文件。
 
 <a id="statusjson"></a>
 
 ### `status.json`
 
-心跳，空闲时每 `2 s` 重写一次，并在**关闭时删除**——因此文件缺失
-明确意味着“未运行”，客户端可以立即回退，而不必等待
-存活窗口超时。
+心跳，空闲时每 `2 s` 重写一次，并在**关闭时删除**——因此文件缺失明确意味着“未运行”，客户端可以立即回退，而不必等待存活窗口超时。
 
 | 字段 | 类型 | 说明 |
 | :-- | :-- | :-- |
@@ -205,9 +187,7 @@ plugin so the two match.
 | `heartbeatUtc` | string | ISO-8601 UTC |
 
 > [!WARNING]
-> 在判断心跳的新旧之前**先**读取 `busy`。编译会阻塞游戏线程，因此运行编译时
-> 心跳会停止——只看时间戳的客户端会把每次真实编译都读作崩溃。剩余的
-> 歧义是硬崩溃，它会留下该文件；记录的 `pid` 正是用来消除它的。
+> 在判断心跳的新旧之前**先**读取 `busy`。编译会阻塞游戏线程，因此运行编译时心跳会停止——只看时间戳的客户端会把每次真实编译都读作崩溃。剩余的歧义是硬崩溃，它会留下该文件；记录的 `pid` 正是用来消除它的。
 
 <a id="recompile"></a>
 
@@ -219,10 +199,7 @@ plugin so the two match.
 | `scope` | string | — | `"all"` 或 `"file"` |
 | `sourceFile` | string | — | 当 `scope` 为 `"file"` 时必填且非空；建议使用绝对路径 |
 
-`scope: "all"` 记录 `DreamShader queued a full .dsm/.dsf recompile scan.` 排队的文件会在
-防抖窗口之后编译——*Save Debounce Seconds*，被限制在 `[0.05, 10.0]` 范围内，默认为 `0.25`——且
-仅当它仍然存在于磁盘上时。有效延迟为防抖时间加上最多 `0.1 s` 的轮询延迟。
-通过此路径进行的编译始终是**瞬态的**：编辑器在内存中生成。
+`scope: "all"` 记录 `DreamShader queued a full .dsm/.dsf recompile scan.` 排队的文件会在防抖窗口之后编译——*Save Debounce Seconds*，被限制在 `[0.05, 10.0]` 范围内，默认为 `0.25`——且仅当它仍然存在于磁盘上时。有效延迟为防抖时间加上最多 `0.1 s` 的轮询延迟。通过此路径进行的编译始终是**瞬态的**：编辑器在内存中生成。
 
 <a id="cleangeneratedshaders"></a>
 
@@ -232,9 +209,7 @@ plugin so the two match.
 | :-- | :-- | :-- |
 | `action` | string | `"cleanGeneratedShaders"` |
 
-仅递归删除 `*.ush` 文件，一次一个——目录本身永不被删除——然后
-排队执行一次完整重新扫描。当 *Generated Shader Directory* 被指向项目的 `Intermediate`
-目录之外时，它会拒绝运行：
+仅递归删除 `*.ush` 文件，一次一个——目录本身永不被删除——然后排队执行一次完整重新扫描。当 *Generated Shader Directory* 被指向项目的 `Intermediate` 目录之外时，它会拒绝运行：
 
 ```text
 DreamShader refused to clean generated shaders: '{Directory}' is not inside the project Intermediate
@@ -255,20 +230,15 @@ directory. Point DreamShaderSettings.GeneratedShaderDirectory back under Interme
 | `requestId` | string | *（不存在）* | 非空时回显到 `preview.json` |
 
 > [!NOTE]
-> 请求文件变体**不会**读取 `orbitYaw`、`orbitPitch`、`stream` 或 `frameRate`。这些
-> 字段仅存在于 WebSocket 传输上。文件请求始终以
-> 默认相机角度渲染一帧。
+> 请求文件变体**不会**读取 `orbitYaw`、`orbitPitch`、`stream` 或 `frameRate`。这些字段仅存在于 WebSocket 传输上。文件请求始终以默认相机角度渲染一帧。
 
-结果会写入 `preview.json`，状态为 `ready` 或 `error`，并在成功时以
-`Display` 记录 `DreamShader preview: {Message}`，失败时记录 `Error`。
+结果会写入 `preview.json`，状态为 `ready` 或 `error`，并在成功时以 `Display` 记录 `DreamShader preview: {Message}`，失败时记录 `Error`。
 
 <a id="reveal-node"></a>
 
 ### `reveal-node`
 
-*（自 2.0.0 起）* 节点到源导航的逆向操作：从 `.dss` 源的一行到材质编辑器
-中的节点。它是 VSCode 扩展的 *Reveal in Material Editor* 命令所发送的内容；
-编辑器侧的部分在 [编辑器集成](editor-integration.md#reveal-node--the-reverse-direction) 中描述。
+*（自 2.0.0 起）* 节点到源导航的逆向操作：从 `.dss` 源的一行到材质编辑器中的节点。它是 VSCode 扩展的 *Reveal in Material Editor* 命令所发送的内容；编辑器侧的部分在 [编辑器集成](editor-integration.md#reveal-node--the-reverse-direction) 中描述。
 
 | 字段 | 类型 | 默认值 | 约束 |
 | :-- | :-- | :-- | :-- |
@@ -288,8 +258,7 @@ directory. Point DreamShaderSettings.GeneratedShaderDirectory back under Interme
 | `instanceAssetPath` | string | 仅对 ThinCustom 产品存在：基础材质被寻址到的实例 |
 | `expressions` | array | 每个匹配表达式的 GUID，带连字符，选中的排在最前 |
 
-失败会以 `ok: false` 返回，原因位于 `diagnostics`（`stage: "navigate"`）中，错误码为
-`DSH9050`–`DSH9057`。`DSH9051` 表示此编辑器中未加载来自该源的任何资产——请先编译该文件；`DSH9052` 表示这些资产是在节点导航功能存在之前构建的，不携带跨度表——请使用 `-Force` 重新构建。
+失败会以 `ok: false` 返回，原因位于 `diagnostics`（`stage: "navigate"`）中，错误码为 `DSH9050`–`DSH9057`。`DSH9051` 表示此编辑器中未加载来自该源的任何资产——请先编译该文件；`DSH9052` 表示这些资产是在节点导航功能存在之前构建的，不携带跨度表——请使用 `-Force` 重新构建。
 
 <a id="symbol-index"></a>
 
@@ -303,9 +272,7 @@ directory. Point DreamShaderSettings.GeneratedShaderDirectory back under Interme
 
 （schema `dreamshader-symbol-index`，版本 `1`）：源文件及其包含的每个头文件的声明——种类、名称、签名、类型、文档、位置——每个名称的提及作为一个跨度、解析后的包含路径，以及参数 schema。`<root>` 是 `Project` 或插件的名称，以此将各自持有 `Materials/M_Foo.dss` 的两个源根区分开来。`dsc index` 按相同规则写入同一文件，因此语言服务无论由谁最后编译都只读取一处；文本不会变化的文件不会被重写，因此未发生变化的编译不会唤醒任何监视器。
 
-VS Code 扩展从这些文件中为 `.dss` 源提供转到定义、查找引用、悬停、大纲、签名帮助和重命名，并从
-`dreamshader-builtin-catalog.json` 补全 `UE.` / `Substrate.`——即绑定器自己的节点类、引脚、属性、别名
-和位置顺序表。
+VS Code 扩展从这些文件中为 `.dss` 源提供转到定义、查找引用、悬停、大纲、签名帮助和重命名，并从 `dreamshader-builtin-catalog.json` 补全 `UE.` / `Substrate.`——即绑定器自己的节点类、引脚、属性、别名和位置顺序表。
 
 `.dsp` *(自 2.1.0 起)* 的索引也有一个 `pipeline` 部分：绑定时的 `#pragma pipeline` 值、uniform、缓冲区和通道及其绑定与跨度，以及注入点和格式拼写。`.dsp` 词汇表的其余部分见 [`pass-keys.json`](workspace.md#pass-keysjson)。
 
@@ -313,8 +280,7 @@ VS Code 扩展从这些文件中为 `.dss` 源提供转到定义、查找引用�
 
 ## 自定义 Pass 着色器文件
 
-*(自 2.1.0 起)* [`.dsp`](../language-v2/passes.md) 的 HLSL pass 从一个 `.usf` 编译而来，该文件可以位于任何位置：紧邻 `.dsp` 是常见位置，但既不需要源根，也不需要映射的着色器目录，因为引擎只会编译该文件的快照
-（[HLSL pass](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)）。源目录监视器仅作用于 DreamShader 源，因此着色器文件有自己的监视器。
+*(自 2.1.0 起)* [`.dsp`](../language-v2/passes.md) 的 HLSL pass 从一个 `.usf` 编译而来，该文件可以位于任何位置：紧邻 `.dsp` 是常见位置，但既不需要源根，也不需要映射的着色器目录，因为引擎只会编译该文件的快照（[HLSL pass](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)）。源目录监视器仅作用于 DreamShader 源，因此着色器文件有自己的监视器。
 
 | | |
 | :-- | :-- |
@@ -324,8 +290,7 @@ VS Code 扩展从这些文件中为 `.dss` 源提供转到定义、查找引用�
 | 刷新时机 | 每次编译 `.dsp` 之后（无论成功与否），以及移除 `.dsp` 时。启动扫描所排队的编译正是注册首批监视器的来源 |
 | 门控 | *保存时自动编译*，与保存源文件时相同 |
 
-对上述文件之一的更改会将每个 HLSL pass 从它编译而来的 `.dsp` 排队，**非强制**：
-`.dsp` 的[构建键](../generation/caching.md#custom-pass-pipelines)保存其 pass 编译所依据的每个文件的文本，因此一次未改变其中任何内容的保存——比如同一文件夹中无关的头文件——会因其键而被跳过。失去跟踪的监视器（重新扫描）会将每个 `.dsp` 排队。
+对上述文件之一的更改会将每个 HLSL pass 从它编译而来的 `.dsp` 排队，**非强制**： `.dsp` 的[构建键](../generation/caching.md#custom-pass-pipelines)保存其 pass 编译所依据的每个文件的文本，因此一次未改变其中任何内容的保存——比如同一文件夹中无关的头文件——会因其键而被跳过。失去跟踪的监视器（重新扫描）会将每个 `.dsp` 排队。
 
 随后，对 `.dsp` 的一次编译会将每个快照发生变化的 HLSL pass 依次经过以下步骤；快照未变化的 pass 保持原样。
 
@@ -335,9 +300,7 @@ VS Code 扩展从这些文件中为 `.dss` 源提供转到定义、查找引用�
 | 2 | **快照。** 将该文件及其通过相对路径包含的一切复制到 `<DShader>/.dreampass/Slots/<C\|P><NN>/` 中，并重写 `Registry.json` 和该表的注册文件 |
 | 3 | **热重载。** 更新管线资产，针对每个活动功能级别同步重新编译槽位着色器类型 `FDreamPassCS` / `FDreamPassPS`——下一帧即运行新代码——并保存该资产 |
 
-被删除的 `.dsp` 会像任何源文件一样记录 `DreamShader source removed, existing generated assets were left
-untouched: {Path}`。其槽位会留在注册表中，直到
-[`dsc pass-registry -Gc`](commandlet.md#pass-registry) 将它们收集起来。
+被删除的 `.dsp` 会像任何源文件一样记录 `DreamShader source removed, existing generated assets were left untouched: {Path}`。其槽位会留在注册表中，直到 [`dsc pass-registry -Gc`](commandlet.md#pass-registry) 将它们收集起来。
 
 <a id="dependents"></a>
 
@@ -351,8 +314,7 @@ untouched: {Path}`。其槽位会留在注册表中，直到
 | 一个 `.dsp` | 每个 `.dss`，其 `UE.DreamPassBuffer` 读取该管线——其导出可能已改变 | 编译写入了资产 |
 | 一个 `.dss` 或一个 `.dsi` | 每个 `.dsi`，其 `Parent` 是其产物之一，进而再排其产物 | 始终 |
 
-排空的一批会经过排序，使 `.dsp` 在其材料所依赖的源之后编译，而读取某管线缓冲区的 `.dss` 在该 `.dsp` 之后编译。开启 *Verbose Logs* 时，每次排队都会记录
-`DreamShader queued {N} instance source(s), {N} pipeline source(s) and {N} pass-buffer reader(s) after '{Source}' compiled.`
+排空的一批会经过排序，使 `.dsp` 在其材料所依赖的源之后编译，而读取某管线缓冲区的 `.dss` 在该 `.dsp` 之后编译。开启 *Verbose Logs* 时，每次排队都会记录 `DreamShader queued {N} instance source(s), {N} pipeline source(s) and {N} pass-buffer reader(s) after '{Source}' compiled.`
 
 <a id="websocket-server"></a>
 
@@ -503,16 +465,13 @@ tag-`3` 载荷是一个 24 字节的小端序头部，后跟 `width × height ×
 | `ackFrameIndex` | number | 无确认 | 仅当它与当前未确认帧匹配时才释放流控门；过时或未来的索引会被忽略 |
 
 > [!NOTE]
-> 除 `requestId`/`ackFrameIndex` 之外，每个字段在省略时都会保持其当前值 *(自
-> `1.7.0` 起)*，因此仅发送帧确认或摄像机微调不再重置速率。流式传输会话中
-> 缺少 `ackFrameIndex` 仍会被视为"客户端仍存活"，从而释放流控门。
+> 除 `requestId`/`ackFrameIndex` 之外，每个字段在省略时都会保持其当前值 *(自 `1.7.0` 起)*，因此仅发送帧确认或摄像机微调不再重置速率。流式传输会话中缺少 `ackFrameIndex` 仍会被视为"客户端仍存活"，从而释放流控门。
 
 <a id="setprobe--client--editor"></a>
 
 ### `setProbe` — 客户端 → 编辑器
 
-附加一个探针（对应材质编辑器中 **Start Previewing Node** 的文本源版本）：在 Graph 行上绑定
-的值会替换预览网格体上的材质。当连接没有会话时忽略。
+附加一个探针（对应材质编辑器中 **Start Previewing Node** 的文本源版本）：在 Graph 行上绑定的值会替换预览网格体上的材质。当连接没有会话时忽略。
 
 | 字段 | 类型 | 默认值 | 效果 |
 | :-- | :-- | :-- | :-- |
@@ -520,22 +479,19 @@ tag-`3` 载荷是一个 24 字节的小端序头部，后跟 `width × height ×
 | `line` | number | `0` | 会话源文件中从 1 开始的行号；将选择该行或其之后最近的绑定 |
 | `name` | string | `""` | 当多个绑定共享同一行时用于消歧 |
 
-回复为一个 `probeState`。在源尚未生成之前设置的探针会被记住，并在下次生成时附加，
-而不是失败。
+回复为一个 `probeState`。在源尚未生成之前设置的探针会被记住，并在下次生成时附加，而不是失败。
 
 <a id="clearprobe--client--editor"></a>
 
 ### `clearProbe` — 客户端 → 编辑器
 
-分离活动探针；网格体恢复为整个材质。回复一个 `probeState`，其中
-`status` 为 `cleared`。
+分离活动探针；网格体恢复为整个材质。回复一个 `probeState`，其中 `status` 为 `cleared`。
 
 <a id="probestate--editor--client"></a>
 
 ### `probeState` — 编辑器 → 客户端
 
-在任何 `setProbe`/`clearProbe` 之后、在 `previewMaterial` 重新解析探针之后，
-以及每当重新生成移动或丢弃它时发送。
+在任何 `setProbe`/`clearProbe` 之后、在 `previewMaterial` 重新解析探针之后，以及每当重新生成移动或丢弃它时发送。
 
 | 字段 | 类型 | 说明 |
 | :-- | :-- | :-- |
@@ -564,15 +520,13 @@ tag-`3` 载荷是一个 24 字节的小端序头部，后跟 `width × height ×
 | `message` | string | 人类可读文本 |
 | `updatedAtUtc` | string | ISO-8601 UTC |
 
-流中途发送的带有 `status: "error"` 的 `previewResult` 也会关闭流式传输；会话将停止投递帧，
-直到新的 `previewMaterial` 或 `previewControl` 重新启用它。
+流中途发送的带有 `status: "error"` 的 `previewResult` 也会关闭流式传输；会话将停止投递帧，直到新的 `previewMaterial` 或 `previewControl` 重新启用它。
 
 <a id="previewframe--editor--client"></a>
 
 ### `previewFrame` — 编辑器 → 客户端
 
-仅为 `png` 编码发送，且总是紧跟一条携带 PNG 的标签 `2` 二进制消息。
-使用 `raw` 编码的会话会改为发送标签 `3` 帧，并且从不发送 `previewFrame`。
+仅为 `png` 编码发送，且总是紧跟一条携带 PNG 的标签 `2` 二进制消息。使用 `raw` 编码的会话会改为发送标签 `3` 帧，并且从不发送 `previewFrame`。
 
 | 字段 | 类型 | 说明 |
 | :-- | :-- | :-- |
@@ -604,31 +558,23 @@ tag-`3` 载荷是一个 24 字节的小端序头部，后跟 `width × height ×
 
 每 tick 执行：
 
-1. 当既没有流式传输也没有待处理的原始一次性渲染，或没有渲染上下文时，不执行任何操作。
-   无效材质会以错误停止会话。
-2. 如果有 GPU 回读正在进行中，在不阻塞的情况下轮询它。就绪 → 投递该帧（一个标签 `3`
-   原始帧，或一对 `previewFrame`+PNG）并提升进行中门。错误 → 发送错误
-   `previewResult` 并停止流式传输。两者皆非 → 返回并在下一个 tick 重试。
-3. 否则，当上一帧已被确认（或其确认超时）且帧间隔已过时，开始新的一帧。原始一次性渲染
-   还会等待其着色器映射。
+1. 当既没有流式传输也没有待处理的原始一次性渲染，或没有渲染上下文时，不执行任何操作。无效材质会以错误停止会话。
+2. 如果有 GPU 回读正在进行中，在不阻塞的情况下轮询它。就绪 → 投递该帧（一个标签 `3` 原始帧，或一对 `previewFrame`+PNG）并提升进行中门。错误 → 发送错误 `previewResult` 并停止流式传输。两者皆非 → 返回并在下一个 tick 重试。
+3. 否则，当上一帧已被确认（或其确认超时）且帧间隔已过时，开始新的一帧。原始一次性渲染还会等待其着色器映射。
 4. 开始帧失败会发送错误 `previewResult` 并停止流式传输。
 
 循环之上有两种效率行为 *(自 `1.7.0` 起)*：
 
 - **去重。** 像素与上一发送帧完全相同的帧会被丢弃，因此静态材质在稳定后不消耗带宽。
-- **空闲退避。** 在若干相同帧之后，渲染时钟放宽到约 2 FPS，直到发生变化（编辑的重新编译、
-  摄像机/网格体更改、探针更改）。当着色器映射仍在编译时渲染的帧从不退避 — 编译落地正是
-  所等待的变化。任何变化都会恢复完整速率，并强制下一帧作为关键帧通过去重。
+- **空闲退避。** 在若干相同帧之后，渲染时钟放宽到约 2 FPS，直到发生变化（编辑的重新编译、摄像机/网格体更改、探针更改）。当着色器映射仍在编译时渲染的帧从不退避 — 编译落地正是所等待的变化。任何变化都会恢复完整速率，并强制下一帧作为关键帧通过去重。
 
-确认始终未到达的帧（隐藏的标签页、丢失的消息）不会被无限等待；在两秒超时后，下一帧
-无论如何都会开始。有效帧率受 60 FPS 钳制、客户端的确认、空闲退避以及编辑器的实际 tick 速率限制。
+确认始终未到达的帧（隐藏的标签页、丢失的消息）不会被无限等待；在两秒超时后，下一帧无论如何都会开始。有效帧率受 60 FPS 钳制、客户端的确认、空闲退避以及编辑器的实际 tick 速率限制。
 
 <a id="meshes"></a>
 
 ### 网格体
 
-不区分大小写比较。任何无法识别的值（包括空字符串）都会回退到 `sphere`，并且结果消息
-报告的就是该回退名称。
+不区分大小写比较。任何无法识别的值（包括空字符串）都会回退到 `sphere`，并且结果消息报告的就是该回退名称。
 
 | 值 | 预览图元 |
 | :-- | :-- |
@@ -639,9 +585,7 @@ tag-`3` 载荷是一个 24 字节的小端序头部，后跟 `width × height ×
 | `sphere` | 球体 |
 | *(其他任何值)* | 球体 |
 
-网格与环绕视图是通过写入**材质资产自身**的缩略图信息来应用的，这与原生材质编辑器的预览形状按钮
-和拖动环绕视口所写入的字段相同。UI 域的材质无论请求的形状如何，
-始终绘制在平面上。完整的渲染器行为及其限制见 [预览](preview.md)。
+网格与环绕视图是通过写入**材质资产自身**的缩略图信息来应用的，这与原生材质编辑器的预览形状按钮和拖动环绕视口所写入的字段相同。UI 域的材质无论请求的形状如何，始终绘制在平面上。完整的渲染器行为及其限制见 [预览](preview.md)。
 
 <a id="artifacts"></a>
 
@@ -693,10 +637,7 @@ tag-`3` 载荷是一个 24 字节的小端序头部，后跟 `width × height ×
 | `source` | 字符串 | 始终 | `DreamShader Lang2`、`DreamShader`、`DreamShader Generate`、`DreamShader Material Compile` 或 `DreamShader VirtualFunction` |
 
 > [!NOTE]
-> 一次编译会归档其自身的记录——每条都带有其 `DSHnnnn` 代码、严重级别和位置：失败的编译
-> 会归档全部，成功的编译只会归档其警告和注释 *(自 2.1.0 起；在此之前，成功的编译会清空
-> 该文件的诊断，其警告仅出现在日志中)*。按严重级别过滤的客户端应将
-> 缺失或未知的值视为错误。
+> 一次编译会归档其自身的记录——每条都带有其 `DSHnnnn` 代码、严重级别和位置：失败的编译会归档全部，成功的编译只会归档其警告和注释 *(自 2.1.0 起；在此之前，成功的编译会清空该文件的诊断，其警告仅出现在日志中)*。按严重级别过滤的客户端应将缺失或未知的值视为错误。
 
 阶段、代码和来源一同传递：
 
@@ -707,19 +648,12 @@ tag-`3` 载荷是一个 24 字节的小端序头部，后跟 `width × height ×
 | `materialCompile` | `material-compile` | `DreamShader Material Compile` | 生成的材质上的着色器编译错误 |
 | `virtualFunctionSync` | `virtual-function-sync` | `DreamShader VirtualFunction` | 启动时的 `VirtualFunction` 声明扫描 |
 
-一次编译的记录会携带其自身的行和列。对于 `generate-error`，位置会从
-形如 `<path>(<line>,<column>): <message>` 的消息中恢复。行和列都必须为数字，
-并被钳制为不小于 `1`；无法解析位置的行会报告为 `1,1`，并去掉开头的
-`"<source path>: "` 前缀。
+一次编译的记录会携带其自身的行和列。对于 `generate-error`，位置会从形如 `<path>(<line>,<column>): <message>` 的消息中恢复。行和列都必须为数字，并被钳制为不小于 `1`；无法解析位置的行会报告为 `1,1`，并去掉开头的 `"<source path>: "` 前缀。
 
-材质编译诊断会携带形如
-`[{ShaderPlatform} / {QualityLevel}] {Message}` 的显示消息，并按来源、平台、质量、
-消息、行和列进行去重。
+材质编译诊断会携带形如 `[{ShaderPlatform} / {QualityLevel}] {Message}` 的显示消息，并按来源、平台、质量、消息、行和列进行去重。
 
 > [!NOTE]
-> 自 UE 5.7 起，`shaderPlatform` 字段携带一个着色器格式名称，例如 `PCD3D_SM6`，
-> 因为该枚举会遍历每个着色器平台。在 UE 5.7 以下，它携带的是功能级名称，
-> 例如 `SM6`。
+> 自 UE 5.7 起，`shaderPlatform` 字段携带一个着色器格式名称，例如 `PCD3D_SM6`，因为该枚举会遍历每个着色器平台。在 UE 5.7 以下，它携带的是功能级名称，例如 `SM6`。
 
 <a id="diagnostics"></a>
 
@@ -727,7 +661,7 @@ tag-`3` 载荷是一个 24 字节的小端序头部，后跟 `width × height ×
 
 同一份数据按每个源文件分片，以便客户端仅重新读取发生变化的内容。
 
-`index.json`：
+`index.json`:
 
 ```json
 { "version": 1, "updatedAtUtc": "<ISO-8601>", "files": [ { "path": "…", "file": "<md5>.json", "count": 2 } ] }
@@ -739,16 +673,13 @@ tag-`3` 载荷是一个 24 字节的小端序头部，后跟 `width × height ×
 | `file` | 字符串 | 同级文件名——规范化路径的 MD5 加上 `.json` |
 | `count` | 数字 | 该分片中的诊断数量 |
 
-每个 `<md5>.json` 都保存与 `diagnostics.json` 相同的 `files[]` 条目结构。过期的分片——任何
-名称不再是活动键的 `*.json`（`index.json` 除外）——会在每次写入时被删除。
-所有三个接收端（`diagnostics.json`、`diagnostics/`、数据库）会一同重写。
+每个 `<md5>.json` 都保存与 `diagnostics.json` 相同的 `files[]` 条目结构。过期的分片——任何名称不再是活动键的 `*.json`（`index.json` 除外）——会在每次写入时被删除。所有三个接收端（`diagnostics.json`、`diagnostics/`、数据库）会一同重写。
 
 <a id="bridgedb"></a>
 
 ### `bridge.db`
 
-SQLite，以 `PRAGMA journal_mode=WAL` 和 `PRAGMA synchronous=NORMAL` 以读写创建模式打开，因此
-`bridge.db-wal` 和 `bridge.db-shm` 会出现在它旁边。
+SQLite，以 `PRAGMA journal_mode=WAL` 和 `PRAGMA synchronous=NORMAL` 以读写创建模式打开，因此 `bridge.db-wal` 和 `bridge.db-shm` 会出现在它旁边。
 
 ```sql
 CREATE TABLE IF NOT EXISTS meta(
@@ -784,18 +715,12 @@ CREATE INDEX IF NOT EXISTS idx_settings_mappings_kind_alias
 | `substrate_builtins` | 每个 `Substrate.*` 内置项一行，完整清单条目在 `json` 中 |
 | `diagnostics` | 每个源文件一行，该文件的诊断数组在 `json` 中 |
 
-`meta` 键：`settings.generatedAt`、`materialExpressions.generatedAt`、
-`substrateBuiltins.generatedAt`、`diagnostics.updatedAt`。
+`meta` 键：`settings.generatedAt`、`materialExpressions.generatedAt`、 `substrateBuiltins.generatedAt`、`diagnostics.updatedAt`。
 
 > [!WARNING]
-> 该数据库**从插件一侧看是只写的**，且不是持久状态。它会在
-> 桥接启动*和*关闭时被删除，并且每个写入者都会在一个事务内替换其整张表（先 `DELETE FROM` 再插入）
-> 而不是更新行。插件中没有任何东西会读回行。不要在其中存储客户端状态；
-> 把它视为 JSON 产物的一种便于查询的镜像，仅在编辑器运行时有效。
+> 该数据库**从插件一侧看是只写的**，且不是持久状态。它会在桥接启动*和*关闭时被删除，并且每个写入者都会在一个事务内替换其整张表（先 `DELETE FROM` 再插入）而不是更新行。插件中没有任何东西会读回行。不要在其中存储客户端状态；把它视为 JSON 产物的一种便于查询的镜像，仅在编辑器运行时有效。
 
-打开数据库失败只是一个警告——`Failed to open DreamShader bridge database: {Path}`，或
-`Failed to open DreamShader bridge database for diagnostics: {Path}`——并且 JSON 接收端仍会被
-写入。替换的是数据库路径，而不是原因。
+打开数据库失败只是一个警告——`Failed to open DreamShader bridge database: {Path}`，或 `Failed to open DreamShader bridge database for diagnostics: {Path}`——并且 JSON 接收端仍会被写入。替换的是数据库路径，而不是原因。
 
 <a id="manifests"></a>
 
@@ -812,7 +737,7 @@ CREATE INDEX IF NOT EXISTS idx_settings_mappings_kind_alias
 | 清单 | 条目字段 |
 | :-- | :-- |
 | `settings.json` | `alias`、`value`（数字）、`name`、`displayName`、`source`（`user` 或 `builtin`） |
-| `material-expressions.json` | `name`、`className`、`pathName`、`defaultOutputType`、`properties[]`（`name`、`type`、`isInput`）、`inputs[]`、`outputs[]`（`index`、`name`、`componentCount`、`outputType`） |
+| `material-expressions.json` | `name`, `className`, `pathName`, `defaultOutputType`, `properties[]` (`name`, `type`, `isInput`), `inputs[]`, `outputs[]` (`index`, `name`, `componentCount`, `outputType`) |
 | `substrate-builtins.json` | `name`、`qualifiedName`、`className`、`outputType`、`isSubstrateOutput`、`detail`、`example`、`snippet`、`parameters[]`（`qualifier` —— 始终为 `in` ——、`type`、`name`、可选的 `placeholder`） |
 
 用户定义的别名条目会先于内置别名条目输出，归一化形式已被用户别名占用的内置别名会被丢弃。别名在每种类型内部分别排序。材质表达式按 `name` 排序。
@@ -820,17 +745,9 @@ CREATE INDEX IF NOT EXISTS idx_settings_mappings_kind_alias
 `pass-keys.json` *（自 2.1.0 起）* 紧跟在 `settings.json` 之后写入，写入时机相同，因为它列出的 pass 层也是项目设置。Schema `DreamShader.PassKeys`，版本 `1`；它没有 `bridge.db` 表。其内容位于 [工作区](workspace.md#pass-keysjson)。
 
 > [!NOTE]
-> 在 UE 5.4 以下，`substrate-builtins.json` 带有一个空的 `builtins` 数组、`"supported": false` 和
-> `"unsupportedReason": "Substrate builtins require Unreal Engine 5.4 or newer."`，并且
-> `MSM_Strata` 着色模型被排除在 `settings.json` 之外。
+> 在 UE 5.4 以下，`substrate-builtins.json` 带有一个空的 `builtins` 数组、`"supported": false` 和 `"unsupportedReason": "Substrate builtins require Unreal Engine 5.4 or newer."`，并且 `MSM_Strata` 着色模型被排除在 `settings.json` 之外。
 
-日志记录：`Wrote DreamShader MaterialExpression manifest: {Path}` /
-`Failed to write DreamShader MaterialExpression manifest: {Path}`、
-`Wrote DreamShader settings manifest: {Path}` /
-`Failed to write DreamShader settings manifest: {Path}`，以及
-`Wrote DreamShader Substrate builtin manifest: {Path}` /
-`Failed to write DreamShader Substrate builtin manifest: {Path}`。无法读取的设置会产生
-`Failed to read DreamShader settings for Bridge manifest.` 并且不生成文件。
+日志记录：`Wrote DreamShader MaterialExpression manifest: {Path}` / `Failed to write DreamShader MaterialExpression manifest: {Path}`、 `Wrote DreamShader settings manifest: {Path}` / `Failed to write DreamShader settings manifest: {Path}`，以及 `Wrote DreamShader Substrate builtin manifest: {Path}` / `Failed to write DreamShader Substrate builtin manifest: {Path}`。无法读取的设置会产生 `Failed to read DreamShader settings for Bridge manifest.` 并且不生成文件。
 
 <a id="previewjson"></a>
 
@@ -850,9 +767,7 @@ CREATE INDEX IF NOT EXISTS idx_settings_mappings_kind_alias
 | `message` | 字符串 | 成功或错误文本 |
 | `updatedAtUtc` | 字符串 | ISO-8601 UTC |
 
-PNG 名称是 `<sanitized source stem>-<crc32 of the project-relative path, 8 hex digits>.png`，位于
-`Bridge/Preview/` 下；如果某个源的主干名净化后为空，则变为 `DreamShaderPreview`。因此同一个
-源始终映射到同一个文件名，并且每次渲染都会覆盖它。
+PNG 名称是 `<sanitized source stem>-<crc32 of the project-relative path, 8 hex digits>.png`，位于 `Bridge/Preview/` 下；如果某个源的主干名净化后为空，则变为 `DreamShaderPreview`。因此同一个源始终映射到同一个文件名，并且每次渲染都会覆盖它。
 
 <a id="kill-switch"></a>
 
@@ -871,9 +786,7 @@ PNG 名称是 `<sanitized source stem>-<crc32 of the project-relative path, 8 he
 | 工具菜单、工具栏、上下文菜单 | 不注册 |
 | Cook 钩子 | 不受影响——它安装在另一条代码路径上 |
 
-在 commandlet 进程中，无论是否带该开关，桥接也永远不会创建；请参阅
-[Commandlet](commandlet.md)。对于在普通编辑器进程中运行的自动化任务（例如 `-ExecCmds="Automation RunTests …"`），如果必须没有文件监视器、生成 pass 或
-监听套接字，请使用该开关。
+在 commandlet 进程中，无论是否带该开关，桥接也永远不会创建；请参阅 [Commandlet](commandlet.md)。对于在普通编辑器进程中运行的自动化任务（例如 `-ExecCmds="Automation RunTests …"`），如果必须没有文件监视器、生成 pass 或监听套接字，请使用该开关。
 
 <a id="example"></a>
 

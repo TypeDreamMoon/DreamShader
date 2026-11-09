@@ -1,8 +1,3 @@
----
-title: "发布"
-description: "发布"
----
-
 <a id="release"></a>
 
 # 发布
@@ -83,13 +78,9 @@ workflow_dispatch(version = [<slug>], prerelease = { true | false })
 
 ## 归档内容
 
-暂存目录为 `<RUNNER_TEMP>/DreamShaderRelease/DreamShader/`，它会被压缩为
-`artifacts/DreamShader-<slug>.zip`。归档的唯一顶层条目是文件夹 `DreamShader`，
-安装说明会告诉用户将其放入 `Plugins/`。
+暂存目录为 `<RUNNER_TEMP>/DreamShaderRelease/DreamShader/`，它会被压缩为 `artifacts/DreamShader-<slug>.zip`。归档的唯一顶层条目是文件夹 `DreamShader`，安装说明会告诉用户将其放入 `Plugins/`。
 
-共复制十一个项目。缺失的项目会被跳过而非导致发布失败，但如今它
-会在运行摘要上发出 `::warning::` 注释——正是这种沉默导致其中三项直到
-`1.5.0` 都未出现在任何归档中，而无人察觉。
+共复制十一个项目。缺失的项目会被跳过而非导致发布失败，但如今它会在运行摘要上发出 `::warning::` 注释——正是这种沉默导致其中三项直到 `1.5.0` 都未出现在任何归档中，而无人察觉。
 
 | 随附 | |
 | :-- | :-- |
@@ -117,29 +108,15 @@ workflow_dispatch(version = [<slug>], prerelease = { true | false })
 | `Binaries/`、`Intermediate/` | 归档为**仅源代码**；使用方首次启动编辑器时会编译这四个模块 |
 
 > [!NOTE]
-> 直到并包括 `1.5.0`，归档都未随附 `Shaders/` 文件夹，因此任何解析
-> `/Plugin/DreamShader/...` 的内容在由发布 zip 安装的环境中都没有文件可读。由这些归档进行的安装
-> 仍需要手动复制入 `Shaders/DreamShaderBuiltins.ush`。参见
-> [HLSL 库](../builtins/hlsl-library.md)。
+> 直到并包括 `1.5.0`，归档都未随附 `Shaders/` 文件夹，因此任何解析 `/Plugin/DreamShader/...` 的内容在由发布 zip 安装的环境中都没有文件可读。由这些归档进行的安装仍需要手动复制入 `Shaders/DreamShaderBuiltins.ush`。参见 [HLSL 库](../builtins/hlsl-library.md)。
 
 > [!NOTE]
-> 从 `1.6.0`（首个具有 `zh-Hans` 翻译的版本）直到并包括 `2.1.1`，
-> 归档都未随附 `Content/` 文件夹。它从未出现在列表中，因此也没有任何警告标记它。
-> 在由这些 zip 之一安装的环境中，描述符的 `LocalizationTargets` 条目找不到
-> 可加载的内容，DreamShader 的编辑器文本即使在 `zh-Hans` 编辑器中仍保持英文。从匹配标签的仓库中
-> 手动复制入 `Content/Localization/` 即可修复。自 `2.1.2` 起，
-> 工作流会像 `BuildPlugin` 一样完整复制 `Content/`，因此之后在其下添加的任何内容
-> 也会随附。参见 [本地化](index.md#localization)。
+> 从 `1.6.0`（首个具有 `zh-Hans` 翻译的版本）直到并包括 `2.1.1`，归档都未随附 `Content/` 文件夹。它从未出现在列表中，因此也没有任何警告标记它。在由这些 zip 之一安装的环境中，描述符的 `LocalizationTargets` 条目找不到可加载的内容，DreamShader 的编辑器文本即使在 `zh-Hans` 编辑器中仍保持英文。从匹配标签的仓库中手动复制入 `Content/Localization/` 即可修复。自 `2.1.2` 起，工作流会像 `BuildPlugin` 一样完整复制 `Content/`，因此之后在其下添加的任何内容也会随附。参见 [本地化](index.md#localization)。
 >
-> 与上面的列表不同，这一点不依赖警告。压缩后，该步骤会打开
-> zip，并对描述符中每一个 `LocalizationTargets` 条目，要求存在
-> `Content/Localization/<Name>/<Name>.locmeta` 以及仓库为其提供的每一个 `<culture>/<Name>.locres`；
-> 缺失任何一个都会导致发布失败。
+> 与上面的列表不同，这一点不依赖警告。压缩后，该步骤会打开 zip，并对描述符中每一个 `LocalizationTargets` 条目，要求存在 `Content/Localization/<Name>/<Name>.locmeta` 以及仓库为其提供的每一个 `<culture>/<Name>.locres`；缺失任何一个都会导致发布失败。
 
 > [!NOTE]
-> 归档不随附 `Binaries/`，因此插件由使用方项目编译。这
-> 需要 C++ 项目（或已转换为 C++ 的项目）以及匹配的引擎工具链——关于 UE 5.3 和 5.4 的 MSVC 注意事项参见
-> [贡献](index.md#engine-versions)。
+> 归档不随附 `Binaries/`，因此插件由使用方项目编译。这需要 C++ 项目（或已转换为 C++ 的项目）以及匹配的引擎工具链——关于 UE 5.3 和 5.4 的 MSVC 注意事项参见[贡献](index.md#engine-versions)。
 
 <a id="release-notes"></a>
 
@@ -196,19 +173,12 @@ workflow_dispatch(version = [<slug>], prerelease = { true | false })
 
 ## 说明
 
-- 工作流从不构建插件。它暂存文件并发布它们；编译发生在
-  使用者的机器上。在打标签前自行运行 `RunUAT BuildPlugin`——参见
-  [贡献](index.md#building)。
+- 工作流从不构建插件。它暂存文件并发布它们；编译发生在使用者的机器上。在打标签前自行运行 `RunUAT BuildPlugin`——参见[贡献](index.md#building)。
 - 工作流也从不会运行自动化测试套件。参见 [测试](testing.md)。
 - 对现有标签重新运行工作流是安全的：资源会被覆盖，说明会从当前 `CHANGELOG.md` 重写。
-- **删除已有发布的标签会将该发布变为草稿。** 重新推送标签会重新运行工作流，
-  但工作流会*编辑*现有发布而不是创建新发布，因此它会保持草稿状态——对用户不可见，
-  而上一版本会保留 *Latest* 徽章。最后用 `gh release edit v<slug> --draft=false --latest` 收尾。在重新发布
-  `v1.5.1` 时观察到。
-- VSCode 扩展从其自己的仓库发布。工作流始终拉取该仓库的**最新**发布，
-  因此如果在扩展发布过程中发布插件版本，会附带先前的 `.vsix`。
-- 描述符中的 `DocsURL` 指向 <https://shader.toolchain.64hz.cn/>，后者由 `Docs/` 构建。
-  `Docs/` 树会随归档一起发布，因此手册也可在插件旁边离线使用。
+- **删除已有发布的标签会将该发布变为草稿。** 重新推送标签会重新运行工作流，但工作流会*编辑*现有发布而不是创建新发布，因此它会保持草稿状态——对用户不可见，而上一版本会保留 *Latest* 徽章。最后用 `gh release edit v<slug> --draft=false --latest` 收尾。在重新发布 `v1.5.1` 时观察到。
+- VSCode 扩展从其自己的仓库发布。工作流始终拉取该仓库的**最新**发布，因此如果在扩展发布过程中发布插件版本，会附带先前的 `.vsix`。
+- 描述符中的 `DocsURL` 指向 <https://shader.toolchain.64hz.cn/>，后者由 `Docs/` 构建。 `Docs/` 树会随归档一起发布，因此手册也可在插件旁边离线使用。
 
 <a id="example"></a>
 
@@ -252,5 +222,4 @@ zip layout   DreamShader/Source/  DreamShader/Resources/  DreamShader/Shaders/
 - [HLSL 库](../builtins/hlsl-library.md) — `DreamShaderBuiltins.ush`，自 `1.5.1` 起随归档发布
 - [工作区和编辑器扩展](../tools/workspace.md) — 随插件一起发布的 VSCode 扩展
 - [DreamShader 模块](../api/dreamshader-module.md) — 启动时注册的 `/Plugin/DreamShader` 着色器映射
-- [DreamShader 参考](../index.md) — `Docs/` 文件夹所变成的手册
-</content>
+- [DreamShader 参考](../index.md) — `Docs/` 文件夹所变成的手册 </content>

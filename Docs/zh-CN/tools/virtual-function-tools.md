@@ -1,16 +1,10 @@
----
-title: "VirtualFunction 工具"
-description: "VirtualFunction 工具"
----
-
 <a id="virtualfunction-tools"></a>
 
 # VirtualFunction 工具
 
 > [DreamShader](../index.md) » [工具](index.md) » **VirtualFunction 工具**
 
-为现有 `UMaterialFunction` 资源生成、打开和刷新
-[`VirtualFunction`](../language/virtual-function.md) 声明的编辑器操作，以及使这些声明与其指定资源保持同步的启动服务。
+为现有 `UMaterialFunction` 资源生成、打开和刷新 [`VirtualFunction`](../language/virtual-function.md) 声明的编辑器操作，以及使这些声明与其指定资源保持同步的启动服务。
 
 | | |
 | :-- | :-- |
@@ -23,9 +17,7 @@ description: "VirtualFunction 工具"
 
 ## 上下文菜单
 
-每次右键单击时都会重新构建 **VirtualFunction** 部分。在构建它之前，编辑器
-会在每个项目源文件中搜索 `VirtualFunction` 声明，其解析后的资源与
-所选 `UMaterialFunction` 匹配。**你获得的条目取决于搜索结果。**
+每次右键单击时都会重新构建 **VirtualFunction** 部分。在构建它之前，编辑器会在每个项目源文件中搜索 `VirtualFunction` 声明，其解析后的资源与所选 `UMaterialFunction` 匹配。**你获得的条目取决于搜索结果。**
 
 <a id="when-a-declaration-already-exists"></a>
 
@@ -50,19 +42,10 @@ description: "VirtualFunction 工具"
 | `DreamShader.CreateVirtualFunctionPrototype` | **Create extern Prototype (2.0)** *（自 2.0.0 起）* | “创建一个包含此材质函数 2.0 extern 原型的 .dsh 文件，供 .dss 源 #include。” | `Icons.Save` | 将该原型写入新的 `.dsh` 并打开它 |
 | `DreamShader.CopyVirtualFunctionCall` | **CopyVirtualFunctionCall** | “复制此 VirtualFunction 的 DreamShader Graph 调用示例。” | `GenericCommands.Copy` | 将调用示例复制到剪贴板 |
 
-匹配依据是声明解析后的资源对象路径，比较时不区分大小写；第一个
-匹配项胜出。有两种拼写形式算作声明：任何源文件中的 1.x `VirtualFunction` 块，以及
-*（自 2.0.0 起）* `.dsh` 或 `.dss` 中带有 `/// @asset` 行的 `extern` 原型。由于
-查找会读取文件，刚刚手写的声明会立即被找到——启动时不会
-缓存任何内容。
+匹配依据是声明解析后的资源对象路径，比较时不区分大小写；第一个匹配项胜出。有两种拼写形式算作声明：任何源文件中的 1.x `VirtualFunction` 块，以及*（自 2.0.0 起）* `.dsh` 或 `.dss` 中带有 `/// @asset` 行的 `extern` 原型。由于查找会读取文件，刚刚手写的声明会立即被找到——启动时不会缓存任何内容。
 
 > [!WARNING]
-> 该查找**会重新枚举并重新读取每个源文件**（`.dsm`、`.dsh`、`.dsf`、`.dss`、`.dsi`、
-> `.dsp`），位于每个源根目录下、每个根目录的 `Packages` 文件夹之外，从磁盘读取，在每次
-> 右键单击材质函数资源时都会执行；提及 `extern` 和
-> `@asset` 的 `.dsh` 或 `.dss` 也会被解析。开销随源文件数量增长，并在
-> 上下文菜单出现之前产生。没有缓存，也无法禁用它，除非
-> `-NoDreamShaderEditorBridge`，而那样会完全移除菜单。
+> 该查找**会重新枚举并重新读取每个源文件**（`.dsm`、`.dsh`、`.dsf`、`.dss`、`.dsi`、 `.dsp`），位于每个源根目录下、每个根目录的 `Packages` 文件夹之外，从磁盘读取，在每次右键单击材质函数资源时都会执行；提及 `extern` 和 `@asset` 的 `.dsh` 或 `.dss` 也会被解析。开销随源文件数量增长，并在上下文菜单出现之前产生。没有缓存，也无法禁用它，除非 `-NoDreamShaderEditorBridge`，而那样会完全移除菜单。
 
 <a id="actions"></a>
 
@@ -79,10 +62,7 @@ description: "VirtualFunction 工具"
 | **CopyVirtualFunctionCall** | `Copied VirtualFunction call for {Asset}.` | 资源已不存在 · `DreamShader failed to build VirtualFunction call: {Error}` |
 
 > [!NOTE]
-> **对已有声明的资源执行 CreateVirtualFunction 会静默重定向到
-> OpenVirtualFunction。** 它绝不会写入重复文件。你收到的提示是
-> `Opened VirtualFunction definition: {File}`，而不是“已创建”消息。当任一拼写形式存在时，
-> *Create extern Prototype* 也会如此。
+> **对已有声明的资源执行 CreateVirtualFunction 会静默重定向到 OpenVirtualFunction。** 它绝不会写入重复文件。你收到的提示是 `Opened VirtualFunction definition: {File}`，而不是“已创建”消息。当任一拼写形式存在时， *Create extern Prototype* 也会如此。
 
 <a id="where-the-file-is-written"></a>
 
@@ -96,8 +76,7 @@ description: "VirtualFunction 工具"
 | 编码 | UTF-8 无 BOM |
 | 写入后 | 通过首选编辑器链打开——VSCode，然后是操作系统默认编辑器，最后是记事本 |
 
-在此写入的 `.dsh` 会像任何其他头文件一样被源目录监视器拾取，因此
-导入它的材质会自动重新编译。
+在此写入的 `.dsh` 会像任何其他头文件一样被源目录监视器拾取，因此导入它的材质会自动重新编译。
 
 <a id="the-generated-declaration"></a>
 
@@ -164,8 +143,7 @@ VirtualFunction(Name="<SanitizedName>")
 
 ### 可选输入与默认值
 
-当资源将某个输入标记为使用其预览值作为默认值时，该输入会加上 `opt` 前缀。
-默认字面量根据该预览值渲染：
+当资源将某个输入标记为使用其预览值作为默认值时，该输入会加上 `opt` 前缀。默认字面量根据该预览值渲染：
 
 | 输入类型 | 默认字面量 |
 | :-- | :-- |
@@ -177,9 +155,7 @@ VirtualFunction(Name="<SanitizedName>")
 | 其他任何类型 | *（空——` = ` 后缀被完全省略）* |
 
 > [!WARNING]
-> 被标记为可选的纹理或材质属性输入会获得 `opt` 前缀，但**没有默认
-> 值**，因为不存在可用于它的字面量语法。请在调用处提供该参数，或编辑
-> 声明。
+> 被标记为可选的纹理或材质属性输入会获得 `opt` 前缀，但**没有默认值**，因为不存在可用于它的字面量语法。请在调用处提供该参数，或编辑声明。
 
 <a id="metadata-suffix"></a>
 
@@ -232,22 +208,16 @@ VirtualFunction(Name="<SanitizedName>")
 | `MaterialFunction '{Name}' does not have a valid package path.` | 该资源没有可用于构建字面量的包 |
 | `MaterialFunction '{Name}' does not expose any outputs.` | 声明构建器未找到任何输出 |
 
-复制的文本是 1.x 文本的模板。请用真实的 `Graph` 值替换占位参
-数名，并在需要不同输出时更改 `OutputIndex`。参见[调用](../graph/calls.md)。
-将 `default` 作为参数是遗留规则（L25）：仅适用于 1.x 文本，且
-[`dsc migrate`](migrate.md#what-the-rewrite-does) 会将其改写为具名参数。
+复制的文本是 1.x 文本的模板。请用真实的 `Graph` 值替换占位参数名，并在需要不同输出时更改 `OutputIndex`。参见[调用](../graph/calls.md)。将 `default` 作为参数是遗留规则（L25）：仅适用于 1.x 文本，且 [`dsc migrate`](migrate.md#what-the-rewrite-does) 会将其改写为具名参数。
 
 <a id="startup-sync-service"></a>
 
 ## 启动同步服务
 
-每个编辑器会话中，在桥接启动时，DreamShader 会重新读取项目中的每个 `VirtualFunction` 声
-明，从实时资源重建它，并在文本发生变化时将文件写回。
+每个编辑器会话中，在桥接启动时，DreamShader 会重新读取项目中的每个 `VirtualFunction` 声明，从实时资源重建它，并在文本发生变化时将文件写回。
 
 > [!WARNING]
-> **没有针对此操作的监视器。** 编辑 `UMaterialFunction` 的输入或输出不会
-> 刷新声明；保存 `.dsh` 也不会。声明只会在下一次编辑器启动时
-> 重新同步。
+> **没有针对此操作的监视器。** 编辑 `UMaterialFunction` 的输入或输出不会刷新声明；保存 `.dsh` 也不会。声明只会在下一次编辑器启动时重新同步。
 
 | 方面 | 行为 |
 | :-- | :-- |
@@ -262,43 +232,28 @@ VirtualFunction(Name="<SanitizedName>")
 | 改写顺序 | 替换按起始偏移量从大到小、从后往前应用，因此较早的偏移量保持有效 |
 | 写回 | 整个文件，UTF-8 无 BOM |
 
-由于扫描器是手写词法分析器而非前端，它能在文件合法存放声明的任何位置找到声明
-——包括在 `.dsm` 内部、与 `Shader` 块并存的情况。
+由于扫描器是手写词法分析器而非前端，它能在文件合法存放声明的任何位置找到声明 ——包括在 `.dsm` 内部、与 `Shader` 块并存的情况。
 
 <a id="conditional-sources-are-refused-since-190"></a>
 
 ### 条件源会被拒绝 *（自 1.9.0 起）*
 
-包含任何[预处理器指令](../language/preprocessor.md)的源文件不会被同步。它会被
-报告一次，为 `DSH9001`，并完全保持原样。
+包含任何[预处理器指令](../language/preprocessor.md)的源文件不会被同步。它会被报告一次，为 `DSH9001`，并完全保持原样。
 
-原因在于写回，而非读取。同步会将 `StartIndex` / `EndIndex` 记录为**字节**
-偏移量，并将重建的声明拼接到该范围上。预处理器保证行数
-守恒——这只能换来**行**对齐，别无其他，因为被切掉的行会被替换为
-*更短的*空行。因此，第一个切割点之后的每个字节偏移量都指向错误的位置，而
-契约中没有可用于修正的偏移映射。如果经过预处理的字符串到达了
-`SaveStringToFile`，文件中的每个死分支都会被永久压平。
+原因在于写回，而非读取。同步会将 `StartIndex` / `EndIndex` 记录为**字节**偏移量，并将重建的声明拼接到该范围上。预处理器保证行数守恒——这只能换来**行**对齐，别无其他，因为被切掉的行会被替换为*更短的*空行。因此，第一个切割点之后的每个字节偏移量都指向错误的位置，而契约中没有可用于修正的偏移映射。如果经过预处理的字符串到达了 `SaveStringToFile`，文件中的每个死分支都会被永久压平。
 
-这与 [Adopt](../generation/divergence.md#adopt-into-source) 是同一类意外，而且在某一点上更为严重：Adopt 是
-由人选择的菜单项，而此服务会在桥接启动时**无人值守地运行**，
-遍历项目中的每个可写源文件。
+这与 [Adopt](../generation/divergence.md#adopt-into-source) 是同一类意外，而且在某一点上更为严重：Adopt 是由人选择的菜单项，而此服务会在桥接启动时**无人值守地运行**，遍历项目中的每个可写源文件。
 
 > [!NOTE]
-> 只有在 `VirtualFunction` 子字符串测试之后才会到达该门控，因此一个不包含声明
-> 的条件材质——同步本来也永远不会改写它——不会在每次编辑器启动时都报告错误。
+> 只有在 `VirtualFunction` 子字符串测试之后才会到达该门控，因此一个不包含声明的条件材质——同步本来也永远不会改写它——不会在每次编辑器启动时都报告错误。
 >
-> 同一扫描器的**只读**使用者不受影响，会继续扫描原始文本：[上下文菜
-> 单](#context-menu)、*Open Virtual Function* 以及复制的[调用示例](#the-call-example)
-> 都会看到所有分支的并集。这与依赖图所遵循的规则一致，而且出于同样的
-> 原因它是安全的——读取所有分支会过度报告，而过度报告是无害的。
+> 同一扫描器的**只读**使用者不受影响，会继续扫描原始文本：[上下文菜单](#context-menu)、*Open Virtual Function* 以及复制的[调用示例](#the-call-example) 都会看到所有分支的并集。这与依赖图所遵循的规则一致，而且出于同样的原因它是安全的——读取所有分支会过度报告，而过度报告是无害的。
 
 <a id="sync-diagnostics"></a>
 
 ### 同步诊断
 
-下面的每条消息都会记录阶段 `virtualFunctionSync`、代码 `virtual-function-sync`、
-源 `DreamShader VirtualFunction` 和严重性 `error`——这是同步产生的唯一严重性。
-它们会到达 `diagnostics.json`、分片的 `diagnostics/` 目录和 `bridge.db`。
+下面的每条消息都会记录阶段 `virtualFunctionSync`、代码 `virtual-function-sync`、源 `DreamShader VirtualFunction` 和严重性 `error`——这是同步产生的唯一严重性。它们会到达 `diagnostics.json`、分片的 `diagnostics/` 目录和 `bridge.db`。
 
 | 消息 | 原因 |
 | :-- | :-- |

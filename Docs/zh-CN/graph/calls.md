@@ -1,8 +1,3 @@
----
-title: "调用"
-description: "调用"
----
-
 <a id="calls"></a>
 
 # 调用
@@ -17,7 +12,7 @@ description: "调用"
 | 种类 | 表达式形式和语句形式 |
 | 生成 | `UMaterialExpressionCustom`（`Function`、`GraphFunction`）、`UMaterialExpressionMaterialFunctionCall`（`ShaderFunction`、`VirtualFunction`）、`UMaterialExpressionStaticSwitchParameter`（静态开关调用），或参数自身的节点并接好其输入引脚（参数调用） |
 
-`.dsm` / `.dsf` 由 legacy 前端读取，由 2.0 绑定器绑定 *(自 2.0.0 起)*。本页的调用写法构建的节点和以前一样；1.x 调用与 `.dss` 调用读法不同的地方，由编号的 legacy 规则处理，并用自己的码说明。每种调用的 `.dss` 写法见 [`dsc migrate`](../../tools/migrate.md#what-the-rewrite-does)。
+`.dsm` / `.dsf` 由 legacy 前端读取，由 2.0 绑定器绑定 *(自 2.0.0 起)*。本页的调用写法构建的节点和以前一样；1.x 调用与 `.dss` 调用读法不同的地方，由编号的 legacy 规则处理，并用自己的码说明。每种调用的 `.dss` 写法见 [`dsc migrate`](../tools/migrate.md#what-the-rewrite-does)。
 
 <a id="synopsis"></a>
 
@@ -108,8 +103,7 @@ F_PulseTint(BaseColor, Tint, TintedColor, PulseAmount);
 | 全部为位置参数；每个输出至少一个，每个输入和输出至多一个 | 最后几个接收输出，每个一个，按声明顺序——函数有返回值时返回值排第一；它们前面的是输入，按顺序（legacy 规则 L5） |
 | 任何命名参数，或数量超出该范围 | 像 `.dss` 调用一样按声明顺序和名字匹配到参数：太多是 `DSH4224`，没有参数的输入或输出是 `DSH4217` |
 
-在第一种读法中，未被覆盖的输入必须声明为 `opt` 或传入 `default`，否则
-`DSH4217`。每个声明的输出都必须收到一个目标——无法丢弃其中一个。
+在第一种读法中，未被覆盖的输入必须声明为 `opt` 或传入 `default`，否则 `DSH4217`。每个声明的输出都必须收到一个目标——无法丢弃其中一个。
 
 <a id="out-target-rules"></a>
 
@@ -123,9 +117,7 @@ F_PulseTint(BaseColor, Tint, TintedColor, PulseAmount);
 | 一个变量被命名为两个输出 | 不报告 |
 
 > [!NOTE]
-> out 目标的拼写与某个声明只差大小写时，它就是那个声明，并带有 `DSH5275` ——
-> 而不是第二个变量 *（自 2.0.0 起）*。只有当任何大小写下都没有声明某个名字时，它才会
-> 成为新的局部变量。
+> out 目标的拼写与某个声明只差大小写时，它就是那个声明，并带有 `DSH5275` —— 而不是第二个变量 *（自 2.0.0 起）*。只有当任何大小写下都没有声明某个名字时，它才会成为新的局部变量。
 
 <a id="arguments"></a>
 
@@ -141,13 +133,9 @@ F_PulseTint(BaseColor, Tint, TintedColor, PulseAmount);
 | 带输入引脚的参数 | 拒绝：[`DSH5259`](../diagnostics/DSH5xxx.md#dsh5259) | 必须：该节点的一个引脚 |
 | `StaticSwitchParameter` | 下标 0 = true 分支，下标 1 = false 分支 | `True`/`A`、`False`/`B` |
 
-位置参数在前、命名参数在后；反过来是 `DSH2158`。同一个参数被给了两次——按位置和按名字，或按名字两次——是 [`DSH4215`](../diagnostics/DSH4xxx.md#dsh4215)。
-在语句调用中，命名参数会关闭末尾接收输出的读法（见
-[语句形式](#statement-form)）。
+位置参数在前、命名参数在后；反过来是 `DSH2158`。同一个参数被给了两次——按位置和按名字，或按名字两次——是 [`DSH4215`](../diagnostics/DSH4xxx.md#dsh4215)。在语句调用中，命名参数会关闭末尾接收输出的读法（见[语句形式](#statement-form)）。
 
-参数名精确比较，带上面的 `DSH5275` 回退；节点引脚在另一种大小写下匹配时警告 [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276)。1.x 前端
-自己读取的名字——`Output`、`OutputName`、`OutputIndex`、`True`、`False`、`A`、`B`——匹配时
-忽略大小写。
+参数名精确比较，带上面的 `DSH5275` 回退；节点引脚在另一种大小写下匹配时警告 [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276)。1.x 前端自己读取的名字——`Output`、`OutputName`、`OutputIndex`、`True`、`False`、`A`、`B`——匹配时忽略大小写。
 
 <a id="default"></a>
 
@@ -155,8 +143,7 @@ F_PulseTint(BaseColor, Tint, TintedColor, PulseAmount);
 
 *（自 1.2.3 起）*
 
-`default` 是一个裸标识符，用于占住一个有意留空的输入（legacy 规则 L25）。
-它**区分大小写**地匹配 *（自 2.0.0 起）*，且仅在没有声明同名变量时生效。
+`default` 是一个裸标识符，用于占住一个有意留空的输入（legacy 规则 L25）。它**区分大小写**地匹配 *（自 2.0.0 起）*，且仅在没有声明同名变量时生效。
 
 | 情况 | 行为 |
 | :-- | :-- |
@@ -171,10 +158,7 @@ F_PulseTint(BaseColor, Tint, TintedColor, PulseAmount);
 
 ## 输出选择
 
-`Output`、`OutputName` 和 `OutputIndex` 是 1.x 前端自己读取的命名参数：它会将它们从调用中移除，改为选择输出，
-如同在调用之后写 `.Name` 或 `[k]`。它们
-适用于任何函数种类的调用 *（`Function` 和 `GraphFunction` 自 2.0.0 起）*，也适用于 `UE.*`
-调用。
+`Output`、`OutputName` 和 `OutputIndex` 是 1.x 前端自己读取的命名参数：它会将它们从调用中移除，改为选择输出，如同在调用之后写 `.Name` 或 `[k]`。它们适用于任何函数种类的调用 *（`Function` 和 `GraphFunction` 自 2.0.0 起）*，也适用于 `UE.*` 调用。
 
 | 参数 | 接受 | 含义 |
 | :-- | :-- | :-- |
@@ -195,32 +179,24 @@ F_PulseTint(BaseColor, Tint, TintedColor, PulseAmount);
 | 所选输出必须存在于已加载的资产上——先按名字匹配，再不区分大小写，然后（对 `VirtualFunction`）按其声明位置匹配 | 发射资产时 [`DSH8221`](../diagnostics/DSH8xxx.md#dsh8221) |
 
 > [!WARNING]
-> 选择器使调用成为一个值。它不能用在语句调用中：被选中的调用是一个无人接收的表达式，
-> 即 `DSH2211`。
+> 选择器使调用成为一个值。它不能用在语句调用中：被选中的调用是一个无人接收的表达式，即 `DSH2211`。
 
-`UE.Expression(…)` 接受同样的三个选择器；节点没有的名字是
-[`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201)，超出其输出的下标是 `DSH5282`。见
-[UE.Expression](../builtins/ue-expression.md)。
+`UE.Expression(…)` 接受同样的三个选择器；节点没有的名字是 [`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201)，超出其输出的下标是 `DSH5282`。见 [UE.Expression](../builtins/ue-expression.md)。
 
 <a id="breakoutfloatncomponents"></a>
 
 ### `BreakOutFloatNComponents`
 
-名为 `BreakOutFloat2Components`、`BreakOutFloat3Components` 或 `BreakOutFloat4Components`
-（任意大小写）、第一个参数是位置参数、且带有输出选择器的调用会被**读作
-第一个参数的 swizzle**。不会产生 `MaterialFunctionCall` 节点，也不会查找该名字的
-函数 *（自 2.0.0 起）*。所选输出指名一个通道，其字母不区分大小写：
+名为 `BreakOutFloat2Components`、`BreakOutFloat3Components` 或 `BreakOutFloat4Components` （任意大小写）、第一个参数是位置参数、且带有输出选择器的调用会被**读作第一个参数的 swizzle**。不会产生 `MaterialFunctionCall` 节点，也不会查找该名字的函数 *（自 2.0.0 起）*。所选输出指名一个通道，其字母不区分大小写：
 
 | 输出名 | 通道 |
 | :-- | :-- |
-| `x`、`r`、`"0"` | 0 |
-| `y`、`g`、`"1"` | 1 |
-| `z`、`b`、`"2"` | 2 |
-| `w`、`a`、`"3"` | 3 |
+| `x`, `r`, `"0"` | 0 |
+| `y`, `g`, `"1"` | 1 |
+| `z`, `b`, `"2"` | 2 |
+| `w`, `a`, `"3"` | 3 |
 
-`OutputIndex=` 按下标选择同一通道。该通道必须位于名字所说的宽度之内（`BreakOutFloat2Components` 为 0–1）。否则
-——没有选择器、第一个参数是命名参数、通道超出宽度——该调用就是对同名函数的一次普通调用。两个选择器同时给出
-是 `DSH5252`。
+`OutputIndex=` 按下标选择同一通道。该通道必须位于名字所说的宽度之内（`BreakOutFloat2Components` 为 0–1）。否则 ——没有选择器、第一个参数是命名参数、通道超出宽度——该调用就是对同名函数的一次普通调用。两个选择器同时给出是 `DSH5252`。
 
 <a id="calling-a-parameter"></a>
 
@@ -232,8 +208,7 @@ F_PulseTint(BaseColor, Tint, TintedColor, PulseAmount);
 
 *(自 1.4.1 起)*
 
-节点自带输入引脚的已声明参数可以被“调用”，以接好这些引脚。前端把这类属性的**每一次**使用——调用或裸读取——都写成一次独立的
-`UE.Expression(Class = "<type>", ParameterName = "<name>", …)` 调用，声明的默认值和元数据作为参数，调用的参数接到引脚上 *(自 2.0.0 起)*。参数相同的使用经过去重 pass（[dedupe pass](node-reuse.md)）后是一个节点；裸读取和引脚调用的参数不同，所以是指向同一个材质参数的两个节点。纹理采样参数读的是它的 `RGBA` 输出。
+节点自带输入引脚的已声明参数可以被“调用”，以接好这些引脚。前端把这类属性的**每一次**使用——调用或裸读取——都写成一次独立的 `UE.Expression(Class = "<type>", ParameterName = "<name>", …)` 调用，声明的默认值和元数据作为参数，调用的参数接到引脚上 *(自 2.0.0 起)*。参数相同的使用经过去重 pass（[dedupe pass](node-reuse.md)）后是一个节点；裸读取和引脚调用的参数不同，所以是指向同一个材质参数的两个节点。纹理采样参数读的是它的 `RGBA` 输出。
 
 接受这种形式的参数节点类型完整清单：
 
@@ -247,10 +222,7 @@ F_PulseTint(BaseColor, Tint, TintedColor, PulseAmount);
 引脚名是节点自己的、引擎目录里列出的名字；另一种大小写带 `DSH5276` 解析。每个参数都必须是命名的（`DSH5259`），每个值都像任何 `UE.` 参数一样按引脚检查（[`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214)）。
 
 > [!NOTE]
-> 资产槽位——采样器参数指向的贴图、曲线或字体——是用 `[TextureSlot=Path(…)]` 这类声明元数据设置的，它会成为节点的一个属性参数。
-> 调用参数再指名声明已经设置过的属性是 `DSH4215`。既不是引脚也不是节点属性的名字是 [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213)；当
-> 它的值是图值时改为提示 [`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291)，节点建出来后按这个名字接引脚
-> （节点上没有这个引脚时 [`DSH8212`](../diagnostics/DSH8xxx.md#dsh8212)）。
+> 资产槽位——采样器参数指向的贴图、曲线或字体——是用 `[TextureSlot=Path(…)]` 这类声明元数据设置的，它会成为节点的一个属性参数。调用参数再指名声明已经设置过的属性是 `DSH4215`。既不是引脚也不是节点属性的名字是 [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213)；当它的值是图值时改为提示 [`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291)，节点建出来后按这个名字接引脚（节点上没有这个引脚时 [`DSH8212`](../diagnostics/DSH8xxx.md#dsh8212)）。
 
 <a id="staticswitchparameter"></a>
 
@@ -258,17 +230,14 @@ F_PulseTint(BaseColor, Tint, TintedColor, PulseAmount);
 
 *(自 1.2.3 起)*
 
-`StaticSwitchParameter` 属性**不**作为裸标识符解析（`DSH4200`）；它需要两个分支，所以只能
-通过调用形式读取。
+`StaticSwitchParameter` 属性**不**作为裸标识符解析（`DSH4200`）；它需要两个分支，所以只能通过调用形式读取。
 
 | 分支 | 参数名，按查找顺序 |
 | :-- | :-- |
 | true | 先 `True=`，再 `A=`，再位置下标 0 |
 | false | 先 `False=`，再 `B=`，再位置下标 1 |
 
-两个分支都必须存在（[`DSH5258`](../diagnostics/DSH5xxx.md#dsh5258)）；其他参数被丢弃并警告 [`DSH5254`](../diagnostics/DSH5xxx.md#dsh5254)。该调用成为一个
-`UE.Expression(Class = "StaticSwitchParameter", …)`，两个分支接在它的 `A` 和 `B` 引脚上，
-像任何 `UE.` 节点的引脚一样检查 *(自 2.0.0 起)*。
+两个分支都必须存在（[`DSH5258`](../diagnostics/DSH5xxx.md#dsh5258)）；其他参数被丢弃并警告 [`DSH5254`](../diagnostics/DSH5xxx.md#dsh5254)。该调用成为一个 `UE.Expression(Class = "StaticSwitchParameter", …)`，两个分支接在它的 `A` 和 `B` 引脚上，像任何 `UE.` 节点的引脚一样检查 *(自 2.0.0 起)*。
 
 ```c
 vec3 Albedo = UseDetail(True = DetailColor, False = BaseColor);
@@ -290,8 +259,7 @@ vec3 Albedo = UseDetail(True = DetailColor, False = BaseColor);
 
 ## 诊断
 
-每个诊断都有稳定的代码；代码的页面里有消息和处理方法。消息以 `<file>(<line>,<col>): DSHnnnn: <message>` 报告，位置在它
-所指的调用或参数上。
+每个诊断都有稳定的代码；代码的页面里有消息和处理方法。消息以 `<file>(<line>,<col>): DSHnnnn: <message>` 报告，位置在它所指的调用或参数上。
 
 <a id="resolution-and-dispatch"></a>
 
@@ -455,7 +423,7 @@ Shader(Name="Docs/M_Calls")
 }
 ```
 
-`Helpers.dsh`：
+`Helpers.dsh`:
 
 ```c
 Function float Luma(in vec3 color) { return dot(color, float3(0.299, 0.587, 0.114)); }
@@ -501,7 +469,7 @@ StaticSwitchParameter  UseTint         -> Color
 - [`VirtualFunction`](../language/virtual-function.md) —— 声明现有的 `UMaterialFunction`
 - [`Namespace`](../language/namespace.md) —— `::` 限定名与禁止嵌套规则
 - [输入 / 输出 / 结果](../language/inputs-outputs.md) —— `in` / `out` / `opt` 与声明的默认值
-- [图中的参数](../../parameters/graph-usage.md) —— 读取参数与引脚调用形式
+- [图中的参数](../parameters/graph-usage.md) —— 读取参数与引脚调用形式
 - [UE.Expression](../builtins/ue-expression.md) —— 通用节点内置及其输出选择器
 - [节点复用](node-reuse.md) —— 哪些调用节点会被去重
 - [`dsc migrate`](../tools/migrate.md) —— 本页每条 legacy 规则在 `.dss` 中的写法

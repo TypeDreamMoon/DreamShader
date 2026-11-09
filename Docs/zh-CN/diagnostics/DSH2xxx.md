@@ -1,14 +1,8 @@
----
-title: "DSH2xxx —— 词法分析器与语法"
-description: "DSH2xxx —— 词法分析器与语法"
----
-
 <a id="dsh2xxx-----lexer-and-syntax"></a>
 
 # DSH2xxx —— 词法分析器与语法
 
-> 生成标记之间的内容由 `.skill/gen-diagnostics.ps1` 编写。
-> 标记下方的所有内容均为手动编写，并可在重新生成后保留。
+> 生成标记之间的内容由 `.skill/gen-diagnostics.ps1` 编写。标记下方的所有内容均为手动编写，并可在重新生成后保留。
 
 <a id="dsh2101"></a>
 
@@ -156,8 +150,7 @@ A '#' directive must be the first thing on its line.
 **触发者** `Source/DreamShaderLang/Private/Lang/LangLexer.cpp:382`
 <!-- generated:end DSH2106 -->
 
-**原因。** 一个 `#` 不是其物理行上第一个非空白字符 —— `int a = 1;
-#pragma x`, or a `#` used as an operator (DreamShaderLang has no `#`, `##` 或 stringize 运算符）。前导空格和制表符没问题；该行上的其他任何内容都不行，这包括注释：`/* c */ #pragma x` **不是**指令行，因为注释是词法分析器已经看到过的东西。
+**原因。** 一个 `#` 不是其物理行上第一个非空白字符 —— `int a = 1; #pragma x`, or a `#` used as an operator (DreamShaderLang has no `#`, `##` 或 stringize 运算符）。前导空格和制表符没问题；该行上的其他任何内容都不行，这包括注释：`/* c */ #pragma x` **不是**指令行，因为注释是词法分析器已经看到过的东西。
 
 **修复。** 将指令放在单独的一行。如果 `#` 本意是运算符，那么它不是 —— 请使用所意图内容的 DreamShaderLang 拼写（材质设置为 `#pragma material(...)`，包含为 `import "..."` 或 `#include "..."`）。
 
@@ -363,11 +356,9 @@ Unsupported statement: the preprocessor line '#{0}' cannot appear inside a funct
 **引发者** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:134`、`Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:442`
 <!-- generated:end DSH2160 -->
 
-**消息（语句）** `Unsupported statement '{0}': DreamShaderLang 2.0 has no switch statement,
-write if / else if instead.`
+**消息（语句）** `Unsupported statement '{0}': DreamShaderLang 2.0 has no switch statement, write if / else if instead.`
 
-**消息（指令）** `Unsupported statement: the preprocessor line '#{0}' cannot appear inside a
-function body; mark the function /// @custom to hand its body to the shader compiler.`
+**消息（指令）** `Unsupported statement: the preprocessor line '#{0}' cannot appear inside a function body; mark the function /// @custom to hand its body to the shader compiler.`
 
 **原因。** 在语句层级出现 `switch`、`case` 或 `default`，或者在已解析的函数体内出现 `#` 行。两者都不属于该语言：2.0 会将函数体降级为材质图表，而图表没有跳转表；`#` 行本应在解析器看到它之前就被预处理器消费掉。
 
@@ -669,8 +660,7 @@ Expected braces around the body of a 1.x Graph 'if', found a single statement.
 **引发者** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:256`、`Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:281`
 <!-- generated:end DSH2209 -->
 
-**原因。** 1.x Graph `if` 或 `else` 的主体是一个不带大括号的单条语句，而 1.x
-要求使用大括号。
+**原因。** 1.x Graph `if` 或 `else` 的主体是一个不带大括号的单条语句，而 1.x 要求使用大括号。
 
 **修复。** 在主体两侧加上 `{ }`，即使它只有一条语句。
 
@@ -690,12 +680,9 @@ Expected at most one comparison in a 1.x Graph 'if' condition, found '{0}' as we
 **由以下项引发** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:298`
 <!-- generated:end DSH2210 -->
 
-**原因。** 1.x Graph `if` 条件包含多个比较（`a > b && c < d`）。1.x 会读取
-第一个比较并静默丢弃其余部分，因此分支仅基于条件的一半
-执行。
+**原因。** 1.x Graph `if` 条件包含多个比较（`a > b && c < d`）。1.x 会读取第一个比较并静默丢弃其余部分，因此分支仅基于条件的一半执行。
 
-**修复。** 嵌套两个 `if`，或先计算组合掩码再进行比较；`&&` 和 `||` 可在
-`.dss` 文件中使用。
+**修复。** 嵌套两个 `if`，或先计算组合掩码再进行比较；`&&` 和 `||` 可在 `.dss` 文件中使用。
 
 <a id="dsh2211"></a>
 
@@ -713,8 +700,7 @@ Expected a call or an assignment as a 1.x Graph statement, found an expression w
 **由以下项引发** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:150`
 <!-- generated:end DSH2211 -->
 
-**原因。** 1.x Graph 语句是一个值无处可去的表达式，例如 `a + b;`。它会
-构建无人读取的节点，这几乎总是丢失的赋值。
+**原因。** 1.x Graph 语句是一个值无处可去的表达式，例如 `a + b;`。它会构建无人读取的节点，这几乎总是丢失的赋值。
 
 **修复。** 将该值赋给变量或输出，或删除该行。
 
@@ -734,8 +720,7 @@ Expected no storage keyword on a 1.x Graph variable, found '{0}'; move this code
 **由以下项引发** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:96`
 <!-- generated:end DSH2212 -->
 
-**原因。** 存储关键字（`static`、`const`、`uniform`）出现在 1.x Graph
-主体内的变量上。1.x 局部变量没有这些关键字；常量和参数位于 `Properties` 中。
+**原因。** 存储关键字（`static`、`const`、`uniform`）出现在 1.x Graph 主体内的变量上。1.x 局部变量没有这些关键字；常量和参数位于 `Properties` 中。
 
 **修复。** 移除该关键字，或在 `Properties` 中声明该值。`.dss` 文件有 `const` 局部变量。
 
@@ -775,10 +760,7 @@ Expected an expression as a 1.x Graph initializer, found an initializer list; us
 **由以下项引发** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:522`
 <!-- generated:end DSH2214 -->
 
-**原因。** 带大括号的列表出现在 1.x 不会读取它的位置：另一个列表内部。1.x 在声明中接受
-`T x = {a, b, c};` 作为构造函数 `T(a, b, c)`，并接受 `T x = {};` 作为零，
-此时类型就写在旁边；而嵌套在该列表中的列表没有类型可供构造。（作为赋值
-值或作为参数的列表会更早被解析器拒绝，报为 `DSH2162`。）
+**原因。** 带大括号的列表出现在 1.x 不会读取它的位置：另一个列表内部。1.x 在声明中接受 `T x = {a, b, c};` 作为构造函数 `T(a, b, c)`，并接受 `T x = {};` 作为零，此时类型就写在旁边；而嵌套在该列表中的列表没有类型可供构造。（作为赋值值或作为参数的列表会更早被解析器拒绝，报为 `DSH2162`。）
 
 **修复。** 写入构造函数：`float3(a, b, c)`。
 
@@ -798,8 +780,7 @@ Expected an initializer on the 1.x Graph variable '{0}' of type '{1}', found non
 **由以下项引发** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:1165`
 <!-- generated:end DSH2215 -->
 
-**原因。** 1.x Graph 变量没有初始化器，且其类型在 1.x 中没有零值：纹理、
-Substrate 值或采样器。数字以零开始，`MaterialAttributes` 以空集开始。
+**原因。** 1.x Graph 变量没有初始化器，且其类型在 1.x 中没有零值：纹理、 Substrate 值或采样器。数字以零开始，`MaterialAttributes` 以空集开始。
 
 **修复。** 为该变量提供初始化器。
 
@@ -819,8 +800,7 @@ Expected a name after '#Region', found none.
 **由以下项引发** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:1023`
 <!-- generated:end DSH2216 -->
 
-**原因。** `#Region` 后面没有名称。该名称是该区域在图中
-变成的注释框的标题。
+**原因。** `#Region` 后面没有名称。该名称是该区域在图中变成的注释框的标题。
 
 **修复。** 写入 `#Region "Name"`。
 
@@ -880,11 +860,7 @@ Expected '#Region' or '#EndRegion' as the only '#' line in a 1.x Graph body, fou
 **由以下项引发** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:1007`
 <!-- generated:end DSH2219 -->
 
-**原因。** 在 1.x Graph 主体内出现了 `#` / `#EndRegion` 之外的 `#Region` 行。
-条件编译（`#if` ...）在解析器运行之前就已解决。在 `.dsm` / `.dsf` 中，
-预处理器会在解析器看到之前拒绝它不认识的指令（`DSH1035`）；此代码
-正是 `.dsh` 中的 1.x Graph 主体所得到的，其中 `#pragma` 和 `#include` 能通过预处理器，
-因为该头文件也可能包含 2.0 声明。
+**原因。** 在 1.x Graph 主体内出现了 `#` / `#EndRegion` 之外的 `#Region` 行。条件编译（`#if` ...）在解析器运行之前就已解决。在 `.dsm` / `.dsf` 中，预处理器会在解析器看到之前拒绝它不认识的指令（`DSH1035`）；此代码正是 `.dsh` 中的 1.x Graph 主体所得到的，其中 `#pragma` 和 `#include` 能通过预处理器，因为该头文件也可能包含 2.0 声明。
 
 **修复。** 将 `import` 行移到文件顶部；`#pragma` 属于 `.dss` 文件。
 
@@ -904,8 +880,7 @@ Expected no bare block in a 1.x Graph body, found one; 1.x has blocks only after
 **由以下项引发** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:191`
 <!-- generated:end DSH2220 -->
 
-**原因。** 1.x Graph 主体中出现了裸 `{ ... }` 块。1.x 仅在 `if` 和
-`else` 之后才有块，且其变量都处于同一作用域，因此单独的块毫无意义。
+**原因。** 1.x Graph 主体中出现了裸 `{ ... }` 块。1.x 仅在 `if` 和 `else` 之后才有块，且其变量都处于同一作用域，因此单独的块毫无意义。
 
 **修复。** 移除外层大括号。
 
@@ -925,8 +900,7 @@ Expected a decimal number in a 1.x Graph expression, found the hexadecimal liter
 **由以下项引发** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:364`
 <!-- generated:end DSH2222 -->
 
-**原因。** 1.x Graph 表达式中出现了十六进制字面量。1.x 数字读取器在 `0` 之后
-停止，并将 `x1F` 作为名称读取，因此该值被静默地视为 0。
+**原因。** 1.x Graph 表达式中出现了十六进制字面量。1.x 数字读取器在 `0` 之后停止，并将 `x1F` 作为名称读取，因此该值被静默地视为 0。
 
 **修复。** 以十进制写入该数字。
 
@@ -946,12 +920,9 @@ Expected a top-level Shader, ShaderFunction, ShaderLayer, ShaderLayerBlend, Func
 **由以下项引发** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:506`
 <!-- generated:end DSH2240 -->
 
-**原因。** 在 `.dsm` / `.dsf` 文件顶部，或 `.dsh` 的 1.x 部分顶部，
-有 1.x 块之外的内容开启了声明。
+**原因。** 在 `.dsm` / `.dsf` 文件顶部，或 `.dsh` 的 1.x 部分顶部，有 1.x 块之外的内容开启了声明。
 
-**修复。** 1.x 文件是 `Shader`、`ShaderFunction`、`ShaderLayer`、`ShaderLayerBlend`、
-`Function`、`GraphFunction`、`Namespace`、`VirtualFunction` 块和 `import` 行的列表。检查
-此行上方是否有游离的标记或未关闭的块。
+**修复。** 1.x 文件是 `Shader`、`ShaderFunction`、`ShaderLayer`、`ShaderLayerBlend`、 `Function`、`GraphFunction`、`Namespace`、`VirtualFunction` 块和 `import` 行的列表。检查此行上方是否有游离的标记或未关闭的块。
 
 <a id="dsh2241"></a>
 
@@ -969,8 +940,7 @@ Expected '(' with the block's attributes, such as '(Name = "M_Example")', found 
 **由以下项引发** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:555`
 <!-- generated:end DSH2241 -->
 
-**原因。** 块词后面没有其属性列表。每个 1.x 块至少在此处写明其
-名称。
+**原因。** 块词后面没有其属性列表。每个 1.x 块至少在此处写明其名称。
 
 **修复。** 写入 `Shader(Name = "M_Example")`，并在其后用 `{` 打开主体。
 
@@ -990,8 +960,7 @@ Expected a 'Name = "..."' attribute on '{0}', found none.
 **由以下项引发** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:776`
 <!-- generated:end DSH2242 -->
 
-**原因。** 该块有属性列表，但其中没有 `Name`。该名称是该块
-构建的资产（或对于 VirtualFunction，是名称调用所使用的）。
+**原因。** 该块有属性列表，但其中没有 `Name`。该名称是该块构建的资产（或对于 VirtualFunction，是名称调用所使用的）。
 
 **修复。** 添加 `Name = "..."`。
 
@@ -1193,8 +1162,7 @@ Expected a double-quoted path after 'import', found {0}.
 
 **原因。** 前端不读取 `import` 行。有三种情况：`import` 后面不是带引号的路径（`"..."`，或同一行的 `'...'`，1.x 文件和 `.dsh` 仍接受这种写法）；该路径指向 `.dsf` 或 `.dsm`——材质或函数文件会自行编译，绝不被包含；或者该路径是根限定路径（`Project:Shared/Common.dsh`、`Plugin.X:...`），即 1.6.0 形式，`import` 不再接受。
 
-**修复。** 使用相对于此文件或其自身源根的路径编写 `import "Shared/Common.dsh";`。位于另一根中的头文件可通过以 `/` 为锚的路径访问，`import
-"/Shared/Common.dsh";`，它会先查找此文件的根，然后依次查找其他每个根——也可通过复制它或通过包来访问。参见 [import](../language/import.md#resolution)。
+**修复。** 使用相对于此文件或其自身源根的路径编写 `import "Shared/Common.dsh";`。位于另一根中的头文件可通过以 `/` 为锚的路径访问，`import "/Shared/Common.dsh";`，它会先查找此文件的根，然后依次查找其他每个根——也可通过复制它或通过包来访问。参见 [import](../language/import.md#resolution)。
 
 <a id="dsh2253"></a>
 
@@ -1292,10 +1260,7 @@ Expected '`{' to open the '{0}' block, found {1}.
 **触发者** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2455`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2569`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2608`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2625`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:809`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:882`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:899`
 <!-- generated:end DSH2257 -->
 
-**原因。** 在必须打开块的地方没有打开块：`Shader`、
-`ShaderFunction`、`Namespace` 或 `VirtualFunction` 的属性列表后面没有 `{`，块内缺少节名称
-（`Properties`、`Graph`、`Inputs`、……），或者节名称后面没有
-`{`。
+**原因。** 在必须打开块的地方没有打开块：`Shader`、 `ShaderFunction`、`Namespace` 或 `VirtualFunction` 的属性列表后面没有 `{`，块内缺少节名称（`Properties`、`Graph`、`Inputs`、……），或者节名称后面没有 `{`。
 
 **修复。** 在同一行或下一行用 `{` 打开主体，并以各自名称开始每一节。
 
@@ -1315,8 +1280,7 @@ The section '{0}' is written twice; the later one wins, as it did in 1.x.
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:962`、`Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:976`
 <!-- generated:end DSH2258 -->
 
-**原因。** 一个节在块中被写了两次。1.x 会保留后一个并静默丢弃前一个；
-此前端行为相同，但会说明这一点。
+**原因。** 一个节在块中被写了两次。1.x 会保留后一个并静默丢弃前一个；此前端行为相同，但会说明这一点。
 
 **修复。** 将两个节合并为一个。
 
@@ -1336,12 +1300,9 @@ Expected ShaderFunction, ShaderLayer and ShaderLayerBlend blocks in a '.dsf' fil
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:758`
 <!-- generated:end DSH2259 -->
 
-**原因。** 一个 `.dsf` 中包含了 `Shader` 块。`.dsf` 构建函数资产——`ShaderFunction`、
-`ShaderLayer`、`ShaderLayerBlend`——而材质应放在 `.dsm` 中。1.x 在生成文件时
-也拒绝它。该块被跳过；文件的其余部分仍会被读取。
+**原因。** 一个 `.dsf` 中包含了 `Shader` 块。`.dsf` 构建函数资产——`ShaderFunction`、 `ShaderLayer`、`ShaderLayerBlend`——而材质应放在 `.dsm` 中。1.x 在生成文件时也拒绝它。该块被跳过；文件的其余部分仍会被读取。
 
-**修复。** 将 `Shader` 块移入 `.dsm`。`.dsm` 可以在其 `Shader` 旁保留 `ShaderFunction` 和层块，
-因此将整个文件移到 `.dsm` 也可以。
+**修复。** 将 `Shader` 块移入 `.dsm`。`.dsm` 可以在其 `Shader` 旁保留 `ShaderFunction` 和层块，因此将整个文件移到 `.dsm` 也可以。
 
 <a id="dsh2260"></a>
 
@@ -1379,13 +1340,9 @@ Expected '`{' to open the block of pass '{0}', found {1}.
 **引发自** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:240`
 <!-- generated:end DSH2300 -->
 
-**原因。** pass 的开头 `pass <Name> : <kind>` 后面没有打开其块的 `{`。pass 没有参数列表——它的设置是花括号内的语句，
-不同于缓冲区的 `(Key = Value)` 列表——因此 `pass Blur : compute(Injection = AfterOpaque)` 就是此错误，
-出现在 `(`。其他形式：在类别之后出现 `;` 或第二个词（`pass Blur : compute fullscreen`），以及
-`{` 完全缺失，此时消息会指出块中第一个设置。
+**原因。** pass 的开头 `pass <Name> : <kind>` 后面没有打开其块的 `{`。pass 没有参数列表——它的设置是花括号内的语句，不同于缓冲区的 `(Key = Value)` 列表——因此 `pass Blur : compute(Injection = AfterOpaque)` 就是此错误，出现在 `(`。其他形式：在类别之后出现 `;` 或第二个词（`pass Blur : compute fullscreen`），以及 `{` 完全缺失，此时消息会指出块中第一个设置。
 
-**修复。** 在类别之后立即打开块，可在同一行或下一行，并将所有设置
-放入其中：
+**修复。** 在类别之后立即打开块，可在同一行或下一行，并将所有设置放入其中：
 
 ```hlsl
 pass Blur : compute
@@ -1397,9 +1354,7 @@ pass Blur : compute
 }
 ```
 
-没有 `{` 时，块中的行会被当作文件作用域声明读取，其中的 `}` 会被当作游离的
-声明，因此会引发更多错误（DSH3205、对于 `Shader =` 行的 DSH3222、DSH3200）；它们源于此错误
-并会随之消失。
+没有 `{` 时，块中的行会被当作文件作用域声明读取，其中的 `}` 会被当作游离的声明，因此会引发更多错误（DSH3205、对于 `Shader =` 行的 DSH3222、DSH3200）；它们源于此错误并会随之消失。
 
 <a id="dsh2301"></a>
 
@@ -1417,16 +1372,9 @@ Expected a setting ('Key = Value;'), a 'read', 'write' or 'param' line or an 'hl
 **引发自** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:334`
 <!-- generated:end DSH2301 -->
 
-**原因。** pass 块中的语句以任何语句都不会以其开头的内容开头。pass 包含设置（`Key = Value;`）以及 `read`、`write` 和 `param` 行，
-它们全都以名称开头；而此处是关键字、数字、字符串或标点符号。典型形式：HLSL 习惯用法
-例如 `in Source = Mask;` 或 `out Result = Blurred;`（`in` 和 `out` 是关键字）、写在 pass 内的 `uniform`
-或 `static const` 声明、没有键的值（`"M_Mask";`），以及
-重复的 `;`——pass 块没有空语句。`uniform` 行也可能表示其上方 pass 的 `}`
-缺失。
+**原因。** pass 块中的语句以任何语句都不会以其开头的内容开头。pass 包含设置（`Key = Value;`）以及 `read`、`write` 和 `param` 行，它们全都以名称开头；而此处是关键字、数字、字符串或标点符号。典型形式：HLSL 习惯用法例如 `in Source = Mask;` 或 `out Result = Blurred;`（`in` 和 `out` 是关键字）、写在 pass 内的 `uniform` 或 `static const` 声明、没有键的值（`"M_Mask";`），以及重复的 `;`——pass 块没有空语句。`uniform` 行也可能表示其上方 pass 的 `}` 缺失。
 
-**修复。** 将该行写为设置或绑定——`read Source = Mask;`、
-`write Result = Blurred;`、`Material = "M_Mask";`——并删除多余的 `;`。声明应放在文件
-作用域，位于 pass 之上，而 pass 通过 `param` 获取它们的值：
+**修复。** 将该行写为设置或绑定——`read Source = Mask;`、 `write Result = Blurred;`、`Material = "M_Mask";`——并删除多余的 `;`。声明应放在文件作用域，位于 pass 之上，而 pass 通过 `param` 获取它们的值：
 
 ```hlsl
 uniform float BlurRadius = 3.0;
@@ -1454,22 +1402,16 @@ Expected '=' after the key '{0}', found {1}.
 **引发自** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:447`
 <!-- generated:end DSH2302 -->
 
-**原因。** pass 语句以不是绑定词的名词开头，因此它被当作设置 `Key = Value;` 读取，而 `=` 不存在。
-常见形式：
+**原因。** pass 语句以不是绑定词的名词开头，因此它被当作设置 `Key = Value;` 读取，而 `=` 不存在。常见形式：
 
-- 缺失或拼错的 `=`：`Injection AfterOpaque;`、`Injection: AfterOpaque;`、
-  `Material("M_Mask");`；
-- 大小写错误的绑定词：`Read Mask;`、`Write SceneColor;`——`read`、`write` 和
-  `param` 为小写，设置键以大写开头；
+- 缺失或拼错的 `=`：`Injection AfterOpaque;`、`Injection: AfterOpaque;`、 `Material("M_Mask");`；
+- 大小写错误的绑定词：`Read Mask;`、`Write SceneColor;`——`read`、`write` 和 `param` 为小写，设置键以大写开头；
 - 没有绑定词的缓冲区：`Mask;` 而非 `read Mask;`；
 - 块内的声明：`float Radius = 2;`。
 
-`read`、`write` 和 `param` 本身始终会开始一个绑定，无论其后是什么，因此后面没有名称的绑定词
-（`read;`、`read "Mask";`、`param = 3;`）属于 DSH2304 或 DSH2306，而不是此错误。
+`read`、`write` 和 `param` 本身始终会开始一个绑定，无论其后是什么，因此后面没有名称的绑定词（`read;`、`read "Mask";`、`param = 3;`）属于 DSH2304 或 DSH2306，而不是此错误。
 
-**修复。** 为设置提供其 `=`，为绑定提供其小写词和名称。pass 需要从管线获取的值，应是文件作用域的
-`uniform` 或 `static const`，并通过
-`param Radius = BlurRadius;` 传入。
+**修复。** 为设置提供其 `=`，为绑定提供其小写词和名称。pass 需要从管线获取的值，应是文件作用域的 `uniform` 或 `static const`，并通过 `param Radius = BlurRadius;` 传入。
 
 <a id="dsh2303"></a>
 
@@ -1487,15 +1429,9 @@ Expected ';' at the end of the pass statement, found {1}.
 **引发自** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:458`
 <!-- generated:end DSH2303 -->
 
-**原因。** 完整的 pass 语句后面没有 `;`。最常见的情况是行尾缺少 `;`，
-消息会指向下一行的第一个标记——而错误在上一行。其他形式：一条语句中有两个绑定（`read A, B;`）、
-缓冲区后面有其他内容（`read Source = Mask[0];`、`read Mask.Previous.r;`），以及两个设置用逗号连接
-（`Shader = "Blur.usf", Entry = BlurCS;`）。
+**原因。** 完整的 pass 语句后面没有 `;`。最常见的情况是行尾缺少 `;`，消息会指向下一行的第一个标记——而错误在上一行。其他形式：一条语句中有两个绑定（`read A, B;`）、缓冲区后面有其他内容（`read Source = Mask[0];`、`read Mask.Previous.r;`），以及两个设置用逗号连接（`Shader = "Blur.usf", Entry = BlurCS;`）。
 
-**修复。** 以 `;` 结束每个设置和绑定，并且每条语句只绑定一个缓冲区：
-`read A; read B;`，而不是 `read A, B;`。通道在着色器或材质中选择，而不是在
-绑定中选择。当 `;` 缺失时，恢复过程还会跳过下一条语句，因此那条语句中的错误
-只有在修复此问题后才会显示。
+**修复。** 以 `;` 结束每个设置和绑定，并且每条语句只绑定一个缓冲区： `read A; read B;`，而不是 `read A, B;`。通道在着色器或材质中选择，而不是在绑定中选择。当 `;` 缺失时，恢复过程还会跳过下一条语句，因此那条语句中的错误只有在修复此问题后才会显示。
 
 <a id="dsh2304"></a>
 
@@ -1513,16 +1449,9 @@ Expected a buffer after '{0}', found {1}.
 **引发自** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:374`、`Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:384`
 <!-- generated:end DSH2304 -->
 
-**原因。** `read` 或 `write` 绑定没有应在其位置的缓冲区。语句开头的 `read` 和 `write`
-始终会开始一个绑定，无论其后是什么，因此后面没有名称的词
-——`read;`、`write;`、`read "Mask";`——就是此错误，如 `Expected a buffer after 'read', ...`。
-指明其槽位和 `=` 之后没有缓冲区的绑定也是如此——`read Source = "Mask";`、
-`read Source = ;`、`write Result = (Blurred);`——如 `Expected a buffer after 'read Source =', ...`。
-缓冲区是一个裸名称——此管线中的缓冲区或内置纹理，例如 `SceneColor`——
-绝不是字符串或表达式。
+**原因。** `read` 或 `write` 绑定没有应在其位置的缓冲区。语句开头的 `read` 和 `write` 始终会开始一个绑定，无论其后是什么，因此后面没有名称的词 ——`read;`、`write;`、`read "Mask";`——就是此错误，如 `Expected a buffer after 'read', ...`。指明其槽位和 `=` 之后没有缓冲区的绑定也是如此——`read Source = "Mask";`、 `read Source = ;`、`write Result = (Blurred);`——如 `Expected a buffer after 'read Source =', ...`。缓冲区是一个裸名称——此管线中的缓冲区或内置纹理，例如 `SceneColor`—— 绝不是字符串或表达式。
 
-**修复。** 命名缓冲区：`read Source = Mask;`、`write Result = Blurred;`。当 pass 内的名称就是
-缓冲区自身的名称时，将其省略：`read Mask;`。
+**修复。** 命名缓冲区：`read Source = Mask;`、`write Result = Blurred;`。当 pass 内的名称就是缓冲区自身的名称时，将其省略：`read Mask;`。
 
 <a id="dsh2305"></a>
 
@@ -1734,3 +1663,4 @@ Expected '`}' to close pass '{0}' before the next declaration, found {1}.
 **原因。** 一个 pass 块没有闭合，而 `buffer` 或 `pass` 声明在其内部开始了一行。解析器在此处结束未闭合的 pass，并保留目前读取的语句，因此下面的声明仍能解析。当后面跟着其他内容时，同样的缺失 `}` 会有不同解读：在文件末尾是 DSH2150，在 `uniform` 或 `static const` 行之前是 DSH2301，在 `#pragma` 行之前是 DSH2312。
 
 **修复。** 在消息所指向的行之上添加闭合该 pass 的 `}`。
+

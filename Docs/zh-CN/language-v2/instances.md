@@ -1,8 +1,3 @@
----
-title: "材质实例 —— `.dsi`"
-description: "材质实例 —— `.dsi`"
----
-
 <a id="material-instances--dsi"></a>
 
 # 材质实例 —— `.dsi`

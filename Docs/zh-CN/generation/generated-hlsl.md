@@ -1,16 +1,10 @@
----
-title: "生成的 HLSL"
-description: "生成的 HLSL"
----
-
 <a id="generated-hlsl"></a>
 
 # 生成的 HLSL
 
 > [DreamShader](../index.md) » [生成](index.md) » **生成的 HLSL**
 
-编译为源的 `Function` 块写入的 HLSL。*(自 2.0.0 起)* 它被写入每次调用所生成的
-Custom 节点中；不会生成 `.ush` include。
+编译为源的 `Function` 块写入的 HLSL。*(自 2.0.0 起)* 它被写入每次调用所生成的 Custom 节点中；不会生成 `.ush` include。
 
 | | |
 | :-- | :-- |
@@ -19,9 +13,7 @@ Custom 节点中；不会生成 `.ush` include。
 | 包含内容 | 被调用函数的函数体本身，以及该函数体调用的每个 `Function`，嵌入在一个包装结构体中 |
 | 1.x 及之前 | 每个源一个 `/DreamShaderGenerated/<basename>_<hash>.ush`，包含每个 `Function`，由各节点分别 include |
 
-1.x 的 `Function` 被旧版前端读取为带有逐字函数体的 `/// @custom` 函数，即 Custom 节点的 2.0 形式——参见 [`/// @custom` 函数体](../language-v2/index.md#-custom-bodies)。一个
-[`GraphFunction`](../language/graph-function.md) 也是如此，其 `UE.*` 调用被提升为
-连接到额外输入的图表节点。
+1.x 的 `Function` 被旧版前端读取为带有逐字函数体的 `/// @custom` 函数，即 Custom 节点的 2.0 形式——参见 [`/// @custom` 函数体](../language-v2/index.md#-custom-bodies)。一个 [`GraphFunction`](../language/graph-function.md) 也是如此，其 `UE.*` 调用被提升为连接到额外输入的图表节点。
 
 <a id="synopsis"></a>
 
@@ -44,11 +36,7 @@ Custom 节点中；不会生成 `.ush` include。
 
 *(自 2.0.0 起)* 无需定位文件：代码存在于节点中，位于资产内，并派生自 [构建键](caching.md) 所哈希的源，因此未更改的源会像其他所有内容一样被跳过。
 
-模块启动时，虚拟目录 `/DreamShaderGenerated` 仍映射到 **生成着色器目录**
-项目设置（类别 `Paths`，默认 `Intermediate/DreamShader/GeneratedShaders`），并且 *工具 ▸ DreamShader ▸ 清理生成的着色器* 仍会删除其下的每个 `*.ush`——
-递归地、一次一个文件，从不删除目录本身——并排队进行一次完整强制重新编译。不再有任何
-编译写入该处；在那里发现的文件是由 1.x 构建写入的。由 1.x 构建保存的材质可能仍包含引用其中一个的 Custom 节点；重新构建该材质会将其替换为
-携带自身代码的节点。
+模块启动时，虚拟目录 `/DreamShaderGenerated` 仍映射到 **生成着色器目录**项目设置（类别 `Paths`，默认 `Intermediate/DreamShader/GeneratedShaders`），并且 *工具 ▸ DreamShader ▸ 清理生成的着色器* 仍会删除其下的每个 `*.ush`—— 递归地、一次一个文件，从不删除目录本身——并排队进行一次完整强制重新编译。不再有任何编译写入该处；在那里发现的文件是由 1.x 构建写入的。由 1.x 构建保存的材质可能仍包含引用其中一个的 Custom 节点；重新构建该材质会将其替换为携带自身代码的节点。
 
 <a id="node-code-layout"></a>
 
@@ -84,9 +72,7 @@ return <first out>;                                 // only when the body needs 
 
 ## 函数名称改编
 
-每个嵌入的辅助函数都会加前缀。没有它，一个 `Function Luminance(float3)` 会重新定义
-引擎自有的 `Luminance`（来自 `/Engine/Private/Common.ush`），并导致着色器编译失败，报错
-`redefinition of 'Luminance'`。
+每个嵌入的辅助函数都会加前缀。没有它，一个 `Function Luminance(float3)` 会重新定义引擎自有的 `Luminance`（来自 `/Engine/Private/Common.ush`），并导致着色器编译失败，报错 `redefinition of 'Luminance'`。
 
 ```text
 DreamShaderFn_ + SanitizeIdentifier(<Function name>)
@@ -108,9 +94,7 @@ DreamShaderFn_ + SanitizeIdentifier(<Function name>)
 | `Common::ApplyTint` | `Common_ApplyTint` | `DreamShaderFn_Common_ApplyTint` |
 | `Common::Remap01` | `Common_Remap01` | `DreamShaderFn_Common_Remap01` |
 
-`Namespace(Name="Common")` 内的 `Function` 是函数 `Common_ApplyTint`，因此顶层的
-`Function Common_ApplyTint` 是同一名称被声明了两次：
-[`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210)。
+`Namespace(Name="Common")` 内的 `Function` 是函数 `Common_ApplyTint`，因此顶层的 `Function Common_ApplyTint` 是同一名称被声明了两次： [`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210)。
 
 <a id="per-function-definition-shape"></a>
 
@@ -144,15 +128,13 @@ DreamShaderFn_ + SanitizeIdentifier(<Function name>)
 | `Texture2D` | `TextureCube` | `Texture2DArray` | `Texture3D` | `VolumeTexture` |
 | :-- | :-- | :-- | :-- | :-- |
 
-`SamplerState` **不是**其中之一；声明为 `SamplerState` 的参数不会获得配套
-参数。一个纹理参数 `T` 位于名为 `TSampler` 的参数旁边属于
-[`DSH6255`](../diagnostics/DSH6xxx.md#dsh6255)。
+`SamplerState` **不是**其中之一；声明为 `SamplerState` 的参数不会获得配套参数。一个纹理参数 `T` 位于名为 `TSampler` 的参数旁边属于 [`DSH6255`](../diagnostics/DSH6xxx.md#dsh6255)。
 
 参数以其声明类型的 2.0 拼写书写：
 
 | 声明的 token | 发出的 HLSL 类型 |
 | :-- | :-- |
-| `vec2`…`vec4`、`ivec*`、`uvec*`、`bvec*`、`mat2`…`mat4` | `float2`…`float4`、`int*`、`uint*`、`bool*`、`float2x2`…`float4x4` |
+| `vec2`…`vec4`, `ivec*`, `uvec*`, `bvec*`, `mat2`…`mat4` | `float2`…`float4`, `int*`, `uint*`, `bool*`, `float2x2`…`float4x4` |
 | 其他大小写形式的标量、向量或矩阵类型（`Float3`） | 小写 |
 | `VolumeTexture` | `Texture3D` |
 | 其他所有 | 按声明原样 |
@@ -161,18 +143,13 @@ DreamShaderFn_ + SanitizeIdentifier(<Function name>)
 
 ## 节点上的 Include
 
-函数体开头的 `#include "…"` 行会被原地置空——用空格覆盖，使它们之后的每个位置仍与源匹配——并改为添加到节点的 `IncludeFilePaths`
-中：先嵌入辅助函数的，按它们被嵌入的顺序，然后是函数自身的，每个
-路径各一次。路径为空的 `#include` 属于 [`DSH6258`](../diagnostics/DSH6xxx.md#dsh6258)。参见
-[函数 ▸ Include](../language/function.md#includes)。
+函数体开头的 `#include "…"` 行会被原地置空——用空格覆盖，使它们之后的每个位置仍与源匹配——并改为添加到节点的 `IncludeFilePaths` 中：先嵌入辅助函数的，按它们被嵌入的顺序，然后是函数自身的，每个路径各一次。路径为空的 `#include` 属于 [`DSH6258`](../diagnostics/DSH6xxx.md#dsh6258)。参见[函数 ▸ Include](../language/function.md#includes)。
 
 <a id="self-contained-functions"></a>
 
 ## 自包含函数
 
-节点嵌入其函数体所调用 `Function` 的**传递闭包**：每个被调用者一次，
-依赖项在其依赖者之前。递归没有 HLSL 形式；它们之间的循环属于
-[`DSH6260`](../diagnostics/DSH6xxx.md#dsh6260)。
+节点嵌入其函数体所调用 `Function` 的**传递闭包**：每个被调用者一次，依赖项在其依赖者之前。递归没有 HLSL 形式；它们之间的循环属于 [`DSH6260`](../diagnostics/DSH6xxx.md#dsh6260)。
 
 | 元素 | 形式 |
 | :-- | :-- |
@@ -253,7 +230,7 @@ return result;
 ```hlsl
 // Begin DreamShader source: DShader/M_Ramp.dsm
 // DreamShader custom: Common_ApplyTint line 4
- return color * tint;
+ return color * tint; 
 // End DreamShader source: DShader/M_Ramp.dsm
 ```
 
@@ -271,7 +248,7 @@ struct generated_wrapper_Desaturate_1A2B3C4D
 	{
 // Begin DreamShader source: DShader/M_Gray.dsm
 // DreamShader custom: Luma line 1
- return dot(c, float3(0.299, 0.587, 0.114));
+ return dot(c, float3(0.299, 0.587, 0.114)); 
 // End DreamShader source: DShader/M_Gray.dsm
 	}
 
@@ -280,7 +257,7 @@ generated_wrapper_Desaturate_1A2B3C4D __ds_wrapper_1A2B3C4D;
 
 // Begin DreamShader source: DShader/M_Gray.dsm
 // DreamShader custom: Desaturate line 2
- float l = __ds_wrapper_1A2B3C4D.DreamShaderFn_Luma(c); return lerp(c, float3(l, l, l), amount);
+ float l = __ds_wrapper_1A2B3C4D.DreamShaderFn_Luma(c); return lerp(c, float3(l, l, l), amount); 
 // End DreamShader source: DShader/M_Gray.dsm
 ```
 

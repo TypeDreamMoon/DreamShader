@@ -1,8 +1,3 @@
----
-title: "表达式"
-description: "表达式"
----
-
 <a id="expressions"></a>
 
 # 表达式

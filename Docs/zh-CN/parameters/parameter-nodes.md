@@ -1,16 +1,10 @@
----
-title: "参数节点标记"
-description: "参数节点标记"
----
-
 <a id="parameter-node-tokens"></a>
 
 # 参数节点标记
 
 > [DreamShader](../index.md) » [参数](index.md) » **参数节点标记**
 
-这 22 个类型标记直接指定 Unreal 参数表达式类的名称，因此一个 `Properties`
-声明会生成该精确节点，而不是紧凑的标量 / 向量 / 纹理对象节点。
+这 22 个类型标记直接指定 Unreal 参数表达式类的名称，因此一个 `Properties` 声明会生成该精确节点，而不是紧凑的标量 / 向量 / 纹理对象节点。
 
 | | |
 | :-- | :-- |
@@ -27,9 +21,7 @@ description: "参数节点标记"
 <parameter-node-token> <name> [ = <default> ] [ [ <metadata> ] ] ;
 ```
 
-标记按**不区分大小写**方式匹配。该集合是封闭的：恰好为下面这 22 个标记。
-`const` 仅对 `ScalarParameter`、`VectorParameter` 和 `TextureObjectParameter`
-合法 *(自 2.0.0 起)*；用于任何其他标记时属于 [`DSH3253`](../diagnostics/DSH3xxx.md#dsh3253)。
+标记按**不区分大小写**方式匹配。该集合是封闭的：恰好为下面这 22 个标记。 `const` 仅对 `ScalarParameter`、`VectorParameter` 和 `TextureObjectParameter` 合法 *(自 2.0.0 起)*；用于任何其他标记时属于 [`DSH3253`](../diagnostics/DSH3xxx.md#dsh3253)。
 
 <a id="the-22-tokens"></a>
 
@@ -37,13 +29,9 @@ description: "参数节点标记"
 
 *(自 2.0.0 起)* 每个标记采用三种 2.0 形式之一：
 
-- **声明** — `ScalarParameter`、`StaticBoolParameter`、`VectorParameter` 和
-  `TextureObjectParameter` 是紧凑标记会生成的 `uniform`（`float`、一个 `/// @static`
-  `bool`、`float4`、`Texture2D`），无论读取多少次都只有一个参数节点；
-- **每次使用展开** — 其余构建时不作为声明的十一个标记：对属性的每次读取或调用都是一次反射 `UE.Expression(Class = "<Token>", ParameterName = …, …)` 调用，
-  携带默认值和元数据，相同的使用共享一个节点；
-- **无 2.0 写法** — 有七个标记为 `DSH3253`。请将此类材质迁移到 `.dss`，并使用
-  [`UE.Expression`](../builtins/ue-expression.md) 构建节点。
+- **声明** — `ScalarParameter`、`StaticBoolParameter`、`VectorParameter` 和 `TextureObjectParameter` 是紧凑标记会生成的 `uniform`（`float`、一个 `/// @static` `bool`、`float4`、`Texture2D`），无论读取多少次都只有一个参数节点；
+- **每次使用展开** — 其余构建时不作为声明的十一个标记：对属性的每次读取或调用都是一次反射 `UE.Expression(Class = "<Token>", ParameterName = …, …)` 调用，携带默认值和元数据，相同的使用共享一个节点；
+- **无 2.0 写法** — 有七个标记为 `DSH3253`。请将此类材质迁移到 `.dss`，并使用 [`UE.Expression`](../builtins/ue-expression.md) 构建节点。
 
 | # | 标记 | 2.0 形式 | 生成的类 | `= default` 接受 | `Graph` 使用 |
 | :-- | :-- | :-- | :-- | :-- | :-- |
@@ -70,33 +58,28 @@ description: "参数节点标记"
 | 21 | `RuntimeVirtualTextureSampleParameter` | 展开 | `UMaterialExpressionRuntimeVirtualTextureSampleParameter` | 无 — 见下文 | `N(Coordinates = …)`，多个输出 |
 | 22 | `SparseVolumeTextureSampleParameter` | 展开 | `UMaterialExpressionSparseVolumeTextureSampleParameter` | 无 — 见下文 | `N(Coordinates = …)`，多个输出 |
 
-展开标记的类会在引擎的节点目录中查找；此引擎没有的类属于 [`DSH5212`](../diagnostics/DSH5xxx.md#dsh5212)。`Graph` 使用情况在此概述；
-引脚表位于[在 Graph 中使用参数](graph-usage.md#pin-names-by-parameter-type)。
+展开标记的类会在引擎的节点目录中查找；此引擎没有的类属于 [`DSH5212`](../diagnostics/DSH5xxx.md#dsh5212)。`Graph` 使用情况在此概述；引脚表位于[在 Graph 中使用参数](graph-usage.md#pin-names-by-parameter-type)。
 
 <a id="type-specific-metadata-slots"></a>
 
 ## 类型特定的元数据槽
 
-每个标记还接受通用元数据键（`Group`、`Description`、`SortPriority`、
-`Slider(min, max)`、`ParameterName`）以及其类的任何反射 UPROPERTY。实际中重要的
-类特定槽：
+每个标记还接受通用元数据键（`Group`、`Description`、`SortPriority`、 `Slider(min, max)`、`ParameterName`）以及其类的任何反射 UPROPERTY。实际中重要的类特定槽：
 
 | 标记 | 绑定类特定 UPROPERTY 的元数据键 |
 | :-- | :-- |
-| `ScalarParameter` | `SliderMin`、`SliderMax`、`PrimitiveDataIndex` |
+| `ScalarParameter` | `SliderMin`, `SliderMax`, `PrimitiveDataIndex` |
 | `StaticBoolParameter` | — |
 | `StaticSwitchParameter` | — |
 | `VectorParameter` | `UseCustomPrimitiveData`（绑定 `bUseCustomPrimitiveData`）、`PrimitiveDataIndex`、`ChannelNames` |
 | `ChannelMaskParameter` | `MaskChannel`（枚举 `EChannelMaskParameterColor`） |
 | `StaticComponentMaskParameter` | `DefaultR`、`DefaultG`、`DefaultB`、`DefaultA`（布尔值） |
-| `TextureObjectParameter` | `Texture`、`SamplerType`、`IsDefaultMeshpaintTexture` |
+| `TextureObjectParameter` | `Texture`, `SamplerType`, `IsDefaultMeshpaintTexture` |
 | `TextureSampleParameter2D` … `TextureSampleParameterSubUV`（标记 15–20） | `Texture`、`SamplerType`、`SamplerSource`、`MipValueMode`、`GatherMode` *(自 UE 5.6 起)*、`AutomaticViewMipBias`、`ConstCoordinate`、`ConstMipValue`、`IsDefaultMeshpaintTexture`；`TextureSampleParameterSubUV` 会添加 `bBlend` |
-| `RuntimeVirtualTextureSampleParameter` | `VirtualTexture`、`MaterialType`、`bSinglePhysicalSpace`、`bAdaptive`、`MipValueMode`、`TextureAddressMode` |
-| `SparseVolumeTextureSampleParameter` | `SparseVolumeTexture`、`MipValueMode`、`SamplerSource`、`ConstMipValue` |
+| `RuntimeVirtualTextureSampleParameter` | `VirtualTexture`, `MaterialType`, `bSinglePhysicalSpace`, `bAdaptive`, `MipValueMode`, `TextureAddressMode` |
+| `SparseVolumeTextureSampleParameter` | `SparseVolumeTexture`, `MipValueMode`, `SamplerSource`, `ConstMipValue` |
 
-布尔 UPROPERTY 匹配时开头的 `b` 可选，因此 `[bBlend=true]` 和 `[Blend=true]`
-都会绑定 `bBlend`。类不具有的键如何报告取决于形式：声明上为警告，
-展开标记上为错误 — 参见[元数据](metadata.md#reflected-property-passthrough)。
+布尔 UPROPERTY 匹配时开头的 `b` 可选，因此 `[bBlend=true]` 和 `[Blend=true]` 都会绑定 `bBlend`。类不具有的键如何报告取决于形式：声明上为警告，展开标记上为错误 — 参见[元数据](metadata.md#reflected-property-passthrough)。
 
 <a id="which-default-parser-a-token-uses"></a>
 
@@ -113,9 +96,7 @@ description: "参数节点标记"
 | `RuntimeVirtualTextureSampleParameter`、`SparseVolumeTextureSampleParameter` | 无 | 默认值会被丢弃且**不产生诊断** *(自 2.0.0 起)* |
 
 > [!WARNING]
-> **`RuntimeVirtualTextureSampleParameter` 或 `SparseVolumeTextureSampleParameter` 默认值会被
-> 忽略。** 对任一标记使用 `= Path(…)` 不会触及该节点的任何属性，而且不会有任何提示。请改为
-> 通过元数据绑定资产 — `[VirtualTexture = Path(…)]`、`[SparseVolumeTexture = Path(…)]`。
+> **`RuntimeVirtualTextureSampleParameter` 或 `SparseVolumeTextureSampleParameter` 默认值会被忽略。** 对任一标记使用 `= Path(…)` 不会触及该节点的任何属性，而且不会有任何提示。请改为通过元数据绑定资产 — `[VirtualTexture = Path(…)]`、`[SparseVolumeTexture = Path(…)]`。
 
 <a id="what-the-default-is-written-to"></a>
 
@@ -163,35 +144,18 @@ description: "参数节点标记"
 | `RuntimeVirtualTextureSampleParameter`、`SparseVolumeTextureSampleParameter` | 不检查；不读取其默认值 |
 
 > [!WARNING]
-> 通过其普通对象路径被赋予普通 2D 纹理的 `TextureSampleParameterCube` 在生成时不会产生
-> DreamShader 诊断；只有 `Texture2D'…'` shell 才会暴露这种不匹配
-> (`DSH1044`)。否则，这种不匹配会在之后作为材质上的 Unreal 着色器编译错误出现。
-> 请赋予正确的维度。
+> 通过其普通对象路径被赋予普通 2D 纹理的 `TextureSampleParameterCube` 在生成时不会产生 DreamShader 诊断；只有 `Texture2D'…'` shell 才会暴露这种不匹配 (`DSH1044`)。否则，这种不匹配会在之后作为材质上的 Unreal 着色器编译错误出现。请赋予正确的维度。
 
 <a id="notes"></a>
 
 ## 说明
 
-- **对于每个具有 2.0 形式的标记，默认值都是可选的。** 测试
-  `DreamShader.Lang.ParameterExpressions.ParseAll` 覆盖全部 15 个标记，覆盖带内联默认值和不带内联默认值的 `ScalarParameter`、
-  `VectorParameter` 与 `TextureObjectParameter`，并检查
-  其余七个标记均为 `DSH3253`。
-- **没有纹理的采样器参数仍然可以编译。** 当展开节点派生自
-  `UMaterialExpressionTextureBase` 且其 `Texture` 为空时，会为
-  `UMaterialExpressionTextureSampleParameter` 子类调用 `SetDefaultTexture()`。否则，没有默认值的采样器参数
-  会以 *Missing input Texture* 失败。运行时虚拟纹理和稀疏体积节点并非
-  此类子类，仍然需要绑定其资产。
-- **显式 `SamplerType` 始终优先。** `AutoSetSampleType()` 仅在源
-  未提供 `SamplerType` 的节点上运行。参见 [SamplerType](sampler-type.md)。
-- `StaticSwitchParameter` 不能作为值读取。裸引用不是已声明的名称
-  ([`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200))；它必须被调用。参见
-  [在 Graph 中使用参数](graph-usage.md#staticswitchparameter)。
-- **`Group(…)` 作用域不会为展开标记盖章** *(自 2.0.0 起)*：此类成员不会从该作用域获得
-  分组，也不会自动获得 `SortPriority`，并且不会占用计数器槽位。请在其自身的元数据块中写入
-  `Group` / `SortPriority`。参见
-  [元数据](metadata.md#group-scopes-and-the-sortpriority-counter)。
-- [反编译器](../tools/decompiler.md) 在每次导出时都会显式输出 `SamplerType` 和纹理采样元数据键，
-  即使它们处于默认值，因此反编译 → 重新编译的往返过程是稳定的。
+- **对于每个具有 2.0 形式的标记，默认值都是可选的。** 测试 `DreamShader.Lang.ParameterExpressions.ParseAll` 覆盖全部 15 个标记，覆盖带内联默认值和不带内联默认值的 `ScalarParameter`、 `VectorParameter` 与 `TextureObjectParameter`，并检查其余七个标记均为 `DSH3253`。
+- **没有纹理的采样器参数仍然可以编译。** 当展开节点派生自 `UMaterialExpressionTextureBase` 且其 `Texture` 为空时，会为 `UMaterialExpressionTextureSampleParameter` 子类调用 `SetDefaultTexture()`。否则，没有默认值的采样器参数会以 *Missing input Texture* 失败。运行时虚拟纹理和稀疏体积节点并非此类子类，仍然需要绑定其资产。
+- **显式 `SamplerType` 始终优先。** `AutoSetSampleType()` 仅在源未提供 `SamplerType` 的节点上运行。参见 [SamplerType](sampler-type.md)。
+- `StaticSwitchParameter` 不能作为值读取。裸引用不是已声明的名称 ([`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200))；它必须被调用。参见[在 Graph 中使用参数](graph-usage.md#staticswitchparameter)。
+- **`Group(…)` 作用域不会为展开标记盖章** *(自 2.0.0 起)*：此类成员不会从该作用域获得分组，也不会自动获得 `SortPriority`，并且不会占用计数器槽位。请在其自身的元数据块中写入 `Group` / `SortPriority`。参见[元数据](metadata.md#group-scopes-and-the-sortpriority-counter)。
+- [反编译器](../tools/decompiler.md) 在每次导出时都会显式输出 `SamplerType` 和纹理采样元数据键，即使它们处于默认值，因此反编译 → 重新编译的往返过程是稳定的。
 
 <a id="diagnostics"></a>
 
@@ -272,9 +236,7 @@ StaticSwitchParameter         UseDetail  Group="Switches"
 TextureCoordinate             UV         CoordinateIndex=0
 ```
 
-`BaseTex`、`Pick` 和 `Keep` 是展开标记，因此它们的 `Group(…)` 作用域不会为其盖章，
-`Roughness` 占用计数器槽位 0。`Keep` 的 `float4` 默认值会随 `DSH5288` 被丢弃：请为该遮罩写入
-`[DefaultR = true; DefaultG = true]`。
+`BaseTex`、`Pick` 和 `Keep` 是展开标记，因此它们的 `Group(…)` 作用域不会为其盖章， `Roughness` 占用计数器槽位 0。`Keep` 的 `float4` 默认值会随 `DSH5288` 被丢弃：请为该遮罩写入 `[DefaultR = true; DefaultG = true]`。
 
 <a id="see-also"></a>
 

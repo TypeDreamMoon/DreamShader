@@ -1,8 +1,3 @@
----
-title: "名称解析"
-description: "名称解析"
----
-
 <a id="name-resolution"></a>
 
 # 名称解析
@@ -117,9 +112,7 @@ description: "名称解析"
 | 一个名为类型名称的变量，例如 `Half` 或 `Float3` | 不可读：该名称被读取为类型，`DSH4204`*（自 2.0.0 起）*。 |
 
 > [!WARNING]
-> 遮蔽构造函数是静默的。`Function vec3(in float x, out float3 r)` 会被解析、被声明，并且
-> 在 `Graph` 块中根本不会被调用 —— 每次 `vec3(…)` 调用都会构建一个构造函数。请重命名该
-> 函数。
+> 遮蔽构造函数是静默的。`Function vec3(in float x, out float3 r)` 会被解析、被声明，并且在 `Graph` 块中根本不会被调用 —— 每次 `vec3(…)` 调用都会构建一个构造函数。请重命名该函数。
 
 <a id="identifier-case"></a>
 
@@ -148,19 +141,13 @@ description: "名称解析"
 | `default` 调用参数 | **敏感***（自 2.0.0 起）* |
 
 > [!NOTE]
-> 以与声明不同的大小写写出的名称**就是**该声明，并带有 `DSH5275`。
-> `float3 Color = …;` 后跟 `color = …;` 写出 `Color`*（自 2.0.0 起；1.x 曾创建名为
-> `color` 的第二个条目）*。只有在任何大小写下都不匹配任何内容的名称才会由赋值声明（旧
-> 规则 L26，信息 [`DSH5292`](../diagnostics/DSH5xxx.md#dsh5292)）。`dsc migrate` 会按照每个此类
-> 名称被声明的方式重新拼写它。
+> 以与声明不同的大小写写出的名称**就是**该声明，并带有 `DSH5275`。 `float3 Color = …;` 后跟 `color = …;` 写出 `Color`*（自 2.0.0 起；1.x 曾创建名为 `color` 的第二个条目）*。只有在任何大小写下都不匹配任何内容的名称才会由赋值声明（旧规则 L26，信息 [`DSH5292`](../diagnostics/DSH5xxx.md#dsh5292)）。`dsc migrate` 会按照每个此类名称被声明的方式重新拼写它。
 
 <a id="named-argument-matching"></a>
 
 ## 命名参数匹配
 
-参数名称会精确比较。函数的参数名称会以 `DSH5275` 回退到唯一的不区分大小写匹配，节点的引脚和
-属性名称会以 `DSH5276` 回退；内置函数的参数名称没有回退。上述 1.x 伪参数在匹配时忽略大小写。
-位置参数在前面并按顺序填充参数；位于命名参数之后的位置参数是 [`DSH2158`](../diagnostics/DSH2xxx.md#dsh2158)*（自 2.0.0 起）*。
+参数名称会精确比较。函数的参数名称会以 `DSH5275` 回退到唯一的不区分大小写匹配，节点的引脚和属性名称会以 `DSH5276` 回退；内置函数的参数名称没有回退。上述 1.x 伪参数在匹配时忽略大小写。位置参数在前面并按顺序填充参数；位于命名参数之后的位置参数是 [`DSH2158`](../diagnostics/DSH2xxx.md#dsh2158)*（自 2.0.0 起）*。
 
 哪些被调用者接受命名参数已记录于 [调用](calls.md#positional-and-named)。
 
@@ -247,7 +234,7 @@ UseTint               -> (bare read) ERROR: DSH4200
 - [数学内置项](../builtins/math.md) — 保留的内置项拼写
 - [UE 内置项](../builtins/ue.md) — 按前缀声明的 `UE.*` 表面
 - [Substrate 内置项](../builtins/substrate.md) — `Substrate.*` 表面
-- [Graph 中的参数](../../parameters/graph-usage.md) — 读取参数和引脚调用形式
+- [Graph 中的参数](../parameters/graph-usage.md) — 读取参数和引脚调用形式
 - [`Namespace`](../language/namespace.md) — 声明 `Namespace::Name` 以及禁止嵌套规则
 - [词法元素](../language/lexical.md) — 声明语法的完整大小写敏感性矩阵
 - [节点复用](node-reuse.md) — 相等节点如何合并

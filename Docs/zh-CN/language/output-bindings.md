@@ -1,8 +1,3 @@
----
-title: "输出绑定"
-description: "输出绑定"
----
-
 <a id="output-bindings"></a>
 
 # 输出绑定
@@ -146,14 +141,7 @@ pin-binding        := Pin[ <index> ] = <source> ;
 
 所绑定的值必须是 Substrate 值，由 [`Substrate.*` 内置函数](../builtins/substrate.md)或 [Substrate 语法糖](../language-v2/substrate.md)生成；其他任何值都会引发 `DSH4228`。
 
-*(自 2.0.0 起)* `FrontMaterial` 是普通属性：1.x 生成器对它施加的额外规则 —— 强制
-着色模型为 Substrate、拒绝除 `"Substrate"` 以外的显式 `ShadingModel`、
-拒绝它与 `Base.MaterialAttributes` 并列、以及整个表面的 `Custom` 节点路径 —— 均不再适用。在材质需要它的
-`Settings` 中写入
-`ShadingModel = "Substrate";`（在 UE 5.3 上，该设置为
-[`DSH7128`](../diagnostics/DSH7xxx.md#dsh7128)）。针对旧版属性编写的材质在
-Substrate 项目中如何读取，由 `Substrate =` 设置决定 —— 请参见
-[Substrate sugar](../language-v2/substrate.md#one-source-two-kinds-of-project--substrate-)。
+*(自 2.0.0 起)* `FrontMaterial` 是普通属性：1.x 生成器对它施加的额外规则 —— 强制着色模型为 Substrate、拒绝除 `"Substrate"` 以外的显式 `ShadingModel`、拒绝它与 `Base.MaterialAttributes` 并列、以及整个表面的 `Custom` 节点路径 —— 均不再适用。在材质需要它的 `Settings` 中写入 `ShadingModel = "Substrate";`（在 UE 5.3 上，该设置为 [`DSH7128`](../diagnostics/DSH7xxx.md#dsh7128)）。针对旧版属性编写的材质在 Substrate 项目中如何读取，由 `Substrate =` 设置决定 —— 请参见 [Substrate sugar](../language-v2/substrate.md#one-source-two-kinds-of-project--substrate-)。
 
 ```c
 Outputs = {
@@ -169,16 +157,13 @@ Graph = {
 
 ## `Expression( … ).Pin[i]` 目标
 
-非 `Base` 绑定形式会创建一个任意 `UMaterialExpression` —— 实际上是一个*自定义输出*
-节点 —— 并将源连接到其某个输入引脚。
+非 `Base` 绑定形式会创建一个任意 `UMaterialExpression` —— 实际上是一个*自定义输出*节点 —— 并将源连接到其某个输入引脚。
 
 ```c
 Expression( Class = "<ExpressionClass>" [, <key> = <value> ]… ) . Pin[ <index> ] = <source> ;
 ```
 
-目标的两种形式都会成为材质入口中的一个 `UE.Expression(Class = "…", …)` 节点调用，
-因此目标受与 `Graph` 中
-[`UE.Expression`](../builtins/ue-expression.md) 调用相同的规则约束。
+目标的两种形式都会成为材质入口中的一个 `UE.Expression(Class = "…", …)` 节点调用，因此目标受与 `Graph` 中 [`UE.Expression`](../builtins/ue-expression.md) 调用相同的规则约束。
 
 <a id="requirements-in-the-order-they-are-checked"></a>
 
@@ -195,52 +180,30 @@ Expression( Class = "<ExpressionClass>" [, <key> = <value> ]… ) . Pin[ <index>
 | 该索引指向该类的某个输入引脚 | [`DSH5285`](../diagnostics/DSH5xxx.md#dsh5285) |
 | 其他每个参数都指向该类的某个引脚或属性 | [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213) |
 
-`Class` 匹配时忽略大小写。下面的复用键会将其他每个键转为小写并去掉每个
-值的引号；节点调用按原样携带每个参数。
+`Class` 匹配时忽略大小写。下面的复用键会将其他每个键转为小写并去掉每个值的引号；节点调用按原样携带每个参数。
 
 <a id="class-resolution"></a>
 
 ### 类解析
 
-*(自 2.0.0 起)* 类在引擎的表达式目录中按精确名称查找，顺序如下：短名称（`ThinTranslucentMaterialOutput`）、类名称
-（`MaterialExpressionThinTranslucentMaterialOutput`）、类路径
-（`/Script/Engine.MaterialExpressionThinTranslucentMaterialOutput`）、前面加上
-`MaterialExpression` 的短名称，以及带有其 `U`
-（`UMaterialExpressionThinTranslucentMaterialOutput`）的 C++ 名称，后者 1.x 会拒绝。在 1.x 文件中，若某名称
-仅忽略大小写地与一个类匹配，也能解析，并给出警告 `DSH5276`。其他任何情况都是
-`DSH5212`。同样的规则记录在 [`UE.Expression`](../builtins/ue-expression.md) 上。
+*(自 2.0.0 起)* 类在引擎的表达式目录中按精确名称查找，顺序如下：短名称（`ThinTranslucentMaterialOutput`）、类名称（`MaterialExpressionThinTranslucentMaterialOutput`）、类路径（`/Script/Engine.MaterialExpressionThinTranslucentMaterialOutput`）、前面加上 `MaterialExpression` 的短名称，以及带有其 `U` （`UMaterialExpressionThinTranslucentMaterialOutput`）的 C++ 名称，后者 1.x 会拒绝。在 1.x 文件中，若某名称仅忽略大小写地与一个类匹配，也能解析，并给出警告 `DSH5276`。其他任何情况都是 `DSH5212`。同样的规则记录在 [`UE.Expression`](../builtins/ue-expression.md) 上。
 
 <a id="other-arguments"></a>
 
 ### 其他参数
 
-除 `Class` 以外的每个参数都会与该类进行匹配：先匹配输入引脚，再匹配反射
-属性。值会被读取为数字、`true` / `false`、带引号的字符串或裸词，裸词指向
-图中的一个值，或者对于枚举属性，指向一个枚举项。
+除 `Class` 以外的每个参数都会与该类进行匹配：先匹配输入引脚，再匹配反射属性。值会被读取为数字、`true` / `false`、带引号的字符串或裸词，裸词指向图中的一个值，或者对于枚举属性，指向一个枚举项。
 
-*(自 2.0.0 起)* 指向**输入**引脚的参数会像 `Pin[<index>]` 那样连接该引脚；
-1.x 会拒绝它。将同一个引脚双向连接会得到 [`DSH4215`](../diagnostics/DSH4xxx.md#dsh4215)。既不是引脚也不是属性的名称会得到
-`DSH5213` —— 但在 1.x 文件中针对图值的情况除外，该名称会在节点存在后
-按该名称连接（[`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291)，信息；
-当构建出的节点没有该引脚时为 [`DSH8212`](../diagnostics/DSH8xxx.md#dsh8212)）。属性无法接受的值会得到
-[`DSH8213`](../diagnostics/DSH8xxx.md#dsh8213)。
+*(自 2.0.0 起)* 指向**输入**引脚的参数会像 `Pin[<index>]` 那样连接该引脚； 1.x 会拒绝它。将同一个引脚双向连接会得到 [`DSH4215`](../diagnostics/DSH4xxx.md#dsh4215)。既不是引脚也不是属性的名称会得到 `DSH5213` —— 但在 1.x 文件中针对图值的情况除外，该名称会在节点存在后按该名称连接（[`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291)，信息；当构建出的节点没有该引脚时为 [`DSH8212`](../diagnostics/DSH8xxx.md#dsh8212)）。属性无法接受的值会得到 [`DSH8213`](../diagnostics/DSH8xxx.md#dsh8213)。
 
 <a id="pin-indices-and-node-reuse"></a>
 
 ### 引脚索引与节点复用
 
-- `Pin[<index>]` 是按引擎声明顺序对节点输入列表的从零开始的索引。`Expression(Class="ThinTranslucentMaterialOutput").Pin[0]` 为 `TransmittanceColor`，
-  `.Pin[1]` 为 `SurfaceCoverage`。超出末尾的索引会得到 `DSH5285`。
-- 节点的每个引脚可以在语句形式和[块](#block-form)形式中绑定**一次**：
-  [`DSH3268`](../diagnostics/DSH3xxx.md#dsh3268)。
-- 节点在同一个 `Outputs` 区段内按**类加排序后的参数列表去重**。两个
-  其 `Expression( … )` 规格完全相同的绑定共享一个节点并绑定不同引脚；
-  任何参数不同就会创建第二个节点，同一个头部出现在第二个 `Outputs`
-  区段中也是如此。
-- 源必须是图中的一个值：没有任何声明指向的名称会得到
-  [`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200)，而引脚无法接受的值会得到
-  [`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214)。必需引脚未连接会得到警告
-  [`DSH5279`](../diagnostics/DSH5xxx.md#dsh5279)。
+- `Pin[<index>]` 是按引擎声明顺序对节点输入列表的从零开始的索引。`Expression(Class="ThinTranslucentMaterialOutput").Pin[0]` 为 `TransmittanceColor`， `.Pin[1]` 为 `SurfaceCoverage`。超出末尾的索引会得到 `DSH5285`。
+- 节点的每个引脚可以在语句形式和[块](#block-form)形式中绑定**一次**： [`DSH3268`](../diagnostics/DSH3xxx.md#dsh3268)。
+- 节点在同一个 `Outputs` 区段内按**类加排序后的参数列表去重**。两个其 `Expression( … )` 规格完全相同的绑定共享一个节点并绑定不同引脚；任何参数不同就会创建第二个节点，同一个头部出现在第二个 `Outputs` 区段中也是如此。
+- 源必须是图中的一个值：没有任何声明指向的名称会得到 [`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200)，而引脚无法接受的值会得到 [`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214)。必需引脚未连接会得到警告 [`DSH5279`](../diagnostics/DSH5xxx.md#dsh5279)。
 - 节点落在哪里是[图形布局](../generation/graph-layout.md)的职责。
 
 此形式最常用于自定义输出时的引脚顺序：
@@ -251,8 +214,7 @@ Expression( Class = "<ExpressionClass>" [, <key> = <value> ]… ) . Pin[ <index>
 | `ClearCoatNormalCustomOutput` | `0` Input |
 | `RuntimeVirtualTextureOutput` | `0` BaseColor、`1` Specular、`2` Roughness、`3` Normal、`4` WorldHeight、`5` Opacity、`6` Mask、`7` Displacement、`8` Mask4 |
 
-任何其他 `UMaterialExpressionCustomOutput` 子类也以相同方式工作；其引脚顺序是引擎声明输入的顺序，材质编辑器在节点上从上到下显示该顺序。一个
-完整的 `RuntimeVirtualTextureOutput` 文件是[示例 15](../examples/index.md#15-runtime-virtual-texture-sampling-and-writing)。
+任何其他 `UMaterialExpressionCustomOutput` 子类也以相同方式工作；其引脚顺序是引擎声明输入的顺序，材质编辑器在节点上从上到下显示该顺序。一个完整的 `RuntimeVirtualTextureOutput` 文件是[示例 15](../examples/index.md#15-runtime-virtual-texture-sampling-and-writing)。
 
 ```c
 Outputs = {
@@ -275,8 +237,7 @@ Outputs = {
 
 *(自 1.9.0 起)*
 
-一个引脚众多的终端节点在语句形式中必须为每个引脚重复其整个 `Expression( … )` 规格，
-而且由于该规格*就是*去重键，**一个被遗忘的参数会悄无声息地把节点拆成两个**。块形式只需写入一次规格：
+一个引脚众多的终端节点在语句形式中必须为每个引脚重复其整个 `Expression( … )` 规格，而且由于该规格*就是*去重键，**一个被遗忘的参数会悄无声息地把节点拆成两个**。块形式只需写入一次规格：
 
 ```c
 Expression( <key> = <value> [, <key> = <value> ]… )
@@ -308,15 +269,9 @@ Outputs = {
 
 ### 单节点保证
 
-块形式和语句形式读入为同一种东西：每个复用键对应一个节点调用，该键下的每个
-引脚都绑定为其参数之一。一个块的所有引脚共享头部的类和
-参数列表，这正好就是[复用键](#pin-indices-and-node-reuse) —— 因此一个包含 *N* 个引脚的块
-总是产生**一个**节点。参数列表不会在各个引脚之间发生偏移，因为只有一份
-副本。
+块形式和语句形式读入为同一种东西：每个复用键对应一个节点调用，该键下的每个引脚都绑定为其参数之一。一个块的所有引脚共享头部的类和参数列表，这正好就是[复用键](#pin-indices-and-node-reuse) —— 因此一个包含 *N* 个引脚的块总是产生**一个**节点。参数列表不会在各个引脚之间发生偏移，因为只有一份副本。
 
-其他一切都不变：块形式和语句形式在下游无法区分。它们
-共享相同的类解析、相同的参数检查、相同的引脚索引检查和相同的
-诊断。
+其他一切都不变：块形式和语句形式在下游无法区分。它们共享相同的类解析、相同的参数检查、相同的引脚索引检查和相同的诊断。
 
 <a id="rules"></a>
 

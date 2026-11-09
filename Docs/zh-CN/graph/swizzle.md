@@ -1,8 +1,3 @@
----
-title: "Swizzle"
-description: "Swizzle"
----
-
 <a id="swizzle"></a>
 
 # Swizzle
@@ -27,8 +22,7 @@ description: "Swizzle"
 <channel>  := { x | y | z | w | r | g | b | a }
 ```
 
-一到四个通道字符。`.` 和通道字母是字面量；`[ … ]` 和
-`{ a | b }` 是元记号。
+一到四个通道字符。`.` 和通道字母是字面量；`[ … ]` 和 `{ a | b }` 是元记号。
 
 <a id="channel-sets"></a>
 
@@ -41,8 +35,7 @@ description: "Swizzle"
 | `z`, `Z`, `b`, `B` | 2 |
 | `w`, `W`, `a`, `A` | 3 |
 
-- 恰好存在**两**个集合：`xyzw` 和 `rgba`。没有 `stpq` 集合，也没有 `uv` 集合 — `u`
-  和 `v` 均无法解析，因此 `.uv` 会失败并产生 [`DSH4230`](../diagnostics/DSH4xxx.md#dsh4230)。
+- 恰好存在**两**个集合：`xyzw` 和 `rgba`。没有 `stpq` 集合，也没有 `uv` 集合 — `u` 和 `v` 均无法解析，因此 `.uv` 会失败并产生 [`DSH4230`](../diagnostics/DSH4xxx.md#dsh4230)。
 - 通道字符**不区分大小写**进行匹配：`.RGB`, `.Rgb`, `.XyZ` 均有效。
 - **在一个 swizzle 中混用两个集合是 `DSH4230`** *（自 2.0.0 起；1.x 将 `.xg` 视为 `.xy`）*。
 
@@ -69,16 +62,13 @@ swizzle 只能缩小或重排；它永远无法读取超出基础宽度的内容
 | `float` | `.y`, `.z`, `.w`, `.g`, `.b`, `.a` | **错误** |
 
 > [!WARNING]
-> **标量不会通过超出范围的通道进行散布。** 对标量参数使用 `Roughness.yz` 是一个硬错误，而不是两分量广播：`DSH4230`。要广播标量，请重复通道 0
-> （`Roughness.xx`）、使用构造函数（`float2(Roughness)`），或依赖
-> 赋值时的[标量拓宽](conversions.md#widening)。
+> **标量不会通过超出范围的通道进行散布。** 对标量参数使用 `Roughness.yz` 是一个硬错误，而不是两分量广播：`DSH4230`。要广播标量，请重复通道 0 （`Roughness.xx`）、使用构造函数（`float2(Roughness)`），或依赖赋值时的[标量拓宽](conversions.md#widening)。
 
 <a id="lowering"></a>
 
 ## 降级
 
-*（自 2.0.0 起）* swizzle 是一个节点：生成器从不在连接上放置通道掩码。以下四种
-情况按此顺序尝试。
+*（自 2.0.0 起）* swizzle 是一个节点：生成器从不在连接上放置通道掩码。以下四种情况按此顺序尝试。
 
 | # | 适用条件 | 创建的节点 | 结果 |
 | :-- | :-- | :-- | :-- |
@@ -87,9 +77,7 @@ swizzle 只能缩小或重排；它永远无法读取超出基础宽度的内容
 | 3 | 基础有 2–4 个分量且掩码被重排或重复 | 每个不同通道一个单通道掩码（或按情况 1 使用其引脚），然后 N−1 个 `AppendVector` | 各部分串联 |
 | 4 | 基础有 1 个分量且每个通道都在范围内 | N−1 个 `AppendVector`（对于 1 字符 swizzle 则无） | 标量复制 N 次 |
 
-恒等掩码 — 值的每个通道按顺序：`.x` 作用于 `float`、`.rgb` 作用于 `float3` — 在 `.dss` 中不是
-节点。在 1.x 源中它保留为 `ComponentMask`，因为 1.x 无论值声明为哪种宽度
-都会对连接进行掩码。
+恒等掩码 — 值的每个通道按顺序：`.x` 作用于 `float`、`.rgb` 作用于 `float3` — 在 `.dss` 中不是节点。在 1.x 源中它保留为 `ComponentMask`，因为 1.x 无论值声明为哪种宽度都会对连接进行掩码。
 
 <a id="sequential-versus-non-sequential-masks"></a>
 
@@ -97,28 +85,25 @@ swizzle 只能缩小或重排；它永远无法读取超出基础宽度的内容
 
 | Swizzle | 通道 | 情况 | 节点成本 |
 | :-- | :-- | :-- | :-- |
-| `.r` / `.x` | 0 | 2 | 1 个 `ComponentMask` |
-| `.a` | 3 | 2 | 1 个 `ComponentMask` |
-| `.rg` / `.xy` | 0,1 | 2 | 1 个 `ComponentMask` |
-| `.rgb` / `.xyz` | 0,1,2 | 2 | 1 个 `ComponentMask` |
+| `.r` / `.x` | 0 | 2 | 1 `ComponentMask` |
+| `.a` | 3 | 2 | 1 `ComponentMask` |
+| `.rg` / `.xy` | 0,1 | 2 | 1 `ComponentMask` |
+| `.rgb` / `.xyz` | 0,1,2 | 2 | 1 `ComponentMask` |
 | `.ga` | 1,3 | 2 — 递增，允许有间隔 | 1 个 `ComponentMask` |
 | `.rgba` 作用于 `float4` | 0,1,2,3 | 恒等 | 在 `.dss` 中无；在 1.x 源中为 1 个 `ComponentMask` |
-| `.gr` | 1,0 | 3 | 2 个 `ComponentMask`, 1 个 `AppendVector` |
+| `.gr` | 1,0 | 3 | 2 `ComponentMask`, 1 `AppendVector` |
 | `.bgr` | 2,1,0 | 3 *（自 1.3.3 起）* | 3 个 `ComponentMask`, 2 个 `AppendVector` |
-| `.xxx` | 0,0,0 | 3 | 1 个 `ComponentMask`, 2 个 `AppendVector` |
-| `.rrgg` | 0,0,1,1 | 3 | 2 个 `ComponentMask`, 3 个 `AppendVector` |
+| `.xxx` | 0,0,0 | 3 | 1 `ComponentMask`, 2 `AppendVector` |
+| `.rrgg` | 0,0,1,1 | 3 | 2 `ComponentMask`, 3 `AppendVector` |
 | `.rr` 作用于 `float` | 0,0 | 4 | 1 个 `AppendVector` |
 
-凡源节点有引脚之处，情况 1 会将此表中的 `ComponentMask` 替换为引脚。无论 swizzle 被书写多少次，每个
-节点都只计数一次：相等的节点会被合并（参见
-[节点复用](node-reuse.md)）。
+凡源节点有引脚之处，情况 1 会将此表中的 `ComponentMask` 替换为引脚。无论 swizzle 被书写多少次，每个节点都只计数一次：相等的节点会被合并（参见[节点复用](node-reuse.md)）。
 
 <a id="composed-swizzles"></a>
 
 ### 组合 swizzle
 
-对已 swizzle 的值再次 swizzle 会通过现有掩码重新映射，因此通道编号始终
-相对于被 swizzle 的值，而不是相对于原始节点。
+对已 swizzle 的值再次 swizzle 会通过现有掩码重新映射，因此通道编号始终相对于被 swizzle 的值，而不是相对于原始节点。
 
 | 书写 | 含义 |
 | :-- | :-- |
@@ -127,17 +112,13 @@ swizzle 只能缩小或重排；它永远无法读取超出基础宽度的内容
 | `v.ga.g` | `v` 的通道 3 |
 | `v.bgr.r` | `v` 的通道 2 |
 
-当结果保持升序时，掩码的掩码会折叠为一个掩码，因此 `v.rgb.rg` 在 `v` 上是一个
-`ComponentMask`（或一个引脚）。选择外部列表中不存在的条目是针对 *已 swizzle* 宽度的
-普通边界失败 — `v.ga.b` 是 `DSH4230`，因为 `.ga` 有 2
-个分量，无论 `v` 的宽度如何。
+当结果保持升序时，掩码的掩码会折叠为一个掩码，因此 `v.rgb.rg` 在 `v` 上是一个 `ComponentMask`（或一个引脚）。选择外部列表中不存在的条目是针对 *已 swizzle* 宽度的普通边界失败 — `v.ga.b` 是 `DSH4230`，因为 `.ga` 有 2 个分量，无论 `v` 的宽度如何。
 
 <a id="swizzling-a-call-result"></a>
 
 ### 对调用结果进行 swizzle
 
-`.` 是普通后缀运算符，因此任何调用结果都可以直接 swizzle — 无需临时
-变量。
+`.` 是普通后缀运算符，因此任何调用结果都可以直接 swizzle — 无需临时变量。
 
 ```c
 float u  = UE.TexCoord().x;
@@ -146,13 +127,7 @@ vec2  yx = vec4(1.0, 2.0, 3.0, 4.0).yx;
 float m  = MyFunction(A, B).r;
 ```
 
-Swizzle 应用于调用的值。对于 `Function`、`GraphFunction`、`ShaderFunction`
-或 `VirtualFunction` 的调用，若成员名是函数某个输出的名称，则改选该输出；
-当函数不返回任何内容时，**任意**成员也如此（旧规则 L3b）：在仅有 `out` 参数的函数上的 `.r`
-会被读取为输出名称，且
-[`DSH5280`](../diagnostics/DSH5xxx.md#dsh5280)，除非有个输出名为 `r`。参见
-[调用](calls.md#output-selection)。对于具有多个输出的 `UE.*` 节点，成员名指定一个输出；
-当输出是同一个值的通道视图时（例如纹理采样），允许使用 swizzle。
+Swizzle 应用于调用的值。对于 `Function`、`GraphFunction`、`ShaderFunction` 或 `VirtualFunction` 的调用，若成员名是函数某个输出的名称，则改选该输出；当函数不返回任何内容时，**任意**成员也如此（旧规则 L3b）：在仅有 `out` 参数的函数上的 `.r` 会被读取为输出名称，且 [`DSH5280`](../diagnostics/DSH5xxx.md#dsh5280)，除非有个输出名为 `r`。参见[调用](calls.md#output-selection)。对于具有多个输出的 `UE.*` 节点，成员名指定一个输出；当输出是同一个值的通道视图时（例如纹理采样），允许使用 swizzle。
 
 <a id="non-swizzlable-bases"></a>
 
@@ -170,15 +145,11 @@ Swizzle 应用于调用的值。对于 `Function`、`GraphFunction`、`ShaderFun
 
 ## 说明
 
-- 无论写多少次，一个 swizzle 只消耗一个节点：`Src.rgb` 使用十次就是一个
-  `ComponentMask` —— 或者当 `Src` 具有 `RGB` 引脚时，不消耗节点。
-- 在 1.x 源中的窄化会以相同的 swizzle 取前导通道（`r`、`rg`、`rgb`），因此
-  隐式裁剪的开销与 swizzle 相同。参见 [转换](conversions.md#narrowing)。
+- 无论写多少次，一个 swizzle 只消耗一个节点：`Src.rgb` 使用十次就是一个 `ComponentMask` —— 或者当 `Src` 具有 `RGB` 引脚时，不消耗节点。
+- 在 1.x 源中的窄化会以相同的 swizzle 取前导通道（`r`、`rg`、`rgb`），因此隐式裁剪的开销与 swizzle 相同。参见 [转换](conversions.md#narrowing)。
 - 常量的 swizzle 会被折叠：`vec4(1.0, 2.0, 3.0, 4.0).yx` 就是一个 `Constant2Vector(2, 1)`。
-- 重复和重排序的 swizzle 会像任何其他表达式一样被合并，因此 `Src.bgr` 写两次
-  只会产生一条 `AppendVector` 链。参见 [节点复用](node-reuse.md)。
-- `.` 后跟任何非标识符的内容，在任何 swizzle 逻辑运行之前就是解析错误：
-  [`DSH2161`](../diagnostics/DSH2xxx.md#dsh2161)。
+- 重复和重排序的 swizzle 会像任何其他表达式一样被合并，因此 `Src.bgr` 写两次只会产生一条 `AppendVector` 链。参见 [节点复用](node-reuse.md)。
+- `.` 后跟任何非标识符的内容，在任何 swizzle 逻辑运行之前就是解析错误： [`DSH2161`](../diagnostics/DSH2xxx.md#dsh2161)。
 
 <a id="diagnostics"></a>
 

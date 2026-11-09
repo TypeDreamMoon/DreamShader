@@ -1,14 +1,8 @@
----
-title: "DSH1xxx --- 驱动、源文件和导入"
-description: "DSH1xxx --- 驱动、源文件和导入"
----
-
 <a id="dsh1xxx-----driver-source-files-and-imports"></a>
 
 # DSH1xxx --- 驱动、源文件和导入
 
-> 生成标记之间的块由 `.skill/gen-diagnostics.ps1` 写入。
-> 标记下方的一切均为手动编写，会在重新生成后保留。
+> 生成标记之间的块由 `.skill/gen-diagnostics.ps1` 写入。标记下方的一切均为手动编写，会在重新生成后保留。
 
 <a id="dsh1030"></a>
 
@@ -361,3 +355,4 @@ Asset reference is written as '%s', but this slot requires a '%s'.
 **修复。**从该槽位所需类的资产复制引用，或去掉 `Class'` 前缀和引号，只保留裸对象路径
 
 **参见**[路径](../parameters/path.md)
+

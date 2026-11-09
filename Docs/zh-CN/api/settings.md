@@ -1,8 +1,3 @@
----
-title: "DreamShaderSettings.h"
-description: "DreamShaderSettings.h"
----
-
 <a id="dreamshadersettingsh"></a>
 
 # DreamShaderSettings.h
@@ -177,26 +172,23 @@ GeneratedShaderDirectory.Path = TEXT("Intermediate/DreamShader/GeneratedShaders"
 | `MaterialDomainMappings` | `TMap<FString, TEnumAsByte<EMaterialDomain>>` | `Mappings` | *空* | — |
 | `SourceDirectory` | `FDirectoryPath` | `Paths` | `DShader` | `RelativeToGameDir` |
 | `GeneratedShaderDirectory` | `FDirectoryPath` | `Paths` | `Intermediate/DreamShader/GeneratedShaders` | `RelativeToGameDir` |
-| `bScanPluginSourceDirectories` | `bool` | `Paths` | `true` | `DisplayName="Scan Plugin Source Directories"`、`ToolTip` |
-| `DefaultBackend` | `EDreamShaderDefaultBackend` | `Compiler` | `ThinCustom` | `DisplayName="Default Compiler Backend"`、`ToolTip` |
-| `bShowEphemeralMaterials` | `bool` | `Compiler` | `false` | `DisplayName="Show Ephemeral Materials"`、`ToolTip` |
+| `bScanPluginSourceDirectories` | `bool` | `Paths` | `true` | `DisplayName="Scan Plugin Source Directories"`, `ToolTip` |
+| `DefaultBackend` | `EDreamShaderDefaultBackend` | `Compiler` | `ThinCustom` | `DisplayName="Default Compiler Backend"`, `ToolTip` |
+| `bShowEphemeralMaterials` | `bool` | `Compiler` | `false` | `DisplayName="Show Ephemeral Materials"`, `ToolTip` |
 | `PreprocessorDefines` | `TMap<FString, FString>` | `Compiler` | *空* | `DisplayName="Preprocessor Defines"`、`ToolTip` |
-| `GraphLayoutStyle` | `EDreamShaderGraphLayoutStyle` | `Compiler` | `Blocks` | `DisplayName="Graph Layout Style"`、`ToolTip` |
+| `GraphLayoutStyle` | `EDreamShaderGraphLayoutStyle` | `Compiler` | `Blocks` | `DisplayName="Graph Layout Style"`, `ToolTip` |
 | `bAutoCompileOnSave` | `bool` | `Compiler` | `true` | — |
-| `SaveDebounceSeconds` | `float` | `Compiler` | `0.25f` | `ClampMin="0.05"`、`ClampMax="10.0"`、`UIMin="0.05"`、`UIMax="2.0"` |
+| `SaveDebounceSeconds` | `float` | `Compiler` | `0.25f` | `ClampMin="0.05"`, `ClampMax="10.0"`, `UIMin="0.05"`, `UIMax="2.0"` |
 | `bVerboseLogs` | `bool` | `Compiler` | `false` | — |
 | `bExportDecompiledLayout` | `bool` | `Decompiler` | `true` | — |
 | `bOpenInNewWindow` | `bool` | `Editor` | `true` | — |
-| `InstanceSubfolder` | `FString` | `Editor` | `TEXT("Instances")` | `DisplayName="Material Instance Subfolder"`、`ToolTip` |
-| `bSyncSourceReferencesOnAssetRename` | `bool` | `Editor` | `true` | `DisplayName="Sync Source References On Asset Rename"`、`ToolTip` |
+| `InstanceSubfolder` | `FString` | `Editor` | `TEXT("Instances")` | `DisplayName="Material Instance Subfolder"`, `ToolTip` |
+| `bSyncSourceReferencesOnAssetRename` | `bool` | `Editor` | `true` | `DisplayName="Sync Source References On Asset Rename"`, `ToolTip` |
 
 每个属性的*作用*见[项目设置](../settings/project.md)；本页记录其声明。
 
 > [!NOTE]
-> 这里刻意**没有持久化开/关切换**。头文件中记录了原因：`ThinCustom`
-> 产品在编辑器中默认是 Ephemeral 的——源文件才是创作界面——并且在显式操作、cook 或创建子实例时才会实体化。`Graph` 材质
-> 和材质函数完全没有 Ephemeral 状态。`DefaultBackend` 是唯一的编译器
-> 开关。参见 [Ephemeral 材质](../generation/ephemeral.md)。
+> 这里刻意**没有持久化开/关切换**。头文件中记录了原因：`ThinCustom` 产品在编辑器中默认是 Ephemeral 的——源文件才是创作界面——并且在显式操作、cook 或创建子实例时才会实体化。`Graph` 材质和材质函数完全没有 Ephemeral 状态。`DefaultBackend` 是唯一的编译器开关。参见 [Ephemeral 材质](../generation/ephemeral.md)。
 
 <a id="normalizemappingkey"></a>
 
@@ -206,8 +198,7 @@ GeneratedShaderDirectory.Path = TEXT("Intermediate/DreamShader/GeneratedShaders"
 static FString NormalizeMappingKey(const FString& InName);
 ```
 
-按顺序应用：`TrimStartAndEndInline()`、`ToLowerInline()`，然后移除每个 `" "`、`"_"`
-和 `"-"`。
+按顺序应用：`TrimStartAndEndInline()`、`ToLowerInline()`，然后移除每个 `" "`、`"_"` 和 `"-"`。
 
 | 输入 | 结果 |
 | :-- | :-- |
@@ -219,13 +210,9 @@ static FString NormalizeMappingKey(const FString& InName);
 因此别名匹配不区分大小写、空格、下划线和连字符。
 
 > [!WARNING]
-> 不要将其与 [`UE::DreamShader::NormalizeSettingKey`](types.md#normalizesettingkey) 混淆，
-> 后者只做修剪和小写化。`NormalizeMappingKey` 应用于设置**值**（枚举
-> 别名）；`NormalizeSettingKey` 应用于设置**键**。参见
-> [归一化器比较](dreamshader-module.md#the-four-normalizers-compared)。
+> 不要将其与 [`UE::DreamShader::NormalizeSettingKey`](types.md#normalizesettingkey) 混淆，后者只做修剪和小写化。`NormalizeMappingKey` 应用于设置**值**（枚举别名）；`NormalizeSettingKey` 应用于设置**键**。参见[归一化器比较](dreamshader-module.md#the-four-normalizers-compared)。
 
-三个私有转发函数 `NormalizeShadingModelKey`、`NormalizeBlendModeKey` 和
-`NormalizeMaterialDomainKey` 调用 `NormalizeMappingKey` 且不做任何额外处理。
+三个私有转发函数 `NormalizeShadingModelKey`、`NormalizeBlendModeKey` 和 `NormalizeMaterialDomainKey` 调用 `NormalizeMappingKey` 且不做任何额外处理。
 
 <a id="the-resolvers"></a>
 
@@ -255,10 +242,7 @@ bool TryResolveMaterialDomain(const FString& InName, EMaterialDomain& OutMateria
 | 常量性 | `const`；在 CDO 上安全。 |
 
 > [!NOTE]
-> 步骤 3 会在**用户映射的每次未命中**时重建整个默认目录——包括对 `StaticEnum` 的完整遍历
-> 以及逐索引的元数据查询。由于用户映射默认为空，
-> 这实际上等于每次调用都会发生。在生成频率下这没问题；不要在
-> 逐节点或逐帧循环中调用这些函数。
+> 步骤 3 会在**用户映射的每次未命中**时重建整个默认目录——包括对 `StaticEnum` 的完整遍历以及逐索引的元数据查询。由于用户映射默认为空，这实际上等于每次调用都会发生。在生成频率下这没问题；不要在逐节点或逐帧循环中调用这些函数。
 
 <a id="building-the-default-catalogues"></a>
 
@@ -287,10 +271,7 @@ static void BuildDefaultMaterialDomainMappings(TMap<FString, TEnumAsByte<EMateri
 | 5 | 以追加方式添加它。 |
 
 > [!WARNING]
-> `UEnum` 元数据仅限编辑器。在非编辑器和发行版构建中 `bHidden` 被硬编码为
-> `false`，因此不会因为隐藏而丢弃任何内容，只有跳过谓词中基于名称和值的部分
-> 会生效。因此发行版构建可以识别一些编辑器
-> 拒绝的额外别名。这是刻意的修复：`UEnum::HasMetaData` 在这些配置中无法编译。
+> `UEnum` 元数据仅限编辑器。在非编辑器和发行版构建中 `bHidden` 被硬编码为 `false`，因此不会因为隐藏而丢弃任何内容，只有跳过谓词中基于名称和值的部分会生效。因此发行版构建可以识别一些编辑器拒绝的额外别名。这是刻意的修复：`UEnum::HasMetaData` 在这些配置中无法编译。
 
 阶段 2 通过同一个追加式辅助函数添加字面量别名。
 
@@ -298,9 +279,7 @@ static void BuildDefaultMaterialDomainMappings(TMap<FString, TEnumAsByte<EMateri
 
 ### 仅追加语义
 
-当别名修剪后为空，**或**当映射已经包含那个完全相同的
-`FString` 键时，辅助函数会跳过该别名——这是一次精确、区分大小写、未归一化的键比较。因为反射阶段
-先运行，所以与反射别名逐字符相同的显式别名会被静默忽略。
+当别名修剪后为空，**或**当映射已经包含那个完全相同的 `FString` 键时，辅助函数会跳过该别名——这是一次精确、区分大小写、未归一化的键比较。因为反射阶段先运行，所以与反射别名逐字符相同的显式别名会被静默忽略。
 
 <a id="ematerialshadingmodel--prefix-msm_"></a>
 
@@ -352,8 +331,7 @@ static void BuildDefaultMaterialDomainMappings(TMap<FString, TEnumAsByte<EMateri
 | `Opaque` | `Masked` | `Translucent` | `Additive` |
 | `Modulate` | `AlphaComposite` | `AlphaHoldout` | `TranslucentColoredTransmittance` |
 
-`BLEND_TranslucentGreyTransmittance` 和 `BLEND_ColoredTransmittanceOnly` 是引擎值别名，
-标记为 `UMETA(Hidden)`，并且在编辑器构建中会被 `Hidden` 测试丢弃。
+`BLEND_TranslucentGreyTransmittance` 和 `BLEND_ColoredTransmittanceOnly` 是引擎值别名，标记为 `UMETA(Hidden)`，并且在编辑器构建中会被 `Hidden` 测试丢弃。
 
 显式别名——4 个：
 
@@ -368,9 +346,7 @@ static void BuildDefaultMaterialDomainMappings(TMap<FString, TEnumAsByte<EMateri
 
 ### `EMaterialDomain` — 前缀 `MD_`
 
-跳过谓词：`Hidden` 元数据**除非值为 `MD_RuntimeVirtualTexture`**，或名称为
-`MAX` 或 `MD_MAX`，或值为 `MD_MAX`。这个例外是刻意的——引擎将
-`MD_RuntimeVirtualTexture` 标记为隐藏，而 DreamShader 保持其可用。
+跳过谓词：`Hidden` 元数据**除非值为 `MD_RuntimeVirtualTexture`**，或名称为 `MAX` 或 `MD_MAX`，或值为 `MD_MAX`。这个例外是刻意的——引擎将 `MD_RuntimeVirtualTexture` 标记为隐藏，而 DreamShader 保持其可用。
 
 反射别名——7 个：
 
@@ -394,29 +370,19 @@ static void BuildDefaultMaterialDomainMappings(TMap<FString, TEnumAsByte<EMateri
 | `Virtual Texture` | `MD_RuntimeVirtualTexture` | |
 
 > [!NOTE]
-> 带空格的别名是**查找冗余**的：`NormalizeMappingKey` 会去除空格，因此
-> `Two Sided Foliage` 和 `TwoSidedFoliage` 会归一化为反射阶段
-> 已覆盖的同一个键。它们作为不同的映射条目存在，以便 Project Settings 面板和
-> 编辑器扩展所使用的桥接清单能够提供人类可读的拼写。
+> 带空格的别名是**查找冗余**的：`NormalizeMappingKey` 会去除空格，因此 `Two Sided Foliage` 和 `TwoSidedFoliage` 会归一化为反射阶段已覆盖的同一个键。它们作为不同的映射条目存在，以便 Project Settings 面板和编辑器扩展所使用的桥接清单能够提供人类可读的拼写。
 
-面向用户的目录（包括推荐使用哪些拼写）位于
-[材质枚举](../settings/material-enums.md)。
+面向用户的目录（包括推荐使用哪些拼写）位于[材质枚举](../settings/material-enums.md)。
 
 <a id="notes"></a>
 
 ## 说明
 
-- 反射阶段枚举的是**引擎**的枚举，因此确切的反射集合取决于
-  引擎版本所定义的内容。上表列出的是当前引擎上的结果；插件自身按版本控制的唯一条目是 `Strata`。
-- 全程使用 `TEnumAsByte<T>`，因为 `TMap` 中 `UPROPERTY` 的值类型必须可反射，
-  而这些引擎枚举不是 `enum class`。
-- `PostEditChangeProperty`（仅编辑器）对一个属性作出反应：编辑 `PreprocessorDefines`
-  会提升定义修订号，之后 `Super` 才会广播该更改。其他所有设置更改均由
-  编辑器模块自身的面板钩子处理。
-- `PostInitProperties` 会在仅存在旧键时，将 2.0 之前的配置键 `bShowInMemoryMaterialsInContentBrowser` 合并到
-  `bShowEphemeralMaterials` 中 *(自 2.0.0 起)*。
-- 该头文件包含了 `MaterialDomain.h` *(自 1.3.6 起)*，因此包含
-  `DreamShaderSettings.h` 的翻译单元无需自行添加包含即可获得 `EMaterialDomain`。
+- 反射阶段枚举的是**引擎**的枚举，因此确切的反射集合取决于引擎版本所定义的内容。上表列出的是当前引擎上的结果；插件自身按版本控制的唯一条目是 `Strata`。
+- 全程使用 `TEnumAsByte<T>`，因为 `TMap` 中 `UPROPERTY` 的值类型必须可反射，而这些引擎枚举不是 `enum class`。
+- `PostEditChangeProperty`（仅编辑器）对一个属性作出反应：编辑 `PreprocessorDefines` 会提升定义修订号，之后 `Super` 才会广播该更改。其他所有设置更改均由编辑器模块自身的面板钩子处理。
+- `PostInitProperties` 会在仅存在旧键时，将 2.0 之前的配置键 `bShowInMemoryMaterialsInContentBrowser` 合并到 `bShowEphemeralMaterials` 中 *(自 2.0.0 起)*。
+- 该头文件包含了 `MaterialDomain.h` *(自 1.3.6 起)*，因此包含 `DreamShaderSettings.h` 的翻译单元无需自行添加包含即可获得 `EMaterialDomain`。
 
 <a id="example"></a>
 
@@ -452,8 +418,7 @@ ApplyShadingModelSetting(M, TEXT("two-sided_foliage"), Error);
 ApplyShadingModelSetting(M, TEXT("  TWOSIDEDFOLIAGE"), Error);
 ```
 
-在没有设置对象的情况下枚举内置目录——工作区服务
-就是这样导出别名清单的：
+在没有设置对象的情况下枚举内置目录——工作区服务就是这样导出别名清单的：
 
 ```cpp
 TMap<FString, TEnumAsByte<EBlendMode>> Aliases;
@@ -472,4 +437,4 @@ UDreamShaderSettings::BuildDefaultBlendModeMappings(Aliases);   // 12 entries: 8
 - [`DreamShaderMaterialInstance.h`](material-instance.md) — 其 `IsAsset()` 读取 `bShowEphemeralMaterials` 的类
 - [`DreamShaderVersionCompat.h`](version-compat.md) — `DREAMSHADER_WITH_SUBSTRATE_BUILTINS`，即 `Strata` 门控
 - [着色器设置](../settings/material.md) — 这些解析器所服务的 `Settings` 键
-- [工作区](../../tools/workspace.md) — 导出的别名清单和 `bridge.db`
+- [工作区](../tools/workspace.md) — 导出的别名清单和 `bridge.db`

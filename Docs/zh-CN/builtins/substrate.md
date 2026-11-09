@@ -1,17 +1,10 @@
----
-title: "Substrate.*"
-description: "Substrate.*"
----
-
 <a id="substrate"></a>
 
 # Substrate.*
 
 > [DreamShader](../index.md) » [内置节点](index.md) » **`Substrate.*`**
 
-与 [`UE.*`](ue.md) 并列的调用命名空间，装着 Unreal 的 Substrate BSDF、组合与工具
-材质节点。（自 2.0.0 起）它是内置目录的 `Substrate` 命名空间：运行中引擎拥有的每一个 Substrate 类，
-按名字调用。
+与 [`UE.*`](ue.md) 并列的调用命名空间，装着 Unreal 的 Substrate BSDF、组合与工具材质节点。（自 2.0.0 起）它是内置目录的 `Substrate` 命名空间：运行中引擎拥有的每一个 Substrate 类，按名字调用。
 
 | | |
 | :-- | :-- |
@@ -25,8 +18,7 @@ description: "Substrate.*"
 
 ## 可用性
 
-绑定器里没有任何按版本编译进或编译出的东西 *(自 2.0.0 起)*：目录列出运行中引擎的
-Substrate 类，而 UE 5.4 之前的引擎一个都没有。
+绑定器里没有任何按版本编译进或编译出的东西 *(自 2.0.0 起)*：目录列出运行中引擎的 Substrate 类，而 UE 5.4 之前的引擎一个都没有。
 
 | 使用面 | 在没有该节点的引擎上 |
 | :-- | :-- |
@@ -38,17 +30,10 @@ Substrate 类，而 UE 5.4 之前的引擎一个都没有。
 | `Settings = { ShadingModel = "Substrate"; }`（以及 `"Strata"` 写法） | UE 5.4 以下报 [`DSH8215`](../diagnostics/DSH8xxx.md#dsh8215)，消息里带 [`DSH7128`](../diagnostics/DSH7xxx.md#dsh7128) |
 
 > [!NOTE]
-> 项目还必须启用 Substrate（*Project Settings ▸ Engine ▸ Rendering ▸
-> Substrate*），Substrate 图才能在引擎里编译。DreamShader 会读这个设置
-> *(自 2.0.0 起)*：`Shader` 的 `Substrate` 设置 —— `Legacy`、`Bridge` 或 `Native` —— 说明
-> 材质在开或不开它时的工程里怎么建，而 `Native` 在 Substrate 关闭时驱动 `FrontMaterial` 会报 [`DSH4382`](../diagnostics/DSH4xxx.md#dsh4382)。见
-> [一份源码，两种工程](../language-v2/substrate.md#one-source-two-kinds-of-project--substrate-)。
+> 项目还必须启用 Substrate（*Project Settings ▸ Engine ▸ Rendering ▸ Substrate*），Substrate 图才能在引擎里编译。DreamShader 会读这个设置*(自 2.0.0 起)*：`Shader` 的 `Substrate` 设置 —— `Legacy`、`Bridge` 或 `Native` —— 说明材质在开或不开它时的工程里怎么建，而 `Native` 在 Substrate 关闭时驱动 `FrontMaterial` 会报 [`DSH4382`](../diagnostics/DSH4xxx.md#dsh4382)。见[一份源码，两种工程](../language-v2/substrate.md#one-source-two-kinds-of-project--substrate-)。
 
 > [!NOTE]
-> 编辑器工具链跟随引擎。UE 5.4 以下，Bridge 清单
-> `Saved/DreamShader/Bridge/substrate-builtins.json` 被写成空条目数组、
-> `supported: false` 和一个 `unsupportedReason` —— 所以编辑器扩展的补全里
-> 什么都没有。参见 [Bridge](../../tools/bridge.md)。
+> 编辑器工具链跟随引擎。UE 5.4 以下，Bridge 清单 `Saved/DreamShader/Bridge/substrate-builtins.json` 被写成空条目数组、 `supported: false` 和一个 `unsupportedReason` —— 所以编辑器扩展的补全里什么都没有。参见 [Bridge](../tools/bridge.md)。
 
 <a id="synopsis"></a>
 
@@ -63,18 +48,13 @@ Substrate . <Name> ( [ <argument-name> = <expression> ]
 
 `Substrate` 和 `.` 是字面量；`[ … ]`、`{ a | b }` 和 `…` 是元记号。
 
-在 1.x 源码里前缀**不区分大小写**匹配 —— `Substrate` 是 1.x 的类型拼写，
-类型拼写都忽略大小写读取 —— 只在忽略大小写时匹配的 `<Name>` 也接受，给出
-警告 [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276)：`SUBSTRATE.UNLIT(…)` 能解析。参数名
-同样匹配 —— 精确匹配，或忽略大小写并给出 `DSH5276` —— 此外是精确的：不
-去掉任何分隔符。
+在 1.x 源码里前缀**不区分大小写**匹配 —— `Substrate` 是 1.x 的类型拼写，类型拼写都忽略大小写读取 —— 只在忽略大小写时匹配的 `<Name>` 也接受，给出警告 [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276)：`SUBSTRATE.UNLIT(…)` 能解析。参数名同样匹配 —— 精确匹配，或忽略大小写并给出 `DSH5276` —— 此外是精确的：不去掉任何分隔符。
 
 <a id="argument-model"></a>
 
 ## 参数模型
 
-`Substrate.*` 调用和任何反射节点调用（[`UE.Expression`](ue-expression.md)）一样，
-对名字选中的类绑定。
+`Substrate.*` 调用和任何反射节点调用（[`UE.Expression`](ue-expression.md)）一样，对名字选中的类绑定。
 
 | 规则 | 行为 |
 | :-- | :-- |
@@ -92,44 +72,25 @@ Substrate . <Name> ( [ <argument-name> = <expression> ]
 
 对每个剩余参数，绑定器按顺序尝试：
 
-1. **输入 pin** —— 类的 pin 名，或其别名：pin 的显示名写成标识符形式
-   （`Diffuse_Albedo`），属性的显示名去掉空格也算。
-2. **属性** —— 类的可编辑反射属性名或别名；bool 属性还可以去掉开头的 `b`，
-   所以 `UseParameterBlending` 能触达 `bUseParameterBlending`。
-3. **虚拟参数** —— 在有这些 pin 的 BSDF 上，`BaseColor` / `Metallic` / `Specular`、
-   `Haziness`、`Transmittance` / `Thickness` 和 `IOR` 会变成那些 pin
-   前面一个转换节点的输入 *(自 2.0.0 起)*。见
-   [Slab 上的旧参数](../language-v2/substrate.md#legacy-parameters-on-a-slab)。
-4. 在 1.x 源码里，以上都不是、但带着值的名字以
-   [`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291) 保留，建节点时按名字连接
-   （节点没有这个 pin 时 [`DSH8212`](../diagnostics/DSH8xxx.md#dsh8212)）。
+1. **输入 pin** —— 类的 pin 名，或其别名：pin 的显示名写成标识符形式（`Diffuse_Albedo`），属性的显示名去掉空格也算。
+2. **属性** —— 类的可编辑反射属性名或别名；bool 属性还可以去掉开头的 `b`，所以 `UseParameterBlending` 能触达 `bUseParameterBlending`。
+3. **虚拟参数** —— 在有这些 pin 的 BSDF 上，`BaseColor` / `Metallic` / `Specular`、 `Haziness`、`Transmittance` / `Thickness` 和 `IOR` 会变成那些 pin 前面一个转换节点的输入 *(自 2.0.0 起)*。见 [Slab 上的旧参数](../language-v2/substrate.md#legacy-parameters-on-a-slab)。
+4. 在 1.x 源码里，以上都不是、但带着值的名字以 [`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291) 保留，建节点时按名字连接（节点没有这个 pin 时 [`DSH8212`](../diagnostics/DSH8xxx.md#dsh8212)）。
 5. 都不匹配 → [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213)。
 
-pin 名匹配优先于同名属性。值按 pin 的类型检查：Substrate pin 上的
-数值、数值 pin 上的 Substrate 值、以及 `MaterialAttributes` pin 上任何不是 material 的值，
-都报 [`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214)。
+pin 名匹配优先于同名属性。值按 pin 的类型检查：Substrate pin 上的数值、数值 pin 上的 Substrate 值、以及 `MaterialAttributes` pin 上任何不是 material 的值，都报 [`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214)。
 
 > [!NOTE]
-> **名字带空格的引擎 pin 能触达** *(自 2.0.0 起)*：显示为
-> `Diffuse Albedo` 的 pin 写作 `Diffuse_Albedo`，它的属性名 —— `DiffuseAlbedo`，也就是下面各表
-> 列出的名字 —— 照旧可用。
+> **名字带空格的引擎 pin 能触达** *(自 2.0.0 起)*：显示为 `Diffuse Albedo` 的 pin 写作 `Diffuse_Albedo`，它的属性名 —— `DiffuseAlbedo`，也就是下面各表列出的名字 —— 照旧可用。
 
 > [!NOTE]
-> **可接受的参数名跟随引擎，而不是插件。** 目录读自运行中
-> 引擎的 `UMaterialExpressionSubstrate*` 类，所以引擎版本增删的某个输入
-> 会随之出现或消失，插件不需要改动。下面各表列出这些类暴露的输入；
-> **补全**列标记的是 DreamShader 发布到编辑器补全和
-> Bridge 清单的精选子集，那个子集*是*插件固定的。同一个类上任何可编辑的非输入属性 ——
-> 枚举、浮点、布尔 —— 即使这里没有列出，也同样可以作为字面量参数设置。
+> **可接受的参数名跟随引擎，而不是插件。** 目录读自运行中引擎的 `UMaterialExpressionSubstrate*` 类，所以引擎版本增删的某个输入会随之出现或消失，插件不需要改动。下面各表列出这些类暴露的输入；**补全**列标记的是 DreamShader 发布到编辑器补全和 Bridge 清单的精选子集，那个子集*是*插件固定的。同一个类上任何可编辑的非输入属性 —— 枚举、浮点、布尔 —— 即使这里没有列出，也同样可以作为字面量参数设置。
 
 <a id="selecting-an-output"></a>
 
 ### 选择输出
 
-`Output=` / `OutputName=` 按目录列出的输出名精确匹配，包括带空格的名字；
-在 1.x 源码里只差大小写的匹配也接受，给出 `DSH5276`。没有这个输出报
-[`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201)。`OutputIndex=` 取 0 起始的索引
-（超过最后一个报 [`DSH5282`](../diagnostics/DSH5xxx.md#dsh5282)）。只有下面的工具节点有多个输出。
+`Output=` / `OutputName=` 按目录列出的输出名精确匹配，包括带空格的名字；在 1.x 源码里只差大小写的匹配也接受，给出 `DSH5276`。没有这个输出报 [`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201)。`OutputIndex=` 取 0 起始的索引（超过最后一个报 [`DSH5282`](../diagnostics/DSH5xxx.md#dsh5282)）。只有下面的工具节点有多个输出。
 
 <a id="catalogue"></a>
 
@@ -164,42 +125,26 @@ pin 名匹配优先于同名属性。值按 pin 的类型检查：Substrate pin 
 | `HazinessToSecondaryRoughness` | `UMaterialExpressionSubstrateHazinessToSecondaryRoughness` | **否** | [↓](#substratehazinesstosecondaryroughness) |
 | `ThinFilm` | `UMaterialExpressionSubstrateThinFilm` | **否** | [↓](#substratethinfilm) |
 
-两对别名是完全的重复：同一个类、同样的输入、同样的输出类型，两种写法都没有被弃用。自 2.0.0 起又多了两个短名
-—— `Mix` 即 `HorizontalMix`、`Layer` 即
-`VerticalLayer` —— 而且每个类都能用目录短名（`SubstrateSlabBSDF`）调用，
-也能用类名去掉前面的 `MaterialExpressionSubstrate` 和后面的 `BSDF` 调用；这就是调用本表没有列出的类的方式：UE 5.8 的
-`UMaterialExpressionSubstrateToonBSDF` 是
-`Substrate.Toon`。
+两对别名是完全的重复：同一个类、同样的输入、同样的输出类型，两种写法都没有被弃用。自 2.0.0 起又多了两个短名 —— `Mix` 即 `HorizontalMix`、`Layer` 即 `VerticalLayer` —— 而且每个类都能用目录短名（`SubstrateSlabBSDF`）调用，也能用类名去掉前面的 `MaterialExpressionSubstrate` 和后面的 `BSDF` 调用；这就是调用本表没有列出的类的方式：UE 5.8 的 `UMaterialExpressionSubstrateToonBSDF` 是 `Substrate.Toon`。
 
 <a id="output-typing"></a>
 
 ## 输出类型
 
-目录按引擎给每个输出定类型：BSDF 或组合节点产出 ``Substrate`` 值；工具节点产出数值，宽度按引擎给每个输出的类型 —— 引擎
-没给类型时，和它被读入的位置一样宽。多输出的节点要指名读取一个输出。
+目录按引擎给每个输出定类型：BSDF 或组合节点产出 ``Substrate`` 值；工具节点产出数值，宽度按引擎给每个输出的类型 —— 引擎没给类型时，和它被读入的位置一样宽。多输出的节点要指名读取一个输出。
 
 一个 ``Substrate`` 值可以：
 
 - 赋给 ``Substrate`` 类型的 ``Graph`` 变量或 ``Outputs`` 声明；
-- 传给另一个 ``Substrate.*`` 节点或
-  [`UE.Expression`](ue-expression.md) 节点的 Substrate 类型输入；
-- 用 `+`（`Substrate.Add`）组合、用 `* <scalar>`（`Substrate.Weight`）加权、用
-  `lerp(A, B, t)`（`Substrate.HorizontalMix`）混合 *(自 2.0.0 起)* —— 见
-  [运算符与 `lerp`](../language-v2/substrate.md#operators-and-lerp)；
-- 由静态开关选择，或由运行时 ``if`` 选择 —— 后者变成 ``Substrate.Select``
-  *(自 2.0.0 起)* —— 见 [Substrate 值上的 `if`](../language-v2/substrate.md#if-and--over-substrate-values)；
+- 传给另一个 ``Substrate.*`` 节点或 [`UE.Expression`](ue-expression.md) 节点的 Substrate 类型输入；
+- 用 `+`（`Substrate.Add`）组合、用 `* <scalar>`（`Substrate.Weight`）加权、用 `lerp(A, B, t)`（`Substrate.HorizontalMix`）混合 *(自 2.0.0 起)* —— 见[运算符与 `lerp`](../language-v2/substrate.md#operators-and-lerp)；
+- 由静态开关选择，或由运行时 ``if`` 选择 —— 后者变成 ``Substrate.Select`` *(自 2.0.0 起)* —— 见 [Substrate 值上的 `if`](../language-v2/substrate.md#if-and--over-substrate-values)；
 - 绑定到 ``Base.FrontMaterial``。
 
-Substrate 值上的其他运算符 —— ``-``、``/``、``A * B``、复合赋值 —— 以及 Substrate 值
-与数值之间的 ``lerp`` 报 [`DSH5293`](../diagnostics/DSH5xxx.md#dsh5293)；把 Substrate 值传给其他数学内置报
-[`DSH4226`](../diagnostics/DSH4xxx.md#dsh4226)。HLSL Custom 节点 ——
-一个 ``Function`` —— 既不能接收也不能返回 Substrate 值（[`DSH6253`](../diagnostics/DSH6xxx.md#dsh6253)）。
+Substrate 值上的其他运算符 —— ``-``、``/``、``A * B``、复合赋值 —— 以及 Substrate 值与数值之间的 ``lerp`` 报 [`DSH5293`](../diagnostics/DSH5xxx.md#dsh5293)；把 Substrate 值传给其他数学内置报 [`DSH4226`](../diagnostics/DSH4xxx.md#dsh4226)。HLSL Custom 节点 —— 一个 ``Function`` —— 既不能接收也不能返回 Substrate 值（[`DSH6253`](../diagnostics/DSH6xxx.md#dsh6253)）。
 
 > [!NOTE]
-> 主材质靠「两个 closure 上的静态开关」从静态参数里选着色变体：``UMaterialExpressionStaticSwitchParameter`` 在引擎构建材质
-> 拓扑树时就决出布尔值、只下降到选中的分支，所以翻译器看到的仍是一个拓扑。
-> [`UE.StaticSwitchParameter`](ue.md#uestaticswitchparameter) 不比较两条分支，
-> 所以一边是 Substrate 值、一边是数值时 DreamShader 不会报错。
+> 主材质靠「两个 closure 上的静态开关」从静态参数里选着色变体：``UMaterialExpressionStaticSwitchParameter`` 在引擎构建材质拓扑树时就决出布尔值、只下降到选中的分支，所以翻译器看到的仍是一个拓扑。 [`UE.StaticSwitchParameter`](ue.md#uestaticswitchparameter) 不比较两条分支，所以一边是 Substrate 值、一边是数值时 DreamShader 不会报错。
 
 ---
 
@@ -430,9 +375,7 @@ Substrate 值上的其他运算符 —— ``-``、``/``、``A * B``、复合赋�
 
 输出：Substrate 值。
 
-`MaterialAttributes` 是反射属性名，`Attributes` 是引擎给同一个输入起的 pin 名；两者都绑定 input 0。传数值进去是
-[`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214)。参见
-[`MaterialAttributes`](../graph/material-attributes.md)。
+`MaterialAttributes` 是反射属性名，`Attributes` 是引擎给同一个输入起的 pin 名；两者都绑定 input 0。传数值进去是 [`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214)。参见 [`MaterialAttributes`](../graph/material-attributes.md)。
 
 <a id="substrateconverttodecal"></a>
 
@@ -451,8 +394,7 @@ Substrate 值上的其他运算符 —— ``-``、``/``、``A * B``、复合赋�
 
 ### Substrate.HorizontalMix
 
-在屏幕空间水平混合两个 Substrate 材质。也可以写成
-**`Substrate.HorizontalMixing`** —— 两个名字可以互换。
+在屏幕空间水平混合两个 Substrate 材质。也可以写成 **`Substrate.HorizontalMixing`** —— 两个名字可以互换。
 
 | 参数 | 值 | 补全 |
 | :-- | :-- | :-- |
@@ -466,8 +408,7 @@ Substrate 值上的其他运算符 —— ``-``、``/``、``A * B``、复合赋�
 
 ### Substrate.VerticalLayer
 
-把一个 Substrate 材质叠在另一个之上。也可以写成 **`Substrate.VerticalLayering`** —— 两个
-名字可以互换。
+把一个 Substrate 材质叠在另一个之上。也可以写成 **`Substrate.VerticalLayering`** —— 两个名字可以互换。
 
 | 参数 | 值 | 补全 |
 | :-- | :-- | :-- |
@@ -621,38 +562,24 @@ Graph = {
 | 引擎 | 目录中列出了 `FrontMaterial` 属性的引擎；否则 `DSH5200` |
 
 > [!NOTE]
-> `Strata` 是改名前的拼写。它被接受为 `Settings = { ShadingModel = … }` 值
-> （同一着色模型的别名），但永远不能作为类型 token，也不能作为调用命名空间。
-> 参见[枚举取值](../settings/material-enums.md)。
+> `Strata` 是改名前的拼写。它被接受为 `Settings = { ShadingModel = … }` 值（同一着色模型的别名），但永远不能作为类型 token，也不能作为调用命名空间。参见[枚举取值](../settings/material-enums.md)。
 
 <a id="notes"></a>
 
 ## 说明
 
-- **每个 Substrate 类都是一个名字。** 在[目录](#catalogue)中没有行的类，按派生的名字调用 ——
-  UE 5.8 上为 `Substrate.Toon` —— 或通过
-  `UE.Expression(Class = "SubstrateToonBSDF", …)` 按其类调用，后者可解析 `SubstrateToonBSDF`、
-  `MaterialExpressionSubstrateToonBSDF`、`UMaterialExpressionSubstrateToonBSDF` 以及完整的
-  `/Script/Engine.…` 路径 *（自 2.0.0 起）*。参见 [`UE.Expression`](ue-expression.md#class-resolution)。
-- **`UE.*` 名称在此命名空间内不适用。** `Substrate.TexCoord(…)` 并不存在；该命名空间
-  没有的名字属于 [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210)。
+- **每个 Substrate 类都是一个名字。** 在[目录](#catalogue)中没有行的类，按派生的名字调用 —— UE 5.8 上为 `Substrate.Toon` —— 或通过 `UE.Expression(Class = "SubstrateToonBSDF", …)` 按其类调用，后者可解析 `SubstrateToonBSDF`、 `MaterialExpressionSubstrateToonBSDF`、`UMaterialExpressionSubstrateToonBSDF` 以及完整的 `/Script/Engine.…` 路径 *（自 2.0.0 起）*。参见 [`UE.Expression`](ue-expression.md#class-resolution)。
+- **`UE.*` 名称在此命名空间内不适用。** `Substrate.TexCoord(…)` 并不存在；该命名空间没有的名字属于 [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210)。
 - Substrate 节点**参与节点复用**：两个参数值完全相同的 `Substrate.Slab(…)` 调用是同一个节点。参见[节点复用](../graph/node-reuse.md)。
-- [`GraphFunction`](../language/graph-function.md) 体内的 `Substrate.` 调用不会被提升为
-  节点输入，因为没有 Custom 节点输入承载 Substrate 值；它留在 HLSL 文本中，并给出警告
-  [`DSH6316`](../diagnostics/DSH6xxx.md#dsh6316)。
-- [反编译器](../tools/decompiler.md)能把现有 Substrate 图导出回源码，
-  并根据每条连接的写掩码推导通道 swizzle *（自 1.5.0 起）*，且按源码使用的名字写出每个节点
-  —— 参见[反编译](../language-v2/substrate.md#decompiling)。
-- `Substrate.*` 接口导出给编辑器工具，以 `Saved/DreamShader/Bridge/substrate-builtins.json`
-  （schema `DreamShader.SubstrateBuiltins`，版本 1），每个名字一条，含其 `qualifiedName`、`className`、`outputType`、
-  `isSubstrateOutput` 和精选的 `parameters`。参见 [Bridge](../../tools/bridge.md)。
+- [`GraphFunction`](../language/graph-function.md) 体内的 `Substrate.` 调用不会被提升为节点输入，因为没有 Custom 节点输入承载 Substrate 值；它留在 HLSL 文本中，并给出警告 [`DSH6316`](../diagnostics/DSH6xxx.md#dsh6316)。
+- [反编译器](../tools/decompiler.md)能把现有 Substrate 图导出回源码，并根据每条连接的写掩码推导通道 swizzle *（自 1.5.0 起）*，且按源码使用的名字写出每个节点 —— 参见[反编译](../language-v2/substrate.md#decompiling)。
+- `Substrate.*` 接口导出给编辑器工具，以 `Saved/DreamShader/Bridge/substrate-builtins.json` （schema `DreamShader.SubstrateBuiltins`，版本 1），每个名字一条，含其 `qualifiedName`、`className`、`outputType`、 `isSubstrateOutput` 和精选的 `parameters`。参见 [Bridge](../tools/bridge.md)。
 
 <a id="diagnostics"></a>
 
 ## 诊断
 
-每个代码及其消息和完整说明都列在
-[诊断](../diagnostics/index.md)中的各自页面上。
+每个代码及其消息和完整说明都列在[诊断](../diagnostics/index.md)中的各自页面上。
 
 <a id="call-site"></a>
 
@@ -746,9 +673,7 @@ SubstrateUnlitBSDF                    -> Emissive                (Substrate valu
 SubstrateAdd                          -> Surface                 (Substrate value)
 ```
 
-自 2.0.0 起，同一张图可写为
-`Surface = Substrate.Slab(BaseColor = BaseColor, Metallic = Metallic, Specular = Specular, Roughness = Rough) + Substrate.Unlit(EmissiveColor = Glow);`
-—— 虚拟参数把转换节点放在 slab 前面，`+` 就是 `Substrate.Add`。
+自 2.0.0 起，同一张图可写为 `Surface = Substrate.Slab(BaseColor = BaseColor, Metallic = Metallic, Specular = Specular, Roughness = Rough) + Substrate.Unlit(EmissiveColor = Glow);` —— 虚拟参数把转换节点放在 slab 前面，`+` 就是 `Substrate.Add`。
 
 <a id="see-also"></a>
 
@@ -767,6 +692,6 @@ SubstrateAdd                          -> Surface                 (Substrate valu
 - [枚举值](../settings/material-enums.md) — `ShadingModel = "Substrate"` / `"Strata"`
 - [调用](../graph/calls.md) — 命名参数语法
 - [节点复用](../graph/node-reuse.md) — 相同的调用与节点
-- [Bridge](../../tools/bridge.md) — `substrate-builtins.json` 与编辑器补全清单
+- [Bridge](../tools/bridge.md) — `substrate-builtins.json` 与编辑器补全清单
 - [反编译器](../tools/decompiler.md) — 把已有的 Substrate 图导回源码
 - [诊断索引](../diagnostics/index.md) — 每一种代码

@@ -1,8 +1,3 @@
----
-title: "DreamShaderMaterialInstance.h"
-description: "DreamShaderMaterialInstance.h"
----
-
 <a id="dreamshadermaterialinstanceh"></a>
 
 # DreamShaderMaterialInstance.h
@@ -88,7 +83,7 @@ virtual bool HasOverridenBaseProperties() const override;
 | 生成的实例（父级为隐藏基础 `UMaterial`） | `true` | 拥有自己的静态排列着色器映射 |
 | 以该实例为父级的子 `UMaterialInstanceConstant` | 标准行为 | **共享**根的已编译映射 |
 
-这正是重写的意义所在：基于一个 DreamShader 材质创建的任意数量的颜色和参数变体都会复用单个已编译的着色器映射，而不是各自编译自己的映射，从而为大量创建实例的项目限定了着色器映射的数量。有关实例创建操作，请参阅[材质内容浏览器](../../tools/material-browser.md)。
+这正是重写的意义所在：基于一个 DreamShader 材质创建的任意数量的颜色和参数变体都会复用单个已编译的着色器映射，而不是各自编译自己的映射，从而为大量创建实例的项目限定了着色器映射的数量。有关实例创建操作，请参阅[材质内容浏览器](../tools/material-browser.md)。
 
 <a id="isasset"></a>
 
@@ -181,6 +176,6 @@ DreamShader
 - [缓存](../generation/caching.md) — 跳过检查实际使用的包元数据键
 - [项目设置](../settings/project.md) — `IsAsset()` 背后的可见性开关
 - [`DreamShaderSettings.h`](settings.md) — C++ 中的 `bShowEphemeralMaterials`
-- [材质内容浏览器](../../tools/material-browser.md) — 创建子实例并进行具现化
+- [材质内容浏览器](../tools/material-browser.md) — 创建子实例并进行具现化
 - [`Shader`](../language/shader.md) — 生成此资产的代码块
 - [资产路径](../generation/asset-paths.md) — 包的落盘位置

@@ -1,17 +1,13 @@
 ---
-title: "项目结构"
-description: "DShader/ 如何组织、六种源文件各存放什么、插件如何贡献自己的源码根、插件拥有哪些目录，以及决定哪些内容会被编译的 Package 规则。"
+title: 项目结构
+description: DShader/ 如何组织、六种源文件各存放什么、插件如何贡献自己的源码根、插件拥有哪些目录，以及决定哪些内容会被编译的 Package 规则。
 ---
 
-DreamShaderLang 源文件位于项目根目录下的一个目录中——默认是 `DShader`，由
-*Project Settings ▸ DreamPlugin ▸ Dream Shader ▸ Paths ▸ Source Directory* 设置。相对路径会相对于项目
-目录解析。
+DreamShaderLang 源文件位于项目根目录下的一个目录中——默认是 `DShader`，由 *Project Settings ▸ DreamPlugin ▸ Dream Shader ▸ Paths ▸ Source Directory* 设置。相对路径会相对于项目目录解析。
 
-源目录、其 `Packages` 子文件夹以及生成的 shader 目录由插件在模块
-启动时创建——也就是编辑器首次启动时，无论你是否编写过任何源文件。
+源目录、其 `Packages` 子文件夹以及生成的 shader 目录由插件在模块启动时创建——也就是编辑器首次启动时，无论你是否编写过任何源文件。
 
-（自 1.6.0 起）它不再是唯一的根：**每个启用了 `DShader` 文件夹的插件都会贡献一个自己的源
-根**——见下方的[插件源码根](#plugin-source-roots)。
+（自 1.6.0 起）它不再是唯一的根：**每个启用了 `DShader` 文件夹的插件都会贡献一个自己的源根**——见下方的[插件源码根](#plugin-source-roots)。
 
 <a id="six-kinds-of-source-file"></a>
 
@@ -28,9 +24,7 @@ DreamShaderLang 源文件位于项目根目录下的一个目录中——默认�
 | `.dsf` | 一个 1.x 材质函数文件 | 它声明的函数资产 |
 | `.dsh` | header：辅助项、`VirtualFunction` / `extern` 声明、共享常量；两种方言均可容纳 | 不产出任何内容——它只通过导入或包含它的文件进入编译 |
 
-请将新源文件写为 `.dss`；`.dsm` / `.dsf` 是 1.x 语法，仍然通过同一个编译器构建，因此
-项目可以用 [`dsc migrate`](../tools/migrate.md) 每次迁移一个文件。每种类型可以包含什么
-见[文件模型](../language/source-files.md)。
+请将新源文件写为 `.dss`；`.dsm` / `.dsf` 是 1.x 语法，仍然通过同一个编译器构建，因此项目可以用 [`dsc migrate`](../tools/migrate.md) 每次迁移一个文件。每种类型可以包含什么见[文件模型](../language/source-files.md)。
 
 <a id="the-tree"></a>
 
@@ -107,15 +101,11 @@ Plugins/
 
 **警告：**
 
-与现有根**重叠**的插件 `DShader` 文件夹会被忽略并给出警告，而不是让一个文件有两个
-所有者。当 *Source Directory* 指向某个插件文件夹，或指向包含某个插件文件夹的位置时，就会发生这种情况。
+与现有根**重叠**的插件 `DShader` 文件夹会被忽略并给出警告，而不是让一个文件有两个所有者。当 *Source Directory* 指向某个插件文件夹，或指向包含某个插件文件夹的位置时，就会发生这种情况。
 
 **注意：**
 
-根列表会被缓存，仅在 *Source Directory* 或扫描开关发生变化时，或在
-Material Content Browser 中刷新时才会重建——这也是拾取你刚创建的 `DShader` 文件夹或会话中途挂载的插件的方式。
-但**监视器只在启动时注册一次**，因此对于会话中途出现的根，其 *Auto Compile On Save* 要等到下次编辑器启动才会
-开始工作。
+根列表会被缓存，仅在 *Source Directory* 或扫描开关发生变化时，或在 Material Content Browser 中刷新时才会重建——这也是拾取你刚创建的 `DShader` 文件夹或会话中途挂载的插件的方式。但**监视器只在启动时注册一次**，因此对于会话中途出现的根，其 *Auto Compile On Save* 要等到下次编辑器启动才会开始工作。
 
 <a id="directory-roles"></a>
 
@@ -138,9 +128,7 @@ Material Content Browser 中刷新时才会重建——这也是拾取你刚创�
 
 **警告：**
 
-`DreamShader.code-workspace` 在每次调用时都从固定对象序列化而来——从不读取、合并或保留。
-手动添加的 `launch`、`tasks`、`extensions` 或额外的 `settings` 都会被销毁。请将个人配置保存在
-`DShader/.vscode/settings.json` 中，该命令永远不会触碰它。
+`DreamShader.code-workspace` 在每次调用时都从固定对象序列化而来——从不读取、合并或保留。手动添加的 `launch`、`tasks`、`extensions` 或额外的 `settings` 都会被销毁。请将个人配置保存在 `DShader/.vscode/settings.json` 中，该命令永远不会触碰它。
 
 <a id="naming-conventions"></a>
 
@@ -155,10 +143,7 @@ Material Content Browser 中刷新时才会重建——这也是拾取你刚创�
 | 共享 header | 按领域命名——`Texture.dsh`、`Color.dsh` |
 | Package 入口点 | `Library/<Name>.dsh` |
 
-`.dss` 资产以其 `export` 函数命名，因此保持文件名和 `export` 名称一致可以避免
-意外。扩展名匹配不区分大小写，因此 `M_Water.DSM` 也是材质文件。标识符则是另一回事：
-插件在将命名空间和函数名净化成 HLSL 和资产
-标识符时会替换非 ASCII 字符，因此请让这些名称保持 ASCII。
+`.dss` 资产以其 `export` 函数命名，因此保持文件名和 `export` 名称一致可以避免意外。扩展名匹配不区分大小写，因此 `M_Water.DSM` 也是材质文件。标识符则是另一回事：插件在将命名空间和函数名净化成 HLSL 和资产标识符时会替换非 ASCII 字符，因此请让这些名称保持 ASCII。
 
 <a id="imports-and-includes"></a>
 
@@ -178,8 +163,7 @@ import "@typedreammoon/dream-noise/Library/Noise.dsh";
 #include "@typedreammoon/dream-noise/Library/Noise.dsh"
 ```
 
-一个 specifier 会依次尝试三个候选：导入文件所在目录、**所属根**的源目录，以及该根的 `Packages` 目录。第一个存在**且仍位于其包含根内**的候选胜出 —— 包中的文件不能用 `../` 爬出去。没有扩展名的 specifier 会被追加 `.dsh`；只有 header 才能被引入（导入 `.dsf` / `.dsm` 是 `DSH2252`）。解析不到任何位置的则是 `DSH8292`。完整规则见
-[导入与命名空间](../language/import.md)。
+一个 specifier 会依次尝试三个候选：导入文件所在目录、**所属根**的源目录，以及该根的 `Packages` 目录。第一个存在**且仍位于其包含根内**的候选胜出 —— 包中的文件不能用 `../` 爬出去。没有扩展名的 specifier 会被追加 `.dsh`；只有 header 才能被引入（导入 `.dsf` / `.dsm` 是 `DSH2252`）。解析不到任何位置的则是 `DSH8292`。完整规则见[导入与命名空间](../language/import.md)。
 
 浅层导入还有另一项好处：构建键覆盖文件引入的每个 header，所以编辑一个 header 会让所有包含它的文件失效。
 
@@ -196,13 +180,11 @@ import "@typedreammoon/dream-noise/Library/Noise.dsh";
 | 请求材质函数的包头 —— `/// @generate`、`#pragma generate`、1.x `Generate =` | 那些材质函数 |
 | 包中的其他任何内容 —— `Examples/`、`Assets` 之外的 `.dss` 或 `.dsf` | 什么都不会构建，在任何路径上 |
 
-要以示例为例，把它从 `DShader/Packages` 复制到 `DShader/` 下的某处。直到 2.1.2，包中 `Assets` 之外的 `.dsf`、`.dss`、`.dsi` 或 `.dsp` 会被文件监视器和 *Recompile DSM* 编译，但不会被 `compile -All`、cook 和 Material Content Browser 编译；请把这类源文件移到 `Assets` 下。见
-[包 ▸ 包资产](../../tools/packages.md#package-assets)。
+要以示例为例，把它从 `DShader/Packages` 复制到 `DShader/` 下的某处。直到 2.1.2，包中 `Assets` 之外的 `.dsf`、`.dss`、`.dsi` 或 `.dsp` 会被文件监视器和 *Recompile DSM* 编译，但不会被 `compile -All`、cook 和 Material Content Browser 编译；请把这类源文件移到 `Assets` 下。见[包 ▸ 包资产](../tools/packages.md#package-assets)。
 
 **注意：**
 
-标记为 `NoGeneration` 的源文件（`#pragma nogeneration`、`/// @nogeneration`、1.x `NoGeneration = true`）会像其他文件一样被枚举，但只有点名它的编译才会构建其资产 —— 见
-[NoGeneration](../generation/no-generation.md)。
+标记为 `NoGeneration` 的源文件（`#pragma nogeneration`、`/// @nogeneration`、1.x `NoGeneration = true`）会像其他文件一样被枚举，但只有点名它的编译才会构建其资产 —— 见 [NoGeneration](../generation/no-generation.md)。
 
 包的 `.dsh` header 可以被导入，但它从不参与 `VirtualFunction` 声明扫描 —— 包中随附的 `VirtualFunction` 永远不会与它的资产进行校验。
 
@@ -220,8 +202,7 @@ import "@typedreammoon/dream-noise/Library/Noise.dsh";
 | 生成的 `.uasset` | 两种做法都行 —— 只提交源文件并在 CI 中重新生成，或者把生成资产也提交；见[版本控制](../generation/source-control.md) |
 | `Intermediate/DreamShader/` | 不提交 |
 
-团队内统一一个 *Source Directory*，这样导入在每台机器上的解析结果才一致。构建键按项目相对路径记录源文件（自 2.1.1 起），所以另一份检出不会把每个资产都重建一遍。插件的
-`DShader` 文件夹随插件一起提交 —— 它和插件的 `Content/` 属于同一份交付物。
+团队内统一一个 *Source Directory*，这样导入在每台机器上的解析结果才一致。构建键按项目相对路径记录源文件（自 2.1.1 起），所以另一份检出不会把每个资产都重建一遍。插件的 `DShader` 文件夹随插件一起提交 —— 它和插件的 `Content/` 属于同一份交付物。
 
 <a id="next"></a>
 

@@ -1,8 +1,3 @@
----
-title: "参数"
-description: "参数"
----
-
 <a id="parameters"></a>
 
 # 参数
@@ -65,10 +60,7 @@ description: "参数"
 | 任何其他 `UMaterialExpression` 类 | `UE.<Class>(OutputType = "float4", … )` | 通用反射式构建 —— 参见 [UE.Expression](../builtins/ue-expression.md) |
 
 > [!NOTE]
-> `const` 与 39 种紧凑标记一起使用是合法的，并且 *(自 2.0.0 起)* 与 `ScalarParameter`、
-> `VectorParameter` 和 `TextureObjectParameter` 一起使用也是合法的，此时它们会构建与 `const float`、
-> `const float4` 和 `const Texture2D` 相同的常量。在任何其他 `*Parameter` 标记上则是 `DSH3253`。在 `UE.*`
-> 声明上，`const` 会被忽略 *(自 2.0.0 起)*。
+> `const` 与 39 种紧凑标记一起使用是合法的，并且 *(自 2.0.0 起)* 与 `ScalarParameter`、 `VectorParameter` 和 `TextureObjectParameter` 一起使用也是合法的，此时它们会构建与 `const float`、 `const float4` 和 `const Texture2D` 相同的常量。在任何其他 `*Parameter` 标记上则是 `DSH3253`。在 `UE.*` 声明上，`const` 会被忽略 *(自 2.0.0 起)*。
 
 <a id="pages"></a>
 
@@ -87,28 +79,12 @@ description: "参数"
 
 ## 附注
 
-- **每种类型的默认值都是可选的。** 没有 `= <default>` 时，标量为 `0`，向量在每个通道中为
-  `0`（对于 2 分量或 3 分量 token，alpha 为 `1`），纹理为该维度下引擎的默认
-  纹理 *(自 2.0.0 起；1.x 会将向量保留为节点自身的默认值)*。
-  `Texture2DArray` 没有引擎默认值：其节点保留类的 2D 默认纹理，且没有
-  诊断 *(自 2.0.0 起)*。请指定一个数组资产。
-- **属性名是标识符** *(自 2.0.0 起)*。`float 1Bad = 0;` 是
-  [`DSH2105`](../diagnostics/DSH2xxx.md#dsh2105)（格式错误的数字）以及
-  [`DSH3250`](../diagnostics/DSH3xxx.md#dsh3250)。
-- **成为声明的属性在文件作用域内声明** *(自 2.0.0 起)*。同一名称的两个属性——无论是在同一个块中，
-  还是在同一文件的两个块中——都会产生
-  [`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210)。名称按精确方式比较。1.x 中关于
-  函数的属性不得与其某个输入同名这一规则，在 2.0 中没有对应检查。
-- **声明顺序不约束读取。** `Graph` 可以读取声明在块中更靠后位置的
-  属性。例外是 `UE.*` 属性：它是在每个读取它的函数体头部声明的局部变量，
-  按 `Properties` 顺序排列，因此若某个参数命名了另一个 `UE.*` 属性，该属性需要在
-  列表中更早出现并由同一个函数体读取；否则该名称就是未声明的
-  ([`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200))。
-- **`Properties` 在 `VirtualFunction` 内部含义不同**：在那里它是 `Inputs` 的同义词，
-  采用类型化参数语法，而非本语法。请参见
-  [VirtualFunction](../language/virtual-function.md)。
-- 写入材质的参数名是所声明的名称，除非 `[ParameterName="…"]`
-  覆盖它。请参见 [Metadata](metadata.md#parametername)。
+- **每种类型的默认值都是可选的。** 没有 `= <default>` 时，标量为 `0`，向量在每个通道中为 `0`（对于 2 分量或 3 分量 token，alpha 为 `1`），纹理为该维度下引擎的默认纹理 *(自 2.0.0 起；1.x 会将向量保留为节点自身的默认值)*。 `Texture2DArray` 没有引擎默认值：其节点保留类的 2D 默认纹理，且没有诊断 *(自 2.0.0 起)*。请指定一个数组资产。
+- **属性名是标识符** *(自 2.0.0 起)*。`float 1Bad = 0;` 是 [`DSH2105`](../diagnostics/DSH2xxx.md#dsh2105)（格式错误的数字）以及 [`DSH3250`](../diagnostics/DSH3xxx.md#dsh3250)。
+- **成为声明的属性在文件作用域内声明** *(自 2.0.0 起)*。同一名称的两个属性——无论是在同一个块中，还是在同一文件的两个块中——都会产生 [`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210)。名称按精确方式比较。1.x 中关于函数的属性不得与其某个输入同名这一规则，在 2.0 中没有对应检查。
+- **声明顺序不约束读取。** `Graph` 可以读取声明在块中更靠后位置的属性。例外是 `UE.*` 属性：它是在每个读取它的函数体头部声明的局部变量，按 `Properties` 顺序排列，因此若某个参数命名了另一个 `UE.*` 属性，该属性需要在列表中更早出现并由同一个函数体读取；否则该名称就是未声明的 ([`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200))。
+- **`Properties` 在 `VirtualFunction` 内部含义不同**：在那里它是 `Inputs` 的同义词，采用类型化参数语法，而非本语法。请参见 [VirtualFunction](../language/virtual-function.md)。
+- 写入材质的参数名是所声明的名称，除非 `[ParameterName="…"]` 覆盖它。请参见 [Metadata](metadata.md#parametername)。
 
 <a id="diagnostics"></a>
 
@@ -126,9 +102,7 @@ description: "参数"
 | `DSH4210` | 同一文件中有两个同名属性 |
 | [`DSH8214`](../diagnostics/DSH8xxx.md#dsh8214) | 发射器无法创建参数节点（内部错误） |
 
-元数据、默认值和资产引用诊断位于 [Metadata](metadata.md#diagnostics)、
-[紧凑类型 token](compact-types.md#diagnostics) 和 [Path(…)](path.md#diagnostics)。完整
-列表见[诊断索引](../diagnostics/index.md)。
+元数据、默认值和资产引用诊断位于 [Metadata](metadata.md#diagnostics)、[紧凑类型 token](compact-types.md#diagnostics) 和 [Path(…)](path.md#diagnostics)。完整列表见[诊断索引](../diagnostics/index.md)。
 
 <a id="example"></a>
 

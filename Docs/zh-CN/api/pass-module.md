@@ -1,8 +1,3 @@
----
-title: "DreamShaderPass"
-description: "DreamShaderPass"
----
-
 <a id="dreamshaderpass"></a>
 
 # DreamShaderPass
@@ -67,7 +62,7 @@ Passes->RemovePipeline(Handle);
 
 从蓝图中，相同的调用位于 `UDreamPassBlueprintLibrary` 上，带有世界上下文，另外还有 `SetFloatParameter`、`SetColorParameter`、`SetBoolParameter`、`SetIntParameter`、`SetTextureParameter` 以及 `Make…Value` 辅助函数。
 
-或者在关卡中放置一个来源 — `ADreamPassVolume`、`UDreamPassComponent` — 或者在项目设置中列出该管线。这四种方式如何组合，请参阅[什么使管线生效](../../runtime/index.md#what-makes-a-pipeline-apply)。
+或者在关卡中放置一个来源 — `ADreamPassVolume`、`UDreamPassComponent` — 或者在项目设置中列出该管线。这四种方式如何组合，请参阅[什么使管线生效](../runtime/index.md#what-makes-a-pipeline-apply)。
 
 <a id="udreampasssubsystem"></a>
 
@@ -159,13 +154,7 @@ Subsystem->UnregisterSource(Owner);
 
 ## `UDreamPassPipeline`
 
-编译后的管线。其字段与 `.dsp`——`Order`、`DefaultInjection`、`Views`、`Requires`、
-`EnabledParameter`、`Parameters`、`Buffers`、`Passes`（导出的渲染目标）——相对应，而 `SourceFilePath` 和
-`SourceHash` 则说明是哪个源构建了它。要编辑 `.dsp`，而不是资产：编译会覆盖它，而在
-细节面板中进行的编辑是一种[分歧](../generation/divergence.md)，需要采纳或丢弃。在
-`.dsp` 中编写的通道 HLSL 仅保存在编辑器的数据中——通道上的 `HlslSource` 说明其代码位于何处，`InlineHlsl` 和
-`InlineHlslLine` 保存其自身的 `hlsl` 块，而管线的 `SharedHlsl` 则保存该文件的——这是回到文本的方式：
-实际运行的是槽位的快照，而 cook 不携带任何 HLSL 文本。
+编译后的管线。其字段与 `.dsp`——`Order`、`DefaultInjection`、`Views`、`Requires`、 `EnabledParameter`、`Parameters`、`Buffers`、`Passes`（导出的渲染目标）——相对应，而 `SourceFilePath` 和 `SourceHash` 则说明是哪个源构建了它。要编辑 `.dsp`，而不是资产：编译会覆盖它，而在细节面板中进行的编辑是一种[分歧](../generation/divergence.md)，需要采纳或丢弃。在 `.dsp` 中编写的通道 HLSL 仅保存在编辑器的数据中——通道上的 `HlslSource` 说明其代码位于何处，`InlineHlsl` 和 `InlineHlslLine` 保存其自身的 `hlsl` 块，而管线的 `SharedHlsl` 则保存该文件的——这是回到文本的方式：实际运行的是槽位的快照，而 cook 不携带任何 HLSL 文本。
 
 | 成员 | |
 | :-- | :-- |
@@ -184,11 +173,9 @@ Subsystem->UnregisterSource(Owner);
 | `GetUserShaderVirtualDirectory()` | `/DreamPassUser` |
 | `GetRegistryFilePath(bCompute)` | `RegistryCompute.ush` 或其中的 `RegistryPixel.ush` |
 | `GetSlotDirectory(bCompute, Slot)` · `GetSlotVirtualDirectory` | `Slots/C07`、`Slots/P07`：某个槽位的快照 |
-| `GetComputeSlotCount()` · `GetPixelSlotCount()` | `DREAMSHADER_PASS_COMPUTE_SLOTS`（32）、`DREAMSHADER_PASS_PIXEL_SLOTS`（16） |
+| `GetComputeSlotCount()` · `GetPixelSlotCount()` | `DREAMSHADER_PASS_COMPUTE_SLOTS` (32), `DREAMSHADER_PASS_PIXEL_SLOTS` (16) |
 
-这些计数可以从 `Target.cs`（`GlobalDefinitions.Add("DREAMSHADER_PASS_COMPUTE_SLOTS=48")`）覆盖；
-提高其中一个会重新编译两个全局着色器类型，仅此而已。注册表的编写方式参见
-[HLSL 通道](../../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)。
+这些计数可以从 `Target.cs`（`GlobalDefinitions.Add("DREAMSHADER_PASS_COMPUTE_SLOTS=48")`）覆盖；提高其中一个会重新编译两个全局着色器类型，仅此而已。注册表的编写方式参见 [HLSL 通道](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)。
 
 <a id="see-also"></a>
 
@@ -196,6 +183,6 @@ Subsystem->UnregisterSource(Owner);
 
 - [Custom Pass 运行时](../runtime/index.md)
 - [Custom Pass 管线——`.dsp`](../language-v2/passes.md)
-- [HLSL 通道](../../runtime/hlsl.md)
+- [HLSL 通道](../runtime/hlsl.md)
 - [Custom Pass 材质节点](../builtins/dream-pass.md)
 - [项目设置](../settings/project.md#dreamshader-custom-pass)

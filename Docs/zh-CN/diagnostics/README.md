@@ -1,8 +1,3 @@
----
-title: "DreamShader 诊断"
-description: "DreamShader 诊断"
----
-
 <a id="dreamshader-diagnostics"></a>
 
 # DreamShader 诊断
@@ -876,3 +871,4 @@ description: "DreamShader 诊断"
 | [DSH9226](DSH9xxx.md#dsh9226) | error | DSH9226：'{0}' 由管线文件 '{1}' 构建，但不是通道管线，因此没有采纳任何内容。 |
 | [DSH9227](DSH9xxx.md#dsh9227) | error | DSH9227：'{0}' 不是 .dsp 管线文件，因此 '{1}' 的设置无法拼接进去。 |
 | [DSH9228](DSH9xxx.md#dsh9228) | error | DSH9228：'{0}' 不再构建任何通道管线，因此 '{1}' 没有可拼接进去的对象。 |
+

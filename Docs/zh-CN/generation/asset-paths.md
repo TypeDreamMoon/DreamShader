@@ -1,8 +1,3 @@
----
-title: "资产路径"
-description: "资产路径"
----
-
 <a id="asset-paths"></a>
 
 # 资产路径
@@ -32,22 +27,16 @@ ShaderFunction(Name = "<name-path>" [, Root = "<root>"]) { … }
              | <folder> [/ <folder>] …
 ```
 
-`Name` 是 **必填** 的：没有或为空是
-[`DSH2242`](../diagnostics/DSH2xxx.md#dsh2242)。`Root` 可选，默认是空字符串。
-属性键按不区分大小写匹配，所以 `name=` 和 `ROOT=` 都能解析。
+`Name` 是 **必填** 的：没有或为空是 [`DSH2242`](../diagnostics/DSH2xxx.md#dsh2242)。`Root` 可选，默认是空字符串。属性键按不区分大小写匹配，所以 `name=` 和 `ROOT=` 都能解析。
 
-*（自 2.0.0 起）* 1.x 的块完全保留这个目标（legacy 规则 L10）：它的 `Name=` 从不像 `.dss` 产物的名字那样被放到
-源文件所在的文件夹下。解析不出来的目标会让这个产物以 [`DSH8200`](../diagnostics/DSH8xxx.md#dsh8200) 失败，消息里引用
-资产层自己的码和文本 —— 见[诊断](#diagnostics)。
+*（自 2.0.0 起）* 1.x 的块完全保留这个目标（legacy 规则 L10）：它的 `Name=` 从不像 `.dss` 产物的名字那样被放到源文件所在的文件夹下。解析不出来的目标会让这个产物以 [`DSH8200`](../diagnostics/DSH8xxx.md#dsh8200) 失败，消息里引用资产层自己的码和文本 —— 见[诊断](#diagnostics)。
 
 <a id="resolution-order"></a>
 
 ## 解析顺序
 
-1. **`Root` → 根 package 路径。** 去空白；`\` → `/`；记住原串是否以 `/` 开头；去掉
-   首尾的 `/`；按 `/` 切分。任何一步得到空结果都退回 `/Game`。
-2. **`Name` → 若干文件夹加一个 leaf。** 去空白；`\` → `/`；去掉所有首尾 `/`；按 `/` 切分。
-   **最后一段**是资产名；前面每一段都是追加到根后面的文件夹。
+1. **`Root` → 根 package 路径。** 去空白；`\` → `/`；记住原串是否以 `/` 开头；去掉首尾的 `/`；按 `/` 切分。任何一步得到空结果都退回 `/Game`。
+2. **`Name` → 若干文件夹加一个 leaf。** 去空白；`\` → `/`；去掉所有首尾 `/`；按 `/` 切分。**最后一段**是资产名；前面每一段都是追加到根后面的文件夹。
 3. 每一段都经过 `ObjectTools::SanitizeObjectName`。空段被静默跳过。
 4. `PackageName = <root>/<folders…>/<Leaf>` 和 `ObjectPath = <PackageName>.<Leaf>`。
 5. `PackageName` 由 `FPackageName::IsValidObjectPath` 校验。
@@ -83,8 +72,7 @@ ShaderFunction(Name = "<name-path>" [, Root = "<root>"]) { … }
 
 #### 插件源码根的默认值
 
-上表是 **工程根** 的答案。住在插件源码根 —— `<Plugin>/DShader`，见[源代码文件](../language/source-files.md#source-roots) —— 下的源文件，则默认落到
-那个插件的挂载点，就像它写了 `Root="Plugin.<PluginName>"` 一样。
+上表是 **工程根** 的答案。住在插件源码根 —— `<Plugin>/DShader`，见[源代码文件](../language/source-files.md#source-roots) —— 下的源文件，则默认落到那个插件的挂载点，就像它写了 `Root="Plugin.<PluginName>"` 一样。
 
 | 源文件 | `Root` | `Name` | Package |
 | :-- | :-- | :-- | :-- |
@@ -93,22 +81,16 @@ ShaderFunction(Name = "<name-path>" [, Root = "<root>"]) { … }
 | `Plugins/MoonToon/DShader/M.dsm` | `"/"` | `M_Flat` | `/Game/M_Flat` |
 | `Plugins/MoonToon/DShader/M.dsm` | `Game/Legacy` | `M_Flat` | `/Game/Legacy/M_Flat` |
 
-只有 **省略或全是空白** 的 `Root` 才取默认值，所以 `Root="/"`（或任何显式写法）
-就是插件根里的文件退回 `/Game` 的办法。默认值按块应用：一个文件可以让它的 `Shader` 块取默认，
-同时把某个 `ShaderFunction` 钉在 `/Game`。
+只有 **省略或全是空白** 的 `Root` 才取默认值，所以 `Root="/"`（或任何显式写法）就是插件根里的文件退回 `/Game` 的办法。默认值按块应用：一个文件可以让它的 `Shader` 块取默认，同时把某个 `ShaderFunction` 钉在 `/Game`。
 
 > [!NOTE]
-> 所属插件无法容纳生成内容时 —— 它不是 `<Project>/Plugins` 下的工程插件、已禁用、没声明
-> `CanContainContent`、没有 `Content` 目录或没挂载 —— 默认值被跳过，块退回 `/Game`。*（自 2.0.0 起）*
-> 这个回退是静默的：不记录任何日志。解析不出来的推断 `Root` 永远不会作为错误发出，因为
-> 作者从来没写过它。
+> 所属插件无法容纳生成内容时 —— 它不是 `<Project>/Plugins` 下的工程插件、已禁用、没声明 `CanContainContent`、没有 `Content` 目录或没挂载 —— 默认值被跳过，块退回 `/Game`。*（自 2.0.0 起）*这个回退是静默的：不记录任何日志。解析不出来的推断 `Root` 永远不会作为错误发出，因为作者从来没写过它。
 
 <a id="the-package-asset-root"></a>
 
 #### package 资产根
 
-*（2.1.2 之后）* package 构建的源 —— 位于其 `Assets` 文件夹下的源，或资产头 —— 默认
-落到 package 的 **资产根**，无论哪个源码根持有该 package，上面的插件默认值都不适用：
+*（2.1.2 之后）* package 构建的源 —— 位于其 `Assets` 文件夹下的源，或资产头 —— 默认落到 package 的 **资产根**，无论哪个源码根持有该 package，上面的插件默认值都不适用：
 
 | 源文件 | `Root` | `Name` / export | Package |
 | :-- | :-- | :-- | :-- |
@@ -117,12 +99,9 @@ ShaderFunction(Name = "<name-path>" [, Root = "<root>"]) { … }
 | `DShader/Packages/lib/Assets/MF_C.dsf` | *（省略）* | `MF_C` | `/Game/DreamShaderPackages/lib/MF_C` |
 | `Plugins/MoonToon/DShader/Packages/lib/Assets/MF_D.dss` | *（省略）* | `MF_D` | `/MoonToon/DreamShaderPackages/lib/MF_D` |
 
-2.0 的源把它的文件夹加在 `Assets` 下，就像工程源把它的文件夹加在源码根下一样；
-1.x 的 `Name=` 则说出它想要的每一个文件夹。显式的 `Root` 仍然优先。见
-[Packages ▸ package 资产](../../tools/packages.md#package-assets)。
+2.0 的源把它的文件夹加在 `Assets` 下，就像工程源把它的文件夹加在源码根下一样； 1.x 的 `Name=` 则说出它想要的每一个文件夹。显式的 `Root` 仍然优先。见 [Packages ▸ package 资产](../tools/packages.md#package-assets)。
 
-默认值只在产物变成资产路径的那一处应用，所以编译、产物解析（Material Content Browser、`dsc list-generated`）
-和预览渲染器指的是同一个资产。
+默认值只在产物变成资产路径的那一处应用，所以编译、产物解析（Material Content Browser、`dsc list-generated`）和预览渲染器指的是同一个资产。
 
 <a id="branch--game"></a>
 
@@ -162,8 +141,7 @@ ShaderFunction(Name = "<name-path>" [, Root = "<root>"]) { … }
 | `Plugins/MoonToon/Shared` | `Test` | `/MoonToon/Shared/Test` |
 
 > [!WARNING]
-> `Root="Plugin"` 和 `Root="Plugins"` **没有**第二段时并不指代插件。它们会落到分派表最后一行，被当成普通文件夹名，
-> 生成 `/Game/Plugin` 和 `/Game/Plugins`。不会发出任何诊断。
+> `Root="Plugin"` 和 `Root="Plugins"` **没有**第二段时并不指代插件。它们会落到分派表最后一行，被当成普通文件夹名，生成 `/Game/Plugin` 和 `/Game/Plugins`。不会发出任何诊断。
 
 <a id="branch--explicit-mount-root"></a>
 
@@ -177,9 +155,7 @@ ShaderFunction(Name = "<name-path>" [, Root = "<root>"]) { … }
 | `/MyMount/Sub` | `Test` | `/MyMount/Sub/Test` |
 | `/Engine` | `Test` | `/Engine/Test` |
 
-第一段必须原样通过 `SanitizeObjectName`，否则目标以
-[`DSH8097`](../diagnostics/DSH8xxx.md#dsh8097) 失败。挂载点本身在这里**不**检查是否存在 ——
-未挂载的根会在后面的 `IsValidObjectPath` 闸门处失败。
+第一段必须原样通过 `SanitizeObjectName`，否则目标以 [`DSH8097`](../diagnostics/DSH8xxx.md#dsh8097) 失败。挂载点本身在这里**不**检查是否存在 —— 未挂载的根会在后面的 `IsValidObjectPath` 闸门处失败。
 
 <a id="branch--bare-relative-path"></a>
 
@@ -193,15 +169,13 @@ ShaderFunction(Name = "<name-path>" [, Root = "<root>"]) { … }
 | `Foo/Bar` | `Test` | `/Game/Foo/Bar/Test` |
 | `Foo/Bar` | `Deep/Test` | `/Game/Foo/Bar/Deep/Test` |
 
-这一分支和上一分支的差别只在开头那个斜杠：
-`Root="Foo/Bar"` 是 `/Game/Foo/Bar`，`Root="/Foo/Bar"` 是 `/Foo/Bar`。
+这一分支和上一分支的差别只在开头那个斜杠： `Root="Foo/Bar"` 是 `/Game/Foo/Bar`，`Root="/Foo/Bar"` 是 `/Foo/Bar`。
 
 <a id="plugin-root-requirements"></a>
 
 ## 插件根的要求
 
-两种插件写法走同一个校验器。下面每一道闸门都必须按顺序通过；
-各有自己的码，由产物的 `DSH8200` 引用。
+两种插件写法走同一个校验器。下面每一道闸门都必须按顺序通过；各有自己的码，由产物的 `DSH8200` 引用。
 
 | # | 要求 | 失败时的码 |
 | :-- | :-- | :-- |
@@ -213,27 +187,20 @@ ShaderFunction(Name = "<name-path>" [, Root = "<root>"]) { … }
 | 6 | 磁盘上存在它的 `Content` 目录 | [`DSH8093`](../diagnostics/DSH8xxx.md#dsh8093) |
 | 7 | 它的内容已挂载 *（仅 UE 5.6+）* | [`DSH8094`](../diagnostics/DSH8xxx.md#dsh8094) |
 
-第 7 道闸门在 UE 5.3 – 5.5 上不存在；在那些引擎上，未挂载的插件会在稍后由
-object 路径校验抓到。
+第 7 道闸门在 UE 5.3 – 5.5 上不存在；在那些引擎上，未挂载的插件会在稍后由 object 路径校验抓到。
 
-根 package 路径就是插件自己的挂载资产路径 —— 规范化成 `\` → `/`，不带结尾
-斜杠，强制加上开头斜杠。如果结果退化成空或者 `/`，则使用 `/<PluginName>`。
+根 package 路径就是插件自己的挂载资产路径 —— 规范化成 `\` → `/`，不带结尾斜杠，强制加上开头斜杠。如果结果退化成空或者 `/`，则使用 `/<PluginName>`。
 
 > [!NOTE]
-> 引擎插件、以及安装在引擎目录下的商城插件，即使已启用、已挂载，也会被第 3 道闸门拒绝。只有物理位置在 `<Project>/Plugins` 下的插件才
-> 被接受。要写进引擎侧的挂载点，请用显式挂载根分支
->（`Root="/SomeMount"`），它会完全跳过插件校验器。
+> 引擎插件、以及安装在引擎目录下的商城插件，即使已启用、已挂载，也会被第 3 道闸门拒绝。只有物理位置在 `<Project>/Plugins` 下的插件才被接受。要写进引擎侧的挂载点，请用显式挂载根分支（`Root="/SomeMount"`），它会完全跳过插件校验器。
 >
-> 这样一个插件自带的源文件不会让 cook 中止。它的产物是那个插件自己的 —— 插件自己会带着它的源文件描述的
-> 资产 —— 而宿主工程既不能往那个挂载点生成，也不能改那个文件（插件根是只读的），所以那里的生成失败只记一条日志，cook 继续。
-> 只有工程自己的源文件，以及其自身位于 `<Project>/Plugins` 下的插件的源文件，才会让 cook 失败。见 [Cook 行为](ephemeral.md#cook-behaviour)。
+> 这样一个插件自带的源文件不会让 cook 中止。它的产物是那个插件自己的 —— 插件自己会带着它的源文件描述的资产 —— 而宿主工程既不能往那个挂载点生成，也不能改那个文件（插件根是只读的），所以那里的生成失败只记一条日志，cook 继续。只有工程自己的源文件，以及其自身位于 `<Project>/Plugins` 下的插件的源文件，才会让 cook 失败。见 [Cook 行为](ephemeral.md#cook-behaviour)。
 
 <a id="per-asset-kind"></a>
 
 ## 各资产类型
 
-四种块的路径解析完全一致。不同的是创建的类，以及
-函数类块被打上的 material function usage。
+四种块的路径解析完全一致。不同的是创建的类，以及函数类块被打上的 material function usage。
 
 | 源块 | 资产类 | Material function usage |
 | :-- | :-- | :-- |
@@ -256,13 +223,7 @@ object 路径校验抓到。
 
 ## Custom Pass 管线
 
-*（自 2.1.0 起）* [`.dsp`](../language-v2/passes.md) 没有 `Name=`、没有 `Root=`、也没有 `/// @name`。它唯一的
-产物 `UDreamPassPipeline` 以文件命名，按 2.0 的默认规则放置：文件相对它的 [源码根](../language/source-files.md#source-roots) 所在的文件夹，
-放在 `/Game` 下 —— 插件源码根里
-的文件则放在插件挂载点下，规则和回退与下面的
-[插件源码根默认值](#the-plugin-source-root-default) 相同，同样回退到 `/Game`。每个导出 buffer 的
-render target 放在管线所在的文件夹里，叫
-`<Pipeline>_<Buffer>` 到 `SanitizeObjectName`。
+*（自 2.1.0 起）* [`.dsp`](../language-v2/passes.md) 没有 `Name=`、没有 `Root=`、也没有 `/// @name`。它唯一的产物 `UDreamPassPipeline` 以文件命名，按 2.0 的默认规则放置：文件相对它的 [源码根](../language/source-files.md#source-roots) 所在的文件夹，放在 `/Game` 下 —— 插件源码根里的文件则放在插件挂载点下，规则和回退与下面的[插件源码根默认值](#the-plugin-source-root-default) 相同，同样回退到 `/Game`。每个导出 buffer 的 render target 放在管线所在的文件夹里，叫 `<Pipeline>_<Buffer>` 到 `SanitizeObjectName`。
 
 | 源文件 | 管线 | 导出 buffer 的 render target `Mask` |
 | :-- | :-- | :-- |
@@ -275,10 +236,7 @@ render target 放在管线所在的文件夹里，叫
 | 管线的 | 那里的对象不是 `UDreamPassPipeline`（`DSH8302`），或者它是 DreamShader 没有生成的已保存资产（`DSH8303`） |
 | render target 的 | 那里的对象不是 `UTextureRenderTarget2D`，或者它是 DreamShader 没有生成的已保存 render target（`DSH8313`） |
 
-想换管线位置，唯一的办法就是挪 `.dsp` 文件本身，这也是为什么反编译出来的
-`.dsp` 无法保留它资产原本在别处的路径（`DSH9224`）。移动或重命名文件会在新路径上新建一条
-管线；旧的管线及其 render target 留在原地，它的 HLSL 槽位会一直占用，直到
-[`dsc pass-registry -Gc`](../../tools/commandlet.md#pass-registry) 回收它们。
+想换管线位置，唯一的办法就是挪 `.dsp` 文件本身，这也是为什么反编译出来的 `.dsp` 无法保留它资产原本在别处的路径（`DSH9224`）。移动或重命名文件会在新路径上新建一条管线；旧的管线及其 render target 留在原地，它的 HLSL 槽位会一直占用，直到 [`dsc pass-registry -Gc`](../tools/commandlet.md#pass-registry) 回收它们。
 
 <a id="on-disk-mapping"></a>
 
@@ -290,32 +248,23 @@ render target 放在管线所在的文件夹里，叫
 | `/<PluginName>/…` | `<Project>/Plugins/<PluginName>/Content/…` |
 | `/<MountRoot>/…` | 该挂载点注册到的任何位置 |
 
-文件是 `<directory>/<Leaf>.uasset`。`Graph` backend 的材质以及每个函数、layer 和
-blend 资产，每次允许写入的构建都会保存；ThinCustom 产物只有在
-Materialized 之后才有文件 —— 见 [内存材质](ephemeral.md)。
+文件是 `<directory>/<Leaf>.uasset`。`Graph` backend 的材质以及每个函数、layer 和 blend 资产，每次允许写入的构建都会保存；ThinCustom 产物只有在 Materialized 之后才有文件 —— 见 [内存材质](ephemeral.md)。
 
 <a id="notes"></a>
 
 ## 说明
 
-- **`Name` 可以包含文件夹；`Root` 只是前缀。** `Root="Game"` 下的 `Name="A/B/C"` 会得到
-  `/Game/A/B/C`，资产名为 `C`。
-- **重复的属性键会覆盖前一个。** `Shader(Name="A", Name="B")` 解析为
-  `B`，并给出警告 [`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244) *（自 2.0.0 起；1.x 期间静默）*。
-- 每一段都会独立进行净化。`SanitizeObjectName` 拒绝的字符会被替换，因此
-  `Name="My Mat"` 解析为一个名为 `My_Mat` 的 leaf，且没有任何诊断。
+- **`Name` 可以包含文件夹；`Root` 只是前缀。** `Root="Game"` 下的 `Name="A/B/C"` 会得到 `/Game/A/B/C`，资产名为 `C`。
+- **重复的属性键会覆盖前一个。** `Shader(Name="A", Name="B")` 解析为 `B`，并给出警告 [`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244) *（自 2.0.0 起；1.x 期间静默）*。
+- 每一段都会独立进行净化。`SanitizeObjectName` 拒绝的字符会被替换，因此 `Name="My Mat"` 解析为一个名为 `My_Mat` 的 leaf，且没有任何诊断。
 - 空段会被丢弃：`Name="A//B"` 就是 `A/B`，`Root="Game//Sub"` 就是 `/Game/Sub`。
-- Content Browser 的状态列和 *Materialize* 操作使用的也是同一个解析器，因此在这里失败的
-  路径在 [Material Content
-  Browser](../../tools/material-browser.md) 中也会显示为无法解析。
+- Content Browser 的状态列和 *Materialize* 操作使用的也是同一个解析器，因此在这里失败的路径在 [Material Content Browser](../tools/material-browser.md) 中也会显示为无法解析。
 
 <a id="diagnostics"></a>
 
 ## 诊断
 
-资产层的码经由发射器的码到达编译结果：解析不出来的目标是 [`DSH8200`](../diagnostics/DSH8xxx.md#dsh8200)，无法创建或复用的资产
-是 `DSH8201`（`Graph` 材质）、`DSH8203`（ThinCustom 实例）或 `DSH8202`（函数、layer、
-blend），每条消息都引用下面的码。
+资产层的码经由发射器的码到达编译结果：解析不出来的目标是 [`DSH8200`](../diagnostics/DSH8xxx.md#dsh8200)，无法创建或复用的资产是 `DSH8201`（`Graph` 材质）、`DSH8203`（ThinCustom 实例）或 `DSH8202`（函数、layer、 blend），每条消息都引用下面的码。
 
 | 码 | 触发条件 |
 | :-- | :-- |

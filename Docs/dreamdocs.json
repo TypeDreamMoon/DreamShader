@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "tool": "0.2.0",
+  "source": "en",
+  "targets": [
+    "zh-CN"
+  ],
+  "exclude": [],
+  "codes": [
+    "DSH\\d{4}"
+  ],
+  "keep": [],
+  "site": "TypeDreamMoon/shader.toolchain.64hz.cn"
+}

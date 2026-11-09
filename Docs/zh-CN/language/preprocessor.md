@@ -1,16 +1,10 @@
----
-title: "预处理器"
-description: "预处理器"
----
-
 <a id="preprocessor"></a>
 
 # 预处理器
 
 > [DreamShader](../index.md) » [DreamShaderLang](index.md) » **预处理器**
 
-`#if` / `#ifdef` / `#ifndef` / `#elif` / `#else` / `#endif`，外加 `#define` 和 `#undef`：
-在源码被解析之前、在生成阶段求值的面向行的指令。未被采用的分支永远不会到达解析器，也永远不会成为节点。
+`#if` / `#ifdef` / `#ifndef` / `#elif` / `#else` / `#endif`，外加 `#define` 和 `#undef`：在源码被解析之前、在生成阶段求值的面向行的指令。未被采用的分支永远不会到达解析器，也永远不会成为节点。
 
 | | |
 | :-- | :-- |
@@ -45,7 +39,7 @@ description: "预处理器"
 
 ## 用途
 
-`#if` 做了[静态开关](../../parameters/parameter-nodes.md)无法做的一件事：切开**声明**层。
+`#if` 做了[静态开关](../parameters/parameter-nodes.md)无法做的一件事：切开**声明**层。
 
 静态开关是一个节点。它存在于 `Graph = { … }` 内部，并在两个值之间进行选择。当材质两个构建之间的差异不是一个值，而是一个*声明*时——一个不同的 `ShadingModel`、一组不同的 `Outputs`、一个不同的 `import`、一整块根本不该存在的 `ShaderFunction` 块——静态开关就无处立足。在 Substrate 下，材质可能需要上述全部四项，而任何开关节点的排列都无法表达其中任何一项。
 
@@ -104,8 +98,8 @@ description: "预处理器"
 > **规则 7 无条件适用于 `#else` 和 `#endif`**，无论它们是否位于被切掉的分支内——它们属于*链*，而非分支，正如 `DSH1032` / `DSH1033` 配对检查所做的那样。它要纠正的习惯来自 C：在 C 中，长链会在底部加标签：
 >
 > ```c
-> #endif MOONTOON_LEGACY     // DSH1042 — MOONTOON_LEGACY 是多余标记
-> #endif // MOONTOON_LEGACY  // 正确
+> #endif MOONTOON_LEGACY     // DSH1042 — MOONTOON_LEGACY is a stray token
+> #endif // MOONTOON_LEGACY  // correct
 > ```
 >
 > `#define` 是唯一一条完全不做尾随检查的指令，因为它的值一直延伸到行尾。参见 [`#define` 值是文本](#define-values-are-text)。
@@ -125,15 +119,9 @@ description: "预处理器"
 | 外部 | 八个关键字之一，**小写** | 一条指令 |
 | 外部 | 其他任何内容 | `DSH1035` |
 
-区域行明确列出了这两个词，而不是笼统地放行某种更宽泛的形式，
-而这正是两种语法之间互操作的全部内容：`#Region` 保留了它一直以来的
-大小写不敏感匹配，除此之外没有任何东西能因此获得豁免。
+区域行明确列出了这两个词，而不是笼统地放行某种更宽泛的形式，而这正是两种语法之间互操作的全部内容：`#Region` 保留了它一直以来的大小写不敏感匹配，除此之外没有任何东西能因此获得豁免。
 
-最后一行正是这样做的目的。在声明层级，`#include` 确实是一个错误 ——
-那里的正确拼写是 [`import`](import.md) —— 而像 `#ifdefined` 或 `#endfi` 这样的拼写错误绝不能
-悄然通过，因为被吞掉的 `#endfi` 会让其下所有内容无条件启用。**大小写错误的指令之所以被报告，
-出于同样的原因**：`#IF FOO` 和 `#Endif` 是 `DSH1035`，而不是
-悄无声息的空行。
+最后一行正是这样做的目的。在声明层级，`#include` 确实是一个错误 —— 那里的正确拼写是 [`import`](import.md) —— 而像 `#ifdefined` 或 `#endfi` 这样的拼写错误绝不能悄然通过，因为被吞掉的 `#endfi` 会让其下所有内容无条件启用。**大小写错误的指令之所以被报告，出于同样的原因**：`#IF FOO` 和 `#Endif` 是 `DSH1035`，而不是悄无声息的空行。
 
 `DSH1035` 会根据你写的内容选择建议：
 
@@ -158,9 +146,7 @@ description: "预处理器"
 
 ### `Function` 和 `GraphFunction` 体属于着色器编译器
 
-`Function` 或 `GraphFunction` 体是原始 HLSL，而 HLSL 有自己的预处理器。写在那里的指令
-针对的是**那个**预处理器，带的是着色器编译器的定义 —— `PIXELSHADER`、
-`MATERIALBLENDING_MASKED`、引擎自身环境 —— 这些 DreamShader 一概不知道，也不应去猜测。
+`Function` 或 `GraphFunction` 体是原始 HLSL，而 HLSL 有自己的预处理器。写在那里的指令针对的是**那个**预处理器，带的是着色器编译器的定义 —— `PIXELSHADER`、 `MATERIALBLENDING_MASKED`、引擎自身环境 —— 这些 DreamShader 一概不知道，也不应去猜测。
 
 ```c
 // The engine exposes blend mode only as a shader define, so this has to be a Custom node.
@@ -176,25 +162,14 @@ Function MoonToonBlendModeSwitch(in float3 Opaque, in float3 Masked, out float3 
 }
 ```
 
-**DreamShader 的预处理器不会进入那些体。** `Function` 签名的 `{` 与其匹配的
-`}` 之间的每一行都会原样传递，`#` 行也不例外：它们不被识别为指令，
-不与外部任何东西配对，不计入嵌套深度，也不对已触及集合有任何贡献。上述这些行会原封不动地到达生成的
-`.ush`，并在材质的着色器编译时被解析。
+**DreamShader 的预处理器不会进入那些体。** `Function` 签名的 `{` 与其匹配的 `}` 之间的每一行都会原样传递，`#` 行也不例外：它们不被识别为指令，不与外部任何东西配对，不计入嵌套深度，也不对已触及集合有任何贡献。上述这些行会原封不动地到达生成的 `.ush`，并在材质的着色器编译时被解析。
 
 > [!IMPORTANT]
-> 这条边界区分了可正常工作的函数和悄无声息出错的函数。对照 DreamShader 的定义表求值，
-> `MATERIALBLENDING_SOLID` 根本就是未定义的，于是它读取到 `0`，每个 `#elif` 都读取到 `0`，
-> `#else` 分支无条件胜出，函数干净地编译通过，却为每种混合模式返回错误的值。没有诊断会发现它，
-> 因为并没有出错 —— 是错的预处理器作出了回答。
+> 这条边界区分了可正常工作的函数和悄无声息出错的函数。对照 DreamShader 的定义表求值， `MATERIALBLENDING_SOLID` 根本就是未定义的，于是它读取到 `0`，每个 `#elif` 都读取到 `0`， `#else` 分支无条件胜出，函数干净地编译通过，却为每种混合模式返回错误的值。没有诊断会发现它，因为并没有出错 —— 是错的预处理器作出了回答。
 >
-> 这不是假设。在整个源码树中，**每一个**位于 `.dsm`、
-> `.dsf` 或 `.dsh` 中的 HLSL `#` 指令 —— 九个文件、六条 `#include` 和三条 `#if` / `#elif` / `#else` / `#endif`
-> 链 —— 都位于 `Function` 体内，无一例外。正是不透明区域让它们正常工作。
+> 这不是假设。在整个源码树中，**每一个**位于 `.dsm`、 `.dsf` 或 `.dsh` 中的 HLSL `#` 指令 —— 九个文件、六条 `#include` 和三条 `#if` / `#elif` / `#else` / `#endif` 链 —— 都位于 `Function` 体内，无一例外。正是不透明区域让它们正常工作。
 >
-> 这条规则反过来讲也值得说明：**在 `Function` 体内，你无法编写
-> DreamShader `#if`。** 那里的条件 HLSL 是在*着色器*编译期生效的。要在生成期
-> 于两个函数体之间选择，请把 `#if` 放在 `Function` 块本身周围，
-> 即 DreamShader 能看到的地方：
+> 这条规则反过来讲也值得说明：**在 `Function` 体内，你无法编写 DreamShader `#if`。** 那里的条件 HLSL 是在*着色器*编译期生效的。要在生成期于两个函数体之间选择，请把 `#if` 放在 `Function` 块本身周围，即 DreamShader 能看到的地方：
 >
 > ```c
 > #if DS_SUBSTRATE
@@ -204,11 +179,7 @@ Function MoonToonBlendModeSwitch(in float3 Opaque, in float3 Masked, out float3 
 > #endif
 > ```
 
-体的查找方式是：取闭合 `Function` / `GraphFunction` 签名的那个 `{` —— 它可能
-跨越多行，也可能带有 `SelfContained` 或 `Inline` —— 然后扫描到其匹配的 `}`，
-忽略注释和字符串字面量中的花括号。`GraphFunction` 以同样的方式被视为不透明，
-因为它同样可以携带裸 HLSL，而且 DreamShader `#if` 在 HLSL 体中从来就没有用处：
-HLSL 自己的预处理器已经在那里了。
+体的查找方式是：取闭合 `Function` / `GraphFunction` 签名的那个 `{` —— 它可能跨越多行，也可能带有 `SelfContained` 或 `Inline` —— 然后扫描到其匹配的 `}`，忽略注释和字符串字面量中的花括号。`GraphFunction` 以同样的方式被视为不透明，因为它同样可以携带裸 HLSL，而且 DreamShader `#if` 在 HLSL 体中从来就没有用处： HLSL 自己的预处理器已经在那里了。
 
 <a id="conditional-expressions"></a>
 
@@ -234,15 +205,13 @@ primary := '(' expr ')'
          | STRING
 ```
 
-`&&` 和 `||` 会**短路**：当左侧已经决定结果时，右侧就不会被求值，因此只有右侧才会读取的定义
-根本不会被读取。
+`&&` 和 `||` 会**短路**：当左侧已经决定结果时，右侧就不会被求值，因此只有右侧才会读取的定义根本不会被读取。
 
 <a id="values"></a>
 
 ### 值
 
-值有两种：64 位有符号**整数**和**字符串**。没有浮点数，
-也没有布尔值 —— 当条件求值为非零整数时即为真。
+值有两种：64 位有符号**整数**和**字符串**。没有浮点数，也没有布尔值 —— 当条件求值为非零整数时即为真。
 
 | 表达式 | 求值为 |
 | :-- | :-- |
@@ -266,15 +235,10 @@ primary := '(' expr ')'
 | `/` 和 `%` 除以零 | `DSH1041` |
 
 > [!WARNING]
-> **字符串永远不会被强制转换为真值。** `#if DS_PLATFORM` 是 `DSH1040`，而不是“因为它非空所以为
-> true”。`!DS_PLATFORM` 也是如此，`DS_PLATFORM && X` 以及将
-> 字符串与数字比较也是如此。静默地把字符串当作 true 或 false，正是平台门控最终在
-> 所有地方都触发的根源，所以这里直接拒绝——请写 `DS_PLATFORM == "Windows"`。
+> **字符串永远不会被强制转换为真值。** `#if DS_PLATFORM` 是 `DSH1040`，而不是“因为它非空所以为 true”。`!DS_PLATFORM` 也是如此，`DS_PLATFORM && X` 以及将字符串与数字比较也是如此。静默地把字符串当作 true 或 false，正是平台门控最终在所有地方都触发的根源，所以这里直接拒绝——请写 `DS_PLATFORM == "Windows"`。
 
 > [!NOTE]
-> `DS_PLUGIN_VERSION` 和 `DS_PLATFORM` 是字符串，所以 `DS_PLUGIN_VERSION >= "1.9.0"` 就是 `DSH1040`，
-> 而不是版本测试。字符串只能与 `==` / `!=` 比较，不能与其他任何东西比较；
-> 若要做版本门控，请使用整数形式的引擎定义。
+> `DS_PLUGIN_VERSION` 和 `DS_PLATFORM` 是字符串，所以 `DS_PLUGIN_VERSION >= "1.9.0"` 就是 `DSH1040`，而不是版本测试。字符串只能与 `==` / `!=` 比较，不能与其他任何东西比较；若要做版本门控，请使用整数形式的引擎定义。
 
 <a id="examples"></a>
 
@@ -298,8 +262,7 @@ primary := '(' expr ')'
 
 ### `#define` 值是文本
 
-一个 `#define` 的值是**名称之后、直到行尾的一切内容**。它被存储为文本，
-永远不会被分词、永远不会被展开、也永远不会被求值：
+一个 `#define` 的值是**名称之后、直到行尾的一切内容**。它被存储为文本，永远不会被分词、永远不会被展开、也永远不会被求值：
 
 ```c
 #define PP_SUM  1 + 1      // the five-character string "1 + 1", NOT the integer 2
@@ -308,27 +271,20 @@ primary := '(' expr ')'
 #define PP_MARK            // empty: a marker, which reads as the integer 1
 ```
 
-因此 `#if PP_SUM == 2` 是 `DSH1040`——字符串对整数——而不是 `true`。这是 DreamShader 的
-`#define` 有意比 C 更弱的一处：这里没有宏，只有供 `#if` 测试的
-具名值。
+因此 `#if PP_SUM == 2` 是 `DSH1040`——字符串对整数——而不是 `true`。这是 DreamShader 的 `#define` 有意比 C 更弱的一处：这里没有宏，只有供 `#if` 测试的具名值。
 
 值一直延伸到行尾这一点带来两个后果：
 
-- **`#define` 是唯一没有尾部令牌检查的指令。** `#define A B C` 是合法的，
-  其值为 `B C`。其他所有指令在遇到多余令牌时都会报告 `DSH1042`——包括 `#undef A B`，
-  它可没有这样的借口。
-- **`//` 的剥离发生在取值之前**，所以注释永远不会落入值中。它是
-  感知引号的，因此 `#define PP_URL "http://x"` 会保留其完整字符串。
+- **`#define` 是唯一没有尾部令牌检查的指令。** `#define A B C` 是合法的，其值为 `B C`。其他所有指令在遇到多余令牌时都会报告 `DSH1042`——包括 `#undef A B`，它可没有这样的借口。
+- **`//` 的剥离发生在取值之前**，所以注释永远不会落入值中。它是感知引号的，因此 `#define PP_URL "http://x"` 会保留其完整字符串。
 
-完全没有名称的 `#define` 或 `#undef` 是 `DSH1038`，即名称诊断——`DSH1036` 是保留给
-`#if` 系列缺失操作数的情况。
+完全没有名称的 `#define` 或 `#undef` 是 `DSH1038`，即名称诊断——`DSH1036` 是保留给 `#if` 系列缺失操作数的情况。
 
 <a id="where-defines-come-from"></a>
 
 ## 定义从哪里来
 
-五个层级，按以下顺序解析。较后的层级会覆盖较前的层级——**但 `Builtin` 除外，
-它永远不会被覆盖。**
+五个层级，按以下顺序解析。较后的层级会覆盖较前的层级——**但 `Builtin` 除外，它永远不会被覆盖。**
 
 | # | 层级 | 设置来源 | 胜过 |
 | --: | :-- | :-- | :-- |
@@ -338,8 +294,7 @@ primary := '(' expr ')'
 | 4 | `Provider` | 一个定义提供者委托，在解析时重新拉取 | `Registered` |
 | 5 | `CommandLine` | [命令小程序](../tools/commandlet.md)上的 `-Define=NAME=VALUE` | 除 `Builtin` 之外的一切 |
 
-名称**区分大小写**，与 C 和 HLSL 一致：`Foo` 和 `FOO` 是两个不同的定义。名称必须匹配
-`[A-Za-z_][A-Za-z0-9_]*`。
+名称**区分大小写**，与 C 和 HLSL 一致：`Foo` 和 `FOO` 是两个不同的定义。名称必须匹配 `[A-Za-z_][A-Za-z0-9_]*`。
 
 <a id="the-builtin-ds_-constants"></a>
 
@@ -356,27 +311,14 @@ primary := '(' expr ')'
 
 其中三个来源是经过选择而非显而易见的，每一种选择都在行为中可见：
 
-- **引擎版本来自 DreamShader 自己的宏，而不是 `ENGINE_MAJOR_VERSION`。** 它们
-  与插件 C++ 的 `DREAMSHADER_UE_VERSION_AT_LEAST` 保护所读取的是同一批宏，因此一个为了
-  兼容性测试而覆盖它们的分支只会得到一个答案，而不是两个相互矛盾的答案。
-- **`DS_PLATFORM` 是*ini* 平台名称，绝不是 `PlatformName()`。** 后者会合并
-  编辑器/服务器/客户端，在编辑器中给出 `WindowsEditor`，而在烘焙期间给出 `Windows`——这样同一个
-  来源会在烘焙的两端以两种不同方式预处理，编辑器展示的资产将不会是最终发布的
-  资产。
-- **`DS_PLUGIN_VERSION` 始终有定义**，会回退到 `"unknown"` 而不是变成未定义。
-  否则 `defined(DS_PLUGIN_VERSION)` 可能因与
-  源码毫无关系的原因而翻转，并连带改变构建键。
+- **引擎版本来自 DreamShader 自己的宏，而不是 `ENGINE_MAJOR_VERSION`。** 它们与插件 C++ 的 `DREAMSHADER_UE_VERSION_AT_LEAST` 保护所读取的是同一批宏，因此一个为了兼容性测试而覆盖它们的分支只会得到一个答案，而不是两个相互矛盾的答案。
+- **`DS_PLATFORM` 是*ini* 平台名称，绝不是 `PlatformName()`。** 后者会合并编辑器/服务器/客户端，在编辑器中给出 `WindowsEditor`，而在烘焙期间给出 `Windows`——这样同一个来源会在烘焙的两端以两种不同方式预处理，编辑器展示的资产将不会是最终发布的资产。
+- **`DS_PLUGIN_VERSION` 始终有定义**，会回退到 `"unknown"` 而不是变成未定义。否则 `defined(DS_PLUGIN_VERSION)` 可能因与源码毫无关系的原因而翻转，并连带改变构建键。
 
-这张表中的一切都是**运行进程的不变量**，这是要求而非巧合。定义在生成时求值一次，
-其效果随后被烘焙进保存的资产；一个会在会话中途改变的值会让构建不可复现，
-并使资产记录的构建键成为谎言。`r.Substrate` 之所以合格，仅仅因为它是只读 CVar，在
-启动时固定。
+这张表中的一切都是**运行进程的不变量**，这是要求而非巧合。定义在生成时求值一次，其效果随后被烘焙进保存的资产；一个会在会话中途改变的值会让构建不可复现，并使资产记录的构建键成为谎言。`r.Substrate` 之所以合格，仅仅因为它是只读 CVar，在启动时固定。
 
 > [!WARNING]
-> **`DS_` 前缀是作为前缀保留的，而不是作为一个列表保留。** 任何内容都不得定义、重定义或
-> 取消定义以 `DS_` 开头的名称，无论 DreamShader 当前是否提供该名称。
-> 拒绝的报告方式取决于尝试来自何处，因为只有其中一种情况
-> 有文件和行号可供指向：
+> **`DS_` 前缀是作为前缀保留的，而不是作为一个列表保留。** 任何内容都不得定义、重定义或取消定义以 `DS_` 开头的名称，无论 DreamShader 当前是否提供该名称。拒绝的报告方式取决于尝试来自何处，因为只有其中一种情况有文件和行号可供指向：
 >
 > | 尝试来自 | 结果 |
 > | :-- | :-- |
@@ -384,21 +326,15 @@ primary := '(' expr ')'
 > | `RegisterDreamShaderDefine("DS_FOO", …)` | 返回 `false`，记录错误，表不变 |
 > | *预处理器定义*，或 `-Define=DS_FOO=…` | 该条目被丢弃并发出警告；编译继续 |
 >
-> 采用前缀规则而非固定列表，是为了防止未来的内置项被某些项目已在该名称下注册的
-> 定义悄悄覆盖。
+> 采用前缀规则而非固定列表，是为了防止未来的内置项被某些项目已在该名称下注册的定义悄悄覆盖。
 >
-> 前缀测试本身**区分大小写**，所以 `ds_foo` 和 `Ds_Foo` 是普通名称，可以
-> 自由定义——它们不会与内置项冲突，因此没有什么需要保护。该检查
-> 必须区分大小写也并非可有可无：若非如此，`ds_substrate` 就会通过保留
-> 测试，然后落入 `DS_SUBSTRATE` 的槽位，从后门覆盖一个只读内置项。
+> 前缀测试本身**区分大小写**，所以 `ds_foo` 和 `Ds_Foo` 是普通名称，可以自由定义——它们不会与内置项冲突，因此没有什么需要保护。该检查必须区分大小写也并非可有可无：若非如此，`ds_substrate` 就会通过保留测试，然后落入 `DS_SUBSTRATE` 的槽位，从后门覆盖一个只读内置项。
 
 <a id="project-settings"></a>
 
 ### 项目设置
 
-*项目设置 ▸ DreamPlugin ▸ Dream Shader ▸ Compiler ▸ **预处理器定义*** 是一个
-`TMap<FString, FString>`，写入项目的 `DefaultEngine.ini`。它是签入层级：
-描述*此项目*的开关，由克隆该项目的所有人共享。
+*项目设置 ▸ DreamPlugin ▸ Dream Shader ▸ Compiler ▸ **预处理器定义*** 是一个 `TMap<FString, FString>`，写入项目的 `DefaultEngine.ini`。它是签入层级：描述*此项目*的开关，由克隆该项目的所有人共享。
 
 ```ini
 [/Script/DreamShader.DreamShaderSettings]
@@ -406,19 +342,15 @@ primary := '(' expr ')'
 +PreprocessorDefines=(("TOON_QUALITY", "2"))
 ```
 
-编辑该映射会递增定义修订号，从而使 Ephemeral 材质失效——参见
-[重建](#rebuilds)。
+编辑该映射会递增定义修订号，从而使 Ephemeral 材质失效——参见[重建](#rebuilds)。
 
 <a id="from-c"></a>
 
 ### 从 C++
 
-两个入口点，都是 `UE::DreamShader` 中的自由函数，声明于
-`Public/DreamShaderDefineResolution.h`（`DreamShader` 模块——表类型本身位于
-`DreamShaderLang`，但构建一个是引擎的工作）。
+两个入口点，都是 `UE::DreamShader` 中的自由函数，声明于 `Public/DreamShaderDefineResolution.h`（`DreamShader` 模块——表类型本身位于 `DreamShaderLang`，但构建一个是引擎的工作）。
 
-**直接注册**是最简单的一种。`SourceTag` 标识贡献者，因此整个
-集合可以在关闭时撤回：
+**直接注册**是最简单的一种。`SourceTag` 标识贡献者，因此整个集合可以在关闭时撤回：
 
 ```cpp
 #include "DreamShaderDefineResolution.h"
@@ -437,13 +369,9 @@ void FMoonToonModule::ShutdownModule()
 }
 ```
 
-`RegisterDreamShaderDefine` 对于无效或保留名称返回 `false`，并且不触碰表。
-从同一标签注册同一名称两次会覆盖。
+`RegisterDreamShaderDefine` 对于无效或保留名称返回 `false`，并且不触碰表。从同一标签注册同一名称两次会覆盖。
 
-**提供程序**是默认应该使用的方式。直接注册必须发生在
-首次编译之前，这使其成为模块加载顺序的问题；提供程序在
-表被解析的那一刻被拉取，因此加载顺序不再重要，并且值可能依赖于在 `StartupModule` 时
-尚未就绪的状态：
+**提供程序**是默认应该使用的方式。直接注册必须发生在首次编译之前，这使其成为模块加载顺序的问题；提供程序在表被解析的那一刻被拉取，因此加载顺序不再重要，并且值可能依赖于在 `StartupModule` 时尚未就绪的状态：
 
 ```cpp
 #include "DreamShaderDefineResolution.h"
@@ -464,35 +392,20 @@ FDelegateHandle Handle = UE::DreamShader::RegisterDreamShaderDefineProvider(
 UE::DreamShader::UnregisterDreamShaderDefineProvider(Handle);
 ```
 
-提供程序计算出的任何内容仍然必须遵守不变性规则：每次编译询问一次，
-其答案被烘焙到资产中。
+提供程序计算出的任何内容仍然必须遵守不变性规则：每次编译询问一次，其答案被烘焙到资产中。
 
-还有两个函数值得了解。`ResolveDreamShaderDefines()` 返回一次编译
-将看到的表，所有五个层级已经合并——对于记录构建实际使用了什么很有用。
-`GetDreamShaderDefineRevision()` 会在每个层级的每次变更时递增；任何根据定义集缓存编译
-输出的内容都会比较它并在其变化时失效。
+还有两个函数值得了解。`ResolveDreamShaderDefines()` 返回一次编译将看到的表，所有五个层级已经合并——对于记录构建实际使用了什么很有用。 `GetDreamShaderDefineRevision()` 会在每个层级的每次变更时递增；任何根据定义集缓存编译输出的内容都会比较它并在其变化时失效。
 
 > [!NOTE]
-> **对于任何以定义名称为键的内容，请使用 `FDreamShaderDefineMap` / `FDreamShaderDefineValueMap`，而不是普通的 `TMap<FString, …>`。**
-> 两个别名都在其键函数中固定了 `ESearchCase::CaseSensitive` 键匹配，因为默认 `TMap<FString, …>` 并不保证关于大小写的唯一答案：
-> `FString` 没有类内 `operator==`，`Equals` 在此引擎树中已将其默认值改为区分大小写，
-> 而 `GetTypeHash(FString)` 仍然是大小写*不敏感*的 `Strihash`。将其
-> 留给容器会使大小写敏感性——一条语言规则——变成引擎版本细节，因此
-> 针对 5.6、5.7 和 5.8 构建的插件将拥有三种不同的语言。
+> **对于任何以定义名称为键的内容，请使用 `FDreamShaderDefineMap` / `FDreamShaderDefineValueMap`，而不是普通的 `TMap<FString, …>`。**两个别名都在其键函数中固定了 `ESearchCase::CaseSensitive` 键匹配，因为默认 `TMap<FString, …>` 并不保证关于大小写的唯一答案： `FString` 没有类内 `operator==`，`Equals` 在此引擎树中已将其默认值改为区分大小写，而 `GetTypeHash(FString)` 仍然是大小写*不敏感*的 `Strihash`。将其留给容器会使大小写敏感性——一条语言规则——变成引擎版本细节，因此针对 5.6、5.7 和 5.8 构建的插件将拥有三种不同的语言。
 >
-> `EDreamShaderDefineSource::SourceFile`，即源文件中 `#define` 的枚举项，列在
-> 五个层级之后，**不参与排序**。这些定义只存在于预处理器返回时丢弃的
-> 表私有副本中，在那里它们只是在那个文件的剩余部分中覆盖
-> 注入层级所说的任何内容。对保留名称的 `#define` 仍然
-> 被 `Set()` 拒绝，这正是引发 `DSH1039` 的原因。
+> `EDreamShaderDefineSource::SourceFile`，即源文件中 `#define` 的枚举项，列在五个层级之后，**不参与排序**。这些定义只存在于预处理器返回时丢弃的表私有副本中，在那里它们只是在那个文件的剩余部分中覆盖注入层级所说的任何内容。对保留名称的 `#define` 仍然被 `Set()` 拒绝，这正是引发 `DSH1039` 的原因。
 
 <a id="command-line"></a>
 
 ### 命令行
 
-[commandlet](../tools/commandlet.md) 接受 `-Define=NAME=VALUE`，或短选项 `-D=NAME=VALUE`。
-**该选项可重复**——每次出现都会添加一个名称——并且它是最明确的层级，因此
-其优先级高于除内置项之外的所有内容。
+[commandlet](../tools/commandlet.md) 接受 `-Define=NAME=VALUE`，或短选项 `-D=NAME=VALUE`。**该选项可重复**——每次出现都会添加一个名称——并且它是最明确的层级，因此其优先级高于除内置项之外的所有内容。
 
 ```powershell
 -run=DreamShader compile -All -Force `
@@ -501,15 +414,13 @@ UE::DreamShader::UnregisterDreamShaderDefineProvider(Handle);
   -D=CI_BUILD
 ```
 
-`-Define=CI_BUILD` 不带 `=VALUE` 会将名称定义为空值——`defined(CI_BUILD)` 为 `1`
-且 `#if CI_BUILD` 为 true。参见[值](#values)。
+`-Define=CI_BUILD` 不带 `=VALUE` 会将名称定义为空值——`defined(CI_BUILD)` 为 `1` 且 `#if CI_BUILD` 为 true。参见[值](#values)。
 
 <a id="define-is-file-local"></a>
 
 ## `#define` 是文件局部的
 
-一个 `#define` **仅在写入它的文件中**可见。它不会到达导入
-该文件的文件，也不会到达在其之后导入的文件。这不是 C。
+一个 `#define` **仅在写入它的文件中**可见。它不会到达导入该文件的文件，也不会到达在其之后导入的文件。这不是 C。
 
 ```c
 // Shared/Common.dsh
@@ -523,10 +434,7 @@ import "Shared/Common.dsh";
 #if TOON_FANCY        // ← 0. The header's #define is not visible here.
 ```
 
-原因在于工作顺序。每个文件在被解析之前，都会**独自**根据
-编译的定义表进行预处理：先是导入文件，当读取其 `import` 时再处理头文件
-*（自 2.0.0 起；在 1.9.x 及之前，头文件的文本当时被内联）*。这正是让
-`#if` 能够包裹 `import` 的原因——当其分支被剪除时，`import` 根本不会被读取：
+原因在于工作顺序。每个文件在被解析之前，都会**独自**根据编译的定义表进行预处理：先是导入文件，当读取其 `import` 时再处理头文件*（自 2.0.0 起；在 1.9.x 及之前，头文件的文本当时被内联）*。这正是让 `#if` 能够包裹 `import` 的原因——当其分支被剪除时，`import` 根本不会被读取：
 
 ```c
 #if DS_SUBSTRATE
@@ -536,45 +444,31 @@ import "Shared/LegacyHelpers.dsh";
 #endif
 ```
 
-当某个头文件的声明到达导入文件时，它自己的 `#define` 已经消失，并且没有任何内容
-被粘贴到该文件的文本中供后续的 `#if` 查看。让 `#define` 像 C 那样行事将意味着
-按包含顺序对每个文件进行一次预处理器遍历，以及 C 的依赖于包含顺序的宏状态，
-而后者是数十年来 bug 的来源，并不令人怀念。
+当某个头文件的声明到达导入文件时，它自己的 `#define` 已经消失，并且没有任何内容被粘贴到该文件的文本中供后续的 `#if` 查看。让 `#define` 像 C 那样行事将意味着按包含顺序对每个文件进行一次预处理器遍历，以及 C 的依赖于包含顺序的宏状态，而后者是数十年来 bug 的来源，并不令人怀念。
 
-**要集中定义一个开关，请使用为此构建的通道**：项目设置中的*预处理器定义*，
-从 C++ 使用的 `RegisterDreamShaderDefine`，或用于一次性构建的 `-Define=`。源文件中的 `#define`
-用于该文件内的局部缩写，仅此而已。
+**要集中定义一个开关，请使用为此构建的通道**：项目设置中的*预处理器定义*，从 C++ 使用的 `RegisterDreamShaderDefine`，或用于一次性构建的 `-Define=`。源文件中的 `#define` 用于该文件内的局部缩写，仅此而已。
 
 > [!NOTE]
-> 未采用的分支中的 `#define` 或 `#undef` 什么都不做，正如该分支的其余部分
-> 什么都不做一样。指令行会与其余所有内容一起被剪除。
+> 未采用的分支中的 `#define` 或 `#undef` 什么都不做，正如该分支的其余部分什么都不做一样。指令行会与其余所有内容一起被剪除。
 
 <a id="consequences"></a>
 
 ## 后果
 
-前四项改变的是你的工作方式，而不仅仅是能编译什么。在编写第一个
-`#if` 之前请阅读它们；后两项解释了为什么工具链的其余部分在剪除后仍能继续工作。
+前四项改变的是你的工作方式，而不仅仅是能编译什么。在编写第一个 `#if` 之前请阅读它们；后两项解释了为什么工具链的其余部分在剪除后仍能继续工作。
 
 <a id="an-inactive-branch-is-not-checked-at-all"></a>
 
 ### 非活动分支完全不会被检查
 
-文本在解析器看到它之前就被剪除，因此未采用的分支从不进行词法分析、从不
-解析、从不进行类型检查，也从不生成。它可以包含任何内容——无效语法、
-调用一个不存在的函数、一个在两个引擎版本前已被移除的 `ShadingModel`——
-而编译仍然通过。
+文本在解析器看到它之前就被剪除，因此未采用的分支从不进行词法分析、从不解析、从不进行类型检查，也从不生成。它可以包含任何内容——无效语法、调用一个不存在的函数、一个在两个引擎版本前已被移除的 `ShadingModel`—— 而编译仍然通过。
 
-这是 C 的交易，也是剪除声明层的代价：让 `#if` 能够移除一行 `Settings` 的同一机制，
-也让它无法检查该行。
+这是 C 的交易，也是剪除声明层的代价：让 `#if` 能够移除一行 `Settings` 的同一机制，也让它无法检查该行。
 
-实际后果是**当前没人构建的分支会悄悄腐烂。** 两个习惯
-有帮助：
+实际后果是**当前没人构建的分支会悄悄腐烂。** 两个习惯有帮助：
 
-- 保持分支简短。围绕三行 `Settings` 的 `#if` 在其损坏时会被注意到；
-  围绕两百行的 `#if` 则不会。
-- 编译你实际发布的每一种组合。针对每个定义集运行一次 commandlet，配合 `-Force`，是
-  一个恰好能捕获此类问题的 CI 门禁——参见[命令行](#command-line)。
+- 保持分支简短。围绕三行 `Settings` 的 `#if` 在其损坏时会被注意到；围绕两百行的 `#if` 则不会。
+- 编译你实际发布的每一种组合。针对每个定义集运行一次 commandlet，配合 `-Force`，是一个恰好能捕获此类问题的 CI 门禁——参见[命令行](#command-line)。
 
 <a id="a-source-with-directives-cannot-be-adopted"></a>
 
@@ -601,7 +495,7 @@ import "Shared/LegacyHelpers.dsh";
 
 ### VirtualFunction 同步会拒绝相同的源文件
 
-[启动同步服务](../../tools/virtual-function-tools.md#startup-sync-service) 会就地重写 `VirtualFunction` 声明，并且会以 `DSH9001` 拒绝包含指令的源文件。其原因比 Adopt 的更尖锐，风险也更大。
+[启动同步服务](../tools/virtual-function-tools.md#startup-sync-service) 会就地重写 `VirtualFunction` 声明，并且会以 `DSH9001` 拒绝包含指令的源文件。其原因比 Adopt 的更尖锐，风险也更大。
 
 同步会使用记录的**字节**偏移量将新文本拼接到声明上。行数守恒只能保证行对齐，仅此而已：被剪切的行会变成*更短的*空行，因此第一个剪切点之后的每个字节偏移量都会指向别处。契约中没有可用于纠正的偏移量映射，而如果预处理后的字符串曾经到达文件写入器，它将**永久**压平文件中的每一个死分支。
 
@@ -658,49 +552,21 @@ import "Shared/LegacyHelpers.dsh";
 
 ## 注释
 
-- **指令是通过逐行扫描发现的，因此块注释不会隐藏指令。** `#if` 内的 `/* … */` 仍然是一条指令。可通过在每行使用 `//` 来注释掉指令。`import` 则不同
-  *(自 2.0.0 起)*：它是一个词元，因此 `/* … */` 内的一个会被注释掉。请参阅
-  [`import`](import.md#recognition) 和 [词法元素](lexical.md#comments)。
-- **`#if` 可在 `Graph` 体内工作。** `Graph` 体是 DreamShaderLang，而非 HLSL，因此其
-  条件指令是 DreamShader 的。`Function` 和 `GraphFunction` 体则是例外，而且是
-  唯一的例外——请参阅[上文](#function-and-graphfunction-bodies-are-the-shader-compilers)。
-- **切除整个 `Shader` 块不会删除其资产。** 文件只是不再构建
-  它，而先前生成的资产会留在磁盘上。完全没有块的 `.dsm` 是
-  [`DSH2254`](../diagnostics/DSH2xxx.md#dsh2254)。静默删除资产远比
-  留下一个要危险得多；请自行删除它，或者只保护范围更小的内容而不是整个块。
-- **通过 `defined(X)` 读取的定义会像任何其他读取一样被记录。** 因此稍后定义 `X`
-  会重建那些查询过它的源文件，包括那些只查询过它
-  是否存在的源文件。
-- **DreamShader 的预处理器没有 `#include`，也没有宏展开。** `#define` 的值是一个
-  供 `#if` 测试的值；它绝不会被替换到源文本中，而且没有
-  类函数宏。请使用 [`import`](import.md) 来引入另一个文件——在
-  `.dsm` / `.dsf` 的声明层级写入 `#include` 是 `DSH1035`，并且消息会这样说明。1.x 文件确实拥有的 `#include`
-  是 `Function` 体内的 HLSL 指令，而预处理器在其处根本不会查看；它会被提升到生成的 `.ush` 中，并由着色器编译器解析。请参阅
-  [函数 ▸ 包含](function.md#includes)。
-- **没有指令的源文件会逐字节返回。** 行尾符不会被改动，也不会添加
-  末尾换行符，因此将文件送入预处理器绝不会成为其
-  显示为已修改的原因。
-- **嵌套层级在跳过的分支中也会被计数。** 嵌套在假 `#if` 下的 `#if` 仍会添加一个
-  层级，因为扫描器必须配对它并未求值的指令。六十四层是
-  合法的；第六十五层是 `DSH1037`。
-- **解析器从不会看到指令。** 当声明语法运行时，每条指令
-  行都是空行，这就是为什么这八个关键字没有一个出现在
-  [关键字索引](keywords.md) 中作为解析器知道的内容。
-- **`.dsh` 内容规则会应用于被切除的文本。** 解析器逐
-  个声明地决定它 *(自 2.0.0 起；1.x 会在文本中搜索 `Shader(`)*，在指令被
-  解析之后，因此被切除分支内的 `Shader` 块不再存在于那里以供拒绝——而
-  被*采用*分支内的一个则是 [`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249)。因此，一个头文件
-  可以携带位于永远不会为真的 `#if` 之后的 `Shader` 块，这是合法的，而且几乎
-  肯定是个错误。请参阅[源文件](source-files.md#how-the-restriction-is-enforced)。
+- **指令是通过逐行扫描发现的，因此块注释不会隐藏指令。** `#if` 内的 `/* … */` 仍然是一条指令。可通过在每行使用 `//` 来注释掉指令。`import` 则不同*(自 2.0.0 起)*：它是一个词元，因此 `/* … */` 内的一个会被注释掉。请参阅 [`import`](import.md#recognition) 和 [词法元素](lexical.md#comments)。
+- **`#if` 可在 `Graph` 体内工作。** `Graph` 体是 DreamShaderLang，而非 HLSL，因此其条件指令是 DreamShader 的。`Function` 和 `GraphFunction` 体则是例外，而且是唯一的例外——请参阅[上文](#function-and-graphfunction-bodies-are-the-shader-compilers)。
+- **切除整个 `Shader` 块不会删除其资产。** 文件只是不再构建它，而先前生成的资产会留在磁盘上。完全没有块的 `.dsm` 是 [`DSH2254`](../diagnostics/DSH2xxx.md#dsh2254)。静默删除资产远比留下一个要危险得多；请自行删除它，或者只保护范围更小的内容而不是整个块。
+- **通过 `defined(X)` 读取的定义会像任何其他读取一样被记录。** 因此稍后定义 `X` 会重建那些查询过它的源文件，包括那些只查询过它是否存在的源文件。
+- **DreamShader 的预处理器没有 `#include`，也没有宏展开。** `#define` 的值是一个供 `#if` 测试的值；它绝不会被替换到源文本中，而且没有类函数宏。请使用 [`import`](import.md) 来引入另一个文件——在 `.dsm` / `.dsf` 的声明层级写入 `#include` 是 `DSH1035`，并且消息会这样说明。1.x 文件确实拥有的 `#include` 是 `Function` 体内的 HLSL 指令，而预处理器在其处根本不会查看；它会被提升到生成的 `.ush` 中，并由着色器编译器解析。请参阅[函数 ▸ 包含](function.md#includes)。
+- **没有指令的源文件会逐字节返回。** 行尾符不会被改动，也不会添加末尾换行符，因此将文件送入预处理器绝不会成为其显示为已修改的原因。
+- **嵌套层级在跳过的分支中也会被计数。** 嵌套在假 `#if` 下的 `#if` 仍会添加一个层级，因为扫描器必须配对它并未求值的指令。六十四层是合法的；第六十五层是 `DSH1037`。
+- **解析器从不会看到指令。** 当声明语法运行时，每条指令行都是空行，这就是为什么这八个关键字没有一个出现在[关键字索引](keywords.md) 中作为解析器知道的内容。
+- **`.dsh` 内容规则会应用于被切除的文本。** 解析器逐个声明地决定它 *(自 2.0.0 起；1.x 会在文本中搜索 `Shader(`)*，在指令被解析之后，因此被切除分支内的 `Shader` 块不再存在于那里以供拒绝——而被*采用*分支内的一个则是 [`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249)。因此，一个头文件可以携带位于永远不会为真的 `#if` 之后的 `Shader` 块，这是合法的，而且几乎肯定是个错误。请参阅[源文件](source-files.md#how-the-restriction-is-enforced)。
 
 <a id="diagnostics"></a>
 
 ## 诊断
 
-*(自 2.0.0 起)* 预处理器故障会在文件被解析之前停止编译，并报告
-为 [`DSH8291`](../diagnostics/DSH8xxx.md#dsh8291)，其消息会指明文件——当失败的
-是头文件时，则指明该头文件——并在下面携带预处理器自身的代码，以及
-违规指令的文件和行号。预处理器会在其第一个错误处停止。
+*(自 2.0.0 起)* 预处理器故障会在文件被解析之前停止编译，并报告为 [`DSH8291`](../diagnostics/DSH8xxx.md#dsh8291)，其消息会指明文件——当失败的是头文件时，则指明该头文件——并在下面携带预处理器自身的代码，以及违规指令的文件和行号。预处理器会在其第一个错误处停止。
 
 | 代码 | 原因 |
 | :-- | :-- |
@@ -720,8 +586,7 @@ import "Shared/LegacyHelpers.dsh";
 | `DSH8149` | 对包含指令的文件执行 **Adopt Into Source**——请参阅[上文](#a-source-with-directives-cannot-be-adopted) |
 | `DSH9001` | 对包含指令的文件执行 **VirtualFunction sync**——请参阅[上文](#virtualfunction-sync-refuses-the-same-sources) |
 
-`DSH1034` 和 `DSH1042` 依据一个机械问题来区分——*表达式是否结束了？*——不涉及
-任何判断：
+`DSH1034` 和 `DSH1042` 依据一个机械问题来区分——*表达式是否结束了？*——不涉及任何判断：
 
 | 写法 | 代码 | 原因 |
 | :-- | :-- | :-- |
@@ -735,23 +600,15 @@ import "Shared/LegacyHelpers.dsh";
 | `#else junk` | `DSH1042` | `#else` 完全不接受操作数 |
 | `#define A B C` | *无* | `#define` 取值直到行尾 |
 
-这种区分依据的是**读者看到的内容**，而不是哪个组件抛出了错误。`#ifdef A B` 会脱糖为
-`#if defined(A) B`，因此任何会给糖形式和脱糖形式赋予不同代码的规则都会是
-不连贯的。无论多余词元是 `B`、`2` 还是 `)`，它都是一个错误、一个修复方法：删除
-它，或者将其注释掉。
+这种区分依据的是**读者看到的内容**，而不是哪个组件抛出了错误。`#ifdef A B` 会脱糖为 `#if defined(A) B`，因此任何会给糖形式和脱糖形式赋予不同代码的规则都会是不连贯的。无论多余词元是 `B`、`2` 还是 `)`，它都是一个错误、一个修复方法：删除它，或者将其注释掉。
 
-完整文本和逐代码说明见 [DSH1xxx](../diagnostics/DSH1xxx.md)、
-[DSH8xxx](../diagnostics/DSH8xxx.md) 和 [DSH9xxx](../diagnostics/README.md)。
+完整文本和逐代码说明见 [DSH1xxx](../diagnostics/DSH1xxx.md)、 [DSH8xxx](../diagnostics/DSH8xxx.md) 和 [DSH9xxx](../diagnostics/README.md)。
 
 <a id="example"></a>
 
 ## 示例
 
-Substrate 案例，这正是该功能存在的原因。三个差异中有两个位于
-声明层，任何切换节点都无法触及：`ShadingModel` 行是一个 `Settings` 键，而
-这两个分支并未声明相同的 `Outputs`——不是相同的*名称*，甚至不是相同的
-*类型*。一个 `Substrate` 值和一个 `vec3` 不是一个切换节点的两个输入；它们是两个
-不同的材质。
+Substrate 案例，这正是该功能存在的原因。三个差异中有两个位于声明层，任何切换节点都无法触及：`ShadingModel` 行是一个 `Settings` 键，而这两个分支并未声明相同的 `Outputs`——不是相同的*名称*，甚至不是相同的*类型*。一个 `Substrate` 值和一个 `vec3` 不是一个切换节点的两个输入；它们是两个不同的材质。
 
 ```c
 Shader(Name="Materials/M_Foo", Root="Game")
@@ -787,11 +644,7 @@ Shader(Name="Materials/M_Foo", Root="Game")
 }
 ```
 
-Substrate 分支完全不写入 `ShadingModel`。1.x 要求这样做：绑定 `Base.FrontMaterial`
-强制设置着色模型，而那里的显式设置只能表示 `"Substrate"`。*（自
-2.0.0 起）* 该绑定 [不设置任何着色模型](../builtins/substrate.md#binding-a-substrate-value-to-basefrontmaterial)
-也不拒绝任何着色模型，因此现在对*另一个*分支的行进行保护只是将 `DefaultLit` 排除在
-Substrate 构建之外。
+Substrate 分支完全不写入 `ShadingModel`。1.x 要求这样做：绑定 `Base.FrontMaterial` 强制设置着色模型，而那里的显式设置只能表示 `"Substrate"`。*（自 2.0.0 起）* 该绑定 [不设置任何着色模型](../builtins/substrate.md#binding-a-substrate-value-to-basefrontmaterial) 也不拒绝任何着色模型，因此现在对*另一个*分支的行进行保护只是将 `DefaultLit` 排除在 Substrate 构建之外。
 
 当 `DS_SUBSTRATE` 位于 `1` 时，到达解析器的文本为：
 
@@ -829,8 +682,7 @@ Shader(Name="Materials/M_Foo", Root="Game")
 }
 ```
 
-三十一行输入，三十一行输出。`Graph` 块内部的错误仍会报告在
-作者撰写它所在的行上：`Substrate.Slab` 调用在两份文本中都是第 26 行。
+三十一行输入，三十一行输出。`Graph` 块内部的错误仍会报告在作者撰写它所在的行上：`Substrate.Slab` 调用在两份文本中都是第 26 行。
 
 <a id="see-also"></a>
 
@@ -845,7 +697,7 @@ Shader(Name="Materials/M_Foo", Root="Game")
 - [命令行工具](../tools/commandlet.md) — `-Define=NAME=VALUE`
 - [缓存](../generation/caching.md) — 受影响的定义所并入的构建键
 - [分歧](../generation/divergence.md) — 采用、还原和分离
-- [VirtualFunction 工具](../../tools/virtual-function-tools.md) — 以 `DSH9001` 拒绝的启动同步
+- [VirtualFunction 工具](../tools/virtual-function-tools.md) — 以 `DSH9001` 拒绝的启动同步
 - [反编译](../tools/decompiler.md) — 无法往返转换的方向
-- [参数节点](../../parameters/parameter-nodes.md) — `StaticSwitchParameter`，另一种分支方式
+- [参数节点](../parameters/parameter-nodes.md) — `StaticSwitchParameter`，另一种分支方式
 - [诊断索引](../diagnostics/index.md) — 按阶段列出的每条消息

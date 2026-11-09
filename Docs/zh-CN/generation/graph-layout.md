@@ -1,8 +1,3 @@
----
-title: "图形布局"
-description: "图形布局"
----
-
 <a id="graph-layout"></a>
 
 # 图形布局
@@ -43,7 +38,7 @@ will be used.
 该阈值针对的是已完成图形的表达式数量，而不是源代码长度。它仅在自动路径上检查——显式的 `Layout` 段在任何节点数量下都会被遵循。
 
 > [!NOTE]
-> **自 `2.0.0` 起，布局始终运行。** 它过去可以被跳过：在[预览](../../tools/preview.md)中或尚未实体化的材质上看到的图形是**未布局**的——节点停留在构建阶段留下的高耸单列中——只有在资产被实体化、烘焙或由命令行工具生成之后，布局才会出现。曾添加了 *Lay Out In-Memory Graphs* 项目设置以重新开启布局，默认开启；`2.0.0` 移除了该设置，也随之移除了跳过行为。唯一剩下的退出方式是上文的大型图形保护。参见[临时材质](ephemeral.md)和[项目设置](../settings/project.md)。
+> **自 `2.0.0` 起，布局始终运行。** 它过去可以被跳过：在[预览](../tools/preview.md)中或尚未实体化的材质上看到的图形是**未布局**的——节点停留在构建阶段留下的高耸单列中——只有在资产被实体化、烘焙或由命令行工具生成之后，布局才会出现。曾添加了 *Lay Out In-Memory Graphs* 项目设置以重新开启布局，默认开启；`2.0.0` 移除了该设置，也随之移除了跳过行为。唯一剩下的退出方式是上文的大型图形保护。参见[临时材质](ephemeral.md)和[项目设置](../settings/project.md)。
 >
 > *（自 2.0.0 起）* 该阶段在每次编译时为每个节点报告一个慢任务帧。在 1.x 中，交互式编译会以*静默*方式运行它，每个块一帧；2.0 的发射器不使用该模式。
 
@@ -129,11 +124,7 @@ Layout = {
 | 注释气泡 | 在细节面板中可见，带颜色 | 在细节面板中可见，带颜色 |
 
 > [!WARNING]
-> DreamShader 创建的每个注释框，其文本都以字面量 `DreamShader: ` 为前缀，
-> 而这个前缀正是重新生成时删除的内容。写入 `Comment(Name="Sampling", …)` 会产生一个
-> 读取为 `DreamShader: Sampling` 的框；在材质编辑器中将其重命名为不带
-> 前缀的内容，可使其在下次重建后保留——并且其旁边会出现第二个框。参见
-> [重新生成](regeneration.md#what-survives)。
+> DreamShader 创建的每个注释框，其文本都以字面量 `DreamShader: ` 为前缀，而这个前缀正是重新生成时删除的内容。写入 `Comment(Name="Sampling", …)` 会产生一个读取为 `DreamShader: Sampling` 的框；在材质编辑器中将其重命名为不带前缀的内容，可使其在下次重建后保留——并且其旁边会出现第二个框。参见[重新生成](regeneration.md#what-survives)。
 
 <a id="placing-the-unpinned-nodes"></a>
 
@@ -148,20 +139,15 @@ Layout = {
 | 仅依赖项 | `dependencyX + 360`，相同 Y |
 | 两者都没有，从未有 | 回退列 |
 
-冲突通过将位置分桶到 80 × 80 的槽位来解决；一个槽位的第 *n* 个占用者
-在垂直方向上偏移 `±((n + 1) / 2) * (nodeHeight + 40)`，符号交替——即节点自身的
-[估算高度](#node-footprints)，因此同一槽位中的两个节点无论是什么都能相互避开。
+冲突通过将位置分桶到 80 × 80 的槽位来解决；一个槽位的第 *n* 个占用者在垂直方向上偏移 `±((n + 1) / 2) * (nodeHeight + 40)`，符号交替——即节点自身的[估算高度](#node-footprints)，因此同一槽位中的两个节点无论是什么都能相互避开。
 
-任何仍未放置的内容都会进入 `bounds.MinX - 480` 处的回退列（当没有任何内容
-被定位时为 `-1200`），起始于 `bounds.MaxY + 240`（或 `-620`），并按每个节点的高度
-加 40 逐步增大 Y。
+任何仍未放置的内容都会进入 `bounds.MinX - 480` 处的回退列（当没有任何内容被定位时为 `-1200`），起始于 `bounds.MaxY + 240`（或 `-620`），并按每个节点的高度加 40 逐步增大 Y。
 
 <a id="automatic-layout"></a>
 
 ## 自动布局
 
-在没有 `Layout` 部分的情况下，该遍历会将图表划分为**块**，独立地布局每个块，
-并将块向下堆叠。
+在没有 `Layout` 部分的情况下，该遍历会将图表划分为**块**，独立地布局每个块，并将块向下堆叠。
 
 <a id="block-construction"></a>
 
@@ -178,9 +164,7 @@ Layout = {
 | 5 | *（仅当以上内容都未产生块时）* 所有内容 | `Graph` | `0` |
 | 6 | 被多个块使用且没有块拥有的表达式 | `Shared Inputs` | `-1000`，最先插入 |
 
-恰好出现在一个块中的表达式会立即分配给该块。有歧义的表达式在最多 16 次遍历中通过
-“哪个块已经拥有我最多的直接使用者”来解决；剩余项采用其第一个候选。每个 `NamedRerouteDeclaration` 最终都会被强制放入其
-来源的块中。
+恰好出现在一个块中的表达式会立即分配给该块。有歧义的表达式在最多 16 次遍历中通过 “哪个块已经拥有我最多的直接使用者”来解决；剩余项采用其第一个候选。每个 `NamedRerouteDeclaration` 最终都会被强制放入其来源的块中。
 
 <a id="cross-block-reroutes"></a>
 
@@ -193,19 +177,13 @@ Layout = {
 | `UMaterialExpressionNamedRerouteDeclaration` | `DS_Shared_<n>`，`n` 从 0 开始计数 | `source.X + 360`，`source.Y` |
 | `UMaterialExpressionNamedRerouteUsage` | 每个（声明，使用者块）对一个 | `consumer.X - 360`，按 `±((slot + 1) / 2) * 80` 在垂直方向上展开 |
 
-输入通道掩码在重新布线过程中得到保留。在自动路径上，每个交叉连接都会被桥接；
-在显式路径上，仅**远距离**连接会被桥接，其中远距离意味着 `|ΔX| ≥ 900` 或
-`|ΔY| ≥ 540`。显式路径还会在插入任何内容之前提前退出，除非它构建了至少两个块
-并为至少两个表达式分配了所有者。
+输入通道掩码在重新布线过程中得到保留。在自动路径上，每个交叉连接都会被桥接；在显式路径上，仅**远距离**连接会被桥接，其中远距离意味着 `|ΔX| ≥ 900` 或 `|ΔY| ≥ 540`。显式路径还会在插入任何内容之前提前退出，除非它构建了至少两个块并为至少两个表达式分配了所有者。
 
 <a id="node-footprints"></a>
 
 ### 节点占用空间
 
-以下每个步骤都使用真实节点尺寸，而不是扁平的占用空间。生成时没有可测量的
-控件——命令行工具没有编辑器 UI，即使在编辑器中，图表的
-节点控件也尚不存在——因此尺寸是根据 `SGraphNodeMaterialBase`
-所组装的内容*估算*出来的。
+以下每个步骤都使用真实节点尺寸，而不是扁平的占用空间。生成时没有可测量的控件——命令行工具没有编辑器 UI，即使在编辑器中，图表的节点控件也尚不存在——因此尺寸是根据 `SGraphNodeMaterialBase` 所组装的内容*估算*出来的。
 
 | 项 | 贡献 |
 | :-- | :-- |
@@ -215,13 +193,9 @@ Layout = {
 | 主体内边距 | `22` |
 | 宽度 | `max(48 + captionChars × 10, 56 + (inputNameChars + outputNameChars) × 8)`，限制在 `[140, 520]` |
 
-输出引脚名称只有在设置了 `bShowOutputNameOnPin` 时才计入宽度。此估算
-故意偏高：高估只会让图表更宽松，而低估会使节点
-重叠。测量结果会在一次布局遍历期间进行记忆化。
+输出引脚名称只有在设置了 `bShowOutputNameOnPin` 时才计入宽度。此估算故意偏高：高估只会让图表更宽松，而低估会使节点重叠。测量结果会在一次布局遍历期间进行记忆化。
 
-这就是防止 `TextureSample`——一个因预览缩略图而高度约为 `Constant` 两倍的
-节点——被堆叠在其相邻节点之上，并且使注释框足够大，
-能够实际容纳它们所圈出的内容的原因。
+这就是防止 `TextureSample`——一个因预览缩略图而高度约为 `Constant` 两倍的节点——被堆叠在其相邻节点之上，并且使注释框足够大，能够实际容纳它们所圈出的内容的原因。
 
 <a id="placement-inside-a-block"></a>
 
@@ -229,36 +203,18 @@ Layout = {
 
 一种分层的、Sugiyama 风格布局。
 
-1. 按每个表达式到其消费者最长路径进行**分级**：汇点为等级 0，
-   `rank(e) = max(rank(consumer) + 1)`。循环会解析为等级 0。
-2. 为每个跨越一个以上等级的边分配**通道**。从等级 `r` 到等级 `r + n` 的边会得到
-   `n - 1` 个占位槽位，每跨过一列一个，并在其端点之间链接。没有它们，
-   步骤 3 对长边就是盲的 —— 它只会比较相隔一个等级的相邻节点 —— 这正是
-   即使每一列本身都整齐，图形仍然读起来像一团线的原因。一条通道
-   预留 `34` 的垂直空间，这样线路就有了走廊，而不是横穿任何
-   恰好挡路的东西。
-3. **减少交叉**：6 遍，每遍先朝输出方向扫描，按每一列消费者的平均位置对每一列排序，
-   然后朝输入方向扫描，按其依赖项排序。
-   通道与真实节点同等参与。重心在整列排序之前
-   就为整列计算，因此排序不会取决于排序如何配对元素；并列时按创建顺序
-   决定。
+1. 按每个表达式到其消费者最长路径进行**分级**：汇点为等级 0， `rank(e) = max(rank(consumer) + 1)`。循环会解析为等级 0。
+2. 为每个跨越一个以上等级的边分配**通道**。从等级 `r` 到等级 `r + n` 的边会得到 `n - 1` 个占位槽位，每跨过一列一个，并在其端点之间链接。没有它们，步骤 3 对长边就是盲的 —— 它只会比较相隔一个等级的相邻节点 —— 这正是即使每一列本身都整齐，图形仍然读起来像一团线的原因。一条通道预留 `34` 的垂直空间，这样线路就有了走廊，而不是横穿任何恰好挡路的东西。
+3. **减少交叉**：6 遍，每遍先朝输出方向扫描，按每一列消费者的平均位置对每一列排序，然后朝输入方向扫描，按其依赖项排序。通道与真实节点同等参与。重心在整列排序之前就为整列计算，因此排序不会取决于排序如何配对元素；并列时按创建顺序决定。
 4. 按真实高度**堆叠**每一列，使用 `60` 的间隙，并以块的中线居中。
-5. **拉直**：4 遍，交替方向。每遍把每个槽位朝已固定一侧相邻槽位的平均中心拉，
-   然后用保序回归修复该列 ——
-   即仍然保持该列顺序及其最小间隙的最近中心集合。这
-   正是把链变成一条直的水平线而不是阶梯的原因。
-6. **分配 X**：一列的宽度与其最宽节点相同，节点在列内**右对齐**，
-   这样一列的输出会对齐，通往下一列的连线也会保持简短。列 `0` 的最宽
-   节点其左边缘位于 `X = 900`；每一后续列位于前一列左边缘
-   左侧 `150` 处。
+5. **拉直**：4 遍，交替方向。每遍把每个槽位朝已固定一侧相邻槽位的平均中心拉，然后用保序回归修复该列 —— 即仍然保持该列顺序及其最小间隙的最近中心集合。这正是把链变成一条直的水平线而不是阶梯的原因。
+6. **分配 X**：一列的宽度与其最宽节点相同，节点在列内**右对齐**，这样一列的输出会对齐，通往下一列的连线也会保持简短。列 `0` 的最宽节点其左边缘位于 `X = 900`；每一后续列位于前一列左边缘左侧 `150` 处。
 
 <a id="packing-the-blocks"></a>
 
 ### 打包块
 
-块过去堆叠在一列中，这会把一个有多个连接输出的材质变成一条
-高达数万单位的带子 —— 只有在完全缩小时才可读。现在它们会先围绕
-自己的原点布局，然后被打包进列中。
+块过去堆叠在一列中，这会把一个有多个连接输出的材质变成一条高达数万单位的带子 —— 只有在完全缩小时才可读。现在它们会先围绕自己的原点布局，然后被打包进列中。
 
 | | |
 | :-- | :-- |
@@ -267,12 +223,9 @@ Layout = {
 | 下一列 | 前一列最宽的块 `+ 520` |
 | 第一个块 | `Y = -620` |
 
-当添加一个块会超出预算时，它会被换到新的一列，除非该列为
-空 —— 一个比整个预算还高的块会独占一列，而不是被拆分。若
-块足够少、能放入一列，结果就是旧的自上而下堆叠。
+当添加一个块会超出预算时，它会被换到新的一列，除非该列为空 —— 一个比整个预算还高的块会独占一列，而不是被拆分。若块足够少、能放入一列，结果就是旧的自上而下堆叠。
 
-注释框只在打包之后绘制：在移动之前放置的框会被它本应包含的
-节点留在原地。
+注释框只在打包之后绘制：在移动之前放置的框会被它本应包含的节点留在原地。
 
 <a id="the-material-root"></a>
 
@@ -280,13 +233,8 @@ Layout = {
 
 有两遍按顺序处理根节点：
 
-1. `RootX = combinedBounds.MaxX + 520`，`RootY = (MinY + MaxY) / 2 - 240`。材质图形的根
-   节点位置也会被写入。
-2. 随后，为输出供给的命名重路由**用法**会从它们的计算块中抽出，
-   并堆叠在 `bodyBounds.MaxX + 420` 处的单列中，间距为最高用法节点的高度
-   `+ 40`（绝不少于 130）；根节点再向右移动 `widestUsage + 360`；并且
-   整个组会获得自己的注释框，标题为 `Material Output`。根节点按自身 `420` 高度
-   在该列中居中，而不是固定的 240。
+1. `RootX = combinedBounds.MaxX + 520`，`RootY = (MinY + MaxY) / 2 - 240`。材质图形的根节点位置也会被写入。
+2. 随后，为输出供给的命名重路由**用法**会从它们的计算块中抽出，并堆叠在 `bodyBounds.MaxX + 420` 处的单列中，间距为最高用法节点的高度 `+ 40`（绝不少于 130）；根节点再向右移动 `widestUsage + 360`；并且整个组会获得自己的注释框，标题为 `Material Output`。根节点按自身 `420` 高度在该列中居中，而不是固定的 240。
 
 先把这些用法从计算块中移除，正是保持各属性框紧凑的原因。
 
@@ -314,7 +262,7 @@ Layout = {
 | 重路由扇出 | `±((slot + 1) / 2) * 80` | 堆叠用法 |
 | 根节点间隔 | `520` | 根节点位于图形边界右侧 |
 | 输出用法列 | `bodyBounds.MaxX + 420`，间距 `max(130, tallest + 40)`，根节点 `+ widest + 360` | `Material Output` 组 |
-| 远距阈值 | `|ΔX| ≥ 900` 或 `|ΔY| ≥ 540` | 仅显式路径重路由 |
+| 远距阈值 | `|ΔX| ≥ 900` or `|ΔY| ≥ 540` | explicit path reroutes only |
 | 减少交叉遍数 | `6` | 每块 |
 | 拉直遍数 | `4` | 每块 |
 | 所有者分配遍数 | `≤ 16` | 有歧义的表达式 |
@@ -322,68 +270,42 @@ Layout = {
 | 大图形阈值 | `1200` | 自动布局退出 |
 
 > [!NOTE]
-> 这些常量不属于稳定接口的一部分。生成的资源布局可能在任何
-> 版本中改变；`.dsm` 中没有任何内容依赖它们，除非通过 `Layout` 节，其固定绝对
-> 坐标，因此不受影响。
+> 这些常量不属于稳定接口的一部分。生成的资源布局可能在任何版本中改变；`.dsm` 中没有任何内容依赖它们，除非通过 `Layout` 节，其固定绝对坐标，因此不受影响。
 
 <a id="output-block-titles"></a>
 
 ## `Output:` 块标题
 
-材质属性块标题来自一张固定表。下面的每个名称都会产生
-`Output: <name>`；未列出的任何内容都会产生 `Output: MaterialProperty<enum index>`。
+材质属性块标题来自一张固定表。下面的每个名称都会产生 `Output: <name>`；未列出的任何内容都会产生 `Output: MaterialProperty<enum index>`。
 
-`BaseColor`，`MaterialAttributes`，`EmissiveColor`，`Opacity`，`OpacityMask`，`Metallic`，
-`Specular`，`Roughness`，`Normal`，`AmbientOcclusion`，`Refraction`，`WorldPositionOffset`，
-`PixelDepthOffset`，`SubsurfaceColor`，`CustomData0`，`CustomData1`，`DiffuseColor`，
-`SpecularColor`，`SurfaceThickness`，`Displacement`，`CustomizedUV0`，`CustomizedUV1`，
-`CustomizedUV2`，`CustomizedUV3`，`CustomizedUV4`，`CustomizedUV5`，`CustomizedUV6`，
-`CustomizedUV7`，`Anisotropy`，`Tangent`。
+`BaseColor`, `MaterialAttributes`, `EmissiveColor`, `Opacity`, `OpacityMask`, `Metallic`, `Specular`, `Roughness`, `Normal`, `AmbientOcclusion`, `Refraction`, `WorldPositionOffset`, `PixelDepthOffset`, `SubsurfaceColor`, `CustomData0`, `CustomData1`, `DiffuseColor`, `SpecularColor`, `SurfaceThickness`, `Displacement`, `CustomizedUV0`, `CustomizedUV1`, `CustomizedUV2`, `CustomizedUV3`, `CustomizedUV4`, `CustomizedUV5`, `CustomizedUV6`, `CustomizedUV7`, `Anisotropy`, `Tangent`.
 
-定义了 `MOON_ENGINE` 的自定义引擎构建会额外增加五个：
-`MoonEncodedAttribute0` … `MoonEncodedAttribute4`（重命名前的 `MooaEncodedAttribute…` 拼写是
-可接受的别名）。标准 UE 5.3 – 5.8 不会。
+定义了 `MOON_ENGINE` 的自定义引擎构建会额外增加五个： `MoonEncodedAttribute0` … `MoonEncodedAttribute4`（重命名前的 `MooaEncodedAttribute…` 拼写是可接受的别名）。标准 UE 5.3 – 5.8 不会。
 
 <a id="construction-time-positions"></a>
 
 ## 构建时位置
 
-这些是布局被跳过时节点所携带的坐标 —— 少于两个节点的图形，或者在 `Classic` 下具有 1200 个或更多节点且没有 `Layout` 节的图形。注意其形状：X 固定，Y 只
-按节点逐个向下步进，因此被跳过的图形是一根高列，线路横穿其上，而不是糟糕的布局。
+这些是布局被跳过时节点所携带的坐标 —— 少于两个节点的图形，或者在 `Classic` 下具有 1200 个或更多节点且没有 `Layout` 节的图形。注意其形状：X 固定，Y 只按节点逐个向下步进，因此被跳过的图形是一根高列，线路横穿其上，而不是糟糕的布局。
 
 | 节点 | X | 首个 Y | Y 步进 |
 | :-- | :-- | :-- | :-- |
 | 发射器创建的每个节点，按其创建顺序 | `0` | `-120` | `+180` |
 
-*（自 2.0.0 起）* 1.x 的按种类位置表 —— 整个表面的 `Custom` 节点、
-`MakeMaterialAttributes` 种子、属性节点、`FunctionInput` / `FunctionOutput` —— 随着 1.x
-生成器一起消失了：发射器以相同方式放置它创建的每个节点，而布局遍会重写它们。
+*（自 2.0.0 起）* 1.x 的按种类位置表 —— 整个表面的 `Custom` 节点、 `MakeMaterialAttributes` 种子、属性节点、`FunctionInput` / `FunctionOutput` —— 随着 1.x 生成器一起消失了：发射器以相同方式放置它创建的每个节点，而布局遍会重写它们。
 
-每个 `Outputs` 绑定在构造时也会创建一个命名重路由对：声明位于
-`source.X + 420`、`source.Y`，使用位于 `X = 720`、`Y = -120 + max(routeIndex, 0) * 180`。
-声明的名称为 `DS_<sanitized route name>`，当路由被索引时再加上 `_<index>`；
-路由名称为空时回退到 `DS_Output`。
+每个 `Outputs` 绑定在构造时也会创建一个命名重路由对：声明位于 `source.X + 420`、`source.Y`，使用位于 `X = 720`、`Y = -120 + max(routeIndex, 0) * 180`。声明的名称为 `DS_<sanitized route name>`，当路由被索引时再加上 `_<index>`；路由名称为空时回退到 `DS_Output`。
 
 <a id="notes"></a>
 
 ## 说明
 
-- `Graph` 块中的 `#Region "Name"` / `#EndRegion` 本身不会移动任何内容——它们为自动路径命名
-  块，并为 IR 样式命名框。区域可以嵌套；没有名称的 `#Region` 是
-  [`DSH2216`](../diagnostics/DSH2xxx.md#dsh2216)，而不成对的
-  [`DSH2217`](../diagnostics/DSH2xxx.md#dsh2217) / [`DSH2218`](../diagnostics/DSH2xxx.md#dsh2218)。
-  语法见 [Layout](../language/layout.md) 页面。
-- 只包含不匹配任何内容的 `Node(Var=…)` 条目且没有 `Comment(…)` 的 `Layout` 段
-  **不会**启用显式路径——而是运行自动路径。
-- 同一块中的第二个 `Layout` 段会完全替换第一个，并给出警告
-  [`DSH2258`](../diagnostics/DSH2xxx.md#dsh2258) *(自 2.0.0 起)*。
-- 重新生成时不会保留布局位置。`Layout` 段是让节点位置保持
-  稳定的唯一方式。请参见[重新生成](regeneration.md)。
-- [反编译器](../tools/decompiler.md) 会以完全相同的解析格式输出 `Layout` 段，因此
-  手动排列的材质可以导出并重新导入，且排列保持不变。这由
-  项目设置 **Export Decompiled Layout** 控制，默认开启。
-- 自动布局会报告一个慢任务，标题为 `Laying out DreamShader material graph...`，每个节点
-  一帧，内容为 `Positioning node {N} of {Total}...`。
+- `Graph` 块中的 `#Region "Name"` / `#EndRegion` 本身不会移动任何内容——它们为自动路径命名块，并为 IR 样式命名框。区域可以嵌套；没有名称的 `#Region` 是 [`DSH2216`](../diagnostics/DSH2xxx.md#dsh2216)，而不成对的 [`DSH2217`](../diagnostics/DSH2xxx.md#dsh2217) / [`DSH2218`](../diagnostics/DSH2xxx.md#dsh2218)。语法见 [Layout](../language/layout.md) 页面。
+- 只包含不匹配任何内容的 `Node(Var=…)` 条目且没有 `Comment(…)` 的 `Layout` 段**不会**启用显式路径——而是运行自动路径。
+- 同一块中的第二个 `Layout` 段会完全替换第一个，并给出警告 [`DSH2258`](../diagnostics/DSH2xxx.md#dsh2258) *(自 2.0.0 起)*。
+- 重新生成时不会保留布局位置。`Layout` 段是让节点位置保持稳定的唯一方式。请参见[重新生成](regeneration.md)。
+- [反编译器](../tools/decompiler.md) 会以完全相同的解析格式输出 `Layout` 段，因此手动排列的材质可以导出并重新导入，且排列保持不变。这由项目设置 **Export Decompiled Layout** 控制，默认开启。
+- 自动布局会报告一个慢任务，标题为 `Laying out DreamShader material graph...`，每个节点一帧，内容为 `Positioning node {N} of {Total}...`。
 
 <a id="example"></a>
 

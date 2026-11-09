@@ -1,8 +1,3 @@
----
-title: "DreamShaderParser.h *（2.0 中已弃用）*"
-description: "DreamShaderParser.h *（2.0 中已弃用）*"
----
-
 <a id="dreamshaderparserh-retired-in-20"></a>
 
 # DreamShaderParser.h *（2.0 中已弃用）*
@@ -10,11 +5,7 @@ description: "DreamShaderParser.h *（2.0 中已弃用）*"
 > [DreamShader](../index.md) » [C++ API](index.md) » **DreamShaderParser.h**
 
 > [!IMPORTANT]
-> **`DreamShaderParser.h` 和 `FTextShaderParser` 已不复存在。** 直到 1.9.x，
-> `DreamShader` 模块中的 `FTextShaderParser::Parse` 都会将 1.x 源代码文本转换为
-> [`FTextShaderDefinition`](types.md#ftextshaderdefinition)，而 1.x 生成器则基于
-> 该结构体构建资源。2.0 弃用了两者：`.dsm` / `.dsf` / `.dsh` 现在由唯一编译器的 **旧版前端**
-> 读取，进入与 `.dss` 解析得到的相同 AST。
+> **`DreamShaderParser.h` 和 `FTextShaderParser` 已不复存在。** 直到 1.9.x， `DreamShader` 模块中的 `FTextShaderParser::Parse` 都会将 1.x 源代码文本转换为 [`FTextShaderDefinition`](types.md#ftextshaderdefinition)，而 1.x 生成器则基于该结构体构建资源。2.0 弃用了两者：`.dsm` / `.dsf` / `.dsh` 现在由唯一编译器的 **旧版前端**读取，进入与 `.dss` 解析得到的相同 AST。
 
 <a id="what-to-call-instead"></a>
 
@@ -44,22 +35,15 @@ if (Parsed.Succeeded() && Parsed.Legacy.IsValid())
 }
 ```
 
-`ELangFrontend::Auto` 按扩展名决定：`.dsm` 和 `.dsf` 属于 1.x，`.dss` 和 `.dsi` 属于 2.0，而
-`.dsh` 头文件是**按声明**进行分派的，因此一个头文件可以在项目迁移期间同时包含两种方言。
+`ELangFrontend::Auto` 按扩展名决定：`.dsm` 和 `.dsf` 属于 1.x，`.dss` 和 `.dsi` 属于 2.0，而 `.dsh` 头文件是**按声明**进行分派的，因此一个头文件可以在项目迁移期间同时包含两种方言。
 
 <a id="what-changed-in-behaviour"></a>
 
 ## 行为上的变化
 
-旧版前端保留了 1.x **有文档记载**的宽松行为，并取消了其未记录的静默宽松行为：
-1.x 未加提示地接受、随后构建出的内容与文本所述不符的情况，现在会成为一个
-诊断。这些规则被编目为 `L1`–`L27`；每条会重写或丢弃内容的规则都会通过代码说明这一点
-（`DSH5254`、`DSH5275`–`DSH5292` 等），而 [`dsc migrate`](../tools/migrate.md) 会将这些
-规则改写为显式的 2.0 文本。
+旧版前端保留了 1.x **有文档记载**的宽松行为，并取消了其未记录的静默宽松行为： 1.x 未加提示地接受、随后构建出的内容与文本所述不符的情况，现在会成为一个诊断。这些规则被编目为 `L1`–`L27`；每条会重写或丢弃内容的规则都会通过代码说明这一点（`DSH5254`、`DSH5275`–`DSH5292` 等），而 [`dsc migrate`](../tools/migrate.md) 会将这些规则改写为显式的 2.0 文本。
 
-随之弃用的 1.x 解析器代码：`DSH2007`、`DSH3133`、`DSH3137` 及其相邻代码不再
-被引发；旧版前端自身的代码为 `DSH2200`–`DSH2258`、`DSH3250`–`DSH3278` 和
-`DSH6300`–`DSH6330`。
+随之弃用的 1.x 解析器代码：`DSH2007`、`DSH3133`、`DSH3137` 及其相邻代码不再被引发；旧版前端自身的代码为 `DSH2200`–`DSH2258`、`DSH3250`–`DSH3278` 和 `DSH6300`–`DSH6330`。
 
 <a id="see-also"></a>
 

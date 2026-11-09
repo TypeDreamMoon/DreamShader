@@ -1,14 +1,8 @@
----
-title: "DSH6xxx —— 函数与 HLSL 代码生成"
-description: "DSH6xxx —— 函数与 HLSL 代码生成"
----
-
 <a id="dsh6xxx-----functions-and-hlsl-codegen"></a>
 
 # DSH6xxx —— 函数与 HLSL 代码生成
 
-> 生成标记之间的区块由 `.skill/gen-diagnostics.ps1` 写入。
-> 标记之下的所有内容均为手工编写，在重新生成后仍会保留。
+> 生成标记之间的区块由 `.skill/gen-diagnostics.ps1` 写入。标记之下的所有内容均为手工编写，在重新生成后仍会保留。
 
 <a id="dsh6200"></a>
 
@@ -288,8 +282,7 @@ Resolving the defaults of '{0}' would go {1} calls deep, past the limit of {2}; 
 
 **原因。** 传递给 `out` 或 `inout` 参数的实参不是可以赋值的内容。该参数会在调用结束时写回调用方，因此实参必须是一个变量、字段、材质属性或它们的 swizzle，而不能是一个计算出的值。
 
-**修复。** 将结果放入局部变量并传递它：`float3 Value; Compute(Value); Use(Value);`。
-将字面量、调用结果或算术表达式传递给 `out` 参数无法工作。
+**修复。** 将结果放入局部变量并传递它：`float3 Value; Compute(Value); Use(Value);`。将字面量、调用结果或算术表达式传递给 `out` 参数无法工作。
 
 <a id="dsh6223"></a>
 
@@ -686,13 +679,9 @@ The texture argument for '{0}' of '{1}' has to be a plain texture name, because 
 **由以下代码引发** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1698`
 <!-- generated:end DSH6266 -->
 
-**原因。** `@custom` 函数体读取了对 `@custom` 函数的调用值，而该函数不返回任何内容——
-`x = F(a, o)`、`return F(a)`、`F(a) + 1`。其 HLSL 为 `void`，因此没有值。在 1.x 下，每个此类函数
-都返回其第一个 `out`（规则 L9），而 1.x 函数体会读取该值；`.dss` 函数则按其声明方式生成。
+**原因。** `@custom` 函数体读取了对 `@custom` 函数的调用值，而该函数不返回任何内容—— `x = F(a, o)`、`return F(a)`、`F(a) + 1`。其 HLSL 为 `void`，因此没有值。在 1.x 下，每个此类函数都返回其第一个 `out`（规则 L9），而 1.x 函数体会读取该值；`.dss` 函数则按其声明方式生成。
 
-**修复。** 为每个 `out` 参数传入一个变量，并在调用后读取它，或声明该函数返回
-该值。`dsc migrate` 使 1.x 函数返回其第一个 `out`；`Namespace` 函数保留其 `out`，而
-其文件中读取某个调用的函数体会调用一个返回该值的适配器。
+**修复。** 为每个 `out` 参数传入一个变量，并在调用后读取它，或声明该函数返回该值。`dsc migrate` 使 1.x 函数返回其第一个 `out`；`Namespace` 函数保留其 `out`，而其文件中读取某个调用的函数体会调用一个返回该值的适配器。
 
 <a id="dsh6300"></a>
 
@@ -710,8 +699,7 @@ Expected a function name after '{0}', found '('.
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2042`、`Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2064`、`Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2093`
 <!-- generated:end DSH6300 -->
 
-**原因。** `Function` 或 `GraphFunction`（及其可选修饰符和返回类型）后面跟着
-`(`，而此处本应是函数名。
+**原因。** `Function` 或 `GraphFunction`（及其可选修饰符和返回类型）后面跟着 `(`，而此处本应是函数名。
 
 **修复。** 编写 `Function float3 MyFunction(in float3 value) { ... }`。
 
@@ -731,8 +719,7 @@ Expected '[in|out] Type Name' in the parameter list of '{0}', found '{1}'.
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2152`
 <!-- generated:end DSH6301 -->
 
-**原因。** 1.x 函数的某个参数不是 `[in|out] Type Name`。1.x 参数没有
-默认值，也没有元数据；那些属于 ShaderFunction 的 `Inputs`。
+**原因。** 1.x 函数的某个参数不是 `[in|out] Type Name`。1.x 参数没有默认值，也没有元数据；那些属于 ShaderFunction 的 `Inputs`。
 
 **修复。** 将每个参数编写为 `in float3 color` 或 `out float result`。
 
@@ -752,8 +739,7 @@ Expected 'in' or 'out' before the parameter '{0}' of '{1}', found '{2}'; a 1.x f
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2165`
 <!-- generated:end DSH6302 -->
 
-**原因。** 1.x 函数的某个参数带有 `inout`，或在 `in` / `out` 应在的位置带有其他词。
-1.x 函数有输入和结果，从没有两者兼具的参数。
+**原因。** 1.x 函数的某个参数带有 `inout`，或在 `in` / `out` 应在的位置带有其他词。 1.x 函数有输入和结果，从没有两者兼具的参数。
 
 **修复。** 将其拆分为一个 `in` 参数和一个 `out` 参数。`.dss` 函数可以使用 `inout`。
 
@@ -773,8 +759,7 @@ Expected a parameter name other than '__return', which 1.x reserved, in '{0}'.
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2178`
 <!-- generated:end DSH6303 -->
 
-**原因。** 某个参数名为 `__return`。1.x 会将函数的返回值降级为一个该名称的 `out`
-参数，因此该名称已被占用。
+**原因。** 某个参数名为 `__return`。1.x 会将函数的返回值降级为一个该名称的 `out` 参数，因此该名称已被占用。
 
 **修复。** 重命名该参数。
 
@@ -794,11 +779,9 @@ Expected either a return type or 'out' parameters on '{0}', found both.
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2210`
 <!-- generated:end DSH6304 -->
 
-**原因。** 某个 1.x 函数既有返回类型又有 `out` 参数。1.x 只允许二者之一：
-返回的值是 Custom 节点的输出，第一个 `out` 也是。
+**原因。** 某个 1.x 函数既有返回类型又有 `out` 参数。1.x 只允许二者之一：返回的值是 Custom 节点的输出，第一个 `out` 也是。
 
-**修复。** 返回第一个结果并保留零个 `out` 参数，或者去掉返回类型并将每个
-结果都变为 `out`。
+**修复。** 返回第一个结果并保留零个 `out` 参数，或者去掉返回类型并将每个结果都变为 `out`。
 
 <a id="dsh6305"></a>
 
@@ -816,8 +799,7 @@ Expected '{0}' to return a value or to have at least one 'out' parameter, found 
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2217`
 <!-- generated:end DSH6305 -->
 
-**原因。** 某个 1.x 函数不返回任何内容，且没有 `out` 参数，因此其 Custom 节点
-将没有可供图表读取的值。
+**原因。** 某个 1.x 函数不返回任何内容，且没有 `out` 参数，因此其 Custom 节点将没有可供图表读取的值。
 
 **修复。** 为其指定返回类型或一个 `out` 参数。
 
@@ -837,11 +819,7 @@ Expected '{0}' to return a value or to have at least one 'out' parameter, found 
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2052`
 <!-- generated:end DSH6306 -->
 
-**原因。** 使用了 `Function Inline`。在 1.x 中，`Inline` 是 `SelfContained` 的完全同义词：
-函数的 Custom 节点会内嵌其函数体所调用的函数。2.0 会将它们内嵌到每个 Custom 节点中，因此
-两种拼写读起来都等同于完全没有修饰符，函数会变成普通的 `@custom`。它
-绝不会变成 `@custom selfcontained`，后者在 2.0 中含义相反——不内嵌任何内容（`DSH6264`）。
-*（2.0.0 – 2.1.0 将两种拼写都读作 `@custom selfcontained`。）*
+**原因。** 使用了 `Function Inline`。在 1.x 中，`Inline` 是 `SelfContained` 的完全同义词：函数的 Custom 节点会内嵌其函数体所调用的函数。2.0 会将它们内嵌到每个 Custom 节点中，因此两种拼写读起来都等同于完全没有修饰符，函数会变成普通的 `@custom`。它绝不会变成 `@custom selfcontained`，后者在 2.0 中含义相反——不内嵌任何内容（`DSH6264`）。*（2.0.0 – 2.1.0 将两种拼写都读作 `@custom selfcontained`。）*
 
 **修复。** 去掉该修饰符，或编写 `SelfContained`；两种方式都不会有任何变化。
 
@@ -861,8 +839,7 @@ Expected a return type or a name after 'GraphFunction', found the modifier '{0}'
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2033`
 <!-- generated:end DSH6307 -->
 
-**原因。** `GraphFunction` 后面跟着 `SelfContained` 或 `Inline`。这些修饰符属于
-`Function`；GraphFunction 始终是每次调用一个 Custom 节点。
+**原因。** `GraphFunction` 后面跟着 `SelfContained` 或 `Inline`。这些修饰符属于 `Function`；GraphFunction 始终是每次调用一个 Custom 节点。
 
 **修复。** 移除该修饰符。
 
@@ -882,8 +859,7 @@ Expected a value after 'return' in '{0}', which returns '{1}', found a bare 'ret
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2262`
 <!-- generated:end DSH6308 -->
 
-**原因。** 某个带返回类型的 1.x 函数包含一个裸 `return;`。1.x 会将 `return x;` 降级为
-对其结果的赋值，而没有值的 `return` 没有什么可赋值。
+**原因。** 某个带返回类型的 1.x 函数包含一个裸 `return;`。1.x 会将 `return x;` 降级为对其结果的赋值，而没有值的 `return` 没有什么可赋值。
 
 **修复。** 在每条路径上都返回一个值。
 
@@ -903,8 +879,7 @@ Expected a 'Name = "..."' attribute with a name on 'Namespace', found none.
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2426`
 <!-- generated:end DSH6309 -->
 
-**原因。** `Namespace` 没有 `Name = "..."` 属性，或者该名称不是标识符。该名称
-会成为块中每个函数的前缀（`N::F`，展平为 `N_F`）。
+**原因。** `Namespace` 没有 `Name = "..."` 属性，或者该名称不是标识符。该名称会成为块中每个函数的前缀（`N::F`，展平为 `N_F`）。
 
 **修复。** 编写 `Namespace(Name = "BL") { ... }`。
 
@@ -924,9 +899,7 @@ Expected only Function and GraphFunction blocks inside the namespace '{0}', foun
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2492`
 <!-- generated:end DSH6310 -->
 
-**原因。** 某个 `Namespace` 块中包含 `Function` 和 `GraphFunction` 块以外的内容。
-命名空间只对 HLSL 函数进行分组，别无其他：没有资产、没有 VirtualFunction、没有嵌套
-命名空间。
+**原因。** 某个 `Namespace` 块中包含 `Function` 和 `GraphFunction` 块以外的内容。命名空间只对 HLSL 函数进行分组，别无其他：没有资产、没有 VirtualFunction、没有嵌套命名空间。
 
 **修复。** 将其他块移出该命名空间。
 
@@ -966,8 +939,7 @@ Expected an 'Asset = Path(...)' option on the VirtualFunction '{0}', found none.
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2696`
 <!-- generated:end DSH6312 -->
 
-**原因。** 某个 VirtualFunction 在其 `Options` 中没有 `Asset = Path(...)`。该
-块的全部意义就在于说明该名称代表哪个现有材质函数。
+**原因。** 某个 VirtualFunction 在其 `Options` 中没有 `Asset = Path(...)`。该块的全部意义就在于说明该名称代表哪个现有材质函数。
 
 **修复。** 添加 `Options = { Asset = Path(Game, "Functions/MF_Example"); }`。
 
@@ -1007,12 +979,9 @@ Expected a ')' to close the 'UE.' call in the body of '{0}', found the end of th
 **引发自** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2316`
 <!-- generated:end DSH6314 -->
 
-**原因。** 逐字函数体中的 `UE.` 调用——即 1.x GraphFunction 或 `/// @custom` 函数——
-打开了一个函数体从未闭合的括号，因此将被提升为节点输入的那个调用
-没有结尾。
+**原因。** 逐字函数体中的 `UE.` 调用——即 1.x GraphFunction 或 `/// @custom` 函数—— 打开了一个函数体从未闭合的括号，因此将被提升为节点输入的那个调用没有结尾。
 
-**修复。** 闭合该调用。如果该文本并非要作为节点调用，那么它不能以 `UE.`
-后跟名称和 `(` 开头。
+**修复。** 闭合该调用。如果该文本并非要作为节点调用，那么它不能以 `UE.` 后跟名称和 `(` 开头。
 
 <a id="dsh6316"></a>
 
@@ -1052,8 +1021,7 @@ Expected '(' to open the parameter list of '{0}', found {1}.
 
 **原因.** 1.x 函数的名称后面没有 `(`，或其参数列表后面没有打开其体的 `{`。
 
-**修复.** 编写参数列表（如有需要可为空）和体：`Function float Pi() { return
-3.14159; }`。
+**修复.** 编写参数列表（如有需要可为空）和体：`Function float Pi() { return 3.14159; }`。
 
 <a id="dsh6325"></a>
 
@@ -1191,7 +1159,7 @@ Expected '(' to open the parameter list of '{0}', found {1}.
 **由以下抛出** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1933`
 <!-- generated:end DSH6331 -->
 
-**原因.** 1.x 的 `Function` 或 `GraphFunction` 头 *(2.1.2 之后)* 命名了一个并非 `Generate`、`Library` 和 `Description` 的键——通常是拼写错误。其他 1.x 块会像 1.x 那样静默忽略未知键；此头是新增的，因此会提示拼写错误。参见 [Packages ▸ Asset headers](../../tools/packages.md#asset-headers)。
+**原因.** 1.x 的 `Function` 或 `GraphFunction` 头 *(2.1.2 之后)* 命名了一个并非 `Generate`、`Library` 和 `Description` 的键——通常是拼写错误。其他 1.x 块会像 1.x 那样静默忽略未知键；此头是新增的，因此会提示拼写错误。参见 [Packages ▸ Asset headers](../tools/packages.md#asset-headers)。
 
 **修复.** 将该键拼写为三者之一，或删除它。
 
@@ -1214,3 +1182,4 @@ Expected '(' to open the parameter list of '{0}', found {1}.
 **原因.** 一个 `Generate` 值——1.x 函数自身的，或 `Namespace` 应用于成员的模板——在 `{Name}` 被替换后仍保留着一个 `{...}`。`{Name}` 是模板唯一拥有的占位符。
 
 **修复.** 准确书写 `{Name}`（它区分大小写），或写出名称。
+

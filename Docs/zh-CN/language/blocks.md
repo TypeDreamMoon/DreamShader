@@ -1,13 +1,11 @@
 ---
-title: "顶层块"
-description: "七种顶层块 —— Shader、ShaderFunction、ShaderLayer / ShaderLayerBlend、VirtualFunction、Function、GraphFunction、Namespace —— 及其各自的产出。"
+title: 顶层块
+description: 七种顶层块 —— Shader、ShaderFunction、ShaderLayer / ShaderLayerBlend、VirtualFunction、Function、GraphFunction、Namespace —— 及其各自的产出。
 ---
 
-一个源文件就是一串平铺的顶层块。它们可以按任意顺序出现，彼此之间没有分隔符，除 `Shader` 之外每种都
-可以在一个文件里出现任意多次。编译一个文件一次，就会构建它所有块描述的全部资产。
+一个源文件就是一串平铺的顶层块。它们可以按任意顺序出现，彼此之间没有分隔符，除 `Shader` 之外每种都可以在一个文件里出现任意多次。编译一个文件一次，就会构建它所有块描述的全部资产。
 
-块关键字和小写保留字是**大小写敏感**的。`shader(…)` 和 `SHADER(…)`
-什么都匹配不上，报 `DSH2240`。见 [词法与大小写](lexical.md)。
+块关键字和小写保留字是**大小写敏感**的。`shader(…)` 和 `SHADER(…)` 什么都匹配不上，报 `DSH2240`。见 [词法与大小写](lexical.md)。
 
 <a id="synopsis"></a>
 
@@ -30,10 +28,7 @@ description: "七种顶层块 —— Shader、ShaderFunction、ShaderLayer / Sha
 | `{ a \| b }` | 多选一——从竖线分隔的写法里取其中一个。 | `{ Node( … ) \| Comment( … ) }` |
 | `…` | 可重复——前一项可以出现任意多次。 | `<property-declaration> …` |
 
-也就是两种头部形态：资产型块用 `( Key = Value )` 属性列表加一组
-[section](sections.md)；两种函数型块用 C 风格签名加一段原始
-HLSL。legacy 前端把每种块读成对应的 2.0 声明 （自 2.0.0 起），
-[`dsc migrate`](../tools/migrate.md) 也按同样的对应关系写出 `.dss`。
+也就是两种头部形态：资产型块用 `( Key = Value )` 属性列表加一组 [section](sections.md)；两种函数型块用 C 风格签名加一段原始 HLSL。legacy 前端把每种块读成对应的 2.0 声明 （自 2.0.0 起）， [`dsc migrate`](../tools/migrate.md) 也按同样的对应关系写出 `.dss`。
 
 <a id="what-each-block-generates"></a>
 
@@ -54,29 +49,20 @@ HLSL。legacy 前端把每种块读成对应的 2.0 声明 （自 2.0.0 起）�
 
 ### 头部属性
 
-每个带属性的块都必须写 `Name`，缺失或为空是 `DSH2242`；块关键字后面没有
-`(` 是 `DSH2241`。`Root` 默认是 `/Game` —— 插件源码根下的文件默认是该插件的挂载点；完整的路径语法见 [资产路径](../generation/asset-paths.md)。
+每个带属性的块都必须写 `Name`，缺失或为空是 `DSH2242`；块关键字后面没有 `(` 是 `DSH2241`。`Root` 默认是 `/Game` —— 插件源码根下的文件默认是该插件的挂载点；完整的路径语法见 [资产路径](../generation/asset-paths.md)。
 
-- 属性键大小写不敏感（`name=` 也行）。值可以带引号也可以不带；不带引号的值一直延续到括号**之外**的下一个
-  `,` 或 `)`，所以头部里写 `Asset = Path(Game, "F/X")` 也没问题 （自 2.0.0 起）。
+- 属性键大小写不敏感（`name=` 也行）。值可以带引号也可以不带；不带引号的值一直延续到括号**之外**的下一个 `,` 或 `)`，所以头部里写 `Asset = Path(Game, "F/X")` 也没问题 （自 2.0.0 起）。
 - 同一个键写两次：后写的胜出，并给出警告 `DSH2244` （自 2.0.0 起）。
-- `)` 之前的尾随逗号可以接受，和 1.x 一样 （自 2.1.1 起）（2.0.0 – 2.1.0 报
-  `DSH2243`）。两个连续逗号、缺键、缺 `=` 或缺值仍然是 `DSH2243`。
-- 头部之后没有 `{`、或 section 缺名字缺 `{`，是 `DSH2257`；文件在块中间结束是
-  `DSH2150`。
-- `NoGeneration = true` 用在 `Shader`、`ShaderFunction`、`ShaderLayer` 或 `ShaderLayerBlend` 上（2.1.2 之后）：
-  只有点名该文件的编译才会构建这个块的资产；取值不是 `true`、`false`、`1` 或
-  `0` 是 `DSH2260`。见 [NoGeneration](../generation/no-generation.md)。
-- 1.x 文件还可以在顶层写 `#pragma nogeneration`（作用于文件的每个块）、`#pragma disable_warning(...)` 和
-  `#pragma disable_error(...)`（2.1.2 之后）—— 见
-  [禁用诊断](../language-v2/disable-diagnostics.md)。
+- `)` 之前的尾随逗号可以接受，和 1.x 一样 （自 2.1.1 起）（2.0.0 – 2.1.0 报 `DSH2243`）。两个连续逗号、缺键、缺 `=` 或缺值仍然是 `DSH2243`。
+- 头部之后没有 `{`、或 section 缺名字缺 `{`，是 `DSH2257`；文件在块中间结束是 `DSH2150`。
+- `NoGeneration = true` 用在 `Shader`、`ShaderFunction`、`ShaderLayer` 或 `ShaderLayerBlend` 上（2.1.2 之后）：只有点名该文件的编译才会构建这个块的资产；取值不是 `true`、`false`、`1` 或 `0` 是 `DSH2260`。见 [NoGeneration](../generation/no-generation.md)。
+- 1.x 文件还可以在顶层写 `#pragma nogeneration`（作用于文件的每个块）、`#pragma disable_warning(...)` 和 `#pragma disable_error(...)`（2.1.2 之后）—— 见[禁用诊断](../language-v2/disable-diagnostics.md)。
 
 <a id="shader"></a>
 
 ## `Shader`
 
-声明一个材质：它的参数、渲染状态、输出绑定，以及供给它们的图。一个 `.dss` 把同一个材质写成 `#pragma material(...)`、若干 `uniform` 和一个
-`export void <Name>(inout material m)`。
+声明一个材质：它的参数、渲染状态、输出绑定，以及供给它们的图。一个 `.dss` 把同一个材质写成 `#pragma material(...)`、若干 `uniform` 和一个 `export void <Name>(inout material m)`。
 
 ```c
 Shader(Name = "<asset-path>" [, Root = "<root>"])
@@ -127,40 +113,21 @@ Shader(Name="Materials/M_Emissive", Root="Game")
 
 - **只能写在 `.dsm` 里。** `Shader` 里的 `.dsh` 是 `DSH2249`，`.dsf` 里的是 `DSH2259` （自 2.1.1 起）。
 - **每个文件最多一个**（`DSH2250`）。header 里不能有 `Shader`，所以 import 永远不会带进第二个。
-- **它可以和函数块、层块共用同一个 `.dsm`。** 一次编译把它们全部构建出来，各自成为一个资产；材质按名字调用
-  这样的函数，函数的资产先构建 （自 2.1.1 起）（2.0.0 – 2.1.0 以 `DSH6201` 拒绝这种组合）。
-- 没有 `Graph` 时，`Outputs` 里的语句得自己算出值 —— 带初始化式的输出声明 （自 1.3.4 起），或者
-  右侧是表达式的绑定，例如 `Base.FrontMaterial = Substrate.Layer(Coat, Body);` （自 2.0.0 起）。既没有 `Graph`、
-  `Outputs` 又是空的，是 `DSH2255`。空的 `Graph = { }` 合法。
-- **真正让材质成立的是绑定。** 没有 `Outputs` section 的 `Shader` 是警告
-  `DSH2256`：材质照样构建，只是什么都没连上 （自 2.0.0 起）（1.9.x 及以前
-  随后会在生成阶段失败）。
-- 绑定 `Base.MaterialAttributes` 会自动打开 *Use Material Attributes*。`Base.FrontMaterial`
-  （需要 （自 UE 5.4 起））现在是普通属性 （自 2.0.0 起）：不再强制
-  把着色模型设为 Substrate，也不再拒绝和 `Base.MaterialAttributes` 并用；需要时在
-  `Settings` 里自己写 `ShadingModel = "Substrate";`。见
-  [输出绑定](../generation/outputs.md)。
-- `Inputs`、`Results` 和 `Options` 不是 `Shader` 认识的 section（`DSH2245`）；`Code` 是
-  `DSH2246`。`Graph` 或 `Layout` 写两次时后一个胜出，并给出警告 `DSH2258`。
+- **它可以和函数块、层块共用同一个 `.dsm`。** 一次编译把它们全部构建出来，各自成为一个资产；材质按名字调用这样的函数，函数的资产先构建 （自 2.1.1 起）（2.0.0 – 2.1.0 以 `DSH6201` 拒绝这种组合）。
+- 没有 `Graph` 时，`Outputs` 里的语句得自己算出值 —— 带初始化式的输出声明 （自 1.3.4 起），或者右侧是表达式的绑定，例如 `Base.FrontMaterial = Substrate.Layer(Coat, Body);` （自 2.0.0 起）。既没有 `Graph`、 `Outputs` 又是空的，是 `DSH2255`。空的 `Graph = { }` 合法。
+- **真正让材质成立的是绑定。** 没有 `Outputs` section 的 `Shader` 是警告 `DSH2256`：材质照样构建，只是什么都没连上 （自 2.0.0 起）（1.9.x 及以前随后会在生成阶段失败）。
+- 绑定 `Base.MaterialAttributes` 会自动打开 *Use Material Attributes*。`Base.FrontMaterial` （需要 （自 UE 5.4 起））现在是普通属性 （自 2.0.0 起）：不再强制把着色模型设为 Substrate，也不再拒绝和 `Base.MaterialAttributes` 并用；需要时在 `Settings` 里自己写 `ShadingModel = "Substrate";`。见[输出绑定](../generation/outputs.md)。
+- `Inputs`、`Results` 和 `Options` 不是 `Shader` 认识的 section（`DSH2245`）；`Code` 是 `DSH2246`。`Graph` 或 `Layout` 写两次时后一个胜出，并给出警告 `DSH2258`。
 
 **提示：**
 
-目标路径上最终落地的是哪个 UClass，取决于解析出的后端。`ThinCustom` —— 默认值 ——
-写出一个 `UDreamShaderMaterialInstance`，其父级是名为
-`MB_DreamThinBase_<leaf>` 的隐藏 `UMaterial` 子对象；`Graph` 写出普通的 `UMaterial`。`Instance` 是
-`ThinCustom` 的已弃用别名（警告 `DSH7204`）。`Graph` 后端的材质每次构建成功都会保存
-（自 2.0.0 起）；`ThinCustom` 产物在 cook、显式 *Materialize* 或有子实例之前一直是 **Ephemeral** 的
-（只在内存里）。见 [Backend](../settings/backend.md)
-与 [内存材质](../generation/ephemeral.md)。
+目标路径上最终落地的是哪个 UClass，取决于解析出的后端。`ThinCustom` —— 默认值 —— 写出一个 `UDreamShaderMaterialInstance`，其父级是名为 `MB_DreamThinBase_<leaf>` 的隐藏 `UMaterial` 子对象；`Graph` 写出普通的 `UMaterial`。`Instance` 是 `ThinCustom` 的已弃用别名（警告 `DSH7204`）。`Graph` 后端的材质每次构建成功都会保存（自 2.0.0 起）；`ThinCustom` 产物在 cook、显式 *Materialize* 或有子实例之前一直是 **Ephemeral** 的（只在内存里）。见 [Backend](../settings/backend.md) 与 [内存材质](../generation/ephemeral.md)。
 
 <a id="shaderfunction"></a>
 
 ## `ShaderFunction`
 
-声明一个可复用的 `UMaterialFunction`：类型化的输入输出引脚、函数内部的参数
-节点，以及把它们连起来的图。legacy 前端把它读成 2.0 的 `export` 函数：
-输入是参数，名字恰好叫 `Result` 的第一个输出是返回值，其余
-输出是 `out` 参数。
+声明一个可复用的 `UMaterialFunction`：类型化的输入输出引脚、函数内部的参数节点，以及把它们连起来的图。legacy 前端把它读成 2.0 的 `export` 函数：输入是参数，名字恰好叫 `Result` 的第一个输出是返回值，其余输出是 `out` 参数。
 
 ```c
 ShaderFunction(Name = "<asset-path>" [, Root = "<root>"])
@@ -203,22 +170,13 @@ ShaderFunction(Name="Functions/F_Tint", Root="Game")
 }
 ```
 
-函数至少需要一个输出（`DSH4315`），且它的 `Graph` 必须给除第一个
-`Result` 之外的每个输出赋值（`DSH6211`）。这里的 `Properties` 声明的是函数*内部*的节点，
-而 `Inputs` 声明的是函数*上面*的引脚 —— 这是本块最常见的困惑来源；
-见 [Section](sections.md)。
+函数至少需要一个输出（`DSH4315`），且它的 `Graph` 必须给除第一个 `Result` 之外的每个输出赋值（`DSH6211`）。这里的 `Properties` 声明的是函数*内部*的节点，而 `Inputs` 声明的是函数*上面*的引脚 —— 这是本块最常见的困惑来源；见 [Section](sections.md)。
 
-在同一个文件另一个块的 `Graph` 里，被调用名是资产的叶子名：
-`F_Tint` 就是 `Name="Functions/F_Tint"`。资产块不能被导入（`DSH2249`），所以其他
-文件通过 [``VirtualFunction``](#virtualfunction) 使用生成的资产。如果文件
-能调用的另一个函数（比如导入 header 里的 `Function`）已经占了这个名字，这个块的函数会
-改名为 `<Leaf>_Asset` 并给出 info `DSH5290`，资产本身保持原名。
+在同一个文件另一个块的 `Graph` 里，被调用名是资产的叶子名： `F_Tint` 就是 `Name="Functions/F_Tint"`。资产块不能被导入（`DSH2249`），所以其他文件通过 [``VirtualFunction``](#virtualfunction) 使用生成的资产。如果文件能调用的另一个函数（比如导入 header 里的 `Function`）已经占了这个名字，这个块的函数会改名为 `<Leaf>_Asset` 并给出 info `DSH5290`，资产本身保持原名。
 
 **提示：**
 
-重新生成时，每个输入输出引脚的 `Id` GUID 会按名字缓存并还原
-（自 1.3.2 起），所以已有的手工 `MaterialFunctionCall` 节点能保住连线 —— **前提
-是引脚名没变**。改名等同于删掉再新建：调用点会丢连接。
+重新生成时，每个输入输出引脚的 `Id` GUID 会按名字缓存并还原（自 1.3.2 起），所以已有的手工 `MaterialFunctionCall` 节点能保住连线 —— **前提是引脚名没变**。改名等同于删掉再新建：调用点会丢连接。
 
 <a id="shaderlayer-and-shaderlayerblend"></a>
 
@@ -226,10 +184,7 @@ ShaderFunction(Name="Functions/F_Tint", Root="Game")
 
 （自 1.3.0 起）
 
-`ShaderFunction` 的材质层变体。它们共用它的函数体解析器和 section 表；
-只有接口规则不同。legacy 前端把 `ShaderLayer` 读成 2.0 的 `@layer` 函数，
-把 `ShaderLayerBlend` 读成 `@layerblend` 函数，并在文件绑定时检查规则
-（自 2.0.0 起）。
+`ShaderFunction` 的材质层变体。它们共用它的函数体解析器和 section 表；只有接口规则不同。legacy 前端把 `ShaderLayer` 读成 2.0 的 `@layer` 函数，把 `ShaderLayerBlend` 读成 `@layerblend` 函数，并在文件绑定时检查规则（自 2.0.0 起）。
 
 ```c
 ShaderLayer(Name = "<asset-path>" [, Root = "<root>"])
@@ -253,17 +208,9 @@ ShaderLayerBlend(Name = "<asset-path>" [, Root = "<root>"])
 | `ShaderLayer` | 只有材质：任何不是 `MaterialAttributes` 的输入、以及材质之外的任何输出，都会破坏签名 | `DSH6204` |
 | `ShaderLayerBlend` | 至少一个 `MaterialAttributes` 输入，材质之外没有别的输出 | `DSH6205` |
 
-层的材质是**穿过**它的：层永远恰好有一个 `MaterialAttributes` 输入，
-以它的输出命名 —— 1.x 块一个输入都没声明时也一样。1.x 里名字不同的 `MaterialAttributes`
-输入会变成这个输入，引脚随之改名并给出警告 `DSH3277`；
-函数体里照样可以用它的 1.x 名字读它。只有 1.x 输入声明了
-`opt` 时这个输入才是可选的。混合块的输出从空开始，每个输入各是一个引脚；引擎的层堆栈
-混合的正好是两个。
+层的材质是**穿过**它的：层永远恰好有一个 `MaterialAttributes` 输入，以它的输出命名 —— 1.x 块一个输入都没声明时也一样。1.x 里名字不同的 `MaterialAttributes` 输入会变成这个输入，引脚随之改名并给出警告 `DSH3277`；函数体里照样可以用它的 1.x 名字读它。只有 1.x 输入声明了 `opt` 时这个输入才是可选的。混合块的输出从空开始，每个输入各是一个引脚；引擎的层堆栈混合的正好是两个。
 
-标量、向量和纹理不能作为层或混合的输入。改用 `Properties`
-暴露它们：它们会变成生成函数内部的参数节点，并出现在材质层堆栈的
-参数面板上。层和混合都不能从 `Graph` 调用（`DSH6208`）；它们的使用者是材质上的层
-堆栈。
+标量、向量和纹理不能作为层或混合的输入。改用 `Properties` 暴露它们：它们会变成生成函数内部的参数节点，并出现在材质层堆栈的参数面板上。层和混合都不能从 `Graph` 调用（`DSH6208`）；它们的使用者是材质上的层堆栈。
 
 ```c
 ShaderLayer(Name="Layers/L_Rust", Root="Game")
@@ -287,15 +234,9 @@ ShaderLayer(Name="Layers/L_Rust", Root="Game")
 
 **提示：**
 
-在 （自 UE 5.7 起） 上，混合块的每个 `MaterialAttributes` 输入会根据
-名字得到一个 `BlendInputRelevance` —— 去掉空格、`_` 和 `-` 后忽略大小写比较：`Top` / `TopLayer` 映射为 `Top`；
-`Bottom` / `BottomLayer` / `Base` / `BaseLayer` 映射为 `Bottom`。其他名字按
-位置回退：第一个输入是 `Bottom`，之后的是 `Top`。UE 5.3–5.6 上这个属性不存在，
-不会写入任何东西。
+在 （自 UE 5.7 起） 上，混合块的每个 `MaterialAttributes` 输入会根据名字得到一个 `BlendInputRelevance` —— 去掉空格、`_` 和 `-` 后忽略大小写比较：`Top` / `TopLayer` 映射为 `Top`； `Bottom` / `BottomLayer` / `Base` / `BaseLayer` 映射为 `Bottom`。其他名字按位置回退：第一个输入是 `Bottom`，之后的是 `Top`。UE 5.3–5.6 上这个属性不存在，不会写入任何东西。
 
-目标路径上已有资产时，只要它**是**预期类的子类就会被复用；
-`ShaderFunction` 要求类完全一致。所以在不动旧资产的情况下把块在 `ShaderFunction` 和
-`ShaderLayer` 之间切换，会失败于 `DSH8110`。
+目标路径上已有资产时，只要它**是**预期类的子类就会被复用； `ShaderFunction` 要求类完全一致。所以在不动旧资产的情况下把块在 `ShaderFunction` 和 `ShaderLayer` 之间切换，会失败于 `DSH8110`。
 
 <a id="deprecated-spellings"></a>
 
@@ -303,9 +244,7 @@ ShaderLayer(Name="Layers/L_Rust", Root="Game")
 
 **自 1.3.0 起弃用。**请改用 `ShaderLayer`。
 
-`MaterialLayer(...)` 和 `MaterialLayerBlend(...)` 仍然能解析，也仍然生成完全相同的
-资产，各自给出警告 `DSH2251`。缺少 `Name`（`DSH2242`）时消息里报的是你实际
-写的那个拼法。
+`MaterialLayer(...)` 和 `MaterialLayerBlend(...)` 仍然能解析，也仍然生成完全相同的资产，各自给出警告 `DSH2251`。缺少 `Name`（`DSH2242`）时消息里报的是你实际写的那个拼法。
 
 <a id="virtualfunction"></a>
 
@@ -313,9 +252,7 @@ ShaderLayer(Name="Layers/L_Rust", Root="Game")
 
 （自 1.2.0 起）
 
-声明一个**已经存在**的 `UMaterialFunction` —— 它的路径和引脚签名 —— 好让 `Graph` 能调用
-它。它什么都不生成，在调用点需要它之前也什么都不校验。legacy 前端把它
-读成带 `/// @asset` 的 2.0 `extern` 原型。
+声明一个**已经存在**的 `UMaterialFunction` —— 它的路径和引脚签名 —— 好让 `Graph` 能调用它。它什么都不生成，在调用点需要它之前也什么都不校验。legacy 前端把它读成带 `/// @asset` 的 2.0 `extern` 原型。
 
 ```c
 VirtualFunction(Name = "<call-name>" [, Asset = "<asset-reference>"])
@@ -347,34 +284,22 @@ VirtualFunction(Name="BufferWriter")
 }
 ```
 
-- `Name` 是**调用名**，不是资产路径，必须是一个标识符（`DSH6311`）。1.x 接受带
-  `/` 的名字、只让最后一段可调用；现在那也是 `DSH6311` （自 2.0.0 起）。这里
-  没有 `Root` 属性 —— 包根是资产引用自身的一部分。
-- 头部的 `Asset=` 属性优先于 `Options.Asset`；只有属性缺失或去空白后为空时才读
-  section 里的值。两处都没有是 `DSH6312`；没有任何输出是 `DSH6313`。
-- `Options` 里的 `Description` 会作为声明的描述保留（`dsc migrate` 把它写在
-  `extern` 上方），不影响构建；其他键读取后忽略。
-- `Graph` 和 `Code` 是 `DSH2247`：这个块声明资产，不构建资产。`Layout` 和
-  任何其他名字都是 `DSH2245`。
-- 资产引用在构建调用时才解析：解析不了是 `DSH8270`，加载不到是
-  `DSH8219`，声明的输入输出和资产引脚对不上是 `DSH8220` / `DSH8221`。
-  没人调用的 `VirtualFunction` 带着坏掉的 `Asset` 也能干净地编译。
-- 两个同名的 `VirtualFunction` 是 `DSH4210` （自 2.0.0 起）（1.x 保留两者并调用
-  第一个）。只含 `VirtualFunction` 块的文件编译成功、不产出资产。
+- `Name` 是**调用名**，不是资产路径，必须是一个标识符（`DSH6311`）。1.x 接受带 `/` 的名字、只让最后一段可调用；现在那也是 `DSH6311` （自 2.0.0 起）。这里没有 `Root` 属性 —— 包根是资产引用自身的一部分。
+- 头部的 `Asset=` 属性优先于 `Options.Asset`；只有属性缺失或去空白后为空时才读 section 里的值。两处都没有是 `DSH6312`；没有任何输出是 `DSH6313`。
+- `Options` 里的 `Description` 会作为声明的描述保留（`dsc migrate` 把它写在 `extern` 上方），不影响构建；其他键读取后忽略。
+- `Graph` 和 `Code` 是 `DSH2247`：这个块声明资产，不构建资产。`Layout` 和任何其他名字都是 `DSH2245`。
+- 资产引用在构建调用时才解析：解析不了是 `DSH8270`，加载不到是 `DSH8219`，声明的输入输出和资产引脚对不上是 `DSH8220` / `DSH8221`。没人调用的 `VirtualFunction` 带着坏掉的 `Asset` 也能干净地编译。
+- 两个同名的 `VirtualFunction` 是 `DSH4210` （自 2.0.0 起）（1.x 保留两者并调用第一个）。只含 `VirtualFunction` 块的文件编译成功、不产出资产。
 
 **警告：**
 
-**在 `VirtualFunction` 内部，而且只在这里，`Properties` 是 `Inputs` 的别名。** 它走的是
-类型化参数语法，不是参数节点语法。像 `const float X = 1;` 这种在 `Shader` 里合法的声明，
-在这里是 `DSH3271` —— `const` 是关键字，不是类型。
+**在 `VirtualFunction` 内部，而且只在这里，`Properties` 是 `Inputs` 的别名。** 它走的是类型化参数语法，不是参数节点语法。像 `const float X = 1;` 这种在 `Shader` 里合法的声明，在这里是 `DSH3271` —— `const` 是关键字，不是类型。
 
 <a id="function"></a>
 
 ## `Function`
 
-一个 HLSL helper。函数体是 HLSL 文本、原样保留，每个调用点变成一个
-`UMaterialExpressionCustom` 节点，节点代码就是这段函数体，外加它调用的其他所有 `Function`
-（自 2.0.0 起）（不再写任何 `.ush` include）。
+一个 HLSL helper。函数体是 HLSL 文本、原样保留，每个调用点变成一个 `UMaterialExpressionCustom` 节点，节点代码就是这段函数体，外加它调用的其他所有 `Function` （自 2.0.0 起）（不再写任何 `.ush` include）。
 
 ```c
 Function [ { Inline | SelfContained } ] [ <return-type> ] <name> ( [ <parameter-list> ] )
@@ -395,10 +320,7 @@ Function SelfContained Remap01(in float value, out float result)
 }
 ```
 
-它没有属性头部、没有 `Settings`、也没有任何 section —— 参数列表之后的 `{ … }` 就是
-原始 HLSL。`SelfContained` 和它的旧拼法 `Inline` 现在读作普通函数、什么都不改变
-（`Inline` 给出警告 `DSH6306`）。完整的参数、返回类型和产出规则见
-[函数](functions.md)。
+它没有属性头部、没有 `Settings`、也没有任何 section —— 参数列表之后的 `{ … }` 就是原始 HLSL。`SelfContained` 和它的旧拼法 `Inline` 现在读作普通函数、什么都不改变（`Inline` 给出警告 `DSH6306`）。完整的参数、返回类型和产出规则见[函数](functions.md)。
 
 <a id="graphfunction"></a>
 
@@ -406,8 +328,7 @@ Function SelfContained Remap01(in float value, out float result)
 
 （自 1.3.1 起）
 
-写法和 `Function` 完全一样，但函数体里的 `UE.*` 调用会被从文本中提取出来，构建成
-真正的材质节点，并作为自动命名的输入引脚接到生成的 `Custom` 节点上。
+写法和 `Function` 完全一样，但函数体里的 `UE.*` 调用会被从文本中提取出来，构建成真正的材质节点，并作为自动命名的输入引脚接到生成的 `Custom` 节点上。
 
 ```c
 GraphFunction [ <return-type> ] <name> ( [ <parameter-list> ] )
@@ -424,9 +345,7 @@ GraphFunction WindPulse(in float2 uv, out float pulse)
 }
 ```
 
-`GraphFunction` 不接受修饰符：`GraphFunction SelfContained Foo(…)` 和
-`GraphFunction Inline Foo(…)` 是 `DSH6307` （自 2.0.0 起）（1.x 把这个词当成返回
-类型吃掉）。`GraphFunction` 没有自包含模式。
+`GraphFunction` 不接受修饰符：`GraphFunction SelfContained Foo(…)` 和 `GraphFunction Inline Foo(…)` 是 `DSH6307` （自 2.0.0 起）（1.x 把这个词当成返回类型吃掉）。`GraphFunction` 没有自包含模式。
 
 <a id="namespace"></a>
 

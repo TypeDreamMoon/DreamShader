@@ -1,8 +1,3 @@
----
-title: "Graph"
-description: "Graph"
----
-
 <a id="graph"></a>
 
 # Graph
@@ -102,9 +97,7 @@ Graph [=] {
 
 ## `#Region` / `#EndRegion`
 
-`#Region "Name"` 和 `#EndRegion` 行位于 `Graph` 块体内部，将它们之间的语句所产生的节点归入生成图里的一个注释框。每一行单独成行，是块体里的一条语句*（自 2.0.0 起）*；区域可以嵌套。没有名字的 `#Region`、没有打开的区域却写了 `#EndRegion`、块体结束时仍未关闭的区域以及其他 `#` 行是
-[`DSH2216`](../diagnostics/DSH2xxx.md#dsh2216)–[`DSH2219`](../diagnostics/DSH2xxx.md#dsh2219)，预处理器不认识的行是
-[`DSH1035`](../diagnostics/DSH1xxx.md#dsh1035)。完整语法与嵌套语义见 [Layout](../language/layout.md)。
+`#Region "Name"` 和 `#EndRegion` 行位于 `Graph` 块体内部，将它们之间的语句所产生的节点归入生成图里的一个注释框。每一行单独成行，是块体里的一条语句*（自 2.0.0 起）*；区域可以嵌套。没有名字的 `#Region`、没有打开的区域却写了 `#EndRegion`、块体结束时仍未关闭的区域以及其他 `#` 行是 [`DSH2216`](../diagnostics/DSH2xxx.md#dsh2216)–[`DSH2219`](../diagnostics/DSH2xxx.md#dsh2219)，预处理器不认识的行是 [`DSH1035`](../diagnostics/DSH1xxx.md#dsh1035)。完整语法与嵌套语义见 [Layout](../language/layout.md)。
 
 <a id="diagnostic-locations"></a>
 
@@ -186,7 +179,7 @@ Add       (.., Ratio)     -> Base.EmissiveColor
 - [Layout](../language/layout.md) — `#Region` / `#EndRegion` 与节点放置指令
 - [UE 内置](../builtins/ue.md) — 可从 `Graph` 调用的完整 `UE.*` 目录
 - [数学内置](../builtins/math.md) — `lerp`、`dot`、`saturate`、`frac`、`fmod`、……
-- [在 Graph 中读取参数](../../parameters/graph-usage.md) — 裸读取与引脚调用形式
+- [在 Graph 中读取参数](../parameters/graph-usage.md) — 裸读取与引脚调用形式
 - [Graph 布局](../generation/graph-layout.md) — 生成的节点如何摆放
 - [2.0 语言](../language-v2/index.md) — 同一个编译器，带 HLSL 控制流
 - [错误速查](../diagnostics/index.md) — 每个码，按阶段分类

@@ -1,8 +1,3 @@
----
-title: "材质内容浏览器"
-description: "材质内容浏览器"
----
-
 <a id="material-content-browser"></a>
 
 # 材质内容浏览器
@@ -141,15 +136,13 @@ description: "材质内容浏览器"
 | 预览 | 无；检查器的平铺显示 `pass pipeline` |
 | 过滤 | 树下的 **隐藏管线** |
 
-管线仅通过其 `.dsp` 列出：没有被任何已扫描源构建的 `UDreamPassPipeline` 不是
-[非托管](#unmanaged-materials)行，其导出缓冲区的渲染目标也不是。
+管线仅通过其 `.dsp` 列出：没有被任何已扫描源构建的 `UDreamPassPipeline` 不是[非托管](#unmanaged-materials)行，其导出缓冲区的渲染目标也不是。
 
 <a id="unmanaged-materials"></a>
 
 ### 非托管材质
 
-内容根目录下（`/Game` 以及每个附带 DreamShader 源的插件的挂载点）的每个 `UMaterial` 和 `UMaterialInstanceConstant`，如果没有任何已扫描源解析到它，那么该标签页会覆盖整个项目，而不仅仅是 DreamShader 的角落。它们通过资产注册表找到，并且**绝不会为了列出而加载**——一个有一千个手工制作材质的项目只耗费一次注册表查询，而不是一千次加载；只有被选中时才会加载某一行，此时检查器会读取其真实来源（一个孤立的生成资产会显示为 `Unstamped` 或
-`Generated`，手工制作的则保持 `Foreign`）并将其合并回该行。
+内容根目录下（`/Game` 以及每个附带 DreamShader 源的插件的挂载点）的每个 `UMaterial` 和 `UMaterialInstanceConstant`，如果没有任何已扫描源解析到它，那么该标签页会覆盖整个项目，而不仅仅是 DreamShader 的角落。它们通过资产注册表找到，并且**绝不会为了列出而加载**——一个有一千个手工制作材质的项目只耗费一次注册表查询，而不是一千次加载；只有被选中时才会加载某一行，此时检查器会读取其真实来源（一个孤立的生成资产会显示为 `Unstamped` 或 `Generated`，手工制作的则保持 `Foreign`）并将其合并回该行。
 
 | 列 | 对于非托管行 |
 | :-- | :-- |
@@ -159,9 +152,7 @@ description: "材质内容浏览器"
 | **状态** | `not managed by DreamShader`，或 `material instance · not managed by DreamShader` |
 | **资产** | 包路径 |
 
-状态栏计数 **未管理** 会跳转到该节点，而不是切换过滤器。精简后端的隐藏 `MB_DreamThinBase_*` 基类
-从不会被列出。对其中的某一个执行 *Export .dss*（对于普通材质实例而言是 `.dsi`）
-就是它进入 DreamShader 管理的方式。
+状态栏计数 **未管理** 会跳转到该节点，而不是切换过滤器。精简后端的隐藏 `MB_DreamThinBase_*` 基类从不会被列出。对其中的某一个执行 *Export .dss*（对于普通材质实例而言是 `.dsi`）就是它进入 DreamShader 管理的方式。
 
 <a id="status-values"></a>
 
@@ -189,24 +180,18 @@ description: "材质内容浏览器"
 
 构建键涵盖编译所标记的内容——预处理后的文件及其包含的每个头文件、它们所读取的定义、一个 `.dsi` 的父级——因此当前资产会显示为 **最新**，而重新构建总会使过期的资产变为最新。1.x 从文本中解析 `Name=` / `Root=` 并剥离导入，并在内联它们的情况下对源进行哈希；该方案对 `.dss` 无法给出任何答案，已被移除。
 
-然后叠加桥接的诊断信息，从其存储中实时读取：该文件的任何 `error` 记录都会使其变为 `compile error`，并以第一条错误记录作为详情
-（`L{line}:{col} {message}`）。所有记录都保留在条目上供检查器使用。
+然后叠加桥接的诊断信息，从其存储中实时读取：该文件的任何 `error` 记录都会使其变为 `compile error`，并以第一条错误记录作为详情（`L{line}:{col} {message}`）。所有记录都保留在条目上供检查器使用。
 
 > [!NOTE]
-> 步骤 2 不会加载，因此磁盘上存在但本会话尚未加载的材质会
-> 报告为 **未编译**，直到有东西加载它。
+> 步骤 2 不会加载，因此磁盘上存在但本会话尚未加载的材质会报告为 **未编译**，直到有东西加载它。
 
 <a id="assets-mode"></a>
 
 ## 资产模式
 
-引擎的资产选择器基于 `UMaterial` 和 `UMaterialInstanceConstant`（递归地，其中
-包括 `UDreamShaderMaterialInstance`），范围限定为导航树的内容路径。有意保留为引擎控件：缩略图、拖拽到视口、列视图以及选择器自身的
-设置都随之而来。
+引擎的资产选择器基于 `UMaterial` 和 `UMaterialInstanceConstant`（递归地，其中包括 `UDreamShaderMaterialInstance`），范围限定为导航树的内容路径。有意保留为引擎控件：缩略图、拖拽到视口、列视图以及选择器自身的设置都随之而来。
 
-共享过滤器在这里同样适用，并且**不加载任何内容**即可得到答案：已扫描源的资产由其条目判定，而 *Ephemeral* 则从注册表的包标志中读取。DreamShader 从未生成过的
-手工制作材质，除
-*Ephemeral* 外不通过任何状态过滤器。
+共享过滤器在这里同样适用，并且**不加载任何内容**即可得到答案：已扫描源的资产由其条目判定，而 *Ephemeral* 则从注册表的包标志中读取。DreamShader 从未生成过的手工制作材质，除 *Ephemeral* 外不通过任何状态过滤器。
 
 双击打开该资产。右键单击会给出相同的[上下文菜单](#context-menu)。
 
@@ -214,11 +199,7 @@ description: "材质内容浏览器"
 
 ## 检查器
 
-两种模式共用一个面板。它显示选择中存在的任何一半——**源**一半
-（一个已扫描文件）和**资产**一半（项目中的一个材质）——通过资产的
-`DreamShader.SourceFile` 标记连接起来。因此，在资产模式中选中的材质会显示其源的
-编译状态和诊断信息；在源模式中选中的源会显示其资产的来源和
-继承关系。
+两种模式共用一个面板。它显示选择中存在的任何一半——**源**一半（一个已扫描文件）和**资产**一半（项目中的一个材质）——通过资产的 `DreamShader.SourceFile` 标记连接起来。因此，在资产模式中选中的材质会显示其源的编译状态和诊断信息；在源模式中选中的源会显示其资产的来源和继承关系。
 
 | 部分 | 内容 |
 | :-- | :-- |
@@ -309,8 +290,7 @@ description: "材质内容浏览器"
 | 网格遮罩链 | `M_<Base>Mask.dss` — `mesh` 通道的覆盖材质，带有 `UE.DreamPassOutput` — 以及 `PP_<Base>Composite.dss`，轮廓的后处理材质 |
 | 计算链 | 无：计算着色器就是该通道的 `hlsl` 块（[HLSL 通道](../runtime/hlsl.md)） |
 
-伴生文件会先写入，因此监视器在编译管线时能找到 `.dsp` 所指定的材质；所有文件要么全部写入，要么全部不写——一旦某次写入失败，会收回在此之前写入的文件。管线只有在被某物激活时才会运行：*Project Settings ▸ DreamPlugin ▸ DreamShader Custom Pass* 中的全局管线、Dream Pass Volume、某个组件，或 API——参见
-[Custom Pass 运行时](../runtime/index.md#what-makes-a-pipeline-apply)。
+伴生文件会先写入，因此监视器在编译管线时能找到 `.dsp` 所指定的材质；所有文件要么全部写入，要么全部不写——一旦某次写入失败，会收回在此之前写入的文件。管线只有在被某物激活时才会运行：*Project Settings ▸ DreamPlugin ▸ DreamShader Custom Pass* 中的全局管线、Dream Pass Volume、某个组件，或 API——参见 [Custom Pass 运行时](../runtime/index.md#what-makes-a-pipeline-apply)。
 
 对话框：
 
@@ -321,11 +301,7 @@ description: "材质内容浏览器"
 
 对于管线，对话框还会说明该模板除 `.dsp` 之外会写入哪些文件。
 
-无论哪种情况，资产都会落在其邻居的旁边——在 `DShader/Materials/` 中创建的文件会编译到
-`/Game/Materials/…`。1.x 块自己会说明这一点：其 `Name=` 是文件夹相对于其根目录的路径
-加上名称。`.dss` 什么也不说明：名称来自其 `export`，而文件夹就是文件所在的位置。
-`.dss` 是一种产品——一个材质，或任意数量的导出函数，每个函数都是自己的
-资产——旁边还有未导出的辅助项；这两个条目启动这两种类型。
+无论哪种情况，资产都会落在其邻居的旁边——在 `DShader/Materials/` 中创建的文件会编译到 `/Game/Materials/…`。1.x 块自己会说明这一点：其 `Name=` 是文件夹相对于其根目录的路径加上名称。`.dss` 什么也不说明：名称来自其 `export`，而文件夹就是文件所在的位置。 `.dss` 是一种产品——一个材质，或任意数量的导出函数，每个函数都是自己的资产——旁边还有未导出的辅助项；这两个条目启动这两种类型。
 
 | 拒绝 | 消息 |
 | :-- | :-- |
@@ -334,16 +310,13 @@ description: "材质内容浏览器"
 | 文件已存在 | `'{Path}' already exists.` |
 | 某个管线模板除 `.dsp` 之外要写入的文件已存在 | `'{Path}' already exists, and the template writes it for '{Pipeline}'; choose another name.` |
 
-这些模板由自动化测试
-`DreamShader.Browser.NewSource.TemplatesRenderAndCompile` 编译，因此不会腐坏。管线模板
-不在其所覆盖的模板之列。
+这些模板由自动化测试 `DreamShader.Browser.NewSource.TemplatesRenderAndCompile` 编译，因此不会腐坏。管线模板不在其所覆盖的模板之列。
 
 <a id="create-material-instance"></a>
 
 ## 创建材质实例
 
-可从检查器、上下文菜单以及内容浏览器条目 **Create DreamShader
-instance** 打开。
+可从检查器、上下文菜单以及内容浏览器条目 **Create DreamShader instance** 打开。
 
 | 方面 | 值 |
 | :-- | :-- |
@@ -372,9 +345,7 @@ instance** 打开。
 | 无法保存包 | `Generated DreamShader asset '{Path}' could not be saved.` |
 | 父材质在打开与确认之间失效 | `The parent material is no longer available.` — 窗口关闭 |
 
-成功时提示为 `Created {Name}`——资产名称来自 **Name** 框，而非对象
-路径——并且窗口关闭。失败时错误会以提示显示，并且 **窗口保持打开**，以便更正
-名称或文件夹。
+成功时提示为 `Created {Name}`——资产名称来自 **Name** 框，而非对象路径——并且窗口关闭。失败时错误会以提示显示，并且 **窗口保持打开**，以便更正名称或文件夹。
 
 | 细节 | 行为 |
 | :-- | :-- |
@@ -383,9 +354,7 @@ instance** 打开。
 | 父材质分配 | 设置为仅编辑器，随后进行一次编辑后变更并广播资产已创建 |
 | 保存失败回滚 | 取消广播半创建的对象，剥离其标志，将其重命名到瞬态包中且不带重定向器，标记为垃圾，并清除包的脏标志——因此它无法在 GC 中存活、不会出现在内容浏览器中、不会被 *Save All* 持久化，也不会阻止同名重试 |
 
-对仅存在于内存中的父材质进行实例化会先实体化父材质，因此子实例永远不会引用
-瞬态对象。从未编译过的源会先被编译；如果它仍未产生
-材质，提示为 `Compile {File} first.`
+对仅存在于内存中的父材质进行实例化会先实体化父材质，因此子实例永远不会引用瞬态对象。从未编译过的源会先被编译；如果它仍未产生材质，提示为 `Compile {File} first.`
 
 <a id="materialize"></a>
 

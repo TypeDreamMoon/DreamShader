@@ -49,6 +49,6 @@ neither file is generated from the other. Bump its *Current release* row and add
 when `CHANGELOG.md` gets one; pages that name the current release, such as
 [Limitations](diagnostics/limitations.md), are reviewed at the same time.
 
-The `zh-CN/` tree mirrors English source paths. Imported translations are unreviewed; the [initial migration snapshot](zh-CN/TRANSLATIONS.md) preserves the original imported and missing translation lists. For current status, run `python -B Docs/translation-status.py` or check the translation status issue in the website repository. `.translations/` records source versions without treating an import as approval. Website-only notes remain in the website repository.
+The `zh-CN/` tree mirrors English source paths. Beside it, `zh-CN/.align/` records which English paragraph each Chinese paragraph was translated from, so when the English changes only the changed paragraphs are translated again. Correct a translation by editing the Chinese page directly; the next run keeps the edit. Website-only notes remain in the website repository.
 
-Check translation status locally with `python -B Docs/translation-status.py`; add `--all` to include every source or `--json` for structured output. This read-only tool does not need the website repository or a Git checkout.
+Translations are made and checked with [dreamdocs](https://github.com/TypeDreamMoon/dreamdocs): `dreamdocs status` lists the stale and missing paragraphs, `dreamdocs translate` translates them, and `dreamdocs check --plugin .` is what CI runs. Its settings for this plugin are in `dreamdocs.json`.

@@ -1,8 +1,3 @@
----
-title: "数学内置"
-description: "数学内置"
----
-
 <a id="math-builtins"></a>
 
 # 数学内置
@@ -30,12 +25,9 @@ description: "数学内置"
 { clamp | lerp | refract | smoothstep } ( <x> , <y> , <z> )
 ```
 
-`( )` 和 `,` 是 DreamShaderLang 的字面标点；`{ a | b }` 是元表示法，永远不会
-被输入。每个 `<x>` / `<y>` / `<z>` 都是任意 [Graph 表达式](../graph/expressions.md)。`sinh`、`cosh`
-和 `tanh` 也是名字，但会被拒绝 —— 见[备注](#notes)。
+`( )` 和 `,` 是 DreamShaderLang 的字面标点；`{ a | b }` 是元表示法，永远不会被输入。每个 `<x>` / `<y>` / `<z>` 都是任意 [Graph 表达式](../graph/expressions.md)。`sinh`、`cosh` 和 `tanh` 也是名字，但会被拒绝 —— 见[备注](#notes)。
 
-名字按**精确**匹配 *（自 2.0.0 起）*。1.x 源码仍享有 1.x 的宽松规则，每一条都会用诊断说明 ——
-见[名称解析](#name-resolution)。参数可以按位置给，也可以按节点 pin 名命名 —— 见[命名参数](#named-arguments)。
+名字按**精确**匹配 *（自 2.0.0 起）*。1.x 源码仍享有 1.x 的宽松规则，每一条都会用诊断说明 —— 见[名称解析](#name-resolution)。参数可以按位置给，也可以按节点 pin 名命名 —— 见[命名参数](#named-arguments)。
 
 <a id="catalogue"></a>
 
@@ -87,10 +79,7 @@ description: "数学内置"
 | `tan` *（自 2.0.0 起）* | 1 | `UMaterialExpressionTangent` | `Input` | 参数的类型 |
 | `trunc` *（自 2.0.0 起）* | 1 | `UMaterialExpressionTruncate` | `Input` | 参数的类型 |
 
-GLSL 拼写在 1.x 源码里按 HLSL 名字读取，并给出警告
-[`DSH5277`](../diagnostics/DSH5xxx.md#dsh5277)：`mix` → `lerp`、`fract` → `frac`、`mod` → `fmod`，
-`inversesqrt` → `rsqrt`。在 `.dss` 里它们是 [`DSH4250`](../diagnostics/DSH4xxx.md#dsh4250)。
-[`dsc migrate`](../tools/migrate.md) 会把它们改写回来。
+GLSL 拼写在 1.x 源码里按 HLSL 名字读取，并给出警告 [`DSH5277`](../diagnostics/DSH5xxx.md#dsh5277)：`mix` → `lerp`、`fract` → `frac`、`mod` → `fmod`， `inversesqrt` → `rsqrt`。在 `.dss` 里它们是 [`DSH4250`](../diagnostics/DSH4xxx.md#dsh4250)。 [`dsc migrate`](../tools/migrate.md) 会把它们改写回来。
 
 <a id="argument-rules"></a>
 
@@ -108,35 +97,28 @@ GLSL 拼写在 1.x 源码里按 HLSL 名字读取，并给出警告
 | 6 | `cross`、`reflect` 和 `refract` 接受 `float3` 操作数 | 更窄的向量是 `DSH4226`；更宽的向量在 1.x 源码里被截为三个分量并给出提示 [`DSH5289`](../diagnostics/DSH5xxx.md#dsh5289) —— 这正是 1.x 的做法 —— 而在 `.dss` 中是 `DSH4226` |
 | 7 | `/` 的两个操作数都是整数构造器调用时会被拒绝 —— 材质图中没有整数除法；其他任何 `/` 都是浮点除法，包括 `7 / 2` | [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243) |
 
-在 1.9.x 及以前，规则 4 – 6 都不是编译检查：`dot(vec3Value, vec2Value)` 会被无声接受，
-随后在 Unreal 自身的材质翻译阶段失败。
+在 1.9.x 及以前，规则 4 – 6 都不是编译检查：`dot(vec3Value, vec2Value)` 会被无声接受，随后在 Unreal 自身的材质翻译阶段失败。
 
 <a id="name-resolution"></a>
 
 ## 名称解析
 
-对裸名的调用按以下顺序解析。完整的查找顺序见
-[名称解析](../graph/name-resolution.md)。
+对裸名的调用按以下顺序解析。完整的查找顺序见[名称解析](../graph/name-resolution.md)。
 
 | # | 候选 | 参考 |
 | :-- | :-- | :-- |
-| 1 | 在 1.x `Graph` 中，由 legacy 前端在读入调用时改写的写法：`SampleTexture2D`、已声明 property 的 pin 调用形式、`UE.SceneTexture` 以及其他 1.x 调用形状 | [`UE.*` 目录](ue.md) · [在 `Graph` 中使用参数](../../parameters/graph-usage.md) |
+| 1 | 在 1.x `Graph` 中，由 legacy 前端在读入调用时改写的写法：`SampleTexture2D`、已声明 property 的 pin 调用形式、`UE.SceneTexture` 以及其他 1.x 调用形状 | [`UE.*` 目录](ue.md) · [在 `Graph` 中使用参数](../parameters/graph-usage.md) |
 | 2 | 类型名 —— 诸如 `float3(…)`、`vec4(…)` 的构造器 | [构造器](../graph/constructors.md) |
 | 3 | 以 `UE.` 和 `Substrate.` 为前缀的被调用者 | [`UE.*` 目录](ue.md) · [`Substrate.*`](substrate.md) |
-| 4 | `Texture2DSample`、`Texture2DSampleLevel` | |
+| 4 | `Texture2DSample`, `Texture2DSampleLevel` | |
 | 5 | **数学内置 —— 本页**，按精确的 HLSL 名字；然后是 GLSL 拼写（1.x 中为 `DSH5277`，`.dss` 中为 `DSH4250`） | — |
 | 6 | 本文件声明或导入的函数 —— `Function`、`GraphFunction`、`ShaderFunction`、`VirtualFunction`、`.dss` 函数 | [调用](../graph/calls.md) |
 | 7 | 仅限 1.x 源码：名称**忽略大小写**才匹配的内置或函数，并给出警告 [`DSH5275`](../diagnostics/DSH5xxx.md#dsh5275) | — |
 
 > [!IMPORTANT]
-> **函数不能与内置同名** *（自 2.0.0 起）*。名为 `lerp`、`clamp`、`dot`、`min`、`max`、
-> `pow`、`abs` —— 本页任何 HLSL 名字或 GLSL 拼写 —— 的 `Function`、`GraphFunction`、
-> `ShaderFunction`、`VirtualFunction` 或 `.dss` 函数会在其声明处
-> [`DSH6206`](../diagnostics/DSH6xxx.md#dsh6206)。在 1.9.x 及以前，这样的函数
-> 可以编译，却从 `Graph` 块中静默地不可达，因为内置胜出。
+> **函数不能与内置同名** *（自 2.0.0 起）*。名为 `lerp`、`clamp`、`dot`、`min`、`max`、 `pow`、`abs` —— 本页任何 HLSL 名字或 GLSL 拼写 —— 的 `Function`、`GraphFunction`、 `ShaderFunction`、`VirtualFunction` 或 `.dss` 函数会在其声明处 [`DSH6206`](../diagnostics/DSH6xxx.md#dsh6206)。在 1.9.x 及以前，这样的函数可以编译，却从 `Graph` 块中静默地不可达，因为内置胜出。
 
-拼错的内置名 —— `saturte(x)` —— 是 [`DSH4208`](../diagnostics/DSH4xxx.md#dsh4208)，当某个已声明名字仅大小写不同时
-会附带 *did you mean*。
+拼错的内置名 —— `saturte(x)` —— 是 [`DSH4208`](../diagnostics/DSH4xxx.md#dsh4208)，当某个已声明名字仅大小写不同时会附带 *did you mean*。
 
 <a id="named-arguments"></a>
 
@@ -149,14 +131,10 @@ float t = lerp(A, B, Alpha = Mask);     // A, B by position; Alpha by name
 float c = clamp(X, Max = 1.0, Min = 0.0);
 ```
 
-pin 名是引擎的，因此不总是 HLSL 的：`pow` 是 `Base` / `Exponent`，`step`
-是 `Y`（edge）/ `X`（value），`normalize` 是 `VectorInput`。节点没有的名字是
-[`DSH4216`](../diagnostics/DSH4xxx.md#dsh4216)，它会列出可用的 pin。没有节点的内置
-（`fwidth`、`rcp`、`rsqrt`、`reflect`、`refract`）只接受按顺序给出的参数。
+pin 名是引擎的，因此不总是 HLSL 的：`pow` 是 `Base` / `Exponent`，`step` 是 `Y`（edge）/ `X`（value），`normalize` 是 `VectorInput`。节点没有的名字是 [`DSH4216`](../diagnostics/DSH4xxx.md#dsh4216)，它会列出可用的 pin。没有节点的内置（`fwidth`、`rcp`、`rsqrt`、`reflect`、`refract`）只接受按顺序给出的参数。
 
 > [!NOTE]
-> 在 1.9.x 及以前，数学内置上的命名参数会被报告为**参数个数**错误 ——
-> `saturate(Input = X)` 会以“expects exactly 1 argument”消息失败。现在它会选中那个 pin。
+> 在 1.9.x 及以前，数学内置上的命名参数会被报告为**参数个数**错误 —— `saturate(Input = X)` 会以“expects exactly 1 argument”消息失败。现在它会选中那个 pin。
 
 <a id="per-builtin-notes"></a>
 
@@ -166,16 +144,13 @@ pin 名是引擎的，因此不总是 HLSL 的：`pow` 是 `Base` / `Exponent`�
 
 ### clamp
 
-`clamp(Input, Min, Max)` 会连接全部三个参数，并将节点的 `ClampMode` 保持在其默认值
-`CMODE_Clamp`。要使用 `CMODE_ClampMin` 或 `CMODE_ClampMax`，直接调用节点本身：
-`UE.Clamp(Input = x, Min = a, ClampMode = CMODE_ClampMin)`。见 [`UE.Expression`](ue-expression.md)。
+`clamp(Input, Min, Max)` 会连接全部三个参数，并将节点的 `ClampMode` 保持在其默认值 `CMODE_Clamp`。要使用 `CMODE_ClampMin` 或 `CMODE_ClampMax`，直接调用节点本身： `UE.Clamp(Input = x, Min = a, ClampMode = CMODE_ClampMin)`。见 [`UE.Expression`](ue-expression.md)。
 
 <a id="dot-length-distance-cross"></a>
 
 ### dot、length、distance、cross
 
-结果宽度固定的内置：`dot`、`length` 和 `distance` 恒为一个分量，`cross`
-恒为三个，与参数无关 —— 因此 `float d = dot(A, B);` 不需要 swizzle。
+结果宽度固定的内置：`dot`、`length` 和 `distance` 恒为一个分量，`cross` 恒为三个，与参数无关 —— 因此 `float d = dot(A, B);` 不需要 swizzle。
 
 <a id="fmod"></a>
 
@@ -183,18 +158,13 @@ pin 名是引擎的，因此不总是 HLSL 的：`pow` 是 `Base` / `Exponent`�
 
 参数 1 是被除数，参数 2 是除数；它们分别连接到节点的 `A` 和 `B` pin。
 
-`mod` 是 GLSL 拼写。在 `Graph` 块中，1.x 源码仍可写它，并给出警告
-`DSH5277`。在 [`Function`](../language/function.md) HLSL 体内部，标识符 `mod` 会被改写
-为 `fmod` —— 静默地、忽略大小写 —— 与其他 GLSL 名字一样。
+`mod` 是 GLSL 拼写。在 `Graph` 块中，1.x 源码仍可写它，并给出警告 `DSH5277`。在 [`Function`](../language/function.md) HLSL 体内部，标识符 `mod` 会被改写为 `fmod` —— 静默地、忽略大小写 —— 与其他 GLSL 名字一样。
 
 <a id="lerp"></a>
 
 ### lerp
 
-结果的宽度与三个参数中最宽的那个相同，包括 `Alpha`：标量 `Alpha`
-混合两个 `float3` 值会得到 `float3`，并被广播到该宽度。在两个 Substrate 值上，
-`lerp(A, B, t)` 则是 `Substrate.HorizontalMixing` —— 见
-[Substrate 语法糖](../language-v2/substrate.md)。
+结果的宽度与三个参数中最宽的那个相同，包括 `Alpha`：标量 `Alpha` 混合两个 `float3` 值会得到 `float3`，并被广播到该宽度。在两个 Substrate 值上， `lerp(A, B, t)` 则是 `Substrate.HorizontalMixing` —— 见 [Substrate 语法糖](../language-v2/substrate.md)。
 
 <a id="min-max"></a>
 
@@ -206,82 +176,60 @@ pin 名是引擎的，因此不总是 HLSL 的：`pow` 是 `Base` / `Exponent`�
 
 ### normalize
 
-唯一一个其单一输入 pin 不叫 `Input` 的内置：`UMaterialExpressionNormalize` 将它命名为
-`VectorInput`。这一差异在按位置调用时（`normalize(N)`）不可见，而它正是
-命名参数必须使用的名字。
+唯一一个其单一输入 pin 不叫 `Input` 的内置：`UMaterialExpressionNormalize` 将它命名为 `VectorInput`。这一差异在按位置调用时（`normalize(N)`）不可见，而它正是命名参数必须使用的名字。
 
 <a id="sin-cos"></a>
 
 ### sin、cos
 
-两者都将节点的 `Period` 属性保持为默认值。要使用非默认周期，请直接调用节点：
-`UE.Sine(Input = x, Period = 2.0)`。
+两者都将节点的 `Period` 属性保持为默认值。要使用非默认周期，请直接调用节点： `UE.Sine(Input = x, Period = 2.0)`。
 
-默认周期为 1，因此这些图内置按周期计：`sin(0.25)` 是 1，`cos(0.25)` 是 0
-（在浮点精度内）。常量表达式使用与图节点相同的周期。
-在 `@custom` HLSL 体内部，`sin` 和 `cos` 照常按弧度计算。
+默认周期为 1，因此这些图内置按周期计：`sin(0.25)` 是 1，`cos(0.25)` 是 0 （在浮点精度内）。常量表达式使用与图节点相同的周期。在 `@custom` HLSL 体内部，`sin` 和 `cos` 照常按弧度计算。
 
 <a id="round"></a>
 
 ### round
 
-图内置和常量折叠在恰好一半的值上遵循 [HLSL 的舍入到偶数规则](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-round)：`round(0.5)` 是 0，
-`round(2.5)` 是 2，而 `round(-1.5)` 是 -2。
+图内置和常量折叠在恰好一半的值上遵循 [HLSL 的舍入到偶数规则](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-round)：`round(0.5)` 是 0， `round(2.5)` 是 2，而 `round(-1.5)` 是 -2。
 
-生成的 Custom 节点对 uniform 和变化的输入都用 HLSL `round` 求值。这样绕开了原生
-`UE.Round(Input = x)` 节点的 preshader：在 UE 5.8 上它会把半值向上舍入
-（`0.5` 变成 1）。需要原生行为时用反射写法。反编译会把未改动的
-生成节点还原成 `round`；原生 Round 节点仍是 `UE.Round`。
-`dump-ir` 显示语言层的运算，`dump-graph` 显示生成的 Custom 节点。
+生成的 Custom 节点对 uniform 和变化的输入都用 HLSL `round` 求值。这样绕开了原生 `UE.Round(Input = x)` 节点的 preshader：在 UE 5.8 上它会把半值向上舍入（`0.5` 变成 1）。需要原生行为时用反射写法。反编译会把未改动的生成节点还原成 `round`；原生 Round 节点仍是 `UE.Round`。 `dump-ir` 显示语言层的运算，`dump-graph` 显示生成的 Custom 节点。
 
-代价：引擎从不在 shader 之前求值 Custom 节点，所以对 uniform 值（比如参数）取 `round` 会
-逐像素执行（一条指令），其下游的数学也随之逐像素，而不再折叠进材质 uniform 每次 draw 算一次。
-常量参数仍在编译期折叠。比起半值的处理，这更要紧时，`UE.Round(Input = x)` 保留原生节点及其 preshader。
+代价：引擎从不在 shader 之前求值 Custom 节点，所以对 uniform 值（比如参数）取 `round` 会逐像素执行（一条指令），其下游的数学也随之逐像素，而不再折叠进材质 uniform 每次 draw 算一次。常量参数仍在编译期折叠。比起半值的处理，这更要紧时，`UE.Round(Input = x)` 保留原生节点及其 preshader。
 
 <a id="step"></a>
 
 ### step
 
-`step(edge, x)` 返回 `x >= edge ? 1 : 0`，和 HLSL 一致。`UMaterialExpressionStep` 的 pin 命名是反过来的 ——
-`Y` 是 edge、`X` 是 value —— 所以参数 1 连到 `Y`、
-参数 2 连到 `X`。
+`step(edge, x)` 返回 `x >= edge ? 1 : 0`，和 HLSL 一致。`UMaterialExpressionStep` 的 pin 命名是反过来的 —— `Y` 是 edge、`X` 是 value —— 所以参数 1 连到 `Y`、参数 2 连到 `X`。
 
 <a id="smoothstep"></a>
 
 ### smoothstep
 
-`smoothstep(min, max, x)`，参数顺序同 HLSL，直接连到节点的 `Min`、`Max` 和
-`Value` pin。
+`smoothstep(min, max, x)`，参数顺序同 HLSL，直接连到节点的 `Min`、`Max` 和 `Value` pin。
 
 <a id="asin-acos-atan-atan2"></a>
 
 ### asin、acos、atan、atan2
 
-四个反三角节点。`atan2(y, x)` 的参数顺序同 HLSL，而节点的 pin 本来就叫 `Y` 和
-`X`，所以映射是直接的。
+四个反三角节点。`atan2(y, x)` 的参数顺序同 HLSL，而节点的 pin 本来就叫 `Y` 和 `X`，所以映射是直接的。
 
 > [!NOTE]
-> 引擎还带了 `ArcsineFast`、`ArccosineFast`、`ArctangentFast` 和 `Arctangent2Fast` ——
-> 在有限输入范围上成立的更便宜的近似。它们没有内置写法，直接调用节点：`UE.ArcsineFast(Input = x)`。
+> 引擎还带了 `ArcsineFast`、`ArccosineFast`、`ArctangentFast` 和 `Arctangent2Fast` —— 在有限输入范围上成立的更便宜的近似。它们没有内置写法，直接调用节点：`UE.ArcsineFast(Input = x)`。
 
 <a id="fwidth-rcp-rsqrt"></a>
 
 ### fwidth、rcp、rsqrt
 
-三者都没有对应的引擎节点。`fwidth(x)` 按 HLSL 内建函数的定义建成 `abs(ddx(x)) + abs(ddy(x))`；
-`rcp(x)` 是 `Divide`，其 `ConstA = 1`；`rsqrt(x)` 是
-`SquareRoot` 接一个这样的 `Divide`。
+三者都没有对应的引擎节点。`fwidth(x)` 按 HLSL 内建函数的定义建成 `abs(ddx(x)) + abs(ddy(x))`； `rcp(x)` 是 `Divide`，其 `ConstA = 1`；`rsqrt(x)` 是 `SquareRoot` 接一个这样的 `Divide`。
 
 <a id="reflect-refract"></a>
 
 ### reflect、refract
 
-Unreal 没有 `Reflect` 或 `Refract` `UMaterialExpression`，所以两者都降级成 HLSL
-对它们的定义，返回给调用方的是那张子图的最后一个节点。
+Unreal 没有 `Reflect` 或 `Refract` `UMaterialExpression`，所以两者都降级成 HLSL 对它们的定义，返回给调用方的是那张子图的最后一个节点。
 
-`reflect(i, n)` 展开成 `i - 2 * dot(i, n) * n` —— 四个节点（`DotProduct`、两个 `Multiply`、
-`Subtract`）。字面量 `2` 骑在 `Multiply` 的 `ConstB` 上，
-不额外花一个 `Constant` 节点。
+`reflect(i, n)` 展开成 `i - 2 * dot(i, n) * n` —— 四个节点（`DotProduct`、两个 `Multiply`、 `Subtract`）。字面量 `2` 骑在 `Multiply` 的 `ConstB` 上，不额外花一个 `Constant` 节点。
 
 `refract(i, n, eta)` 展开成完整的 HLSL 定义 —— 十四个节点：
 
@@ -290,39 +238,21 @@ k = 1 - eta*eta * (1 - dot(n, i)^2)
 k < 0 ? 0 : eta*i - (eta*dot(n, i) + sqrt(k)) * n
 ```
 
-全内反射的判断是一个 `If` 节点，所以两侧都会被翻译、再选其一；对负 `k` 取
-`sqrt` 只落在被丢弃的那一侧，和 HLSL 完全一样。`k == 0`
-仍然满足公式（`sqrt(0) == 0`）并走折射侧。零分支写成 `i * 0` 而不是常量，
-是为了让它的宽度永远等于 `i` 的宽度 —— `If` 要求它的两个分支一致。
+全内反射的判断是一个 `If` 节点，所以两侧都会被翻译、再选其一；对负 `k` 取 `sqrt` 只落在被丢弃的那一侧，和 HLSL 完全一样。`k == 0` 仍然满足公式（`sqrt(0) == 0`）并走折射侧。零分支写成 `i * 0` 而不是常量，是为了让它的宽度永远等于 `i` 的宽度 —— `If` 要求它的两个分支一致。
 
 > [!NOTE]
-> 两者都是按构造就很贵的。周围代码本来就是 HLSL 时，写在
-> [`Function`](../language/function.md) 体里，一个节点就够了。
+> 两者都是按构造就很贵的。周围代码本来就是 HLSL 时，写在 [`Function`](../language/function.md) 体里，一个节点就够了。
 
 <a id="notes"></a>
 
 ## 注意事项
 
-- 两个相同操作数上的相同调用 —— 写了两次的 `sin(X)` —— 只产生一个节点：IR 在发射任何东西之前
-  做结构去重并合并它们。参见
-  [节点复用](../graph/node-reuse.md)。
+- 两个相同操作数上的相同调用 —— 写了两次的 `sin(X)` —— 只产生一个节点：IR 在发射任何东西之前做结构去重并合并它们。参见[节点复用](../graph/node-reuse.md)。
 - 节点位置和其他节点一样来自 [图布局](../generation/graph-layout.md)。
-- **`sinh`、`cosh` 和 `tanh` 被拒绝**，报 [`DSH4246`](../diagnostics/DSH4xxx.md#dsh4246)：
-  材质图没有双曲节点。写在 [`Function`](../language/function.md) 体
-  （或 `.dss` 里的 `/// @custom` 函数）里，那里着色器编译器有它们。
-- **这个调用面上没有矩阵。** Unreal 材质图没有矩阵值类型 —— 没有
-  `float3x3` 值，也没有 `mul(M, v)` —— 而常量折叠之后仍然存在的矩阵是
-  [`DSH4361`](../diagnostics/DSH4xxx.md#dsh4361)。空间转换节点是
-  [Transform 内置](transform.md)。真正的矩阵运算，写在
-  [`Function`](../language/function.md) 的 HLSL 体里，那里 `float4x4` 和 `mul` 就是 HLSL。
-- 在 `Function` 的 HLSL 体内部，这些名字*根本不*由编译器处理；函数体
-  原样输出，适用的是 HLSL 自己的内建函数。
-- [反编译器](../tools/decompiler.md)会写回这些写法。它的 2.0 写出器（`.dss`，
-  默认）对目录中类的节点，只要输入 pin 全部连上、其他属性都是默认值，就打印内置 ——
-  `Sine` 带非默认 `Period` 时
-  仍是 `UE.Sine(...)` —— 并且在没有别的东西读入它们时，能认出 `fwidth`、`rcp`、
-  `rsqrt`、`reflect` 和 `refract` 降级成的子图。旧写出器
-  （`-Format Legacy`，*Export Legacy* 菜单项）保留 1.x 的映射表。
+- **`sinh`、`cosh` 和 `tanh` 被拒绝**，报 [`DSH4246`](../diagnostics/DSH4xxx.md#dsh4246)：材质图没有双曲节点。写在 [`Function`](../language/function.md) 体（或 `.dss` 里的 `/// @custom` 函数）里，那里着色器编译器有它们。
+- **这个调用面上没有矩阵。** Unreal 材质图没有矩阵值类型 —— 没有 `float3x3` 值，也没有 `mul(M, v)` —— 而常量折叠之后仍然存在的矩阵是 [`DSH4361`](../diagnostics/DSH4xxx.md#dsh4361)。空间转换节点是 [Transform 内置](transform.md)。真正的矩阵运算，写在 [`Function`](../language/function.md) 的 HLSL 体里，那里 `float4x4` 和 `mul` 就是 HLSL。
+- 在 `Function` 的 HLSL 体内部，这些名字*根本不*由编译器处理；函数体原样输出，适用的是 HLSL 自己的内建函数。
+- [反编译器](../tools/decompiler.md)会写回这些写法。它的 2.0 写出器（`.dss`，默认）对目录中类的节点，只要输入 pin 全部连上、其他属性都是默认值，就打印内置 —— `Sine` 带非默认 `Period` 时仍是 `UE.Sine(...)` —— 并且在没有别的东西读入它们时，能认出 `fwidth`、`rcp`、 `rsqrt`、`reflect` 和 `refract` 降级成的子图。旧写出器（`-Format Legacy`，*Export Legacy* 菜单项）保留 1.x 的映射表。
 
 <a id="diagnostics"></a>
 

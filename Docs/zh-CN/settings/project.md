@@ -1,8 +1,3 @@
----
-title: "项目设置"
-description: "项目设置"
----
-
 <a id="project-settings"></a>
 
 # 项目设置
@@ -77,67 +72,35 @@ description: "项目设置"
 
 *Scan Plugin Source Directories*：
 
-> When enabled, every enabled plugin that ships a DShader folder contributes its own source root, so
-> a plugin can carry the .dsm/.dsf/.dsh files that build its materials. Plugin roots are discovered
-> and compiled but never rewritten by the editor -- only the project's own source directory is
-> writable. Imports never cross roots: a file resolves its imports against its own root and that
-> root's Packages folder.
+> When enabled, every enabled plugin that ships a DShader folder contributes its own source root, so a plugin can carry the .dsm/.dsf/.dsh files that build its materials. Plugin roots are discovered and compiled but never rewritten by the editor -- only the project's own source directory is writable. Imports never cross roots: a file resolves its imports against its own root and that root's Packages folder.
 
 *Default Compiler Backend*：
 
-> DreamShader 如何物化一个未指定 `Settings = { Backend = "..." }` 的源文件。
-> ThinCustom（默认值）在每材质一份的隐藏基础上构建材质图，并产出它的
-> 轻量、Ephemeral 材质实例 —— 完整的功能面，没有可见的逐材质
-> 资产。Graph 构建一份可见的 UMaterial 节点图。Instance 是 ThinCustom 的弃用别名。
+> DreamShader 如何物化一个未指定 `Settings = { Backend = "..." }` 的源文件。 ThinCustom（默认值）在每材质一份的隐藏基础上构建材质图，并产出它的轻量、Ephemeral 材质实例 —— 完整的功能面，没有可见的逐材质资产。Graph 构建一份可见的 UMaterial 节点图。Instance 是 ThinCustom 的弃用别名。
 
 *Show Ephemeral Materials*：
 
-> 只作用于 ThinCustom/Instance 后端 —— 它是唯一一个有 Ephemeral 状态的后端，
-> 通过 UDreamShaderMaterialInstance::IsAsset 把它藏起来。开启时，Ephemeral 材质会像未保存的资产一样出现
-> 在内容浏览器里。默认关闭：源文件才是预期的
-> 创作面，而隐藏材质也防止意外的 Save 操作把它们
-> 物化到磁盘。Graph 后端的材质是普通 UMaterial，无法退出
-> 资产枚举，所以它们总是可见，此设置不影响它们。
+> 只作用于 ThinCustom/Instance 后端 —— 它是唯一一个有 Ephemeral 状态的后端，通过 UDreamShaderMaterialInstance::IsAsset 把它藏起来。开启时，Ephemeral 材质会像未保存的资产一样出现在内容浏览器里。默认关闭：源文件才是预期的创作面，而隐藏材质也防止意外的 Save 操作把它们物化到磁盘。Graph 后端的材质是普通 UMaterial，无法退出资产枚举，所以它们总是可见，此设置不影响它们。
 
 *Material Instance Subfolder*：
 
-> 相对父材质所在文件夹的子目录，材质内容浏览器在这里创建
-> 新的材质实例。留空则与父材质同级创建。
+> 相对父材质所在文件夹的子目录，材质内容浏览器在这里创建新的材质实例。留空则与父材质同级创建。
 
 *Sync Source References On Asset Rename*：
 
-> 开启时，在编辑器中重命名或移动资产会改写引用它的 .dsm/.dsf/.dsh 文件，
-> 因此源文件会继续按名字而不是它曾有的路径来指称该资产。只有项目源目录下的文件会被改写 —— 插件源根从不触碰 —— 并且
-> 每个文件在被写入前都会复制成旁边的 .bak。像 Fix Up
-> Redirectors 这样的批量重命名会被合并为单次处理。删除资产不在其列：删除没有
-> 新路径可写，它产生的编译错误就是正确的结果。如果你
-> 更希望插件从不自行编辑你的源文件，就关掉它。
+> 开启时，在编辑器中重命名或移动资产会改写引用它的 .dsm/.dsf/.dsh 文件，因此源文件会继续按名字而不是它曾有的路径来指称该资产。只有项目源目录下的文件会被改写 —— 插件源根从不触碰 —— 并且每个文件在被写入前都会复制成旁边的 .bak。像 Fix Up Redirectors 这样的批量重命名会被合并为单次处理。删除资产不在其列：删除没有新路径可写，它产生的编译错误就是正确的结果。如果你更希望插件从不自行编辑你的源文件，就关掉它。
 
 *Preprocessor Defines*：
 
-> 每个 .dsm/.dsf/.dsh 源文件编译时都带的预处理器 define —— 它的 #if / #elif 条件
-> 读到的内容。名字回答 defined()；能解析为整数的值按数字比较，其他
-> 按字符串比较；空值仍算作已定义；此表中不存在的名字求值为
-> 0，与 C 中一样。条件在生成时求值，落败的分支在
-> 解析器看到它之前就被剪掉，所以一个条件可以选中一个 Domain、一个 ShadingModel 乃至整个 Outputs 块 —— 这些
-> 都是 StaticSwitch 够不着的，因为它们描述的是材质*是*什么，
-> 而不是它*计算*什么。编辑此表只会重建那些源文件确实读取了
-> 发生变化的名字的生成资产。名字区分大小写，必须匹配 [A-Za-z_][A-Za-z0-9_]*。DS_ 前缀
-> 保留给只读的内置名；使用它的条目会被丢弃并记一条日志警告，而不是
-> 让编译失败，因为设置里的错误没有源码行可以报告。
+> 每个 .dsm/.dsf/.dsh 源文件编译时都带的预处理器 define —— 它的 #if / #elif 条件读到的内容。名字回答 defined()；能解析为整数的值按数字比较，其他按字符串比较；空值仍算作已定义；此表中不存在的名字求值为 0，与 C 中一样。条件在生成时求值，落败的分支在解析器看到它之前就被剪掉，所以一个条件可以选中一个 Domain、一个 ShadingModel 乃至整个 Outputs 块 —— 这些都是 StaticSwitch 够不着的，因为它们描述的是材质*是*什么，而不是它*计算*什么。编辑此表只会重建那些源文件确实读取了发生变化的名字的生成资产。名字区分大小写，必须匹配 [A-Za-z_][A-Za-z0-9_]*。DS_ 前缀保留给只读的内置名；使用它的条目会被丢弃并记一条日志警告，而不是让编译失败，因为设置里的错误没有源码行可以报告。
 
-这段提示文本所暗指的内置名是 `DS_ENGINE_MAJOR`、`DS_ENGINE_MINOR`、
-`DS_ENGINE_PATCH`、`DS_PLATFORM`、`DS_PLUGIN_VERSION` 和 `DS_SUBSTRATE`；它们被列在
-[预处理器页面](../language/preprocessor.md)中。提示文本只按前缀提到它们，
-因为 UHT 将元数据字符串限制在 1024 个字符，把六个都拼出来会超出。
+这段提示文本所暗指的内置名是 `DS_ENGINE_MAJOR`、`DS_ENGINE_MINOR`、 `DS_ENGINE_PATCH`、`DS_PLATFORM`、`DS_PLUGIN_VERSION` 和 `DS_SUBSTRATE`；它们被列在[预处理器页面](../language/preprocessor.md)中。提示文本只按前缀提到它们，因为 UHT 将元数据字符串限制在 1024 个字符，把六个都拼出来会超出。
 
 <a id="the-mapping-maps"></a>
 
 ## 映射表
 
-三个 `Mappings` 条目扩展了三个枚举设置所接受的取值拼写。它们
-**默认为空**：内置别名表在解析时按需重建，从不
-物化到这些映射中，所以空面板并不意味着“没有别名”。
+三个 `Mappings` 条目扩展了三个枚举设置所接受的取值拼写。它们**默认为空**：内置别名表在解析时按需重建，从不物化到这些映射中，所以空面板并不意味着“没有别名”。
 
 | 行为 | 细节 |
 | :-- | :-- |
@@ -165,22 +128,11 @@ description: "项目设置"
 
 ## 备注
 
-- 该类是 `Config=Engine, DefaultConfig`，所以值保存在**项目的**
-  `Config/DefaultEngine.ini` 里，而不是每用户文件里。签出这个
-  项目的所有人共享同一份配置。
-- **没有持久化的开关。** ThinCustom 产物是 Ephemeral 的 —— 源文件才是
-  创作面 —— 落盘发生在 cook 时、通过
-  [命令行](../tools/commandlet.md)，或通过显式操作。*Default Compiler Backend*
-  在 1.5.0 取代了旧的 In-Memory 开关。**在 `2.0.0` 中移除：** *Lay Out In-Memory Graphs*
-  （`bLayoutInMemoryGraphs`）。图布局现在总是运行；只有大图的性能保护
-  会跳过它。*Show Ephemeral Materials* 的键在 `2.0.0` 之前叫 `bShowInMemoryMaterialsInContentBrowser`
-  ，加载时自动迁移。
-- `GeneratedShaderDirectory` 只在虚拟着色器目录尚未映射时才被读取。如果本项目已经存在
-  映射，**已有映射优先于该设置**，直到
-  编辑器重启。
+- 该类是 `Config=Engine, DefaultConfig`，所以值保存在**项目的** `Config/DefaultEngine.ini` 里，而不是每用户文件里。签出这个项目的所有人共享同一份配置。
+- **没有持久化的开关。** ThinCustom 产物是 Ephemeral 的 —— 源文件才是创作面 —— 落盘发生在 cook 时、通过[命令行](../tools/commandlet.md)，或通过显式操作。*Default Compiler Backend* 在 1.5.0 取代了旧的 In-Memory 开关。**在 `2.0.0` 中移除：** *Lay Out In-Memory Graphs* （`bLayoutInMemoryGraphs`）。图布局现在总是运行；只有大图的性能保护会跳过它。*Show Ephemeral Materials* 的键在 `2.0.0` 之前叫 `bShowInMemoryMaterialsInContentBrowser` ，加载时自动迁移。
+- `GeneratedShaderDirectory` 只在虚拟着色器目录尚未映射时才被读取。如果本项目已经存在映射，**已有映射优先于该设置**，直到编辑器重启。
 - 内置着色器库路径设置已在 **1.3.8 移除**；没有替代项。
-- 此对象的 C++ 界面 —— 三个 `TryResolve*` 方法、`NormalizeMappingKey` 和
-  三个 `BuildDefault*Mappings` 辅助函数 —— 记录于[设置 API](../api/settings.md)。
+- 此对象的 C++ 界面 —— 三个 `TryResolve*` 方法、`NormalizeMappingKey` 和三个 `BuildDefault*Mappings` 辅助函数 —— 记录于[设置 API](../api/settings.md)。
 
 <a id="example"></a>
 
@@ -203,10 +155,7 @@ InstanceSubfolder=Instances
 bSyncSourceReferencesOnAssetRename=True
 ```
 
-ini 键就是原始 C++ 标识符，包括布尔属性上的 `b` 前缀 —— `bAutoCompileOnSave`，
-而不是 `AutoCompileOnSave`。三张映射表和 *Preprocessor Defines* 是容器属性；
-请在 Project Settings 面板里编辑，让编辑器写回它们。手写条目使用
-`+Key=((…))` 形式：
+ini 键就是原始 C++ 标识符，包括布尔属性上的 `b` 前缀 —— `bAutoCompileOnSave`，而不是 `AutoCompileOnSave`。三张映射表和 *Preprocessor Defines* 是容器属性；请在 Project Settings 面板里编辑，让编辑器写回它们。手写条目使用 `+Key=((…))` 形式：
 
 ```ini
 +PreprocessorDefines=(("MOONTOON_LEGACY_TOON", "1"))
@@ -216,10 +165,7 @@ ini 键就是原始 C++ 标识符，包括布尔属性上的 `b` 前缀 —— `
 
 ## DreamShader Custom Pass
 
-旁边还有第二个设置对象：`UDreamPassSettings`，位于 `DreamShaderPass` 运行时
-模块，在 *Project Settings ▸ DreamPlugin ▸ DreamShader Custom Pass*。它保存在同一个
-`DefaultEngine.ini` 的 `[/Script/DreamShaderPass.DreamPassSettings]` 节，并配置
-[Custom Pass 运行时](../runtime/index.md)。它在每个引擎上都存在；UE 5.8 以下没人读它。
+旁边还有第二个设置对象：`UDreamPassSettings`，位于 `DreamShaderPass` 运行时模块，在 *Project Settings ▸ DreamPlugin ▸ DreamShader Custom Pass*。它保存在同一个 `DefaultEngine.ini` 的 `[/Script/DreamShaderPass.DreamPassSettings]` 节，并配置 [Custom Pass 运行时](../runtime/index.md)。它在每个引擎上都存在；UE 5.8 以下没人读它。
 
 | 分类 | 配置属性 | 类型 | 默认值 | 作用 |
 | :-- | :-- | :-- | :-- | :-- |

@@ -1,8 +1,3 @@
----
-title: "禁用诊断"
-description: "禁用诊断"
----
-
 <a id="disabling-diagnostics"></a>
 
 # 禁用诊断
@@ -18,9 +13,7 @@ description: "禁用诊断"
 | `code; // disable_warning DSH5251` | 该行上的那个警告 |
 | `// disable_error DSH4210` 单独占一行 | 下一行包含代码的那个错误（中间的空行或普通注释不算；`///` 行算） |
 
-列表是以逗号或空格分隔的代码；大小写不敏感。不是代码的词会
-[`DSH7236`](../diagnostics/DSH7xxx.md#dsh7236) 并被忽略，完全不含代码的列表也会被忽略 ——
-两者都不会禁用“所有内容”。`#pragma` 行可以位于文件作用域中的任何位置；其位置无关紧要。
+列表是以逗号或空格分隔的代码；大小写不敏感。不是代码的词会 [`DSH7236`](../diagnostics/DSH7xxx.md#dsh7236) 并被忽略，完全不含代码的列表也会被忽略 —— 两者都不会禁用“所有内容”。`#pragma` 行可以位于文件作用域中的任何位置；其位置无关紧要。
 
 ```hlsl
 #pragma disable_warning(DSH9011)        // this material is slow to compile on purpose
@@ -37,8 +30,7 @@ float Helper(float x) { return x; }
 ## 禁用的作用
 
 - **警告**不会被报告：不在编译结果中，不在桥接写入的诊断中，也不在编辑器日志中。
-- **错误**不会被报告**且不会被计入**：本应因它而停止的阶段会继续。该错误所涉及的内容随后就由编译器自行处理 —— 后续阶段可能会改为报告其他内容。当某个阶段离开它就无法继续且没有其他说明时，编译最终仍会以该被禁用的错误失败，并随后给出
-  `(The source disables DSHnnnn, but the compile could not go on past it.)`。
+- **错误**不会被报告**且不会被计入**：本应因它而停止的阶段会继续。该错误所涉及的内容随后就由编译器自行处理 —— 后续阶段可能会改为报告其他内容。当某个阶段离开它就无法继续且没有其他说明时，编译最终仍会以该被禁用的错误失败，并随后给出 `(The source disables DSHnnnn, but the compile could not go on past it.)`。
 - **信息**无法被禁用 —— 流水线会回读其中一些（被跳过的资产、先编译的父级）。
 
 <a id="where-the-lists-are-read-from"></a>
@@ -49,9 +41,7 @@ float Helper(float x) { return x; }
 
 为另一个源文件而首先编译的源文件（`.dsi` 的父级）使用其自身的列表编译，而不是请求它的源文件的列表。
 
-没有位置的项目级警告 —— [`DSH9011`](../diagnostics/DSH9xxx.md#dsh9011)、
-[`DSH9012`](../diagnostics/DSH9xxx.md#dsh9012)、`DSH8155` —— 只能通过 `#pragma
-disable_warning` 禁用。
+没有位置的项目级警告 —— [`DSH9011`](../diagnostics/DSH9xxx.md#dsh9011)、 [`DSH9012`](../diagnostics/DSH9xxx.md#dsh9012)、`DSH8155` —— 只能通过 `#pragma disable_warning` 禁用。
 
 <a id="see-also"></a>
 

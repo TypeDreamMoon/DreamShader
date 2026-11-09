@@ -1,8 +1,3 @@
----
-title: "缓存"
-description: "缓存"
----
-
 <a id="caching"></a>
 
 # 缓存
@@ -79,8 +74,7 @@ source path    ->  project-relative, forward slashes  ->  DreamShader.SourceFile
 > 更改键的组成会使每个现有戳记失效。这为每个资产一次性付出一次重建的代价，正是预期的效果。
 
 > [!NOTE]
-> 编辑 `.dsh` 会使导入它的每个源失效，但头文件自身从不生成任何内容：直接交给编译器时它会是 [`DSH8296`](../diagnostics/DSH8xxx.md#dsh8296)。
-> 开启 **Auto Compile On Save** 后，保存头文件会将直接或通过另一个头文件导入它的每个源排入队列，这些编译会发现它们的键已改变。否则，依赖项会在它们自身被编译时重建：在它们自己保存时，由启动扫描或更改构建键覆盖的设置后的扫描，材质内容浏览器的编译按钮，[命令行工具](../tools/commandlet.md)，或烘焙。
+> 编辑 `.dsh` 会使导入它的每个源失效，但头文件自身从不生成任何内容：直接交给编译器时它会是 [`DSH8296`](../diagnostics/DSH8xxx.md#dsh8296)。开启 **Auto Compile On Save** 后，保存头文件会将直接或通过另一个头文件导入它的每个源排入队列，这些编译会发现它们的键已改变。否则，依赖项会在它们自身被编译时重建：在它们自己保存时，由启动扫描或更改构建键覆盖的设置后的扫描，材质内容浏览器的编译按钮，[命令行工具](../tools/commandlet.md)，或烘焙。
 
 当一个批次同时包含一个文件及其依赖项——它导入的头文件、`.dsi` 的父级、`.dsp` 命名的材质——该批次会**按依赖项先编译的顺序排列** *(自 1.8.0 起)*。这不是小事：一个调用 `ShaderFunction` 的材质会将其调用节点绑定到实时的 `UMaterialFunction` 资产上——发射器从对象读取引脚，而不是从源读取——因此先编译调用方会将其绑定到该函数接口的*上一个*版本。在单个文件内，发射器保持相同顺序，在调用方之前构建文件另一个产物所调用的函数；互相调用的两个函数是 [`DSH8299`](../diagnostics/DSH8xxx.md#dsh8299)。处于导入循环中的文件按遍历到达它们的顺序保留；编译本身会以 [`DSH4211`](../diagnostics/DSH4xxx.md#dsh4211) 拒绝该循环。
 
@@ -98,14 +92,11 @@ source path    ->  project-relative, forward slashes  ->  DreamShader.SourceFile
 | 每个 `Shader = "..."`：引用、其虚拟路径，以及快照输入的哈希——文件及其按相对路径包含的所有内容的文本和相对路径，以及每个按虚拟路径包含的内容背后的文本，该虚拟路径既不是 `/Engine/` 也不是 `/Plugin/` | 编辑了 `.usf` 或它包含的任何内容 |
 | 每个被 `hlsl` 块包含的文件：其相对于 `.dsp` 文件夹的路径，以及其输入的相同哈希——写在 `.dsp` 中的 HLSL 已在键中，作为 `.dsp` 的文本 | 编辑了被包含的文件，或它包含的任何内容 |
 
-这正是让 [bridge](../../tools/bridge.md#custom-pass-shader-files) 能在每次
-`.usf` 保存时以及每次重建其命名的材质后，排队一个非强制的 `.dsp` 的原因：不会移动上述任何一项的更改会被跳过。
-预检查插槽所用的着色器格式不在键中。
+这正是让 [bridge](../tools/bridge.md#custom-pass-shader-files) 能在每次 `.usf` 保存时以及每次重建其命名的材质后，排队一个非强制的 `.dsp` 的原因：不会移动上述任何一项的更改会被跳过。预检查插槽所用的着色器格式不在键中。
 
 匹配的键不足以跳过管线：插槽注册表还必须仍然持有它的每个 HLSL 通道，位于资产记录的插槽中，并带有通过预检查的快照及其在磁盘上的文件，且每个导出的缓冲区都必须有其渲染目标。被删除的注册表，或丢失了插槽的合并，会在下次编译时重建，而不是被隐藏在未更改的键后面。
 
-通过 [`UE.DreamPassBuffer`](../builtins/dream-pass.md#uedreampassbuffer) 读取导出缓冲区的 `.dss`
-会按节点并入管线的对象路径、缓冲区、它是否被导出、其格式以及渲染目标的路径，因此更改导出的 `.dsp` 会重建材质。
+通过 [`UE.DreamPassBuffer`](../builtins/dream-pass.md#uedreampassbuffer) 读取导出缓冲区的 `.dss` 会按节点并入管线的对象路径、缓冲区、它是否被导出、其格式以及渲染目标的路径，因此更改导出的 `.dsp` 会重建材质。
 
 <a id="where-the-metadata-lives"></a>
 
@@ -118,12 +109,7 @@ source path    ->  project-relative, forward slashes  ->  DreamShader.SourceFile
 | `DreamShader.SourceFile` | 源路径相对于项目目录的路径，使用正斜杠。项目外的源保留其绝对路径。 |
 | `DreamShader.SourceHash` | 八位十六进制 CRC32。仅在非空时写入。 |
 
-存储 *项目相对* 路径是故意的：在另一台机器上的检出，或移动后的项目
-目录，仍会将其生成的资产识别为自己的——[所有权
-守卫](regeneration.md#ownership-guard) 和 *Make Ephemeral* 会读取此键。哈希随它一起传递：
-构建键按相同的项目相对路径命名每个文件，因此在另一位置的检出
-会跳过已是最新的内容 *（2.0.0 – 2.1.0 在那里使用绝对路径，这样的检出会重建每个
-资产一次）*。
+存储 *项目相对* 路径是故意的：在另一台机器上的检出，或移动后的项目目录，仍会将其生成的资产识别为自己的——[所有权守卫](regeneration.md#ownership-guard) 和 *Make Ephemeral* 会读取此键。哈希随它一起传递：构建键按相同的项目相对路径命名每个文件，因此在另一位置的检出会跳过已是最新的内容 *（2.0.0 – 2.1.0 在那里使用绝对路径，这样的检出会重建每个资产一次）*。
 
 哪些资产会被标记，以及何时：
 
@@ -138,22 +124,12 @@ source path    ->  project-relative, forward slashes  ->  DreamShader.SourceFile
 | 导出缓冲区的渲染目标 *(2.1.0)* | 仅路径，从不标记哈希——它会随 `.dsp` 的每次编辑而移动——以及 `DreamShader.PassPipeline`，即它所属管线的对象路径 |
 
 > [!NOTE]
-> 直到 1.8.0，仅内存的 Graph 材质或函数仅标记源 **路径**，
-> 因此跳过永远不会对它触发。代价是没有任何东西能说明这样的资产
-> 是否是最新的——材质内容浏览器会永远将每一个都报告为过期。现在每个生成的
-> 资产在两种模式下都携带其哈希，而 *意为* "无论如何都重建" 的入口点
-> 会强制越过跳过（见下文）。
+> 直到 1.8.0，仅内存的 Graph 材质或函数仅标记源 **路径**，因此跳过永远不会对它触发。代价是没有任何东西能说明这样的资产是否是最新的——材质内容浏览器会永远将每一个都报告为过期。现在每个生成的资产在两种模式下都携带其哈希，而 *意为* "无论如何都重建" 的入口点会强制越过跳过（见下文）。
 
-ThinCustom 实例还会将源路径和哈希作为只读 `UPROPERTY` 携带——
-`SourceFilePath` 和 `SourceHash`，类别 `DreamShader`——因此它们在细节面板中可见，
-无需检查包元数据。`SourceFilePath` 保存 **完整规范化** 的源路径，而不是
-元数据存储的项目相对形式；`SourceHash` 是相同的八位十六进制值。参见
-[`UDreamShaderMaterialInstance`](../api/material-instance.md)。
+ThinCustom 实例还会将源路径和哈希作为只读 `UPROPERTY` 携带—— `SourceFilePath` 和 `SourceHash`，类别 `DreamShader`——因此它们在细节面板中可见，无需检查包元数据。`SourceFilePath` 保存 **完整规范化** 的源路径，而不是元数据存储的项目相对形式；`SourceHash` 是相同的八位十六进制值。参见 [`UDreamShaderMaterialInstance`](../api/material-instance.md)。
 
 > [!NOTE]
-> `DreamShader.SourceFile` 兼作 **所有权标记**。它的存在告诉
-> DreamShader 某个资产是它自己可以覆盖的，也是 *Make Ephemeral*
-> 所过滤的依据。参见 [Regeneration](regeneration.md#ownership-guard)。
+> `DreamShader.SourceFile` 兼作 **所有权标记**。它的存在告诉 DreamShader 某个资产是它自己可以覆盖的，也是 *Make Ephemeral* 所过滤的依据。参见 [Regeneration](regeneration.md#ownership-guard)。
 
 <a id="when-regeneration-is-skipped"></a>
 
@@ -169,9 +145,7 @@ ThinCustom 实例还会将源路径和哈希作为只读 `UPROPERTY` 携带—�
 | 4 | 存储的源路径等于正在编译的源的项目相对路径，**忽略大小写** |
 | 5 | 存储的 `DreamShader.SourceHash` 等于新哈希，**区分大小写** |
 
-跳过被报告为信息 [`DSH8237`](../diagnostics/DSH8xxx.md#dsh8237)，并且产品结果
-行读取 `Skipped {ObjectPath} from {File}; source hash is unchanged (build key {BuildKey}).` 在比较哈希之前，如果另一个编辑器拥有写入此项目生成资产的权限，则一次可能写入磁盘的构建会被跳过
-（[`DSH8209`](../diagnostics/DSH8xxx.md#dsh8209)）。
+跳过被报告为信息 [`DSH8237`](../diagnostics/DSH8xxx.md#dsh8237)，并且产品结果行读取 `Skipped {ObjectPath} from {File}; source hash is unchanged (build key {BuildKey}).` 在比较哈希之前，如果另一个编辑器拥有写入此项目生成资产的权限，则一次可能写入磁盘的构建会被跳过（[`DSH8209`](../diagnostics/DSH8xxx.md#dsh8209)）。
 
 失败的包保存会清除内存中的源哈希，因此再次编译同一源会在没有 `-Force` 的情况下重试生成和保存。源所有者和输出摘要保持不变：失败保存后所做的手动编辑仍会停止重新生成。失败的批处理会使每个参与的资产失效，包括可能已经到达磁盘的包。管线在跳过之前还会验证其导出渲染目标的持久化配置，因此部分保存的批处理可以在重启编辑器后修复。
 
@@ -282,5 +256,5 @@ DreamShader.SourceHash   9f2c41ab
 - [`UDreamShaderMaterialInstance`](../api/material-instance.md)——`SourceFilePath` 和 `SourceHash`
 - [生成的 HLSL](generated-hlsl.md)——Custom 节点代码，以及它所取代的 1.x 包含文件
 - [Commandlet](../tools/commandlet.md)——无头编译和强制
-- [HLSL 通道](../../runtime/hlsl.md)——其输入由 `.dsp` 的键覆盖的快照
+- [HLSL 通道](../runtime/hlsl.md)——其输入由 `.dsp` 的键覆盖的快照
 - [项目设置](../settings/project.md)——自动编译和防抖

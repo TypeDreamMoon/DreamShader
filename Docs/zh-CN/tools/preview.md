@@ -1,8 +1,3 @@
----
-title: "预览"
-description: "预览"
----
-
 <a id="preview"></a>
 
 # 预览
@@ -130,20 +125,11 @@ description: "预览"
 GPU 就绪状态在该帧的复制命令之后于渲染线程上轮询，因此复用回读缓冲区不会把上一帧已完成的栅栏误认为当前帧的完成信号。游戏线程只检查异步结果。在捕获期间断开连接会安全地释放挂起的结果，而无效的渲染目标纹理会报告错误，而不是让捕获一直挂起。
 
 > [!WARNING]
-> **请使用正方形 `width`/`height`。** 预览通过 `FThumbnailPreviewScene` 进行渲染，其
-> 投影矩阵构建为 `FReversedZPerspectiveMatrix(halfFov, 1, 1, near)` — 宽高比
-> 是硬编码的，*不会*取自视图矩形。因此，非正方形的渲染目标并不会显示更多场景；
-> 它会把球体拉伸成椭圆。这没有任何诊断提示。请请求正方形帧，如果其填充的表面
-> 不是正方形，则在客户端一侧进行加黑边处理。
+> **请使用正方形 `width`/`height`。** 预览通过 `FThumbnailPreviewScene` 进行渲染，其投影矩阵构建为 `FReversedZPerspectiveMatrix(halfFov, 1, 1, near)` — 宽高比是硬编码的，*不会*取自视图矩形。因此，非正方形的渲染目标并不会显示更多场景；它会把球体拉伸成椭圆。这没有任何诊断提示。请请求正方形帧，如果其填充的表面不是正方形，则在客户端一侧进行加黑边处理。
 
 场景的材质接口在提交一帧后有意**不**清除；清除它会与仍在执行中的渲染命令产生竞态。
 
-源文件的编译方式为交互式编译：即一个 `ThinCustom` 产物 **Ephemeral**，因此
-预览永远不会将其写入磁盘；一个 `Graph` 后端材质和一个 `.dsi` 实例则是普通资产，
-会像任何编译保存它们一样被保存 *(自 2.0.0 起)*。未更改的源文件会被构建键跳过，
-除非请求强制进行。结果有意地类型化为材质*接口*，因为
-默认的 `ThinCustom` 后端产生的是一层薄薄的材质实例而非 `UMaterial`，而 `.dsi`
-则会生成一个材质实例。
+源文件的编译方式为交互式编译：即一个 `ThinCustom` 产物 **Ephemeral**，因此预览永远不会将其写入磁盘；一个 `Graph` 后端材质和一个 `.dsi` 实例则是普通资产，会像任何编译保存它们一样被保存 *(自 2.0.0 起)*。未更改的源文件会被构建键跳过，除非请求强制进行。结果有意地类型化为材质*接口*，因为默认的 `ThinCustom` 后端产生的是一层薄薄的材质实例而非 `UMaterial`，而 `.dsi` 则会生成一个材质实例。
 
 <a id="output"></a>
 
@@ -154,9 +140,7 @@ GPU 就绪状态在该帧的复制命令之后于渲染线程上轮询，因此�
 | `<Project>/Saved/DreamShader/Bridge/Preview/` | 渲染后的 PNG |
 | `<Project>/Saved/DreamShader/Bridge/preview.json` | 结果清单 |
 
-PNG 文件名为 `<sanitized source stem>-<crc32 of the project-relative path>.png`，其中
-CRC 打印为八位小写十六进制数字。如果源文件的主干部分清洗后为空，则生成
-`DreamShaderPreview-<crc32>.png`。
+PNG 文件名为 `<sanitized source stem>-<crc32 of the project-relative path>.png`，其中 CRC 打印为八位小写十六进制数字。如果源文件的主干部分清洗后为空，则生成 `DreamShaderPreview-<crc32>.png`。
 
 `preview.json` 字段：
 
@@ -194,23 +178,18 @@ CRC 打印为八位小写十六进制数字。如果源文件的主干部分清�
 | `previewFrame` | 出 | *（仅 png 编码）* 帧元数据，随后立即以带标签的二进制消息发送 PNG |
 | `probeState` | 出 | 探针是 `attached`、`pending` 还是 `cleared` |
 
-`previewControl` 读取 `requestId`、`stream`、`frameRate`、`orbitYaw`、`orbitPitch`、`width`、
-`height`、`mesh` 和 `ackFrameIndex`；除 `requestId`/`ackFrameIndex` 之外的每个字段在省略时都保持其
-当前值。与活动会话不匹配的 `requestId` 会被忽略。
+`previewControl` 读取 `requestId`、`stream`、`frameRate`、`orbitYaw`、`orbitPitch`、`width`、 `height`、`mesh` 和 `ackFrameIndex`；除 `requestId`/`ackFrameIndex` 之外的每个字段在省略时都保持其当前值。与活动会话不匹配的 `requestId` 会被忽略。
 
 <a id="frame-pacing"></a>
 
 ### 帧节奏
 
-流式传输既受确认门控，也受速率限制。只有在**两个**条件同时满足时才会开始新的一帧：客户端已确认上一帧，且帧间隔已过去。
-间隔为 `1 / frameRate` 秒，`frameRate` 被限制在 `[0.25, 60.0]`。
+流式传输既受确认门控，也受速率限制。只有在**两个**条件同时满足时才会开始新的一帧：客户端已确认上一帧，且帧间隔已过去。间隔为 `1 / frameRate` 秒，`frameRate` 被限制在 `[0.25, 60.0]`。
 
 流式传输期间的任何错误都会关闭流式传输并发送错误 `previewResult`。
 
 > [!NOTE]
-> 60 FPS 的上限之所以能够达到，仅仅是因为预览运行在它自己的每帧计时器上。
-> 如果共用桥接的 0.1 秒请求计时器，则无论 `frameRate` 要求多少，
-> 每个会话都会被限制在 10 FPS。
+> 60 FPS 的上限之所以能够达到，仅仅是因为预览运行在它自己的每帧计时器上。如果共用桥接的 0.1 秒请求计时器，则无论 `frameRate` 要求多少，每个会话都会被限制在 10 FPS。
 
 <a id="diagnostics"></a>
 
@@ -236,8 +215,7 @@ CRC 打印为八位小写十六进制数字。如果源文件的主干部分清�
 | `Generated material '{ObjectPath}' could not be loaded.` | 编译成功但对象未能加载 |
 | `Compiled preview material for {ObjectPath}.` | 成功；任何编译消息都会附加其后 |
 
-源文件由编译自身的前半部分解析 — 预处理器、前端、绑定器、`import`
-头文件单独解析 — 因此预览与编译对于某个文件会构建哪个资产不可能产生分歧。1.x 预览会剥离 `import` 行并运行 1.x 解析器 *(2.0.0 之前)*。
+源文件由编译自身的前半部分解析 — 预处理器、前端、绑定器、`import` 头文件单独解析 — 因此预览与编译对于某个文件会构建哪个资产不可能产生分歧。1.x 预览会剥离 `import` 行并运行 1.x 解析器 *(2.0.0 之前)*。
 
 <a id="rendering"></a>
 
@@ -272,33 +250,26 @@ CRC 打印为八位小写十六进制数字。如果源文件的主干部分清�
 | `DreamShader preview WebSocket: {Message}` | 显示 / 错误 | 每个请求的结果 |
 | `DreamShader preview: {Message}` | 显示 / 错误 | 每个请求的结果，请求文件路径 |
 
-无法解析的入站消息会得到 `previewResult` 响应，其状态为 `error`，
-消息为 `Invalid DreamShader preview request JSON.`
+无法解析的入站消息会得到 `previewResult` 响应，其状态为 `error`，消息为 `Invalid DreamShader preview request JSON.`
 
 <a id="limits"></a>
 
 ## 限制
 
-- **仅支持材质来源** — `.dss`、`.dsi`、`.dsm`。`.dsf`、`.dsh` 或 `.dsp` 完全无法预览；
-  也没有函数预览。
+- **仅支持材质来源** — `.dss`、`.dsi`、`.dsm`。`.dsf`、`.dsh` 或 `.dsp` 完全无法预览；也没有函数预览。
 - 尺寸在两个维度上都被限制为 `[64, 2048]`。
-- 运动模糊、抗锯齿和动态屏幕百分比均已关闭，因此预览不会与视口捕获
-  逐像素匹配。
+- 运动模糊、抗锯齿和动态屏幕百分比均已关闭，因此预览不会与视口捕获逐像素匹配。
 - 插件侧没有俯仰角限制。
 - Alpha 通道会被丢弃 — 半透明材质会针对固定的清除颜色进行预览。
-- 一次性路径会阻塞，直到所有着色器都编译完成；在冷着色器缓存上这可能会耗费
-  很长时间。
-- 只能有一个异步回读处于未完成状态；启动第二个会返回
-  `A preview readback is already in flight.`
+- 一次性路径会阻塞，直到所有着色器都编译完成；在冷着色器缓存上这可能会耗费很长时间。
+- 只能有一个异步回读处于未完成状态；启动第二个会返回 `A preview readback is already in flight.`
 - 请求文件传输会完全忽略 `orbitYaw` 和 `orbitPitch`。
 
 <a id="example"></a>
 
 ## 示例
 
-由 bridge 请求文件驱动的一次性渲染。将其放入
-`<Project>/Saved/DreamShader/Bridge/Requests/`，可使用任意 `.json` 名称；轮询器会处理它，
-然后将其删除。
+由 bridge 请求文件驱动的一次性渲染。将其放入 `<Project>/Saved/DreamShader/Bridge/Requests/`，可使用任意 `.json` 名称；轮询器会处理它，然后将其删除。
 
 ```json
 {
