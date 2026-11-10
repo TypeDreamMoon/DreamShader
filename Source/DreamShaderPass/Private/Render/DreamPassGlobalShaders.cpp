@@ -225,9 +225,8 @@ namespace UE::DreamPass
 			const FSceneView& View = Context.GetView();
 			const FSnapshotPass& Pass = Context.Pass;
 
-			// Null at BeginView, where the renderer has not created it yet; the registry makes any use of `View` in such
-			// a pass a compile error, so nothing reads the empty binding.
-			Parameters.View = View.ViewUniformBuffer;
+			// The view's own is null at BeginView, where the renderer has not created it yet; that point makes one of its own.
+			Parameters.View = Context.Injection.ViewUniformBuffer.IsValid() ? Context.Injection.ViewUniformBuffer : View.ViewUniformBuffer;
 			Parameters.SceneTextures = Context.Injection.SceneTextures
 				? Context.Injection.SceneTextures
 				: CreatePlaceholderSceneTextures(GraphBuilder, View.GetFeatureLevel());

@@ -1387,7 +1387,7 @@ pass Draw : mesh
 		Table.Add(TEXT("Names.DSH7319.SlotParameterPrefix"), TEXT("DSH7319"), Raised, Free, ComputeWith(TEXT("    param DP_Gain = 1.0;\n")));
 		Table.Add(TEXT("Names.DSH7319.Entry"), TEXT("DSH7319"), Raised, Free, ComputeWith(TEXT("    param BlurCS = 1.0;\n")));
 		Table.Add(TEXT("Names.DSH7319.SlotEntry"), TEXT("DSH7319"), Raised, Free, TEXT("buffer Mask : R8;\nbuffer Soft : R8;\n\npass Blur : compute\n{\n    Shader = \"Blur.usf\";\n    Entry = BlurCS;\n    read Source = Mask;\n    write DreamPassMainCS = Soft;\n}\n"));
-		Table.Add(TEXT("Names.DSH7319.ViewAtBeginView"), TEXT("DSH7319"), Raised, Free, TEXT("buffer Mask : R8;\nbuffer Soft : R8;\n\npass Blur : compute\n{\n    Injection = BeginView;\n    Shader = \"Blur.usf\";\n    Entry = BlurCS;\n    read Source = Mask;\n    write Result = Soft;\n    param View = 1.0;\n}\n"));
+		Table.Add(TEXT("Names.DSH7319.ViewAtBeginView"), TEXT("DSH7319"), Clean, Free, TEXT("buffer Mask : R8;\nbuffer Soft : R8;\n\npass Blur : compute\n{\n    Injection = BeginView;\n    Shader = \"Blur.usf\";\n    Entry = BlurCS;\n    read Source = Mask;\n    write Result = Soft;\n    param View = 1.0;\n}\n"));
 		Table.Add(TEXT("Names.DSH7319.ViewElsewhere"), TEXT("DSH7319"), Clean, Free, TEXT("buffer Mask : R8;\nbuffer Soft : R8;\n\npass Blur : compute\n{\n    Injection = AfterOpaque;\n    Shader = \"Blur.usf\";\n    Entry = BlurCS;\n    read Source = Mask;\n    write Result = Soft;\n    param View = 1.0;\n}\n"));
 		// A material pass's reads, write and params are three kinds of name of their own (they are no `#define`s).
 		Table.Add(TEXT("Names.DSH7319.MaterialKeepsKindsApart"), TEXT("DSH7319"), Clean, Free, TEXT("buffer Mask : R8;\n\npass Show : fullscreen\n{\n    Material = \"PP_Show\";\n    read Mask;\n    write SceneColor;\n    param Mask = 1.0;\n}\n"));
@@ -3501,7 +3501,7 @@ bool FDreamShaderLangPipelineInlineTextTest::RunTest(const FString& Parameters)
 			TestEqual(TEXT("to the entry's line"), SourceLine, FindLineOf(Source, TEXT("void BlurCS(")));
 			TestFalse(TEXT("as the pass's own code"), bShared);
 			TestFalse(TEXT("the comment line of the generated header maps nowhere"), Root.MapLine(1, SourceLine, bShared));
-			TestFalse(TEXT("no View guard away from BeginView"), Root.Text.Contains(TEXT("DP_NoViewAtBeginView")));
+			TestFalse(TEXT("the root defines no View of its own"), Root.Text.Contains(TEXT("#define View")));
 		}
 	}
 	// The pass's own block of whole functions: the shared code with every entry blanked, then the block as it is.
@@ -3546,7 +3546,8 @@ bool FDreamShaderLangPipelineInlineTextTest::RunTest(const FString& Parameters)
 			TestFalse(TEXT("the signature maps nowhere"), Root.MapLine(FindRootLineOf(Root, TEXT("void DreamPassMainPS(")), SourceLine, bShared));
 		}
 	}
-	// A compute body form at BeginView: its group size from Threads, and the View guard around its own code only.
+	// A compute body form at BeginView: its group size from Threads, and `View` left to the view uniform buffer, in the
+	// shared code and in its own.
 	{
 		FPipelineBind Early;
 		const FString EarlySource = Dsp(TEXT(R"DSP(
@@ -3568,7 +3569,7 @@ pass Early : compute
 
     hlsl
     {
-        Result[Id.xy] = 1;
+        Result[Id.xy] = Helper(View.ViewSizeAndInvSize.z);
     }
 }
 )DSP"));
@@ -3580,10 +3581,13 @@ pass Early : compute
 			TestTrue(TEXT("the compute signature, with the pass's group size"), Root.Text.Contains(TEXT("[numthreads(4, 4, 1)]\nvoid DreamPassMainCS(uint3 Id : SV_DispatchThreadID, uint3 GroupId : SV_GroupID, uint3 LocalId : SV_GroupThreadID, uint LocalIndex : SV_GroupIndex)")));
 			TestTrue(TEXT("threads past the dispatch return first"), Root.Text.Contains(TEXT("if (any(Id >= DP_DispatchSize.xyz))")));
 			const int32 Helper = FindRootLineOf(Root, TEXT("View.PreExposure"));
-			const int32 Guard = FindRootLineOf(Root, TEXT("#define View DP_NoViewAtBeginView"));
-			const int32 Statement = FindRootLineOf(Root, TEXT("Result[Id.xy] = 1;"));
-			const int32 Unguard = FindRootLineOf(Root, TEXT("#undef View"));
-			TestTrue(TEXT("the guard after the shared code, around the pass's own"), Helper != INDEX_NONE && Helper < Guard && Guard < Statement && Statement < Unguard);
+			const int32 Statement = FindRootLineOf(Root, TEXT("Result[Id.xy] = Helper(View.ViewSizeAndInvSize.z);"));
+			TestTrue(TEXT("the shared code, then the pass's own"), Helper != INDEX_NONE && Helper < Statement);
+			TestFalse(TEXT("no View guard at BeginView"), Root.Text.Contains(TEXT("#define View")) || Root.Text.Contains(TEXT("#undef View")));
+			int32 SourceLine = 0;
+			bool bShared = true;
+			TestTrue(TEXT("the statement maps back to the .dsp"), Root.MapLine(Statement, SourceLine, bShared)
+				&& SourceLine == FindLineOf(EarlySource, TEXT("Result[Id.xy] = Helper(")) && !bShared);
 		}
 	}
 	return true;

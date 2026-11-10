@@ -659,7 +659,6 @@ namespace UE::DreamShader::Lang
 			return false;
 		}
 		const bool bCompute = Pass.Kind.Equals(TEXT("compute"), ESearchCase::CaseSensitive);
-		const bool bAtBeginView = Pass.Injection.Equals(TEXT("BeginView"), ESearchCase::CaseSensitive);
 		const bool bShared = Source.Equals(IR::PassHlslSource::Shared, ESearchCase::CaseSensitive);
 
 		FRootWriter Writer(OutRoot);
@@ -695,13 +694,6 @@ namespace UE::DreamShader::Lang
 				}
 			}
 			Writer.Mapped(Shared, Pipeline.SharedHlslLine, /*bShared*/ true);
-		}
-
-		// ---- the guard: at BeginView the view uniform buffer does not exist yet, so a use of `View` in this pass's own code
-		// is an undeclared name rather than a crash. Not around the shared functions, which other passes may use with it.
-		if (bAtBeginView)
-		{
-			Writer.Generated(TEXT("#define View DP_NoViewAtBeginView\n")); /* I18N-EXEMPT: HLSL */
 		}
 
 		// ---- this pass's code
@@ -765,11 +757,6 @@ namespace UE::DreamShader::Lang
 			}
 			Writer.Mapped(Pass.InlineHlsl, Pass.InlineHlslLine, /*bShared*/ false);
 			Writer.Generated(TEXT("}\n")); /* I18N-EXEMPT: HLSL */
-		}
-
-		if (bAtBeginView)
-		{
-			Writer.Generated(TEXT("#undef View\n")); /* I18N-EXEMPT: HLSL */
 		}
 		return true;
 	}

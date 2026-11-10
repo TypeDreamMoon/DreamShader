@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Changed
+
+- **An HLSL pass at `BeginView` can read `View`.** The renderer makes a view's uniform buffer only after
+  `BeginView`, so a `compute` pass or a `fullscreen` pass with HLSL could not use `View` there: a use was a compile
+  error at its line, or `DSH8318` when it came through the file's `hlsl` block, and a pass that needed the camera had
+  it fed in as a `param` from a Blueprint. The runtime now binds a view uniform buffer of its own at `BeginView`, made
+  from the camera: the transforms, the camera's position and directions, the view rect, the times and the frame
+  counters. What only the renderer fills later is not in it — sky, atmosphere, lights, exposure: `View.PreExposure`
+  is 1, and `View.Prev*` equal this frame's transforms. `DSH8318` is retired, a binding may be named `View` at
+  `BeginView` as anywhere else, and a pipeline with a `BeginView` HLSL pass rewrites its slot's registry section the
+  next time it compiles.
+
 ### Fixed
 
 - **An HLSL pass at `BeginView` crashed the editor on an engine that adds scene textures of its own.** The scene

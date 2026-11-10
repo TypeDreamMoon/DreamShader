@@ -117,7 +117,7 @@ namespace UE::DreamShader::Lang
 		FString Text;
 		TArray<FHlslRootLineRun> Runs;
 
-		/** The `.dsp` line a line of Text came from; false for a line the compiler wrote (a body-form signature, the View guard). */
+		/** The `.dsp` line a line of Text came from; false for a line the compiler wrote (the header comment, a body-form signature). */
 		bool MapLine(int32 RootLine, int32& OutSourceLine, bool& bOutShared) const;
 	};
 
@@ -126,9 +126,7 @@ namespace UE::DreamShader::Lang
 	 * DreamShader_Plan/10 section 4 lays it out:
 	 *
 	 *     the file's hlsl block, every function a Shared pass names as its Entry blanked to spaces (lines kept)
-	 *     #define View DP_NoViewAtBeginView                     (a pass at BeginView only)
 	 *     this pass's code: its Shared entry, moved here; its own block; or its statements inside the generated function
-	 *     #undef View                                          (a pass at BeginView only)
 	 *
 	 * The entry keeps its own name; the slot's registry section renames it to the slot's entry point, as it does for a
 	 * shader file. False with OutError when the pass is not inline or its Shared entry is not in the file's block -- both

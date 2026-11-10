@@ -2,7 +2,7 @@
 //
 // See DreamShaderPassSlotRegistry.h.
 //
-// Diagnostics owned by this file: DSH8315-DSH8329 (DSH8318: an inline pass at BeginView whose slot binds `View`).
+// Diagnostics owned by this file: DSH8315-DSH8329 (DSH8318 retired: every injection point binds a view uniform buffer).
 //
 // THE PRE-CHECK, and why it is built the way it is (DreamShader_Plan/04 section 3, SP-3).
 //
@@ -40,8 +40,6 @@
 // a deviation from the `#line` the design proposed, with the same result and one text for the check and the commit. An
 // error in the file block's shared code fails every inline pass that reaches it alike, and is said once with the passes it
 // failed (DSH8322); the engine drops code no entry reaches before the shader compiler reads a slot (r.Shaders.RemoveDeadCode).
-// At BeginView the root's View guard covers the pass's own code only, so a slot whose compiled parameters still name
-// `View` reached it through shared code: refused (DSH8318).
 
 #include "Pass/DreamShaderPassSlotRegistry.h"
 
@@ -271,14 +269,6 @@ namespace UE::DreamShader::Editor::Compiler
 
 			const FString MainEntry = GetMainEntryName(bCompute);
 			if (!Candidate.Entry.Equals(MainEntry, ESearchCase::CaseSensitive) && !Define(Candidate.Entry, MainEntry))
-			{
-				return false;
-			}
-
-			// At BeginView the view uniform buffer does not exist yet; a use of `View` is an undeclared name, not a crash. An
-			// inline root guards its pass's code itself, after the shared code of its `.dsp`, which other passes may use with
-			// a view (the pre-check checks what the slot binds instead).
-			if (!Candidate.bInline && Pass.Injection == EDreamPassInjection::BeginView && !Define(TEXT("View"), TEXT("DP_NoViewAtBeginView")))
 			{
 				return false;
 			}
@@ -537,8 +527,6 @@ namespace UE::DreamShader::Editor::Compiler
 			bool bInUserFile = false;
 			/** Inline: in the shared code of the `.dsp`'s file block, which every inline pass compiles. */
 			bool bShared = false;
-			/** Inline, at BeginView: the slot compiled, and binds the view uniform buffer (DSH8318). */
-			bool bViewAtBeginView = false;
 		};
 
 		/**
@@ -658,14 +646,6 @@ namespace UE::DreamShader::Editor::Compiler
 				{
 					Out.Message = FString::Printf(TEXT("%s(%d): %s"), *ErrorPath, Out.Line, *Out.Message); /* I18N-EXEMPT: quotes a shader compiler message */
 				}
-			}
-
-			// Inline at BeginView: the guard in the root covers the pass's own code, not the shared functions it may call.
-			if (bSucceeded && Candidate.bInline && Candidate.bAtBeginView && Job->Output.ParameterMap.ContainsParameterAllocation(TEXT("View")))
-			{
-				FPrecheckError& Out = OutErrors.AddDefaulted_GetRef();
-				Out.bViewAtBeginView = true;
-				return false;
 			}
 
 			return bSucceeded;
@@ -1305,14 +1285,6 @@ namespace UE::DreamShader::Editor::Compiler
 					}
 					for (const FPrecheckError& Error : Errors)
 					{
-						if (Error.bViewAtBeginView)
-						{
-							Diagnostics.Error(TEXT("DSH8318"), Candidate.Span, FText::Format(
-								LOCTEXT("PrecheckViewAtBeginView", "[{0}] pass '{1}' runs at BeginView, where the view uniform buffer does not exist yet, and its slot uses 'View' all the same: a function of the file's 'hlsl' block that the pass calls reads it. Give that function what it needs as a parameter, or move the pass to a later injection point."),
-								FText::FromName(Format),
-								FText::FromString(Candidate.PassName)));
-							continue;
-						}
 						if (Error.bShared)
 						{
 							FSharedError* Same = SharedErrors.FindByPredicate([&Error](const FSharedError& Known)

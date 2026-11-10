@@ -955,7 +955,6 @@ namespace UE::DreamShader::Editor::Compiler
 				// The root the slot compiles, generated from the `.dsp`'s text; its file and folder are the planner's
 				// (PlanDreamPassSlots). A root that cannot be built leaves the text empty, which the planner reports.
 				Candidate.bInline = true;
-				Candidate.bAtBeginView = IRPass.Injection.Equals(TEXT("BeginView"), ESearchCase::CaseSensitive);
 				FString RootError;
 				if (!Lang::BuildDreamPassInlineHlslRoot(Payload, Index, Candidate.Inline, RootError))
 				{

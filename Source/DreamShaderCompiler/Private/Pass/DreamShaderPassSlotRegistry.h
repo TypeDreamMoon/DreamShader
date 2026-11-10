@@ -116,12 +116,10 @@ namespace UE::DreamShader::Editor::Compiler
 		/**
 		 * The pass's HLSL is in its `.dsp`: the snapshot's root is generated -- Inline.Text, with the map of its lines back to
 		 * the `.dsp` that the pre-check reports through -- and ShaderFilePath is the `.dsp`. Entry is the slot's own entry
-		 * point for a body form, whose function the root names so. At BeginView the root guards the pass's own code against
-		 * `View` itself (the section does not), and the pre-check refuses a slot that binds the view through shared code.
+		 * point for a body form, whose function the root names so.
 		 */
 		bool bInline = false;
 		Lang::FHlslInlineRoot Inline;
-		bool bAtBeginView = false;
 
 		// --- filled by PlanDreamPassSlots ---
 		int32 Slot = INDEX_NONE;

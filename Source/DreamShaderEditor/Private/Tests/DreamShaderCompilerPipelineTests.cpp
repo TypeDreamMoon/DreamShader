@@ -14,7 +14,7 @@
 //                    line), a pipeline without HLSL passes (DSH8339); nothing written         [NonNullRHI]
 //   RegistryPrecheckInline
 //                    the same for HLSL in the `.dsp` (DreamShader_Plan/10): every form compiles, an error at its
-//                    `.dsp` line, one in the shared code said once for every pass, the view at BeginView (DSH8318)
+//                    `.dsp` line, one in the shared code said once for every pass, the view at BeginView compiles
 //                                                                                              [NonNullRHI]
 //   Registry         a compile that commits slots: the section text, slot stability across an edit, the slot freed,
 //                    the garbage of a deleted pipeline, an unreadable Registry.json           [NonNullRHI]
@@ -25,6 +25,7 @@
 // (FScopedDreamPassRegistryBackup). Every other test leaves Registry.json as it found it, and Asset and RegistryPrecheck
 // say so.
 
+#include "DreamShaderPassRegistryBackup.h"
 #include "DreamShaderTestCommon.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -256,64 +257,7 @@ namespace UE::DreamShader::Editor::Private::CompilerPipelineTests
 		FScopedPassLayers& operator=(const FScopedPassLayers&) = delete;
 	};
 
-	/**
-	 * The project's slot registry folder (<DShader>/.dreampass) copied away, and put back however the scope is left. The
-	 * slot shaders the editor has loaded follow the files: with a renderer, RewriteDreamPassRegistryFiles writes the
-	 * registry files from the restored Registry.json and hot reloads them, and the copy is laid over them once more so that
-	 * every file is byte for byte what it was.
-	 */
-	struct FScopedDreamPassRegistryBackup
-	{
-		FString Directory;
-		FString Backup;
-		bool bHadDirectory = false;
-		bool bBackedUp = false;
-
-		FScopedDreamPassRegistryBackup()
-		{
-			IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-			Directory = FPaths::ConvertRelativePathToFull(::UE::DreamPass::GetUserShaderDirectory());
-			Backup = FPaths::ConvertRelativePathToFull(FPaths::Combine(
-				FPaths::ProjectSavedDir(),
-				TEXT("DreamShaderTests"),
-				FString::Printf(TEXT("DreamPassBackup-%s"), *FGuid::NewGuid().ToString(EGuidFormats::Digits))));
-			bHadDirectory = PlatformFile.DirectoryExists(*Directory);
-			if (bHadDirectory)
-			{
-				PlatformFile.CreateDirectoryTree(*Backup);
-				bBackedUp = PlatformFile.CopyDirectoryTree(*Backup, *Directory, /*bOverwriteAllExisting*/ true);
-			}
-		}
-
-		/** False when the folder exists and could not be copied: nothing may be committed then. */
-		bool IsValid() const { return !bHadDirectory || bBackedUp; }
-
-		~FScopedDreamPassRegistryBackup()
-		{
-			if (!IsValid())
-			{
-				return;
-			}
-			IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-			PlatformFile.DeleteDirectoryRecursively(*Directory);
-			if (bHadDirectory)
-			{
-				PlatformFile.CreateDirectoryTree(*Directory);
-				PlatformFile.CopyDirectoryTree(*Directory, *Backup, /*bOverwriteAllExisting*/ true);
-				if (FApp::CanEverRender())
-				{
-					int32 Reserved = 0;
-					Lang::FLangDiagnosticSink Ignored;
-					Compiler::RewriteDreamPassRegistryFiles(Reserved, Ignored);
-					PlatformFile.CopyDirectoryTree(*Directory, *Backup, /*bOverwriteAllExisting*/ true);
-				}
-				PlatformFile.DeleteDirectoryRecursively(*Backup);
-			}
-		}
-
-		FScopedDreamPassRegistryBackup(const FScopedDreamPassRegistryBackup&) = delete;
-		FScopedDreamPassRegistryBackup& operator=(const FScopedDreamPassRegistryBackup&) = delete;
-	};
+	using Tests::FScopedDreamPassRegistryBackup;
 
 	/** Registry.json's text, or empty when there is none. */
 	inline FString ReadRegistryJson()
@@ -1522,6 +1466,7 @@ bool FDreamShaderCompilerPipelineInlinePrecheckTest::RunTest(const FString& Para
 		.Replace(TEXT(".rgb - 1.0, 0.0), 1.0);"), TEXT(".rgb - PL2Bad(1.0), 0.0), 1.0);"))
 		.Replace(TEXT("Result[Id.xy] = Sum * Strength;"), TEXT("Result[Id.xy] = Sum * Strength * PL2Bad(1.0);"))
 		.Replace(TEXT("DreamPassLoad(Glow, Pixel * 0.5).rgb, 1.0);"), TEXT("DreamPassLoad(Glow, Pixel * 0.5).rgb * PL2Bad(1.0), 1.0);"));
+	// At BeginView `View` is bound as at every other point, in the pass's own code and through a shared function alike.
 	const FString Early = TEXT(
 		"buffer Mask : R8;\n"
 		"\n"
@@ -1540,7 +1485,7 @@ bool FDreamShaderCompilerPipelineInlinePrecheckTest::RunTest(const FString& Para
 		"\n"
 		"    hlsl\n"
 		"    {\n"
-		"        Result[Id.xy] = PL2Exposure();\n"
+		"        Result[Id.xy] = PL2Exposure() * View.ViewSizeAndInvSize.z;\n"
 		"    }\n"
 		"}\n");
 
@@ -1612,12 +1557,13 @@ bool FDreamShaderCompilerPipelineInlinePrecheckTest::RunTest(const FString& Para
 		TestEqual(FString::Printf(TEXT("each naming the four passes it failed (%s)"), *Describe(Diagnostics)), NamingTheFour, AtTheLine);
 	}
 
-	// ---- BeginView: the view reached through a shared function is refused after the compile
+	// ---- BeginView: the view, in the pass's own code and through a shared function, compiles
 	{
 		Lang::FLangDiagnosticSink Diagnostics;
 		int32 Checked = 0;
-		TestFalse(TEXT("a BeginView pass that reads View through shared code fails the pre-check"), Compiler::CheckDreamShaderPipelineSlots(EarlyPath, TArray<FName>(), Diagnostics, Checked));
-		TestTrue(FString::Printf(TEXT("with DSH8318 (%s)"), *Describe(Diagnostics)), HasCode(Diagnostics, TEXT("DSH8318"), Lang::ELangSeverity::Error));
+		TestTrue(FString::Printf(TEXT("a BeginView pass that reads View passes the pre-check (%s)"), *Describe(Diagnostics)),
+			Compiler::CheckDreamShaderPipelineSlots(EarlyPath, TArray<FName>(), Diagnostics, Checked));
+		TestEqual(TEXT("its one HLSL pass checked"), Checked, 1);
 	}
 
 	TestTrue(TEXT("a pre-check writes nothing: Registry.json is as it was"), ReadRegistryJson().Equals(RegistryBefore, ESearchCase::CaseSensitive));
@@ -1842,8 +1788,8 @@ bool FDreamShaderCompilerPipelineRegistryTest::RunTest(const FString& Parameters
 	}
 	if (SeedSlot != INDEX_NONE)
 	{
-		TestTrue(TEXT("a pass at BeginView makes `View` a name that does not compile"),
-			FindRegistrySection(/*bCompute*/ true, SeedSlot).Contains(TEXT("#define View DP_NoViewAtBeginView\n"), ESearchCase::CaseSensitive));
+		TestFalse(TEXT("a pass at BeginView leaves `View` to the view uniform buffer"),
+			FindRegistrySection(/*bCompute*/ true, SeedSlot).Contains(TEXT("#define View "), ESearchCase::CaseSensitive));
 	}
 	if (ToneSlot != INDEX_NONE)
 	{

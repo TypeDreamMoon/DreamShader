@@ -3298,7 +3298,7 @@ namespace UE::DreamShader::Lang::Private
 
 			// In a `.usf` pass the slot's registry #defines more than the bound names (DreamShaderCompiler,
 			// Pass/DreamShaderPassSlotRegistry.cpp, BuildSlotSection): a read also as <Name>Size and <Name>UVRect, a write as
-			// <Name>Size, the Entry as the slot's fixed entry point, and `View` at BeginView; DP_ names are the slot's own
+			// <Name>Size, and the Entry as the slot's fixed entry point; DP_ names are the slot's own
 			// parameters. A name that meets one of those fails the slot when the pipeline compiles, so it is refused here too,
 			// where a check without a compile sees it. Two bound names that meet were said above.
 			if (bHlsl)
@@ -3395,7 +3395,6 @@ namespace UE::DreamShader::Lang::Private
 				}
 
 				const FString MainEntry = KindIndex == Kind::Compute ? FString(TEXT("DreamPassMainCS")) : FString(TEXT("DreamPassMainPS"));
-				const bool bAtBeginView = InjectionIndexOf(Pass) == Injection::BeginView;
 				for (int32 Index = 0; Index < Macros.Num(); ++Index)
 				{
 					const FSlotMacro& Macro = Macros[Index];
@@ -3409,10 +3408,6 @@ namespace UE::DreamShader::Lang::Private
 						|| (!Pass.Entry.IsEmpty() && Macro.Name.Equals(Pass.Entry, ESearchCase::CaseSensitive)))
 					{
 						Clash = LOCTEXT("SlotNameEntry", "'{0}' is a name of pass '{1}' in its HLSL slot, and so is its entry point: the slot's registry renames the Entry to the slot's own entry function with a #define of that name; rename the binding.");
-					}
-					else if (bAtBeginView && Macro.Name.Equals(TEXT("View"), ESearchCase::CaseSensitive))
-					{
-						Clash = LOCTEXT("SlotNameView", "'{0}' is a name of pass '{1}' in its HLSL slot, and at BeginView the slot's registry defines 'View' itself, so that a use of the view uniform buffer, which does not exist yet there, fails to compile; rename the binding.");
 					}
 					else
 					{
@@ -4426,15 +4421,14 @@ namespace UE::DreamShader::Lang::Private
 			}
 			else if (bSlotPass && InjectionIndex == Injection::BeginView)
 			{
-				// The view uniform buffer is created after BeginView, so the slot's registry defines `View` as a name that does
-				// not exist for a pass there (Pass/DreamShaderPassSlotRegistry.cpp, BuildSlotSection): a use is a compile error,
-				// not a placeholder. DP_Time stands in for the timing values (Shaders/Pass/DreamPass.ush).
+				// The renderer creates the view's uniform buffer after BeginView; the runtime binds one it makes from the camera
+				// instead (DreamShaderPass, Render/DreamPassSceneViewExtension.cpp, CreateBeginViewUniformBuffer).
 				Diagnostics.Info(
 					TEXT("DSH7326"),
 					File,
 					Span,
 					FText::Format(
-						LOCTEXT("FullscreenShaderBeginViewNoView", "At BeginView neither the scene textures nor the view uniform buffer exist yet: the SceneTextures pass '{0}' sees are placeholders, a use of 'View' in its '.usf' does not compile, and DP_Time gives the time."),
+						LOCTEXT("SlotPassBeginView", "At BeginView the scene textures do not exist yet: the SceneTextures pass '{0}' sees are placeholders. Its 'View' holds the camera -- transforms, position, view rect, time -- but nothing the renderer adds later: no sky or atmosphere, PreExposure 1, and last frame's transforms equal this frame's."),
 						FText::FromString(Pass.Name)));
 			}
 			else if (bSlotPass && InjectionIndex == Injection::BeforeBasePass)

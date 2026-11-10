@@ -69,6 +69,38 @@ namespace UE::DreamPass::Private
 		const int32 ViewIndex = View.Family->Views.IndexOfByKey(&View);
 		return Data->Snapshot->FindView(ViewIndex);
 	}
+
+	/**
+	 * A view uniform buffer for BeginView, where the renderer has not made the view's own yet: FViewInfo::InitRHIResources
+	 * runs after the PreRenderView_RenderThread calls (R/Private/SceneRendering.cpp:4422, 5468). Made the way the Slate
+	 * renderer makes one (SlateRHIRenderer/Private/SlateRHIRenderingPolicy.cpp:736): the default constructor binds the
+	 * engine's placeholder to every texture, sampler and buffer of the struct, and SetupCommonViewUniformBufferParameters
+	 * fills the camera -- the transforms, the camera and view origins, the view rect, the frame's time and counters.
+	 *
+	 * What only the renderer fills stays at its default: no sky, atmosphere, light or distance field data, PreExposure 1
+	 * (the renderer's value lives in its own FViewInfo), and the previous frame's transforms equal this frame's. This
+	 * family's scene texture extent is not public either; the last one the renderer set stands in, grown to cover the view
+	 * rect -- there are no scene textures at BeginView for it to describe.
+	 */
+	static TUniformBufferRef<FViewUniformShaderParameters> CreateBeginViewUniformBuffer(const FSceneView& View, const FIntRect& ViewRect)
+	{
+		const FSceneTexturesConfig& Config = FSceneTexturesConfig::Get();
+		const FIntPoint BufferSize(
+			FMath::Max3(Config.Extent.X, ViewRect.Max.X, 1),
+			FMath::Max3(Config.Extent.Y, ViewRect.Max.Y, 1));
+
+		FViewUniformShaderParameters Parameters;
+		View.SetupCommonViewUniformBufferParameters(
+			Parameters,
+			BufferSize,
+			FMath::Max(int32(Config.NumSamples), 1),
+			ViewRect,
+			View.ViewMatrices,
+			View.ViewMatrices);
+		Parameters.PreExposure = 1.0f;
+		Parameters.OneOverPreExposure = 1.0f;
+		return TUniformBufferRef<FViewUniformShaderParameters>::CreateUniformBufferImmediate(Parameters, UniformBuffer_SingleFrame);
+	}
 }
 
 FDreamPassSceneViewExtension::FDreamPassSceneViewExtension(const FAutoRegister& AutoRegister, UWorld* InWorld, UDreamPassSubsystem* InSubsystem)
@@ -232,10 +264,18 @@ void FDreamPassSceneViewExtension::PreRenderView_RenderThread(FRDGBuilder& Graph
 		return;
 	}
 
+	// The view uniform buffer below is made only for a view that runs passes here.
+	const FViewState& State = Family->Views[ViewIndex];
+	if (!State.IsActive() || State.bFinished || !State.Snapshot->HasPassesAt(EDreamPassInjection::BeginView))
+	{
+		return;
+	}
+
 	FInjectionContext Context;
 	Context.Injection = EDreamPassInjection::BeginView;
 	Context.SceneViewRect = GetRenderViewRect(InView);
 	Context.SceneTextureViewRect = Context.SceneViewRect;
+	Context.ViewUniformBuffer = Private::CreateBeginViewUniformBuffer(InView, Context.SceneViewRect);
 	RunInjection(GraphBuilder, *Family, ViewIndex, Context);
 }
 

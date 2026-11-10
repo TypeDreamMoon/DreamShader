@@ -10,8 +10,9 @@
 //
 // They render, so they need a real RHI. NonNullRHI keeps them out of the -nullrhi suite; the Rhi preset of
 // Tools/Tests/Invoke-DreamShaderTests.ps1 runs them with -RenderOffscreen -d3d12. What the subsystem decides without
-// rendering is DreamShader.Pass.Logic.*. The HLSL passes, exported buffers and the documented example pipelines come later;
-// the end of the file lists them.
+// rendering is DreamShader.Pass.Logic.*. Of the HLSL passes there is one case so far, a compute pass reading `View` at
+// BeginView; the rest of them, exported buffers and the documented example pipelines come later -- the end of the file
+// lists them.
 
 #include "CoreMinimal.h"
 
@@ -29,6 +30,11 @@
 #include "DreamPassTypes.h"
 #include "DreamPassVolume.h"
 #include "Materials/MaterialExpressionDreamPassOutput.h"
+
+#include "DreamShaderCompilePipeline.h"
+#include "DreamShaderPassRegistryBackup.h"
+#include "DreamShaderProductIndex.h"
+#include "DreamShaderTestCommon.h"
 
 #include "AssetCompilingManager.h"
 #include "Components/SceneCaptureComponent2D.h"
@@ -1826,6 +1832,105 @@ bool FDreamShaderPassLifecycleInvalidPassTest::RunTest(const FString& Parameters
 
 	Activate(Fixture.GetSubsystem(), Pipeline);
 	Fixture.ExpectFrame(TEXT("the passes around the broken ones run and the broken ones do not"), FLinearColor::Green, ETexelMatch::Exact);
+	return true;
+}
+
+// ------------------------------------------------------------------------------------------------------------ HLSL passes
+
+// An HLSL pass runs in a slot of the project's slot registry, which only the `.dsp` compiler writes: these cases compile a
+// `.dsp` into it (and put the registry back afterwards), then render the pipeline it made.
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderPassRenderComputeViewAtBeginViewTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Pass.Render.Compute.ViewAtBeginView",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter | EAutomationTestFlags::NonNullRHI)
+
+bool FDreamShaderPassRenderComputeViewAtBeginViewTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private::PassRenderTests;
+	using UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2Fixture;
+	using UE::DreamShader::Editor::Private::Tests::FScopedDreamPassRegistryBackup;
+	namespace Compiler = ::UE::DreamShader::Editor::Compiler;
+	namespace Lang = ::UE::DreamShader::Lang;
+
+	// Declared first, destroyed last: the registry is restored after the source fixture has deleted the asset and the source.
+	FScopedDreamPassRegistryBackup RegistryBackup;
+	if (!TestTrue(TEXT("the slot registry folder was copied away before anything is committed to it"), RegistryBackup.IsValid()))
+	{
+		return false;
+	}
+
+	FDreamShaderCompile2Fixture Source(TEXT("CP_RenderViewAtBeginView"), TEXT("PassRender"), TEXT("dsp"));
+	AddExpectedError(Source.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
+	AddExpectedError(TEXT("package was marked as deleted in editor, but has been modified on disk"), EAutomationExpectedErrorFlags::Contains, -1);
+
+	// The renderer makes the view's uniform buffer after BeginView; the runtime binds one it makes from the camera there.
+	// The capture looks down +X at 64 by 64 texels, so a `View` with the camera in it writes yellow, an empty one black.
+	if (!Source.WriteSource(*this, TEXT(
+		"#pragma pipeline(Views = SceneCapture)\n"
+		"\n"
+		"buffer Mark : RGBA16F;\n"
+		"\n"
+		"pass Seed : compute\n"
+		"{\n"
+		"    Injection = BeginView;\n"
+		"    Dispatch = Mark;\n"
+		"    write Result = Mark;\n"
+		"\n"
+		"    hlsl\n"
+		"    {\n"
+		"        const float Forward = View.ViewForward.x > 0.99 ? 1.0 : 0.0;\n"
+		"        const float Size = abs(View.ViewSizeAndInvSize.x - 64.0) < 0.5 ? 1.0 : 0.0;\n"
+		"        Result[Id.xy] = float4(Forward, Size, 0.0, 1.0);\n"
+		"    }\n"
+		"}\n"
+		"\n"
+		"pass Show : copy\n"
+		"{\n"
+		"    Injection = EndOfView;\n"
+		"    read Mark;\n"
+		"    write SceneColor;\n"
+		"}\n")))
+	{
+		return false;
+	}
+
+	Compiler::FDreamShaderProductIndex::Get().Refresh();
+	Compiler::FDreamShaderLang2PipelineOptions Options;
+	Options.bEmitAssets = true;
+	Options.bForce = true;
+	Compiler::FDreamShaderLang2PipelineResult Run;
+	const bool bBuilt = Compiler::RunDreamShaderLang2Pipeline(Source.GetSourceFilePath(), Options, Run);
+	TArray<FString> Said;
+	bool bNoPrecheck = false;
+	for (const Lang::FLangDiagnostic& Diagnostic : Run.Diagnostics.GetDiagnostics())
+	{
+		Said.Add(Lang::FLangDiagnosticSink::ToWireString(Diagnostic));
+		bNoPrecheck |= Diagnostic.Code.Equals(TEXT("DSH8325"), ESearchCase::CaseSensitive) || Diagnostic.Code.Equals(TEXT("DSH8323"), ESearchCase::CaseSensitive);
+	}
+	if (bNoPrecheck)
+	{
+		AddWarning(FString::Printf(TEXT("No shader format or slot shader type to compile the slot with here; skipped (%s)."), *FString::Join(Said, TEXT(" | "))));
+		return true;
+	}
+	if (!TestTrue(FString::Printf(TEXT("the pipeline builds and commits its slot (%s)"), *FString::Join(Said, TEXT(" | "))), bBuilt))
+	{
+		return false;
+	}
+
+	UDreamPassPipeline* Pipeline = LoadObject<UDreamPassPipeline>(nullptr, *Source.MakeObjectPath(TEXT("CP_RenderViewAtBeginView")));
+	if (!TestNotNull(TEXT("the compiled pipeline loads"), Pipeline) || !TestTrue(TEXT("and passes its own checks"), Pipeline->Validate()))
+	{
+		return false;
+	}
+
+	FPassCaptureFixture Fixture(*this);
+	if (!Fixture.IsReady())
+	{
+		return false;
+	}
+	Activate(Fixture.GetSubsystem(), Pipeline);
+	Fixture.ExpectFrame(TEXT("a compute pass at BeginView reads the camera from View"), FLinearColor::Yellow, ETexelMatch::Exact);
 	return true;
 }
 

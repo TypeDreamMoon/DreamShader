@@ -59,6 +59,12 @@ namespace UE::DreamPass
 
 		/** Depth, GBuffer and velocity stay at render resolution even when the colour chain has been upscaled. */
 		FIntRect SceneTextureViewRect;
+
+		/**
+		 * The view uniform buffer a slot binds as `View`, where the point has to make its own: at BeginView the renderer has
+		 * not created the view's yet. Null everywhere else, where the view's own is bound.
+		 */
+		TUniformBufferRef<FViewUniformShaderParameters> ViewUniformBuffer;
 	};
 
 	struct FViewState
