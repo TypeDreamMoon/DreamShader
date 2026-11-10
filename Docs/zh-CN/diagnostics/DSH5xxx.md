@@ -61,7 +61,7 @@ This Custom node declares no output called '{0}'; its outputs are '{1}'. An outp
 The builtin catalog is empty, so no 'UE.' expression and no material attribute can be resolved; export it with 'dsc export-catalog'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:287`
+**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:288`
 <!-- generated:end DSH5202 -->
 
 **原因。** 绑定器被赋予了空的内置项目录，因此无法解析任何 `UE.` 节点和材质引脚，所有指定它们的项也会报告。对于在编辑器之外运行的工具而言这是正常的；在编译内部则意味着目录未被加载。
@@ -1001,7 +1001,7 @@ This Custom node declares {0} output(s), counted from 0, and this selects output
 The asset of this block and a function this file can call are both named '{0}', which 1.x kept apart; the block is declared as '{1}', and a '.dss' writes that name.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:866`
+**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:867`
 <!-- generated:end DSH5290 -->
 
 **原因。** 规则 L23。一个块构建了一个以此文件可调用的函数命名的资产（例如 `ShaderFunction(Name = ".../MF_X")` 旁边的 `Function MF_X`）。1.x 将资产和函数保存在两个表中，因此两者都存在；2.0 有一个名称表，并且该块的函数被声明为 `<Name>_Asset`，而资产保留其名称。

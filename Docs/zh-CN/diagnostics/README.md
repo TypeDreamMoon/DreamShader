@@ -730,7 +730,6 @@
 | [DSH8315](DSH8xxx.md#dsh8315) | error | 无法读取 Custom Pass 槽位注册表：{0}。未写入任何内容，因为覆盖它会丢失... |
 | [DSH8316](DSH8xxx.md#dsh8316) | error | 通道 '{0}' 需要一个 {1} 槽位，而所有 {2} 均已被占用。请合并通道，运行 'dsc pass-registry -Gc' 以释放槽... |
 | [DSH8317](DSH8xxx.md#dsh8317) | error | 通道 '{0}' 无法映射到其 HLSL 槽位：{1} |
-| [DSH8318](DSH8xxx.md#dsh8318) | error | [{0}] 通道 '{1}' 在 BeginView 处运行，此时视图 uniform buffer 尚不存在，而其槽位使用 'Vi... |
 | [DSH8319](DSH8xxx.md#dsh8319) | error | 通道 '{0}' 在其 '.dsp' 中的 HLSL 无法为其槽位组合起来（其条目不在... |
 | [DSH8320](DSH8xxx.md#dsh8320) | error | '{0}' 通过相对路径包含且未指定任何文件，因此无法构建通道 '{1}' 的快照。 |
 | [DSH8321](DSH8xxx.md#dsh8321) | warning | '{0}' 通过 /Engine/、/Plugin/ 和 /ThirdParty/ 之外的虚拟路径包含，因此通道 '{... 的快照 |

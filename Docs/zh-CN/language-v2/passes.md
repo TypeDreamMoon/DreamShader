@@ -109,7 +109,7 @@ pass Composite : fullscreen
 
 | 注入点 | 在帧里的位置 | 那里有的场景纹理 |
 | :-- | :-- | :-- |
-| `BeginView` | 可见性之前，什么都还没画 | 没有 —— 没有 SceneColor、SceneDepth，也没有 `View` uniform buffer（见 [HLSL pass](../runtime/hlsl.md)） |
+| `BeginView` | 可见性之前，什么都还没画 | 没有 —— 没有 SceneColor，也没有 SceneDepth；`View` 只保存相机，渲染器之后填充的内容一概没有（见 [HLSL passes](../runtime/hlsl.md)） |
 | `BeforeBasePass` | depth prepass 之后 | SceneDepth |
 | `AfterBasePass` | GBuffer 已写、尚未光照 | GBuffer A–F、Velocity、SceneDepth；SceneColor 只有自发光；`r.CustomDepth.Order` 把它排在前面时（开了 DBuffer 贴花的默认）还有 CustomDepth |
 | `AfterOpaque` | 光照、雾、天空已完成，半透明还没有 | 所有不透明的东西、CustomDepth / CustomStencil |

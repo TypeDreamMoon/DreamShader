@@ -17,7 +17,7 @@
 '{0}' is a second material entry; '{1}' above it is already the entry, and one file makes one material.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1235`
+**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1236`
 <!-- generated:end DSH6200 -->
 
 **原因。** 同一文件中有两个导出函数具有签名 `void (inout material)`。该签名*就是*材质入口的声明，因此包含两个此类签名的文件描述了两个材质。消息中会同时列出这两个函数。
@@ -37,7 +37,7 @@
 '{0}' is exported from a file whose entry is '{1}'; a file makes a material or it makes functions, not both. Move it to its own file, or drop 'export' to make it a helper.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1330`
+**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1331`
 <!-- generated:end DSH6201 -->
 
 **原因。** 一个文件同时包含材质入口**和**导出函数、层或层混合。一个文件只能产出一种类型的产品。1.x 的 `.dsm` 是例外：它的 `Shader` 以及旁边的 `ShaderFunction` 和层区块都会被构建，正如 1.x 构建它们那样*(2.0.0 – 2.1.0 在此处同样拒绝它们)*——这也是 `dsc migrate` 无法将此类文件转换为单个 `.dss` 的原因。
@@ -57,7 +57,7 @@
 'extern {0}' has nothing to bind to; add '/// @asset /Game/.../MF_Name' above it.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1163`
+**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1164`
 <!-- generated:end DSH6202 -->
 
 **原因。** 一个 `extern` 原型上方没有 `/// @asset`，因此没有任何可供其绑定的对象。
@@ -77,7 +77,7 @@
 '@layer' makes '{0}' a material layer asset, so it has to be 'export'.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1177`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1205`
+**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1178`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1206`
 <!-- generated:end DSH6203 -->
 
 **原因。** `@layer` 或 `@layerblend` 作用于一个并非 `export` 的函数。这两个指令都命名了文件产出的资产，而只有导出函数才会产出一个资产。
@@ -97,7 +97,7 @@
 A '@layer' function is written 'export void {0}(inout material m)'.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1187`
+**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1188`
 <!-- generated:end DSH6204 -->
 
 **原因。** 一个 `@layer` 函数不具有签名 `void Name(inout material m)`。
@@ -117,7 +117,7 @@ A '@layer' function is written 'export void {0}(inout material m)'.
 A '@layerblend' function is written 'export void {0}(material Base, material Top, ..., inout material Result)': at least one 'material' input and a final 'inout material'.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1215`
+**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1216`
 <!-- generated:end DSH6205 -->
 
 **原因。** 一个 `@layerblend` 函数不具有 `void Name(material A, material B, …, inout material Result)` 的形状：至少一个 `material` 输入，其余每个参数都是输入，以及一个位于末尾的 `inout material`。
@@ -137,7 +137,7 @@ A '@layerblend' function is written 'export void {0}(material Base, material Top
 '{0}' is a builtin operation and cannot be redeclared; rename the function.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:840`
+**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:841`
 <!-- generated:end DSH6206 -->
 
 **原因。** 一个函数使用了某个内置操作的名字进行声明（`dot`、`lerp`、`saturate`、……，以及该语言所拒绝的 GLSL 拼写）。此处没有重载，因此两者在每个调用点都会产生歧义。
@@ -177,7 +177,7 @@ A '@layerblend' function is written 'export void {0}(material Base, material Top
 '{0}' has no body; a prototype has to be 'extern' and carry '/// @asset'.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1264`
+**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1265`
 <!-- generated:end DSH6209 -->
 
 **原因。** 一个函数没有主体且并非 `extern`。通常解析器会先捕获此问题（DSH3208）；这是针对以其他方式到达绑定器的语法树的语义兜底检查。
@@ -197,7 +197,7 @@ A '@layerblend' function is written 'export void {0}(material Base, material Top
 '{0}' is '@custom', so '{1}' becomes an input pin of a Custom node, and a Custom node cannot take a material; pass the fields it needs instead.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1284`
+**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1285`
 <!-- generated:end DSH6210 -->
 
 **原因。** 一个 `/// @custom` 函数将 `material` 作为输入接收（`material m` 或 `inout material m`）。`@custom` 主体会成为一个 Custom 节点，其输入是材质转换器为其指定类型的引脚，并且没有可供其使用的 MaterialAttributes 输入类型。
@@ -1136,7 +1136,7 @@ Expected '(' to open the parameter list of '{0}', found {1}.
 '{0}' reaches itself through the 'UE.' calls lifted out of its body, and each call makes a new custom node, so the graph would never end.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1512`
+**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1513`
 <!-- generated:end DSH6330 -->
 
 **原因.** 一个函数通过从体中提升出来的调用到达自身：被提升的 `UE.` 调用的参数再次调用了该函数。对此类函数的每次调用都是一个带有自己提升输入的新 Custom 节点，因此展开将不会结束。

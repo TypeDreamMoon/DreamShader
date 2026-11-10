@@ -1,4 +1,4 @@
-#dreamdocs-align 1	source=Docs/runtime/hlsl.md	rev=dce3a7afae92	model=deepseek-flash	page=a6ff6a381c07
+#dreamdocs-align 1	source=Docs/runtime/hlsl.md	rev=91dee3448997	model=deepseek-v4.1-flash	page=5ca724e37ed6
 h1	eb8ad3b7a3dd	42119e2a	m
 q	169efa24b490	4d41e9e9	m
 p	99e01787160c	3e91a91b	m
@@ -41,7 +41,7 @@ row2	e2f2d97ef1a1	adc834bf	m
 row2	8271b7ee1331	abc913be	m
 row2	e148bfff5fe9	303dcb52	m
 row2	0e35759c10d6	d0e5a06c	m
-row2	35c81faa9f10	8f85045f	m
+row2	7d7e3f0845e3	27ecc834	m
 row2	286d149bd03b	b5dff802	m
 row2	c1c550554c84	ce96947a	m
 row2	0ea7cc15d07f	786c8d17	m
@@ -52,7 +52,7 @@ row2	9dd6aa872c75	541e044a	m
 row2	604f938d6cc4	5a5e4084	m
 row2	21de82f9256b	859decae	m
 p	c2cb3d07e214	66e5c910	m
-p	a920cd454ceb	f35fe4e5	m
+p	1f4050a089cf	830b5209	m
 h2	32e01bfbed84	311ba758	m
 p	026383c44efe	2261aff9	m
 li	bd3f3c2725cf	8e8994f5	m

@@ -1171,7 +1171,7 @@ Expected a pass kind: fullscreen, compute, mesh, clear or copy, found {1}.
 '#pragma pipeline' configures a Custom Pass pipeline and belongs in a '.dsp' file of its own, and this line is in '{0}'; move it, with the pipeline's buffers and passes, into a '.dsp'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4818`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4812`
 <!-- generated:end DSH3311 -->
 
 **原因。** `#pragma pipeline(...)` 出现在 `.dss`、`.dsh` 或 `.dsi` 中——消息会指出文件名。自定义通道管线是一个独立的源文件：`.dsp` 持有该 pragma 以及管线的参数、缓冲区和通道，并成为一个以该文件命名的 `UDreamPassPipeline`。
@@ -1191,7 +1191,7 @@ Expected a pass kind: fullscreen, compute, mesh, clear or copy, found {1}.
 An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only a '.dsp' file holds, and '{0}' is not one; a pipeline cannot be included.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4831`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4855`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4825`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4849`
 <!-- generated:end DSH3312 -->
 
 **原因。** 一个 `buffer` 或 `pass` 声明，或一个文件级 `hlsl` 块，到达了 `.dss` 或 `.dsh` 的绑定器——即，一个 `.dsp` 被包含了。解析器仅在 `.dsp` 中进行这些声明（在其他地方该文本是 DSH3310），因此这里的唯一途径是某个宿主的包含解析器解析了一个 `.dsp`；编辑器与 `dsc` 的解析器在此发生之前拒绝包含除 `.dsh` 或 `.dss` 之外的任何内容（DSH8295）。它会在 `.dsp` 中报告，每个缓冲区和通道一次，并指出正在编译的文件。

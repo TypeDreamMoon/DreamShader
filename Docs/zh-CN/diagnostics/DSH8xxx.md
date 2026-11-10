@@ -2469,7 +2469,7 @@ The builtin expression catalog came back empty, so nothing that names a 'UE.*' n
 Building '{0}' was cancelled; the asset is as it was before this compile.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:316`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1183`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:684`
+**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:316`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1182`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:684`
 <!-- generated:end DSH8298 -->
 
 **原因。** 用户在编译进度对话框上按了取消。没有任何内容被写入：emit（输出）是运行的最后一个阶段，并且在每个阶段之前以及每个产物之前都会检查取消。
@@ -2511,7 +2511,7 @@ The exported functions {0} call one another in a cycle, so there is no order in 
 '{0}' is a Custom Pass pipeline, which needs Unreal Engine 5.8 or later; this engine has the DreamShaderPass asset types but no runtime to run them, so nothing was built.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1017`
+**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1016`
 <!-- generated:end DSH8300 -->
 
 **原因。** 一个 `.dsp` 在早于 Unreal Engine 5.8 的引擎上被编译。DreamShaderPass 模块在那里会仅以其资产类型构建（`DREAMSHADER_WITH_CUSTOM_PASS` 是 `0`）：没有运行时来运行管线，也没有全局着色器持有 HLSL pass，因此 emitter（发射器）在创建或触碰任何内容之前就会停止。前半部分仍会运行——文件会被解析、格式化并绑定，只是跳过需要运行时的检查（DSH7360）——因此 `check` 可以通过，而 `compile` 不能。
@@ -2531,7 +2531,7 @@ The exported functions {0} call one another in a cycle, so there is no order in 
 Failed to create package '%s'.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1027`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1057`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:341`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:346`
+**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1026`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1056`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:341`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:346`
 <!-- generated:end DSH8301 -->
 
 **原因。** 无法在其 `.dsp` 解析到的路径上创建管线资产。消息 `The pass pipeline for '…' could not be created or reused.` 后面跟着带有其自身代码的原因：当 `CreatePackage` 或 `NewObject` 拒绝了该路径时为 DSH8301 again、`Failed to create package '…'` 或 `Failed to create the pass pipeline '…'`，这种情况很少见；或者当已经有东西位于那里时为 DSH8302 / DSH8303。第三种形式 `'…' does not resolve to a valid asset path` 是目标检查，编译会首先执行该检查，并将其报告为 DSH8200。
@@ -2691,7 +2691,7 @@ Buffer '{0}' is {1} and cannot be exported: materials, Blueprints and UMG read a
 The render target of the exported buffer '{0}' could not be created or reused. {1}
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1162`
+**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1161`
 <!-- generated:end DSH8309 -->
 
 **原因。** 导出的缓冲区的渲染目标——`<Pipeline>_<Buffer>`，位于管线的文件夹中—— 无法创建或接管；其后的句子是原因，带有其代码（DSH8313 或 DSH8314）。渲染目标在写入任何内容之前就已找到或创建，因此管线、槽位注册表和快照保持原样。
@@ -2731,7 +2731,7 @@ The render target of the exported buffer '{0}' could not be created or reused. {
 '{0}' was built but could not be saved with its render targets; its slots are already in the registry. Make the packages writable and compile the source again to retry saving. {1}
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1271`
+**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1270`
 <!-- generated:end DSH8311 -->
 
 **原因。** 管线已构建且其渲染目标已配置，但保存包失败——例如文件因未签出而为只读，或路径不再存在；资产层的原因随后给出。保存之前的一切仍然有效：槽位注册表和快照已写入，在编辑器中槽位着色器已重新编译，内存中的管线已在运行新版本。
@@ -2811,7 +2811,7 @@ Failed to create package '%s'.
 The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose every slot it records; fix the file, or run 'dsc pass-registry -Rebuild'.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:897`
+**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:877`
 <!-- generated:end DSH8315 -->
 
 **原因。** 每次 `.dsp` 编译都会读取项目的槽位注册表 `<DShader>/.dreampass/Registry.json`—— 以给其 HLSL pass 分配槽位，并释放其丢弃的 pass 的槽位——而该文件存在但无法使用：无法打开、不是有效的 JSON（其中留下的合并冲突是常见原因），或某个条目没有槽位编号、管线或 pass。覆盖它会丢失其记录的每一个槽位，因此未写入任何内容。
@@ -2831,7 +2831,7 @@ The Custom Pass slot registry cannot be read: {0}. Nothing was written, because 
 Pass '{0}' needs a {1} slot and all {2} are taken. Merge passes, run 'dsc pass-registry -Gc' to free the slots of pipelines whose source is gone, or raise {3} in the project's Target.cs.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:980`
+**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:960`
 <!-- generated:end DSH8316 -->
 
 **原因。** 新的 HLSL pass 需要一个槽位——`compute` pass 需要计算表中的一个，带 `fullscreen` 且含 `Shader =` 的 pass 需要像素表中的一个——而该表的每个槽位在项目的注册表中都已被占用（默认 32 个计算槽位和 16 个像素槽位）。管线丢弃的 pass 会在该管线再次编译时释放其槽位；被删除或重命名的 `.dsp` 的槽位在被回收之前仍保持占用。
@@ -2851,32 +2851,12 @@ Pass '{0}' needs a {1} slot and all {2} are taken. Merge passes, run 'dsc pass-r
 Pass '{0}' cannot be mapped onto its HLSL slot: {1}
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1060`
+**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1040`
 <!-- generated:end DSH8317 -->
 
-**原因。** 该 pass 的绑定无法写入其槽位的 section —— `#define`将它们映射到槽位的固定参数上；原因如下。一个不是标识符或以 `DP_` 开头的名称；一个被定义两次的名称（`read` 同时也定义了 `<Name>Size` 和 `<Name>UVRect`，`write` `<Name>Size`，以及 `Entry` —— 而 `View` 在 `BeginView` —— 也是槽位中的名称）；超过 8 次读取或 4 次写入；不适合槽位 16 个 `float4` 的参数，或其中包含纹理。绑定器会先拒绝上述每一项（DSH7319、DSH7347），因此两者不一致。
+**原因。** 该 pass 的绑定无法写入其槽位的 section —— 即把绑定映射到槽位固定参数上的 `#define`；原因如下。名称不是标识符或以 `DP_` 开头；名称被定义两次（`read` 也定义了 `<Name>Size` 和 `<Name>UVRect`，`write` 定义 `<Name>Size`，而 `Entry` 也是槽位中的名称）；读取超过 8 次或写入超过 4 次；参数无法放入槽位的 16 个 `float4`，或其中包含纹理。绑定器会先拒绝上述每一项（DSH7319、DSH7347），因此两者不一致。
 
 **修复。** 按原因所述重命名或减少绑定，并用 `.dsp` 报告：绑定器本应拒绝该 pass。
-
-<a id="dsh8318"></a>
-
-## DSH8318
-
-<!-- generated:begin DSH8318 -->
-**严重性** 错误
-
-**消息**
-
-```
-[{0}] pass '{1}' runs at BeginView, where the view uniform buffer does not exist yet, and its slot uses 'View' all the same: a function of the file's 'hlsl' block that the pass calls reads it. Give that function what it needs as a parameter, or move the pass to a later injection point.
-```
-
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1310`
-<!-- generated:end DSH8318 -->
-
-**原因。** 一个位于 `BeginView` 的 pass，其 HLSL 在 `.dsp` 中编译通过，并且其槽位使用了视图 uniform buffer，而该 buffer 在 `BeginView` 时还不存在。该 pass 自身的代码是受保护的 —— 那里的 `View` 会在其所在行产生编译错误 —— 因此该使用来自 pass 所调用的文件 `hlsl` 块中的某个函数。
-
-**修复。** 让该函数以参数形式接收它从视图所需的内容，并传入 pass 在 `BeginView` 时拥有的值（时间则用 `DP_Time`），或将 pass 移到更晚的注入点。
 
 <a id="dsh8319"></a>
 
@@ -2891,7 +2871,7 @@ Pass '{0}' cannot be mapped onto its HLSL slot: {1}
 The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slot (its entry is not in the file's 'hlsl' block); there is nothing to snapshot.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1005`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1014`
+**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:985`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:994`
 <!-- generated:end DSH8319 -->
 
 **原因。** pass 在 `Shader =` 中命名的 `.usf` 在构建其快照时无法被读取。绑定器找到了该文件（缺失的文件是 DSH4408），因此它在这期间丢失或变得不可读：被删除或移动、被另一个程序锁定，或本进程无法读取。对于 HLSL 在 `.dsp` 中的 pass，其快照的根无法由 `.dsp` 的文本拼装：其条目不在该文件的 `hlsl` 块中，绑定器会先报告这一点（DSH4410）。
@@ -2911,7 +2891,7 @@ The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slo
 '{0}' is included by a relative path and names no file, so the snapshot of pass '{1}' cannot be built.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1040`
+**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1020`
 <!-- generated:end DSH8320 -->
 
 **原因。** 该 pass 的 `.usf`，或它包含的某个文件，有一个 `#include "<relative path>"`，其命名的文件相对于存放它的文件不存在。槽位的快照会复制通过相对路径包含的每个文件，因此每个文件都必须存在。该扫描是文本式的，不会求值 `#if`：位于从未被编译的分支中的 include 也会被计入。在 include 所在行报告。
@@ -2931,7 +2911,7 @@ The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slo
 '{0}' is included by a virtual path outside /Engine/, /Plugin/ and /ThirdParty/, so the snapshot of pass '{1}' keeps including the live file: an edit of it later reaches the global shaders without a pre-check. Include it by a relative path to have it copied into the snapshot.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1050`
+**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1030`
 <!-- generated:end DSH8321 -->
 
 **原因。** 该 pass 的 `.usf`，或它包含的某个文件，通过 `/Engine/`、`/Plugin/` 和 `/ThirdParty/` 之外的虚拟路径包含了一个文件 —— 例如 `/Project/...` 这样的项目着色器目录。快照只复制通过相对路径包含的内容，因此该 include 仍指向活动文件。其文本是槽位哈希的一部分，而管线的下一次编译会预先检查对它的编辑；在此之前的编辑器启动或 cook 会在那时的文件状态下编译全局着色器，未经检查 —— 而全局着色器编译失败是致命的。
@@ -2951,7 +2931,7 @@ The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slo
 [{0}] pass '{1}' does not compile in its HLSL slot: {2}
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1338`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1346`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1372`
+**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1310`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1318`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1344`
 <!-- generated:end DSH8322 -->
 
 **原因。** 预检查在槽位中针对方括号内的着色器格式编译了该 pass，着色器编译器拒绝了它；消息的其余部分是编译器自己的内容。`.usf` 中或其快照的某个文件中的错误，会在该文件的行列处报告；写在 `.dsp` 中的 HLSL 中的错误，则在其 `.dsp` 行处报告。文件 `hlsl` 块中共享代码的错误会以相同方式使每个调用它的 pass 失败，并且只报告一次，并列出失败的 pass。没有入口到达的代码不会被编译：引擎在着色器编译器读取槽位之前就将其从槽位中丢弃（`r.Shaders.RemoveDeadCode`），因此尚无 pass 调用的辅助函数不会被检查，无论是在 `.dsp` 中还是在 `.usf` 中。其他地方的一个 —— 槽位的 section、槽位着色器、引擎头文件（此时消息会保留其路径）—— 会在该 pass 处报告，并附注绑定名称可能冲突：每个绑定都是在包含该文件之前创建的 `#define`。没有任何内容被写入：资产、注册表和快照都保持原样，该 pass 的先前版本继续运行。
@@ -2973,7 +2953,7 @@ The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slo
 The {0} slot shader cannot be pre-checked: the global shader type {1} is not registered, or its source no longer includes '{2}'. The DreamShaderPass module is out of step with this compiler; nothing was written.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1263`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1382`
+**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1243`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1354`
 <!-- generated:end DSH8323 -->
 
 **原因。** 预检查需要 DreamShaderPass 模块所注册的槽位着色器 —— 即全局着色器类型 `FDreamPassCS` / `FDreamPassPS`，其 `DreamPassCompute.usf` / `DreamPassPixel.usf` 包含注册表 —— 而该类型未在此进程中注册，或其源无法读取，或不再包含注册表文件。DreamShaderPass 模块未加载，或它与编译器来自插件的不同构建。没有写入任何内容。在 Unreal Engine 5.8 以下，同一段代码会提示 HLSL 槽位需要 5.8；编译和 `check -Shaders` 会在此之前停在 DSH8300。
@@ -2993,7 +2973,7 @@ The {0} slot shader cannot be pre-checked: the global shader type {1} is not reg
 The project targets the shader format {0}, which this machine has no shader compiler for, so the HLSL slots were not pre-checked for it; a cook for that platform compiles them unchecked.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1201`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1223`
+**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1181`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1203`
 <!-- generated:end DSH8324 -->
 
 **原因。** 一个预检查会为项目渲染和烘焙所用的每种格式编译发生变更的槽位——包括活动功能级别的格式，以及活动目标平台所针对的每种格式——而本机没有针对此格式的着色器编译器（其平台的 SDK 或着色器格式未安装）。其他格式的槽位已被检查；针对该平台的烘焙会在未检查的情况下编译它们，而一个在那里编译失败的全局着色器会导致烘焙失败。
@@ -3015,7 +2995,7 @@ The project targets the shader format {0}, which this machine has no shader comp
 There is no shader format to pre-check the HLSL slots with: no active feature level and no target platform has a shader compiler on this machine. Nothing was written, because a slot that never compiled must not reach the global shaders.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1207`
+**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1187`
 <!-- generated:end DSH8325 -->
 
 **原因。** 某个槽位必须被预检查，却没有可用来编译它的着色器格式：该进程不渲染任何内容——`-nullrhi`，`dsc.ps1` 会将其传递给除 `check -Shaders` 之外的每个动词——因此没有任何功能级别会提供一种格式，并且没有任何活动目标平台具有本机可编译的格式。一个从未编译过的槽位绝不能到达全局着色器，因此没有写入任何内容。
@@ -3035,7 +3015,7 @@ There is no shader format to pre-check the HLSL slots with: no active feature le
 '{0}' cannot be written or deleted, so nothing of the slot registry was changed: no snapshot written, no slot deleted, no registry file rewritten. The registry and its snapshots are committed files; a file that is read-only because it is not checked out is the usual reason. Check out the whole .dreampass folder and try again.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1454`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1473`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1652`
+**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1426`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1445`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1624`
 <!-- generated:end DSH8326 -->
 
 **原因。** 槽位注册表的一个文件无法被写入或删除——`Slots/`、 `Registry.json`、`RegistryCompute.ush` 或 `RegistryPixel.ush` 下的快照文件——无论是被 `.dsp` 编译还是被 `pass-registry -Gc` / `-Rebuild` 操作。它们是已提交的文件；某个文件因为未被签出而成为只读，是常见原因。一次编译、`-Gc` 以及 `-Rebuild` 的每个步骤，都会在触碰任何文件之前检查它们将要写入或删除的每个文件，因此上面的消息意味着没有任何内容被更改：没有写入快照、没有删除槽位、没有重写注册表文件。较短的消息 `'<file>' could not be written. ...` 是在该检查通过之后写入失败——文件在此期间被锁定或更改——并且可能使该步骤半途而废：一次编译会在注册表文件之前写入其变更的快照，而 `-Gc` 会在注册表文件之前删除其释放的槽位的快照。
@@ -3055,7 +3035,7 @@ There is no shader format to pre-check the HLSL slots with: no active feature le
 {0} slot {1} of pass '{2}' was freed: the pipeline no longer runs that pass in HLSL there.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1530`
+**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1502`
 <!-- generated:end DSH8327 -->
 
 **原因。** 信息性。一次 `.dsp` 编译释放了其管线持有的某个槽位：该通道被移除或重命名，被移到另一张表（一个 `compute` 通道变成了 `fullscreen` 通道，或反之），或不再运行 HLSL（它现在绘制一个 `Material`）。它的条目及其章节已消失，其快照也已消失，除非同一次编译的某个通道再次取得了该槽位。
@@ -3266,4 +3246,17 @@ HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runti
 **原因。** 信息性。`check -Shaders` 在无 HLSL pass 的 `.dsp` 上运行 —— 没有 `compute` pass，也没有带 `Shader =` 的 `fullscreen` pass —— 因此没有可预检查的槽位。其 pass 绘制材质，这些材质的着色器属于构建它们的源。
 
 **修复。** 无需操作。要检查这些着色器，请对材质的源运行 `./dsc.ps1 check <file>.dss -Shaders`。
+
+<a id="retired-codes"></a>
+
+## 已停用的代码
+
+> 源码中已没有任何引发位置使用这些代码。保留其说明文字，以便重新编号的代码可以重新取用；当某节不再需要时，删除该节。
+
+<a id="dsh8318"></a>
+
+### DSH8318
+
+<!-- retired DSH8318 -->
+**已停用。** 在 2.2.0 及之前，`BeginView` 处的 pass 无法使用 view uniform buffer，因为渲染器只在该点之后才创建它，而此代码会拒绝这样的 pass：其 HLSL 通过文件 `hlsl` 块中的某个函数访问到 `View`。现在运行时在 `BeginView` 处绑定自己的 view uniform buffer，因此 `View` 在每个注入点都存在，不再有任何地方引发此代码。
 

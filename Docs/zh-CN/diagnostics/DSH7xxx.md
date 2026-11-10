@@ -757,7 +757,7 @@ Invalid reflected property target.
 '#pragma material' configures a material, and this file has no 'export void Name(inout material m)' entry to configure.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1367`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1368`
 <!-- generated:end DSH7203 -->
 
 **原因。** 该文件包含 `#pragma material(...)`，但没有可供配置的材质条目。函数库不会成为 `UMaterial`，因此这些设置没有可应用的对象。
@@ -837,7 +837,7 @@ Invalid reflected property target.
 '{0}' is a file-scope variable with no storage class; write 'uniform' for a material parameter or 'static const' for a compile-time constant.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:753`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:754`
 <!-- generated:end DSH7211 -->
 
 **原因。** 文件作用域变量没有存储类别：`float Gain = 1.0;` 或 `static float …`。两者都没有对应的节点。文件作用域的值要么是材质的输入（`uniform`），要么是折叠进材质的常量（`static const`）。
@@ -857,7 +857,7 @@ Invalid reflected property target.
 A file-scope variable of type {0} has no node; a 'uniform' or 'static const' must be numeric, bool, a texture or a sampler.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:780`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:781`
 <!-- generated:end DSH7212 -->
 
 **原因。** 文件作用域变量的类型没有对应的节点：`material`、`Substrate` 值、用户 `struct`、`void`。
@@ -877,7 +877,7 @@ A file-scope variable of type {0} has no node; a 'uniform' or 'static const' mus
 A texture uniform has no HLSL initializer; write its default asset as '/// @default /Game/...'.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:792`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:793`
 <!-- generated:end DSH7213 -->
 
 **原因。** 某个纹理 `uniform` 带有 HLSL 初始化值。纹理没有字面量值。
@@ -897,7 +897,7 @@ A texture uniform has no HLSL initializer; write its default asset as '/// @defa
 '{0}' is a compile-time constant and must be initialised where it is declared.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:803`、`Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:569`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:804`、`Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:569`
 <!-- generated:end DSH7214 -->
 
 **原因。** 某个 `static const`——无论是在文件作用域还是函数内部——没有初始化值。
@@ -937,7 +937,7 @@ A texture uniform has no HLSL initializer; write its default asset as '/// @defa
 A 'uniform' array has no parameter node; declare one uniform per element, or make it 'static const'.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:825`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:826`
 <!-- generated:end DSH7216 -->
 
 **原因。** 某个 `uniform` 被声明为数组。不存在数组参数节点。
@@ -1017,7 +1017,7 @@ A 'uniform' array has no parameter node; declare one uniform per element, or mak
 '@static' asks for a static switch and is only meaningful on a 'uniform bool'.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:814`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:815`
 <!-- generated:end DSH7223 -->
 
 **原因。** `@static` 位于非 `uniform bool` 之上。它要求使用静态开关，而只有布尔参数才能成为静态开关。
@@ -1037,7 +1037,7 @@ A 'uniform' array has no parameter node; declare one uniform per element, or mak
 '@{0}' means nothing here; it belongs on {1}.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:929`、`Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:138`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:930`、`Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:138`
 <!-- generated:end DSH7224 -->
 
 **原因。** `///` 指令被写在了一个它没有任何意义的声明上：`@slider` 写在函数上，`@library` 写在 uniform 上，`@sampler` 写在非纹理的对象上，`@asset` 写在并非 `extern` 原型的函数上，`@library` 或 `@name` 写在并非 `export` 的函数上。该指令会被丢弃。
@@ -1057,7 +1057,7 @@ A 'uniform' array has no parameter node; declare one uniform per element, or mak
 '@static {0}' does not name a parameter of '{1}'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1035`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1057`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1083`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1036`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1058`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1084`
 <!-- generated:end DSH7225 -->
 
 **原因。** `@param <name>` 所指定的名称并非函数的参数。通常是因为参数被重命名了，而注释没有。
@@ -1117,7 +1117,7 @@ A 'uniform' array has no parameter node; declare one uniform per element, or mak
 '@custom' on '{0}' did not make its body opaque; the directive has to sit in the '///' block directly above the declaration.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1301`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1302`
 <!-- generated:end DSH7228 -->
 
 **原因。** `@custom` 被记录在一个函数上，而该函数体是按 DreamShaderLang 解析的，而不是逐字捕获的。解析器只有在 `///` 块中 **紧邻** 声明上方看到 `@custom` 时，才会使函数体不透明。
@@ -1177,7 +1177,7 @@ A 'uniform' array has no parameter node; declare one uniform per element, or mak
 '@static {0}' makes a parameter a static bool pin, which only a 'bool' input can be, and '{0}' is {1}.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1010`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1011`
 <!-- generated:end DSH7231 -->
 
 **原因。** 函数上的 `/// @static <Parameter>` 会使该参数成为 StaticBool 引脚 —— 一个其值用于选择着色器排列的引脚 —— 而所命名的参数不是 `bool`。
@@ -1237,7 +1237,7 @@ A slider range ('@slider', or 'Slider(min, max)' in a 1.x property) is for a sca
 '{0}' asks to generate '{1}', and only a package's header generates material functions; this file is not in one, so nothing is generated. Write an 'export' function (or a 1.x ShaderFunction) to make a material function of your own.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:893`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:894`
 <!-- generated:end DSH7234 -->
 
 **原因。** 一个函数带有 `@generate` —— 即 2.0 `/// @generate` 或 1.x `Generate =` 头 —— 但该文件不在包中。只有包的头才会生成材质函数（[包 ▸ 资源头](../tools/packages.md#asset-headers)）；在其他任何位置，该注解都不起任何作用。
@@ -1257,7 +1257,7 @@ A slider range ('@slider', or 'Slider(min, max)' in a 1.x property) is for a sca
 '#pragma nogeneration' in '{0}' was ignored: it marks the file it is written in, a header builds nothing, and the files that include it are not marked by it. Write it in each of those files instead.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1353`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1354`
 <!-- generated:end DSH7235 -->
 
 **原因。** `#pragma nogeneration` *（2.1.2 之后）* 出现在头文件中。它标记的是写入它的文件；头文件不构建任何内容，而包含它的文件也不会被它标记。
@@ -2059,7 +2059,7 @@ Filter = Stencil(4, 0x0F) | Layer(Enemies | Allies) & List(Visible);
 Mesh pass '{0}' needs 'Filter = ...' to say which primitives it draws: 'Stencil(1)', 'Layer(Name)', 'List(Name)'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3095`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3109`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3921`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4004`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3095`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3109`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3916`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3999`
 <!-- generated:end DSH7315 -->
 
 **原因。** 某个 pass 缺少其类型所需的键；消息会说明是哪一个：
@@ -2156,14 +2156,13 @@ pass Grab      : copy       { read SceneColor; write Half; }
 '{0}' is bound twice in pass '{1}'; inside a pass every input, output and parameter has a name of its own.
 ```
 
-**由以下项引发** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3256`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3339`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3430`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3256`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3339`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3425`
 <!-- generated:end DSH7319 -->
 
 **原因。** 该 pass 绑定的某个名称已被占用。在单个 pass 内，`read`、`write` 或 `param` 绑定的每个名称只使用一次。代码为 `.usf` 的 pass（`compute`，或 `fullscreen` 与 `Shader`）三者共用一个命名空间，因为每个绑定都会成为其 HLSL 槽位的 `#define`；在那里消息还涵盖：
 
 - 以 `DP_` 开头的名称，即槽位自身参数的前缀；
 - 等于该 pass 的 `Entry` 的名称，或槽位自身的入口点 (`DreamPassMainCS`、 `DreamPassMainPS`)；
-- 在 `BeginView` 处的 `View`，其中槽位自身定义了 `View`；
 - 槽位从另一个绑定派生的名称：`read X` 还会定义 `XSize` 和 `XUVRect`， `write Y` 定义 `YSize`。
 
 在材质或 mesh pass 中，读取、写入和参数各自在内部进行检查—— 且忽略大小写：该 pass 将它们作为 Unreal 名称与其材质的 UserSceneTexture 输入和参数匹配，因此 `read Mask` 和 `read mask` 会将同一个输入绑定两次。`.usf` pass 的名称保持其大小写，正如它们所变成的 `#define` 一样。
@@ -2273,7 +2272,7 @@ pass Debug : fullscreen
 A fullscreen material pass needs the scene textures, which do not exist yet at {0}; run '{1}' at AfterBasePass or later.
 ```
 
-**由以下项引发** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4396`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4407`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4391`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4402`
 <!-- generated:end DSH7325 -->
 
 **原因。** 某种类型的 pass 在无法工作的注入点运行。三条消息：
@@ -2297,14 +2296,14 @@ A fullscreen material pass needs the scene textures, which do not exist yet at {
 At AfterBasePass scene colour holds the emissive light only; nothing is lit yet, so pass '{0}' {1} that.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4371`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4419`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4432`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4442`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4452`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4463`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4560`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4366`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4414`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4426`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4436`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4446`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4457`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4554`
 <!-- generated:end DSH7326 -->
 
 **原因。** 通道在其运行位置所看到的内容；文件本身没有错误。消息会说明是哪一种：
 
 - 该通道在 `AfterBasePass` 处读取或写入 `SceneColor`，而在该处它仅保存自发光光照；
 - 带有 `Material` 的 `fullscreen` 通道在 `AfterBasePass` 或 `AfterOpaque` 处运行，而这些位置尚未在此引擎上验证过；`BeforePostProcess` 是已知可正常工作的位置；
-- 一个 HLSL 通道——带有 `Shader` 的 `fullscreen` 通道，或一个 `compute` 通道——在 `BeginView` 处运行，而此处尚不存在任何场景纹理（场景纹理是占位符，且 `View` 完全无法使用： `DP_Time` 代替其时序），或在 `BeforeBasePass` 处运行，而此处只有场景深度；
+- 一个 HLSL 通道——带有 `Shader` 的 `fullscreen` 通道，或一个 `compute` 通道——在 `BeginView` 处运行，而此处尚不存在任何场景纹理（场景纹理是占位符，且 `View` 保存了相机和时间，但不包含渲染器稍后填充的任何内容：没有天空或大气，`PreExposure` 为 1，上一帧的变换与本帧相同），或在 `BeforeBasePass` 处运行，而此处只有场景深度；
 - 在 `BeforeBasePass` 处的 `mesh` 通道针对场景深度（`Depth = TestScene`）进行测试，而场景深度仅保存深度预通道所绘制的内容；
 - 在放大器之后（`PostProcess.ReplaceTonemapper` 到 `PostProcess.AfterFXAA`）的 `mesh` 通道针对场景深度进行测试，而场景深度仍处于渲染分辨率——无论是直接测试，还是通过一份被带入另一尺寸输出的像素中的副本来测试——因此其深度测试的精细程度仅与渲染分辨率相当；
 - 一个 `mesh` 通道写入场景的某个纹理（`SceneColor`，位于 `AfterBasePass` 的 GBuffer， `Translucency`）并针对其自身深度 `Depth = Own(...)` 进行测试，而该深度是从其角落绑定的：在不从场景纹理的角落开始的视图中——分屏的第二个视图、立体声中的右眼——该深度无法到达该视图的像素，运行时会在该处跳过此通道。
@@ -2324,7 +2323,7 @@ At AfterBasePass scene colour holds the emissive light only; nothing is lit yet,
 'CustomStencil' is the stencil half of the custom depth texture, which no pass can bind as a texture of its own, and pass '{0}' {1} it; read it through the scene textures instead: a SceneTexture node in the material, CalcSceneCustomStencil in a '.usf'.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4270`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4330`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4265`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4325`
 <!-- generated:end DSH7327 -->
 
 **原因。** 通道在无法拥有某个内置纹理的位置绑定了它。共有三类消息：
@@ -2348,7 +2347,7 @@ At AfterBasePass scene colour holds the emissive light only; nothing is lit yet,
 (built at runtime)
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4359`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4354`
 <!-- generated:end DSH7328 -->
 
 **原因。** 通道在其运行位置写入了无法写入的内置纹理；消息会说明是哪一种：
@@ -2372,7 +2371,7 @@ At AfterBasePass scene colour holds the emissive light only; nothing is lit yet,
 '{0}' exists at AfterBasePass only when r.CustomDepth.Order draws custom depth before the base pass; where it does not, pass '{1}' reads a cleared placeholder. From AfterOpaque on it always exists.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4302`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4297`
 <!-- generated:end DSH7329 -->
 
 **原因。** 位于 `AfterBasePass` 的通道读取 `CustomDepth`，只有在 `r.CustomDepth.Order` 如此指示时，它才会在基础通道之前被绘制：`0`，或是在启用 DBuffer 贴花时的默认值 `2`。使用 `1`，或使用不带 DBuffer 贴花的 `2` 时，该通道读取的是已清除的占位符。
@@ -2429,7 +2428,7 @@ pass DrawObjects : mesh
 Pass '{0}' reads '{1}', which no pass writes, and '{1}' is 'Clear = None', so what it reads is undefined.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4723`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4717`
 <!-- generated:end DSH7331 -->
 
 **原因。** 某个通道在任何通道写入它之前读取了声明为 `Clear = None` 的缓冲区，这是按帧内顺序（注入点，然后是声明顺序）而言的。共有两类消息：没有任何通道写入它，或者它的第一个写入者在该读取者之后运行。若没有清除值，这种读取所看到的内容是未定义的。
@@ -2449,7 +2448,7 @@ Pass '{0}' reads '{1}', which no pass writes, and '{1}' is 'Clear = None', so wh
 Pass '{0}' reads '{1}' before '{2}' writes it in the frame, so it reads the buffer's 'Clear' value; move the reader after the writer, or read '{1}.Previous'.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4733`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4727`
 <!-- generated:end DSH7332 -->
 
 **原因。** 某个通道在第一个写入它的通道之前读取了缓冲区，这是按帧内顺序（注入点，然后是声明顺序）而言的，因此它读取的是该缓冲区的 `Clear` 值，而非该写入者所绘制的内容。通常这两个通道位于顺序错误的注入点上。
@@ -2469,7 +2468,7 @@ Pass '{0}' reads '{1}' before '{2}' writes it in the frame, so it reads the buff
 Pass '{0}' reads and writes '{1}', and one pass cannot have one texture as its input and its output; write another buffer, or read '{1}.Previous' of a 'History = true' buffer.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4497`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4491`
 <!-- generated:end DSH7333 -->
 
 **原因。** 一个通道读取并写入同一张纹理，而一个 GPU 通道不能将同一张纹理同时作为其输入和输出。`B.Previous` 和 `B` 是两张纹理，不计入。链的颜色也不计入：任何类型的通道——`fullscreen` 或 `compute` 通道，或 `copy`——都可以在写入 `SceneColor` 的同时读取它，并在 `PostProcess.TranslucencyAfterDOF` 处 `Translucency`，因为写入它的通道会绘制到一张临时纹理，之后再被取回。
@@ -2489,7 +2488,7 @@ Pass '{0}' reads and writes '{1}', and one pass cannot have one texture as its i
 '{0}' reads no UserSceneTexture of '{1}': its inputs are {2}.
 ```
 
-**由以下引发** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3563`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3558`
 <!-- generated:end DSH7334 -->
 
 **原因。** 一个 `fullscreen` 通道绑定了 `read X = B`，而其材质没有名为 `X` 的 `UE.UserSceneTexture`；该消息列出了它具有的名称。`X` 是材质中的名称，`B` 是管线的缓冲区，`read B;` 是 `read B = B;` 的简称。实例重命名的输入以新名称计入。对材质从未构建过的 `.dsp` 的 `dsc check` 会从其源读取材质的输入，而看不到它所调用的材质函数内部的 `UE.UserSceneTexture`。
@@ -2513,7 +2512,7 @@ float Halo = UE.UserSceneTexture(UserSceneTexture = "Blurred", Coordinates = UV)
 '{0}' reads the UserSceneTexture '{1}', and pass '{2}' binds nothing to it, so it samples black; add 'read {1} = <Buffer>;'.
 ```
 
-**由以下引发** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3578`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3573`
 <!-- generated:end DSH7335 -->
 
 **原因。** 某个 `fullscreen` 通道的材质读取了该通道未绑定缓冲区的 `UE.UserSceneTexture`。引擎仍会为该输入提供一个槽位，它会采样黑色。
@@ -2533,7 +2532,7 @@ float Halo = UE.UserSceneTexture(UserSceneTexture = "Blurred", Coordinates = UV)
 Fullscreen material pass '{0}' reads {1} buffers, and a post-process material has {2} input slots, shared with its own SceneTexture nodes; split the pass in two, or write it with 'Shader =' (a '.usf' pass reads up to {3}).
 ```
 
-**由以下引发** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3011`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3597`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3011`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3592`
 <!-- generated:end DSH7336 -->
 
 **原因。** 一个带有 `Material` 的 `fullscreen` 通道所需的输入多于后处理材质所拥有的数量。引擎为它提供五个共享的后处理输入槽位：每个读取 `PostProcessInput0` 到 `PostProcessInput4` 的 `SceneTexture` 节点占用一个，而材质的每个 `UE.UserSceneTexture` 输入，无论是否绑定，都占用其余槽位中的一个。有两种消息：该通道读取超过五个缓冲区；或者材质的 `UserSceneTexture` 输入无法与它自己的 `SceneTexture` 节点并存——一个为场景颜色读取 `PostProcessInput0` 的材质只剩下四个。
@@ -2553,7 +2552,7 @@ Fullscreen material pass '{0}' reads {1} buffers, and a post-process material ha
 '{0}' is a {1} material, and a fullscreen pass draws a Post Process one: '#pragma material(Domain = PostProcess)'.
 ```
 
-**由以下引发** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3547`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3542`
 <!-- generated:end DSH7337 -->
 
 **原因。** 一个 `fullscreen` 通道绘制了一个域不是 Post Process 的材质。该通道通过引擎的后处理材质通道运行该材质，而该通道只绘制该域。
@@ -2573,7 +2572,7 @@ Fullscreen material pass '{0}' reads {1} buffers, and a post-process material ha
 Pass '{0}' writes a data buffer, and '{1}' scales what it reads and writes by the exposure; give it '#pragma material(bDisablePreExposureScale = true)'.
 ```
 
-**由以下引发** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3614`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3609`
 <!-- generated:end DSH7338 -->
 
 **原因。** 一个带有 `Material` 的 `fullscreen` 通道写入的是管线的缓冲区而不是场景颜色，而该材质保持预曝光开启。引擎随后会按曝光缩放该材质读取和写入的内容，因此存储在缓冲区中的遮罩或向量会随场景的亮度而变化。
@@ -2597,7 +2596,7 @@ Pass '{0}' writes a data buffer, and '{1}' scales what it reads and writes by th
 '{0}' is compiled for BlendableLocation {1}, and pass '{2}' runs it at {3}, {4} tonemapping, so its colours are in another space than it expects; use {5}.
 ```
 
-**由以下引发** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3630`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3625`
 <!-- generated:end DSH7339 -->
 
 **原因。** 一个 `fullscreen` 通道在其材质编译时所针对的 `BlendableLocation` 的色调映射另一侧运行该材质，因此其颜色所处的空间与它预期的不同：一个为 `SceneColorAfterTonemapping`（引擎的默认值）或 `ReplacingTonemapper` 编译的材质位于色调映射之前的某个点，或者一个为 `PostProcess.ReplaceTonemapper`、`PostProcess.AfterTonemap`、`PostProcess.AfterFXAA` 或 `EndOfView` 处的另一位置编译的材质。
@@ -2621,7 +2620,7 @@ Pass '{0}' writes a data buffer, and '{1}' scales what it reads and writes by th
 '{0}' has no UE.DreamPassOutput in its graph, so a mesh pass has nothing to write; add 'UE.DreamPassOutput(Output0 = ...);' to the material.
 ```
 
-**由以下引发** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3664`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3659`
 <!-- generated:end DSH7340 -->
 
 **原因。** 一个 `mesh` 通道的覆盖 `Material` 在其自身的图表中没有 `UE.DreamPassOutput`。该节点是网格通道据以写入其输出的节点，也是引擎为该材质编译网格通道着色器的原因；材质所调用的材质函数内部的那个节点不计入（DSH5302）。在 Unreal Engine 5.8 及更高版本（即存在 Custom Pass 运行时的版本）上会进行检查。
@@ -2645,7 +2644,7 @@ UE.DreamPassOutput(Output0 = float4(1, 0, 0, 0));
 '{0}' leaves Output{1} of its UE.DreamPassOutput unconnected, so '{2}' would receive nothing.
 ```
 
-**由以下引发** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3681`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3676`
 <!-- generated:end DSH7341 -->
 
 **原因。** 一个 `mesh` 通道写入了 `UE.DreamPassOutput` 的一个输出——`write Output1 = Id;`——其引脚在材质中未连接，因此该缓冲区将收不到任何内容。
@@ -2665,7 +2664,7 @@ UE.DreamPassOutput(Output0 = float4(1, 0, 0, 0));
 Mesh pass '{0}' draws {1} primitives, and '{2}' is not compiled for them; give the material its usage flag ('#pragma material({3} = true)' in its '.dss'), or leave {1} out of 'Usage'.
 ```
 
-**由以下引发** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3702`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3697`
 <!-- generated:end DSH7342 -->
 
 **原因。** 一个 `mesh` 通道绘制了其覆盖材质未针对编译的某种图元。该通道的 `Usage`——未指定时为 `StaticMesh | InstancedStaticMeshes | SkeletalMesh`——列出了它绘制的内容，每种类型都需要材质的用法标志；`Landscape` 不需要任何标志。该消息会指出缺少的标志。在 Unreal Engine 5.8 及更高版本（即存在 Custom Pass 运行时的版本）上会进行检查。
@@ -2689,7 +2688,7 @@ Mesh pass '{0}' draws {1} primitives, and '{2}' is not compiled for them; give t
 Mesh pass '{0}' writes '{1}', a texture of the scene, together with '{2}', a buffer of the pipeline. A mesh pass draws all its targets through one viewport, so they have to be one size holding the view at one place; the scene's textures are usually larger than the view they hold (rounded up, and in the editor grown to the largest view so far) while a buffer is the view's size, and the runtime skips the pass whenever the two differ. Write them in two mesh passes.
 ```
 
-**由以下引发** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4525`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4542`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4575`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4519`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4536`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4569`
 <!-- generated:end DSH7343 -->
 
 **原因。** 一个 `mesh` 通道的目标会通过一个视口一起绘制。有三条消息：
@@ -2715,7 +2714,7 @@ Mesh pass '{0}' writes '{1}', a texture of the scene, together with '{2}', a buf
 '{0}' is a {1} material, and a mesh pass draws primitives with a Surface one.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3652`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3647`
 <!-- generated:end DSH7344 -->
 
 **原因。** 一个 `mesh` pass 的 override `Material` 不是 Surface 材质 —— 而是一个后处理、一个贴花、一个 UI 材质。网格 pass 会用它来绘制图元，就像图元自身材质绘制它们那样。
@@ -2735,7 +2734,7 @@ Mesh pass '{0}' writes '{1}', a texture of the scene, together with '{2}', a buf
 '{0}' asks for the new material translator, which UE.DreamPassOutput does not support; remove 'bEnableNewHLSLGenerator' from it.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3716`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3711`
 <!-- generated:end DSH7345 -->
 
 **原因。** 一个 `mesh` pass 的 override `Material` 设置了 `bEnableNewHLSLGenerator`，而 `UE.DreamPassOutput` 未实现新的材质转换器；该材质自身的 `.dss` 也报告了同样的情况，即 DSH5301。在 Unreal Engine 5.8 及更高版本上检查，也就是 Custom Pass 运行时所在之处。
@@ -2775,7 +2774,7 @@ Fullscreen pass '{0}' reads {1} and writes {2} buffers, and the pixel slot a '.u
 '{0}' is a {1}, and the parameter block of a shader slot holds numbers only, so no texture parameter reaches a '.usf' pass. A material takes one through 'param': draw this pass with a material ('Material = ...'), or let a fullscreen material pass that takes the texture by 'param' write it into a buffer this pass reads.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3460`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3475`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3455`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3470`
 <!-- generated:end DSH7347 -->
 
 **原因。** 一个 HLSL pass 的 `param` 不适合该槽位的参数块 `DP_Params`：16 个 `float4`，且仅为数字。有两条消息：
@@ -2798,7 +2797,7 @@ Fullscreen pass '{0}' reads {1} and writes {2} buffers, and the pixel slot a '.u
 Pass '{0}' writes scene colour, which is {1} at {2}, and '{3}' with it, which is {4}; targets drawn together have one size.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4605`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4599`
 <!-- generated:end DSH7350 -->
 
 **原因。** 一个带有 `Shader` 和多个输出的 `fullscreen` pass 写入了 `SceneColor` 以及一个其他大小的 buffer，而一起绘制的目标只有一个大小。场景颜色处于缩放 1：在上采样器之前是渲染分辨率，从 `PostProcess.ReplaceTonemapper` 起是输出分辨率。一个 `mesh` pass 不在此处检查：它完全可能既写入管线的一个 buffer，又写入场景的一个纹理（DSH7343）。
@@ -2818,7 +2817,7 @@ Pass '{0}' writes scene colour, which is {1} at {2}, and '{3}' with it, which is
 Pass '{0}' replaces the tonemapper, and so does '{1}'; one view runs one tonemapper, so a pipeline replaces it at most once.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4642`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4656`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4636`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4650`
 <!-- generated:end DSH7351 -->
 
 **原因。** 有两条消息，都与 `PostProcess.ReplaceTonemapper` 有关：管线的第二个 pass 在此处运行，而一个视图只运行一个色调映射器；或者在此处运行的 pass 没有写入 `SceneColor`，而色调映射器的替代者必须产生该帧的最终颜色。
@@ -2882,7 +2881,7 @@ What scales or offsets a parameter in a 'param' is one number the compiler can f
 Buffer '{0}' is exported and last written at {1}: opaque and translucent materials that sample it see the previous frame's contents, UI sees this frame's.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4774`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4768`
 <!-- generated:end DSH7354 -->
 
 **原因。** 导出的缓冲区的最后一个写入者在 `AfterBasePass` 或更晚运行，因此其渲染目标在某些采样它的材质已绘制之后才被更新。最后写入于 `AfterBasePass` 或 `AfterOpaque`：不透明材质看到上一帧的内容，而半透明和后期处理材质以及 UI 看到本帧的内容。最后写入于 `BeforePostProcess` 或更晚：不透明和半透明材质看到上一帧的，UI 看到本帧的。
@@ -2922,7 +2921,7 @@ Buffer '{0}' is exported, and an exported buffer becomes a render target asset t
 No pass writes buffer '{0}', so whoever reads it reads its 'Clear' value.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4749`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4743`
 <!-- generated:end DSH7356 -->
 
 **原因。** 没有通道写入该缓冲区——没有 `write`，也没有任何网格通道的 `Depth = Own(...)`——因此每次读取它都获得其 `Clear` 值。通常是因为某个写入者被重命名或移除了。
@@ -2942,7 +2941,7 @@ No pass writes buffer '{0}', so whoever reads it reads its 'Clear' value.
 No pass reads buffer '{0}' and it is not exported, so writing it is wasted work; read it, export it, or remove it.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4759`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4753`
 <!-- generated:end DSH7357 -->
 
 **原因。** 某个通道写入该缓冲区而没有任何东西读取它——没有对它的或将它的 `.Previous` 的 `read`，也没有网格通道的 `Depth = Own(...)`——并且它未被导出，因此写入它是在浪费 GPU 工作。
@@ -3011,7 +3010,7 @@ The materials, shader files and pass layers this pipeline names are not availabl
 Pass '{0}' holds a second 'hlsl' block, and the code of a pass is one block; the one on line {1} is it.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3885`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3880`
 <!-- generated:end DSH7361 -->
 
 **原因。** 一个通道持有两个 `hlsl` 块。一个通道的代码是一个块：整个函数，或其入口的语句。
@@ -3031,7 +3030,7 @@ Pass '{0}' holds a second 'hlsl' block, and the code of a pass is one block; the
 This file already has an 'hlsl' block, on line {0}, and a '.dsp' has one: write every shared function and entry in it.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3862`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3857`
 <!-- generated:end DSH7362 -->
 
 **原因。** 该文件在文件作用域有第二个 `hlsl` 块。一个 `.dsp` 只有一个：其 HLSL 在该文件中的所有通道编译所用的代码，以及各通道用 `Entry = X;` 选取的入口。
@@ -3051,7 +3050,7 @@ This file already has an 'hlsl' block, on line {0}, and a '.dsp' has one: write 
 Pass '{0}' runs the shader file '{1}' and holds an 'hlsl' block as well, and the code of a pass is in one place: remove 'Shader' to run the block, or the block to run the file.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3910`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3905`
 <!-- generated:end DSH7364 -->
 
 **原因。** 一个通道命名了一个着色器文件（`Shader = "..."`）并且还持有一个 `hlsl` 块。一个通道的代码只在一处。
@@ -3071,7 +3070,7 @@ Pass '{0}' runs the shader file '{1}' and holds an 'hlsl' block as well, and the
 The 'hlsl' block of pass '{0}' holds the statements of its entry, whose function the compiler writes, so 'Entry' has no function to name; remove it, or write whole functions in the block: '{1}'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3948`
+**触发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3943`
 <!-- generated:end DSH7365 -->
 
 **原因。** 该通道的 `hlsl` 块只包含语句——在其顶层没有函数定义、`groupshared`、`struct`、 `cbuffer` 或 `[numthreads(...)]`——因此它是某个入口的语句，其函数由编译器编写，而 `Entry` 没有函数可命名。
@@ -3091,7 +3090,7 @@ The 'hlsl' block of pass '{0}' holds the statements of its entry, whose function
 '#include' cannot stand among the statements of a function, and the 'hlsl' block of pass '{0}' holds the statements of its entry; include the file in the file's 'hlsl' block, or write whole functions in the pass's block.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3962`
+**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3957`
 <!-- generated:end DSH7366 -->
 
 **原因。** 一个持有某个入口语句的块中有一个 `#include`。编译器会将这些语句编写在一个函数内，而 HLSL 不允许在那里使用 include。
@@ -3131,7 +3130,7 @@ The 'hlsl' block of pass '{0}' holds the statements of its entry, whose function
 '{0}' is in the shared code of the file's 'hlsl' block, and is the entry of pass '{1}' as well, which the pass's slot renames to the slot's entry point with a #define; the shared code is compiled into that slot, after it. Rename it in the block.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4220`
+**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4215`
 <!-- generated:end DSH7368 -->
 
 **Cause.** 文件 `hlsl` 块共享代码中的某个名称——即其中所有未被任何 pass 用 `Entry` 命名的内容——同时也是某个 pass 的槽位名称，而该 pass 的 HLSL 位于 `.dsp` 定义中：可能是 `read`、`write` 或 `param` 名称，其 `Size` 或 `UVRect` 名称，或该 pass 的入口，而该 pass 的槽位会将其重命名为槽位的入口点。共享代码会在这些 `#define` 之后被编译进每个此类 pass 的槽位，因此该名称会在那里被替换——包括作为辅助函数的参数或局部变量。
@@ -3151,7 +3150,7 @@ The 'hlsl' block of pass '{0}' holds the statements of its entry, whose function
 '{0}' is the entry of pass '{1}' in the file's 'hlsl' block, and is called here; an entry is compiled only into the slots of the passes that name it, so nothing else can call it. Move what it shares into a function of its own in the block, and call that.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4120`
+**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4115`
 <!-- generated:end DSH7369 -->
 
 **Cause.** 文件 `hlsl` 块中的一个入口——即某个 pass 仅用 `Entry = X;` 命名的函数——被调用：来自共享代码、来自另一个入口，或来自某个 pass 自己的代码块。在未命名它的每个 pass 的槽位中，该入口会从共享代码中被抹除，因此该调用在那里无法编译。

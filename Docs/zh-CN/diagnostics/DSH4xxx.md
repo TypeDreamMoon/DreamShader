@@ -37,7 +37,7 @@
 '{0}' is not a type; did you mean '{1}'? Type names are case-sensitive.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:560`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:571`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:585`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:707`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:980`、`Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:544`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:561`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:572`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:586`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:708`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:981`、`Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:544`
 <!-- generated:end DSH4201 -->
 
 **原因。** 一个类型拼写既不是内置类型（`float3`、`Texture2D`、`material`、`Substrate`、……），也不是在此行**之前**声明的 `struct`。对于需要值类型的 `void`——字段、参数或变量——也会引发此错误。
@@ -197,7 +197,7 @@ A value of type {0} has no method '{1}'.
 '{0}' is already declared in this file; one name declares one thing.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:482`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:492`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:861`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:483`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:493`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:861`
 <!-- generated:end DSH4210 -->
 
 **原因。** 同一个名称被声明了两次。结构体、文件作用域变量和函数共用一个命名空间，因为结构体的构造函数和函数调用的写法相同。当两个声明位于不同文件时，消息会指出两者——常见原因是某个头文件声明了该文件也声明的名称，或两个头文件都声明了它。
@@ -219,7 +219,7 @@ A value of type {0} has no method '{1}'.
 Including '{0}' from '{1}' closes a cycle; a header may not include itself, directly or through another header.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:445`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:446`
 <!-- generated:end DSH4211 -->
 
 **原因。** 沿着 `#include` / `import` 追踪会回到一个已在读取的文件。消息会指出闭合该循环的文件以及包含它的文件。
@@ -239,7 +239,7 @@ Including '{0}' from '{1}' closes a cycle; a header may not include itself, dire
 '{0}' cannot be read: this front end was started without an include resolver, so nothing a header declares is visible.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:409`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:410`
 <!-- generated:end DSH4212 -->
 
 **原因。** 该文件带有 `#include` / `import`，而此前端在启动时没有包含解析器，因此头文件声明的任何内容都不可见。在一次编译内部不会发生这种情况；这说明某个工具调用 `BindDreamShaderLang` 时 `FBindOptions::IncludeResolver` 为空。
@@ -259,7 +259,7 @@ Including '{0}' from '{1}' closes a cycle; a header may not include itself, dire
 '{0}' is declared twice in struct '{1}'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:688`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:689`
 <!-- generated:end DSH4213 -->
 
 **原因。** 一个 `struct` 声明了两个同名字段。
@@ -279,7 +279,7 @@ Including '{0}' from '{1}' closes a cycle; a header may not include itself, dire
 '{0}' is declared twice in the parameter list of '{1}'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:957`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:958`
 <!-- generated:end DSH4214 -->
 
 **原因。** 参数列表中将同一个名字声明了两次。
@@ -787,7 +787,7 @@ An initializer list only has a meaning against a declared type; it cannot stand 
 A multi-dimensional array has no graph form; declare one dimension, or move the code into a '/// @custom' function.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:607`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:608`
 <!-- generated:end DSH4241 -->
 
 **原因。** 一个声明有多个 ``[n]``。图中完全没有数组；唯一受支持的一个维度只是为了能在编译时对 ``static const`` 表进行索引。
@@ -867,7 +867,7 @@ A matrix row cannot be read: the graph has no matrices. Move the code into a '//
 An unsized array needs an initializer list to take its length from.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:626`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:649`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:659`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:627`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:650`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:660`
 <!-- generated:end DSH4245 -->
 
 **原因。** 数组大小不是介于 1 到 4096 之间的整数字面量，或者未指定大小的 `[]` 没有初始化列表来确定其长度。大小在绑定任何内容之前就被读取，因此表达式——即使是常量表达式——也无法使用。
@@ -2402,7 +2402,7 @@ uniform bool bShowOutline = true;
 No material '{0}' was found: a bare name is the material a '.dss' under the same source root builds, an object path any material or material instance.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3530`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3525`
 <!-- generated:end DSH4406 -->
 
 **原因。** 全屏 pass 或网格 pass 的 `Material` 解析不到任何内容。裸名称（`"PP_Outline"`）会在 `.dsp` 的源根目录下的 DreamShader 源产物中查找—— `.dss` 导出的材质，或一个 `.dsi`——必须完全按拼写匹配，包括大小写；材质函数不算。对象路径（`"/Game/FX/PP_Outline.PP_Outline"`）必须指向一个存在的资产，或源根目录下的某个源所构建的资产。该检查需要宿主来查找材质，编辑器中的编译或通过 `dsc` 的编译会进行此操作；否则会跳过（DSH7360）。
@@ -2442,7 +2442,7 @@ No material '{0}' was found: a bare name is the material a '.dss' under the same
 The shader file '{0}' does not exist; a path starting with '/' is a virtual shader path, and any other is read from the folder of this '.dsp'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3735`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3730`
 <!-- generated:end DSH4408 -->
 
 **原因。** `Shader =` 指向的文件不存在。不以 `/` 开头的路径相对于 `.dsp` 所在的文件夹——`"BoxBlur.usf"` 与它相邻，`"../Shared/Blur.usf"` 位于其上一级文件夹；以 `/` 开头的路径是虚拟着色器路径，只能通过引擎映射的目录解析（`/Engine/...`、`/Plugin/<Name>/...`，或模块通过 `AddShaderSourceDirectoryMapping` 添加的映射）。在 DSH4406 所在之处检查。
@@ -2462,7 +2462,7 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 '{0}' does not define a function '{1}'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3802`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3830`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3842`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3989`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4023`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4082`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3797`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3825`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3837`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3984`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4018`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4077`
 <!-- generated:end DSH4410 -->
 
 **原因。** HLSL pass 的 `Entry` 未指向该 pass 可运行的函数。共有两种消息：
@@ -2493,7 +2493,7 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 '{0}' in '{1}' has no '[numthreads(x, y, z)]' the compiler can read; write 'Threads = uint3(x, y, z)' in the pass.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3790`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3816`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4069`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3785`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3811`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4064`
 <!-- generated:end DSH4411 -->
 
 **原因。** 某个 compute pass 的 `Entry` 具有编译器无法读取的线程组大小，并且该 pass 未提供 `Threads` 来说明这一点。调度按该大小的组来计数。共有两种消息：
@@ -2517,7 +2517,7 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 '{0}' is not a pass layer of this project; the layers are the first {1} names of Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3510`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3505`
 <!-- generated:end DSH4412 -->
 
 **原因。** 网格 pass 的 `Filter` 通过 `Layer(...)` 选择了一个项目并不具有的名称。Pass 层是项目自己的：Project Settings ▸ DreamPlugin ▸ DreamShader Custom Pass 的 **Layer Names** 列表的前 32 个名称，即消息中所指出的；只有这些名称具有位，因此列表中更靠后的名称也不是层。名称的比较区分大小写，当某个层仅在其大小写上与之不同时，消息会改为建议那一个（`'<Layer>' is not a pass layer of this project; did you mean '<Name>'?`）。每个未知名称产生一个错误，位于 `Filter` 行。在 DSH4406 处检查。
@@ -2537,7 +2537,7 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 'Threads = uint3({0}, {1}, {2})' disagrees with '[numthreads({3}, {4}, {5})]' of '{6}', and the dispatch would be sized for groups the shader does not have; leave 'Threads' out, or write the same numbers.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3775`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4056`
+**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3770`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4051`
 <!-- generated:end DSH4413 -->
 
 **原因。** 一个计算 pass 写入 `Threads = uint3(...)`，而其入口的 `[numthreads(...)]` （编译器可以读取 -- 在 `.usf` 中，或者当入口编写在那里时在 `.dsp` 中）表示的是其他数字（消息中给出了两者）。组数是根据 `Threads` 计算出来的，而着色器以 `[numthreads]` 的组运行，因此该 pass 会覆盖其缓冲区过多或过少的内容。`Threads = uint2(x, y)` 计为 `z = 1`。

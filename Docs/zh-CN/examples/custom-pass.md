@@ -315,7 +315,7 @@ m.WorldPositionOffset = float3(Wind * UE.VertexColor().r * 20.0, 0);
 
 要点：
 
-- `BeginView` 时还没有 view uniform buffer：代码用 `DP_Time` 而不是 `View.GameTime`，在这里写 `View` 会在那一行报编译错误。
+- 代码从 `DP_Time` 获取时间；用 `View.GameTime` 也可以。在 `BeginView` 处，运行时会绑定它自己的 view uniform buffer，其中保存相机和时间，但不包含渲染器稍后填充的内容（参见 [HLSL passes](../runtime/hlsl.md)）。
 - `read Previous = Wind.Previous` 和 `write Result = Wind` 是两张纹理 —— 上一帧的和本帧的。
 - 每个编辑器视口各自推进自己的历史；只有一个会写导出的渲染目标。
 - Niagara：把一个 Texture Sample 数据接口指向资产 `CP_WindField_Wind`。

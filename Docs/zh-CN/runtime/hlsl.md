@@ -184,7 +184,7 @@ pass Blur : compute
 | `DreamPassInputUV(i, uv)` | 输入 i 的图片上的 `uv`，作为其纹理中的 UV |
 | `DreamPassSample(Name, UV)` | 在视图上的 UV 处、其图片内部，对 `read` 名称采样（线性） |
 | `DreamPassLoad(Name, Pixel)` | `read` 名称的一个纹素，位于从视图左上角计起的像素处 |
-| `DreamPassSceneUV(UV)` | 视图上的 UV，作为场景纹理的 UV，用于 `CalcSceneDepth` 及其余部分；不用于 `BeginView` |
+| `DreamPassSceneUV(UV)` | 视图上的 UV，作为场景纹理的 UV，用于 `CalcSceneDepth` 及其余部分；`BeginView` 没有场景纹理可用 |
 | `DP_PointClamp`、`DP_LinearClamp` | 采样器 |
 | `DP_Output0`…`DP_Output3` | 仅计算：`write` UAV |
 | `DP_OutputSize[4]` | 输出的尺寸 |
@@ -197,7 +197,7 @@ pass Blur : compute
 
 `DreamPassSample`、`DreamPassLoad` 和 `DreamPassSceneUV` 是宏——`DreamPassSample(InColor, UV)` 会读取 `InColorUVRect`，即该绑定所使用的名称——它们既可在 `.usf` 中工作，也可在块中工作。
 
-在 `BeginView` 处，视图 uniform 缓冲区尚不存在；在那里 pass 中使用 `View` 会产生编译错误，而 `DP_Time` 会代替计时值。那里的场景纹理是占位符。文件块的共享代码可以使用 `View`——其他 pass 可能会在帧的更晚时间运行——但一个 `BeginView` pass 若调用这样的函数，会在其槽位被预检查时被拒绝（`DSH8318`）。
+`View` 在每个注入点都存在，包括 `BeginView` —— 计算 pass 可以自行读取相机，无需从蓝图传入参数。在 `BeginView` 处，渲染器尚未创建视图自身的 uniform 缓冲区，因此运行时绑定一个由相机生成的缓冲区：变换（`TranslatedWorldToClip`、`ViewToClip`、`ClipToTranslatedWorld` 及其余部分）、相机的位置与方向、视图矩形、时间与帧计数器。只有渲染器稍后才填充的内容不在其中 —— 天空、大气、灯光、曝光：`View.PreExposure` 为 1，且上一帧的变换（`View.Prev*`）与本帧相同。`BeginView` 处的场景纹理是占位符。
 
 <a id="how-the-hlsl-gets-into-the-engine"></a>
 
