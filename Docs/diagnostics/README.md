@@ -729,7 +729,6 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH8315](DSH8xxx.md#dsh8315) | error | The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose ... |
 | [DSH8316](DSH8xxx.md#dsh8316) | error | Pass '{0}' needs a {1} slot and all {2} are taken. Merge passes, run 'dsc pass-registry -Gc' to free the sl... |
 | [DSH8317](DSH8xxx.md#dsh8317) | error | Pass '{0}' cannot be mapped onto its HLSL slot: {1} |
-| [DSH8318](DSH8xxx.md#dsh8318) | error | [{0}] pass '{1}' runs at BeginView, where the view uniform buffer does not exist yet, and its slot uses 'Vi... |
 | [DSH8319](DSH8xxx.md#dsh8319) | error | The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slot (its entry is not in the ... |
 | [DSH8320](DSH8xxx.md#dsh8320) | error | '{0}' is included by a relative path and names no file, so the snapshot of pass '{1}' cannot be built. |
 | [DSH8321](DSH8xxx.md#dsh8321) | warning | '{0}' is included by a virtual path outside /Engine/, /Plugin/ and /ThirdParty/, so the snapshot of pass '{... |

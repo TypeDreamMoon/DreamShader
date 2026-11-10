@@ -736,7 +736,7 @@ works, with a warning.
 '#pragma material' configures a material, and this file has no 'export void Name(inout material m)' entry to configure.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1367`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1368`
 <!-- generated:end DSH7203 -->
 
 **Cause.** The file has `#pragma material(...)` and no material entry to configure. A function
@@ -813,7 +813,7 @@ sample or a node is not a constant — declare it as an ordinary local.
 '{0}' is a file-scope variable with no storage class; write 'uniform' for a material parameter or 'static const' for a compile-time constant.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:753`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:754`
 <!-- generated:end DSH7211 -->
 
 **Cause.** A file-scope variable has no storage class: `float Gain = 1.0;` or `static float …`.
@@ -834,7 +834,7 @@ folded into it (`static const`).
 A file-scope variable of type {0} has no node; a 'uniform' or 'static const' must be numeric, bool, a texture or a sampler.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:780`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:781`
 <!-- generated:end DSH7212 -->
 
 **Cause.** A file-scope variable has a type with no node: a `material`, a `Substrate` value, a user
@@ -854,7 +854,7 @@ aggregate and lives inside a function; a `Substrate` value comes from a `Substra
 A texture uniform has no HLSL initializer; write its default asset as '/// @default /Game/...'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:792`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:793`
 <!-- generated:end DSH7213 -->
 
 **Cause.** A texture `uniform` has an HLSL initializer. A texture has no literal value.
@@ -873,7 +873,7 @@ leave the declaration itself as plain legal HLSL.
 '{0}' is a compile-time constant and must be initialised where it is declared.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:803`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:569`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:804`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:569`
 <!-- generated:end DSH7214 -->
 
 **Cause.** A `static const` — at file scope or inside a function — has no initializer.
@@ -911,7 +911,7 @@ classes.
 A 'uniform' array has no parameter node; declare one uniform per element, or make it 'static const'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:825`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:826`
 <!-- generated:end DSH7216 -->
 
 **Cause.** A `uniform` is declared as an array. There is no array parameter node.
@@ -985,7 +985,7 @@ comes from the engine, so an unknown spelling is reported by the emitter and not
 '@static' asks for a static switch and is only meaningful on a 'uniform bool'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:814`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:815`
 <!-- generated:end DSH7223 -->
 
 **Cause.** `@static` sits on something that is not a `uniform bool`. It asks for a static switch,
@@ -1004,7 +1004,7 @@ which only a boolean parameter can become.
 '@{0}' means nothing here; it belongs on {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:929`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:138`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:930`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:138`
 <!-- generated:end DSH7224 -->
 
 **Cause.** A `///` directive is written on a declaration where it cannot mean anything: `@slider` on
@@ -1025,7 +1025,7 @@ warning — they are passed through to the node by reflection.
 '@static {0}' does not name a parameter of '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1035`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1057`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1083`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1036`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1058`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1084`
 <!-- generated:end DSH7225 -->
 
 **Cause.** `@param <name>` names something that is not a parameter of the function. Usually the
@@ -1082,7 +1082,7 @@ the line.
 '@custom' on '{0}' did not make its body opaque; the directive has to sit in the '///' block directly above the declaration.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1301`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1302`
 <!-- generated:end DSH7228 -->
 
 **Cause.** `@custom` was recorded on a function whose body was parsed as DreamShaderLang rather
@@ -1143,7 +1143,7 @@ layout entry is simply placed by the layout pass.
 '@static {0}' makes a parameter a static bool pin, which only a 'bool' input can be, and '{0}' is {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1010`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1011`
 <!-- generated:end DSH7231 -->
 
 **Cause.** `/// @static <Parameter>` on a function makes that parameter a StaticBool pin -- a pin
@@ -1205,7 +1205,7 @@ in a range, one scalar per channel, or a scalar that scales the colour.
 '{0}' asks to generate '{1}', and only a package's header generates material functions; this file is not in one, so nothing is generated. Write an 'export' function (or a 1.x ShaderFunction) to make a material function of your own.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:893`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:894`
 <!-- generated:end DSH7234 -->
 
 **Cause.** A function carries `@generate` -- a 2.0 `/// @generate` or a 1.x `Generate =` header -- in a file that is not in a package. Only a package's header generates material functions ([Packages ▸ Asset headers](../tools/packages.md#asset-headers)); anywhere else the annotation does nothing.
@@ -1223,7 +1223,7 @@ in a range, one scalar per channel, or a scalar that scales the colour.
 '#pragma nogeneration' in '{0}' was ignored: it marks the file it is written in, a header builds nothing, and the files that include it are not marked by it. Write it in each of those files instead.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1353`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1354`
 <!-- generated:end DSH7235 -->
 
 **Cause.** `#pragma nogeneration` *(after 2.1.2)* stands in a header. It marks the file it is written in; a header builds nothing, and the files that include it are not marked by it.
@@ -2031,7 +2031,7 @@ Filter = Stencil(4, 0x0F) | Layer(Enemies | Allies) & List(Visible);
 Mesh pass '{0}' needs 'Filter = ...' to say which primitives it draws: 'Stencil(1)', 'Layer(Name)', 'List(Name)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3095`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3109`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3921`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4004`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3095`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3109`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3916`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3999`
 <!-- generated:end DSH7315 -->
 
 **Cause.** A pass lacks a key its kind needs; the message says which:
@@ -2132,7 +2132,7 @@ which only a `read` can name; this frame's writes go to `B`, which is next frame
 '{0}' is bound twice in pass '{1}'; inside a pass every input, output and parameter has a name of its own.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3256`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3339`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3430`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3256`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3339`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3425`
 <!-- generated:end DSH7319 -->
 
 **Cause.** A name the pass binds is taken already. Inside one pass every name a `read`, a `write` or
@@ -2143,7 +2143,6 @@ slot; there the message also covers:
 - a name starting with `DP_`, the prefix of the slot's own parameters;
 - a name that is the pass's `Entry`, or the slot's own entry point (`DreamPassMainCS`,
   `DreamPassMainPS`);
-- `View` at `BeginView`, where the slot defines `View` itself;
 - a name the slot derives from another binding: a `read X` also defines `XSize` and `XUVRect`, a
   `write Y` defines `YSize`.
 
@@ -2259,7 +2258,7 @@ pass Debug : fullscreen
 A fullscreen material pass needs the scene textures, which do not exist yet at {0}; run '{1}' at AfterBasePass or later.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4396`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4407`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4391`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4402`
 <!-- generated:end DSH7325 -->
 
 **Cause.** A kind of pass runs at an injection point where it cannot work. Three messages:
@@ -2285,7 +2284,7 @@ Work that has to run at `BeginView` is a `compute` pass, or a `fullscreen` pass 
 At AfterBasePass scene colour holds the emissive light only; nothing is lit yet, so pass '{0}' {1} that.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4371`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4419`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4432`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4442`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4452`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4463`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4560`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4366`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4414`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4426`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4436`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4446`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4457`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4554`
 <!-- generated:end DSH7326 -->
 
 **Cause.** What a pass sees where it runs; nothing in the file is wrong. The message says which:
@@ -2294,8 +2293,9 @@ At AfterBasePass scene colour holds the emissive light only; nothing is lit yet,
 - a `fullscreen` pass with `Material` runs at `AfterBasePass` or `AfterOpaque`, which has not been
   verified on this engine yet; `BeforePostProcess` is the point it is known to work at;
 - an HLSL pass -- a `fullscreen` pass with `Shader`, or a `compute` pass -- runs at `BeginView`,
-  where no scene texture exists yet (the scene textures are placeholders, and `View` cannot be used at
-  all: `DP_Time` stands in for its timing), or at `BeforeBasePass`, where only the scene depth does;
+  where no scene texture exists yet (the scene textures are placeholders, and `View` holds the camera
+  and the times but nothing the renderer fills later: no sky or atmosphere, `PreExposure` 1, last
+  frame's transforms equal to this frame's), or at `BeforeBasePass`, where only the scene depth does;
 - a `mesh` pass at `BeforeBasePass` tests against the scene depth (`Depth = TestScene`), which holds
   only what the depth prepass drew;
 - a `mesh` pass after the upscaler (`PostProcess.ReplaceTonemapper` to `PostProcess.AfterFXAA`) tests
@@ -2324,7 +2324,7 @@ the scene's texture, for a later pass to bring into the scene, or tests against 
 'CustomStencil' is the stencil half of the custom depth texture, which no pass can bind as a texture of its own, and pass '{0}' {1} it; read it through the scene textures instead: a SceneTexture node in the material, CalcSceneCustomStencil in a '.usf'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4270`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4330`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4265`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4325`
 <!-- generated:end DSH7327 -->
 
 **Cause.** A pass binds a built-in texture where it cannot have it. Three messages:
@@ -2351,7 +2351,7 @@ textures: a `SceneTexture` node in the material (`UE.SceneTexture(SceneTextureId
 (built at runtime)
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4359`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4354`
 <!-- generated:end DSH7328 -->
 
 **Cause.** A pass writes a built-in texture that cannot be written where it runs; the message says
@@ -2378,7 +2378,7 @@ which:
 '{0}' exists at AfterBasePass only when r.CustomDepth.Order draws custom depth before the base pass; where it does not, pass '{1}' reads a cleared placeholder. From AfterOpaque on it always exists.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4302`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4297`
 <!-- generated:end DSH7329 -->
 
 **Cause.** A pass at `AfterBasePass` reads `CustomDepth`, which is drawn before the base pass only when
@@ -2440,7 +2440,7 @@ pass DrawObjects : mesh
 Pass '{0}' reads '{1}', which no pass writes, and '{1}' is 'Clear = None', so what it reads is undefined.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4723`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4717`
 <!-- generated:end DSH7331 -->
 
 **Cause.** A pass reads a buffer declared `Clear = None` before any pass has written it, in frame
@@ -2461,7 +2461,7 @@ default), or read last frame's `B.Previous` of a `History = true` buffer.
 Pass '{0}' reads '{1}' before '{2}' writes it in the frame, so it reads the buffer's 'Clear' value; move the reader after the writer, or read '{1}.Previous'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4733`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4727`
 <!-- generated:end DSH7332 -->
 
 **Cause.** A pass reads a buffer before the first pass that writes it, in frame order (injection
@@ -2482,7 +2482,7 @@ that means last frame's contents reads `B.Previous` of a `History = true` buffer
 Pass '{0}' reads and writes '{1}', and one pass cannot have one texture as its input and its output; write another buffer, or read '{1}.Previous' of a 'History = true' buffer.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4497`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4491`
 <!-- generated:end DSH7333 -->
 
 **Cause.** A pass reads and writes the same texture, and one GPU pass cannot have one texture as its
@@ -2505,7 +2505,7 @@ writes it draws into a scratch texture that is brought back afterwards.
 '{0}' reads no UserSceneTexture of '{1}': its inputs are {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3563`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3558`
 <!-- generated:end DSH7334 -->
 
 **Cause.** A `fullscreen` pass binds `read X = B`, and its material has no `UE.UserSceneTexture` named
@@ -2532,7 +2532,7 @@ float Halo = UE.UserSceneTexture(UserSceneTexture = "Blurred", Coordinates = UV)
 '{0}' reads the UserSceneTexture '{1}', and pass '{2}' binds nothing to it, so it samples black; add 'read {1} = <Buffer>;'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3578`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3573`
 <!-- generated:end DSH7335 -->
 
 **Cause.** The material of a `fullscreen` pass reads a `UE.UserSceneTexture` the pass binds no buffer
@@ -2551,7 +2551,7 @@ to. The engine still gives the input a slot, and it samples black.
 Fullscreen material pass '{0}' reads {1} buffers, and a post-process material has {2} input slots, shared with its own SceneTexture nodes; split the pass in two, or write it with 'Shader =' (a '.usf' pass reads up to {3}).
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3011`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3597`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3011`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3592`
 <!-- generated:end DSH7336 -->
 
 **Cause.** A `fullscreen` pass with `Material` needs more inputs than a Post Process material has. The
@@ -2575,7 +2575,7 @@ Or write the pass with `Shader =`; a `.usf` pass reads up to eight.
 '{0}' is a {1} material, and a fullscreen pass draws a Post Process one: '#pragma material(Domain = PostProcess)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3547`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3542`
 <!-- generated:end DSH7337 -->
 
 **Cause.** A `fullscreen` pass draws a material whose domain is not Post Process. The pass runs the
@@ -2594,7 +2594,7 @@ material through the engine's post-process material pass, which draws only that 
 Pass '{0}' writes a data buffer, and '{1}' scales what it reads and writes by the exposure; give it '#pragma material(bDisablePreExposureScale = true)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3614`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3609`
 <!-- generated:end DSH7338 -->
 
 **Cause.** A `fullscreen` pass with `Material` writes a buffer of the pipeline rather than the scene
@@ -2619,7 +2619,7 @@ brightness.
 '{0}' is compiled for BlendableLocation {1}, and pass '{2}' runs it at {3}, {4} tonemapping, so its colours are in another space than it expects; use {5}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3630`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3625`
 <!-- generated:end DSH7339 -->
 
 **Cause.** A `fullscreen` pass runs its material on the other side of tonemapping from the
@@ -2647,7 +2647,7 @@ it:
 '{0}' has no UE.DreamPassOutput in its graph, so a mesh pass has nothing to write; add 'UE.DreamPassOutput(Output0 = ...);' to the material.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3664`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3659`
 <!-- generated:end DSH7340 -->
 
 **Cause.** A `mesh` pass's override `Material` has no `UE.DreamPassOutput` in its own graph. The node
@@ -2672,7 +2672,7 @@ UE.DreamPassOutput(Output0 = float4(1, 0, 0, 0));
 '{0}' leaves Output{1} of its UE.DreamPassOutput unconnected, so '{2}' would receive nothing.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3681`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3676`
 <!-- generated:end DSH7341 -->
 
 **Cause.** A `mesh` pass writes an output of `UE.DreamPassOutput` -- `write Output1 = Id;` -- whose pin
@@ -2692,7 +2692,7 @@ remove the write the material does not fill.
 Mesh pass '{0}' draws {1} primitives, and '{2}' is not compiled for them; give the material its usage flag ('#pragma material({3} = true)' in its '.dss'), or leave {1} out of 'Usage'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3702`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3697`
 <!-- generated:end DSH7342 -->
 
 **Cause.** A `mesh` pass draws primitives of a kind its override material is not compiled for. The
@@ -2718,7 +2718,7 @@ names the missing flag. Checked on Unreal Engine 5.8 and later, where the Custom
 Mesh pass '{0}' writes '{1}', a texture of the scene, together with '{2}', a buffer of the pipeline. A mesh pass draws all its targets through one viewport, so they have to be one size holding the view at one place; the scene's textures are usually larger than the view they hold (rounded up, and in the editor grown to the largest view so far) while a buffer is the view's size, and the runtime skips the pass whenever the two differ. Write them in two mesh passes.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4525`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4542`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4575`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4519`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4536`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4569`
 <!-- generated:end DSH7343 -->
 
 **Cause.** The targets of a `mesh` pass are drawn together, through one viewport. Three messages:
@@ -2754,7 +2754,7 @@ mesh passes.
 '{0}' is a {1} material, and a mesh pass draws primitives with a Surface one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3652`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3647`
 <!-- generated:end DSH7344 -->
 
 **Cause.** A `mesh` pass's override `Material` is not a Surface material -- a Post Process, a decal, a
@@ -2774,7 +2774,7 @@ UI material. A mesh pass draws primitives with it, as their own materials draw t
 '{0}' asks for the new material translator, which UE.DreamPassOutput does not support; remove 'bEnableNewHLSLGenerator' from it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3716`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3711`
 <!-- generated:end DSH7345 -->
 
 **Cause.** A `mesh` pass's override `Material` sets `bEnableNewHLSLGenerator`, and `UE.DreamPassOutput`
@@ -2815,7 +2815,7 @@ channels).
 '{0}' is a {1}, and the parameter block of a shader slot holds numbers only, so no texture parameter reaches a '.usf' pass. A material takes one through 'param': draw this pass with a material ('Material = ...'), or let a fullscreen material pass that takes the texture by 'param' write it into a buffer this pass reads.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3460`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3475`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3455`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3470`
 <!-- generated:end DSH7347 -->
 
 **Cause.** A `param` of an HLSL pass does not fit the slot's parameter block, `DP_Params`: 16 `float4`,
@@ -2841,7 +2841,7 @@ pass fewer, or pack them into `float4` uniforms yourself.
 Pass '{0}' writes scene colour, which is {1} at {2}, and '{3}' with it, which is {4}; targets drawn together have one size.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4605`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4599`
 <!-- generated:end DSH7350 -->
 
 **Cause.** A `fullscreen` pass with `Shader` and several outputs writes `SceneColor` together with a
@@ -2865,7 +2865,7 @@ of another size in a pass of its own.
 Pass '{0}' replaces the tonemapper, and so does '{1}'; one view runs one tonemapper, so a pipeline replaces it at most once.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4642`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4656`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4636`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4650`
 <!-- generated:end DSH7351 -->
 
 **Cause.** Two messages, both about `PostProcess.ReplaceTonemapper`: a second pass of the pipeline runs
@@ -2935,7 +2935,7 @@ shader or the material. Pass a `bool` or a texture unchanged.
 Buffer '{0}' is exported and last written at {1}: opaque and translucent materials that sample it see the previous frame's contents, UI sees this frame's.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4774`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4768`
 <!-- generated:end DSH7354 -->
 
 **Cause.** An exported buffer's last writer runs at `AfterBasePass` or later, so its render target is
@@ -2980,7 +2980,7 @@ export that; a mesh pass can write `UE.PixelDepth()` through `UE.DreamPassOutput
 No pass writes buffer '{0}', so whoever reads it reads its 'Clear' value.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4749`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4743`
 <!-- generated:end DSH7356 -->
 
 **Cause.** No pass writes the buffer -- no `write`, and no mesh pass's `Depth = Own(...)` -- so every
@@ -3000,7 +3000,7 @@ reaches a pass as a `param`, not as a buffer.
 No pass reads buffer '{0}' and it is not exported, so writing it is wasted work; read it, export it, or remove it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4759`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4753`
 <!-- generated:end DSH7357 -->
 
 **Cause.** A pass writes the buffer and nothing reads it -- no `read` of it or of its `.Previous`, no
@@ -3075,7 +3075,7 @@ checked.
 Pass '{0}' holds a second 'hlsl' block, and the code of a pass is one block; the one on line {1} is it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3885`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3880`
 <!-- generated:end DSH7361 -->
 
 **Cause.** A pass holds two `hlsl` blocks. The code of a pass is one block: whole functions, or the statements of
@@ -3094,7 +3094,7 @@ its entry.
 This file already has an 'hlsl' block, on line {0}, and a '.dsp' has one: write every shared function and entry in it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3862`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3857`
 <!-- generated:end DSH7362 -->
 
 **Cause.** The file has a second `hlsl` block at file scope. A `.dsp` has one: the code every pass whose HLSL is
@@ -3113,7 +3113,7 @@ in the file is compiled with, and the entries passes pick with `Entry = X;`.
 Pass '{0}' runs the shader file '{1}' and holds an 'hlsl' block as well, and the code of a pass is in one place: remove 'Shader' to run the block, or the block to run the file.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3910`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3905`
 <!-- generated:end DSH7364 -->
 
 **Cause.** A pass names a shader file (`Shader = "..."`) and holds an `hlsl` block as well. The code of a pass is
@@ -3133,7 +3133,7 @@ block to run the file.
 The 'hlsl' block of pass '{0}' holds the statements of its entry, whose function the compiler writes, so 'Entry' has no function to name; remove it, or write whole functions in the block: '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3948`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3943`
 <!-- generated:end DSH7365 -->
 
 **Cause.** The pass's `hlsl` block holds statements only -- no function definition, `groupshared`, `struct`,
@@ -3155,7 +3155,7 @@ when it is not written.
 '#include' cannot stand among the statements of a function, and the 'hlsl' block of pass '{0}' holds the statements of its entry; include the file in the file's 'hlsl' block, or write whole functions in the pass's block.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3962`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3957`
 <!-- generated:end DSH7366 -->
 
 **Cause.** A block that holds the statements of an entry has an `#include` among them. The compiler writes those
@@ -3196,7 +3196,7 @@ functions in the block, which name their parameters themselves.
 '{0}' is in the shared code of the file's 'hlsl' block, and is the entry of pass '{1}' as well, which the pass's slot renames to the slot's entry point with a #define; the shared code is compiled into that slot, after it. Rename it in the block.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4220`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4215`
 <!-- generated:end DSH7368 -->
 
 **Cause.** A name in the shared code of the file's `hlsl` block -- everything in it that no pass names with
@@ -3219,7 +3219,7 @@ pass's names belongs in an entry, which is compiled only into the slots of the p
 '{0}' is the entry of pass '{1}' in the file's 'hlsl' block, and is called here; an entry is compiled only into the slots of the passes that name it, so nothing else can call it. Move what it shares into a function of its own in the block, and call that.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4120`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4115`
 <!-- generated:end DSH7369 -->
 
 **Cause.** An entry of the file's `hlsl` block -- a function a pass names with `Entry = X;` alone -- is called:

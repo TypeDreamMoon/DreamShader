@@ -1206,7 +1206,7 @@ lines bind, and any other material reads an exported buffer with
 '#pragma pipeline' configures a Custom Pass pipeline and belongs in a '.dsp' file of its own, and this line is in '{0}'; move it, with the pipeline's buffers and passes, into a '.dsp'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4818`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4812`
 <!-- generated:end DSH3311 -->
 
 **Cause.** `#pragma pipeline(...)` stands in a `.dss`, a `.dsh` or a `.dsi` -- the message names the
@@ -1228,7 +1228,7 @@ stay in their `.dss` files, with their `#pragma material(...)`.
 An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only a '.dsp' file holds, and '{0}' is not one; a pipeline cannot be included.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4831`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4855`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4825`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4849`
 <!-- generated:end DSH3312 -->
 
 **Cause.** A `buffer` or `pass` declaration, or a file-level `hlsl` block, reached the binder of a `.dss` or

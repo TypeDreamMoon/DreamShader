@@ -320,8 +320,9 @@ m.WorldPositionOffset = float3(Wind * UE.VertexColor().r * 20.0, 0);
 
 Notes:
 
-- At `BeginView` there is no view uniform buffer yet: the code uses `DP_Time` rather than `View.GameTime`, and a
-  `View` in it would be a compile error at its line.
+- The code takes its time from `DP_Time`; `View.GameTime` would do as well. At `BeginView` the runtime binds a
+  view uniform buffer of its own that holds the camera and the times, though not what the renderer fills later
+  (see [HLSL passes](../runtime/hlsl.md)).
 - `read Previous = Wind.Previous` and `write Result = Wind` are two textures — last frame's and this frame's.
 - Every editor viewport advances its own history; only one writes the exported render target.
 - Niagara: point a Texture Sample data interface at the asset `CP_WindField_Wind`.

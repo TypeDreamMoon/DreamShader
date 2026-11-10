@@ -73,7 +73,7 @@ is listed under the channels it keeps.
 The builtin catalog is empty, so no 'UE.' expression and no material attribute can be resolved; export it with 'dsc export-catalog'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:287`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:288`
 <!-- generated:end DSH5202 -->
 
 **Cause.** The binder was given an empty builtin catalog, so no `UE.` node and no material pin can
@@ -995,7 +995,7 @@ migrate` writes it.
 The asset of this block and a function this file can call are both named '{0}', which 1.x kept apart; the block is declared as '{1}', and a '.dss' writes that name.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:866`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:867`
 <!-- generated:end DSH5290 -->
 
 **Cause.** Rule L23. A block builds an asset named like a function this file can call (a

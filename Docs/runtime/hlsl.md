@@ -190,7 +190,7 @@ of it is what the dispatch uses.
 | `DreamPassInputUV(i, uv)` | `uv` over input i's picture, as a UV in its texture |
 | `DreamPassSample(Name, UV)` | the `read` Name sampled (linear) at a UV over the view, inside its picture |
 | `DreamPassLoad(Name, Pixel)` | a texel of the `read` Name, at a pixel counted from the view's top left |
-| `DreamPassSceneUV(UV)` | a UV over the view as a UV of the scene textures, for `CalcSceneDepth` and the rest; not at `BeginView` |
+| `DreamPassSceneUV(UV)` | a UV over the view as a UV of the scene textures, for `CalcSceneDepth` and the rest; `BeginView` has no scene textures to use it on |
 | `DP_PointClamp`, `DP_LinearClamp` | samplers |
 | `DP_Output0`…`DP_Output3` | compute only: the `write` UAVs |
 | `DP_OutputSize[4]` | the outputs' sizes |
@@ -204,10 +204,13 @@ of it is what the dispatch uses.
 `DreamPassSample`, `DreamPassLoad` and `DreamPassSceneUV` are macros — `DreamPassSample(InColor, UV)` reads
 `InColorUVRect`, the name the binding made — and work in a `.usf` as well as in a block.
 
-At `BeginView` the view uniform buffer does not exist yet; using `View` in a pass there is a compile error,
-and `DP_Time` stands in for the timing values. The scene textures there are placeholders. The shared code of
-the file's block may use `View` — other passes may run later in the frame — but a `BeginView` pass that calls
-such a function is refused when its slot is pre-checked (`DSH8318`).
+`View` is there at every injection point, `BeginView` included — a compute pass can read the camera itself,
+with no parameter fed from a Blueprint. At `BeginView` the renderer has not made the view's own uniform
+buffer yet, so the runtime binds one it makes from the camera: the transforms (`TranslatedWorldToClip`,
+`ViewToClip`, `ClipToTranslatedWorld` and the rest), the camera's position and directions, the view rect,
+the times and the frame counters. What only the renderer fills later is not in it — sky,
+atmosphere, lights, exposure: `View.PreExposure` is 1, and the previous frame's transforms (`View.Prev*`)
+equal this frame's. The scene textures at `BeginView` are placeholders.
 
 ## How the HLSL gets into the engine
 

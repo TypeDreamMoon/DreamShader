@@ -114,7 +114,7 @@ Every pass names its own; the pipeline only gives the default.
 
 | Point | Where in the frame | The scene textures there |
 | :-- | :-- | :-- |
-| `BeginView` | before visibility, before anything is drawn | none — no SceneColor, no SceneDepth, no `View` uniform buffer (see [HLSL passes](../runtime/hlsl.md)) |
+| `BeginView` | before visibility, before anything is drawn | none — no SceneColor, no SceneDepth; `View` holds the camera but nothing the renderer fills later (see [HLSL passes](../runtime/hlsl.md)) |
 | `BeforeBasePass` | after the depth prepass | SceneDepth |
 | `AfterBasePass` | the GBuffer is written, nothing is lit | GBuffer A–F, Velocity, SceneDepth; SceneColor holds emissive only; CustomDepth if `r.CustomDepth.Order` puts it first (the default with DBuffer decals) |
 | `AfterOpaque` | lighting, fog and sky done, translucency not | everything opaque, CustomDepth / CustomStencil |

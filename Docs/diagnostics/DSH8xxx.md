@@ -2485,7 +2485,7 @@ cached copy and `InvalidateDreamShaderBuiltinCatalog`.
 Building '{0}' was cancelled; the asset is as it was before this compile.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:316`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1183`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:684`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:316`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1182`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:684`
 <!-- generated:end DSH8298 -->
 
 **Cause.** The user pressed Cancel on the compile's progress dialog. Nothing was written: the emit
@@ -2532,7 +2532,7 @@ third function that neither calls back into.
 '{0}' is a Custom Pass pipeline, which needs Unreal Engine 5.8 or later; this engine has the DreamShaderPass asset types but no runtime to run them, so nothing was built.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1017`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1016`
 <!-- generated:end DSH8300 -->
 
 **Cause.** A `.dsp` was compiled on an engine older than Unreal Engine 5.8. The DreamShaderPass module
@@ -2555,7 +2555,7 @@ pipeline, render target, slot or snapshot was written.
 Failed to create package '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1027`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1057`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:341`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:346`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1026`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1056`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:341`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:346`
 <!-- generated:end DSH8301 -->
 
 **Cause.** The pipeline asset could not be made at the path its `.dsp` resolves to. The message
@@ -2734,7 +2734,7 @@ check as it maps the format onto a render target format.
 The render target of the exported buffer '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1162`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1161`
 <!-- generated:end DSH8309 -->
 
 **Cause.** The render target of an exported buffer — `<Pipeline>_<Buffer>`, in the pipeline's folder —
@@ -2779,7 +2779,7 @@ the next compile takes the same render target over again, and its readers stay v
 '{0}' was built but could not be saved with its render targets; its slots are already in the registry. Make the packages writable and compile the source again to retry saving. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1271`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1270`
 <!-- generated:end DSH8311 -->
 
 **Cause.** The pipeline was built and its render targets configured, and saving the packages failed — a
@@ -2866,7 +2866,7 @@ refuses in a package name.
 The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose every slot it records; fix the file, or run 'dsc pass-registry -Rebuild'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:897`
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:877`
 <!-- generated:end DSH8315 -->
 
 **Cause.** Every `.dsp` compile reads the project's slot registry, `<DShader>/.dreampass/Registry.json` —
@@ -2890,7 +2890,7 @@ slot again ([`pass-registry`](../tools/commandlet.md#pass-registry)).
 Pass '{0}' needs a {1} slot and all {2} are taken. Merge passes, run 'dsc pass-registry -Gc' to free the slots of pipelines whose source is gone, or raise {3} in the project's Target.cs.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:980`
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:960`
 <!-- generated:end DSH8316 -->
 
 **Cause.** A new HLSL pass needs a slot — a `compute` pass one of the compute table, a `fullscreen` pass
@@ -2914,39 +2914,18 @@ game alike, and rebuild: every slot is compiled for every platform, used or not.
 Pass '{0}' cannot be mapped onto its HLSL slot: {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1060`
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1040`
 <!-- generated:end DSH8317 -->
 
 **Cause.** The pass's bindings cannot be written as its slot's section — the `#define`s that map them
 onto the slot's fixed parameters; the reason follows. A name that is not an identifier or starts with
 `DP_`; a name defined twice (a `read` also defines `<Name>Size` and `<Name>UVRect`, a `write`
-`<Name>Size`, and the `Entry` — and `View` at `BeginView` — are names in the slot too); more than 8
+`<Name>Size`, and the `Entry` is a name in the slot too); more than 8
 reads or 4 writes; params that do not fit the slot's 16 `float4`, or a texture among them. The binder
 refuses each of these first (DSH7319, DSH7347), so the two disagree.
 
 **Fix.** Rename or reduce the bindings as the reason says, and report it with the `.dsp`: the binder
 should have refused the pass.
-
-## DSH8318
-
-<!-- generated:begin DSH8318 -->
-**Severity** error
-
-**Message**
-
-```
-[{0}] pass '{1}' runs at BeginView, where the view uniform buffer does not exist yet, and its slot uses 'View' all the same: a function of the file's 'hlsl' block that the pass calls reads it. Give that function what it needs as a parameter, or move the pass to a later injection point.
-```
-
-**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1310`
-<!-- generated:end DSH8318 -->
-
-**Cause.** A pass at `BeginView` whose HLSL is in the `.dsp` compiled, and its slot uses the view uniform buffer,
-which does not exist yet at `BeginView`. The pass's own code is guarded -- a `View` there is a compile error at its
-line -- so the use comes from a function of the file's `hlsl` block the pass calls.
-
-**Fix.** Give that function what it needs from the view as a parameter and pass a value the pass has at
-`BeginView` (`DP_Time` for the time), or move the pass to a later injection point.
 
 ## DSH8319
 
@@ -2959,7 +2938,7 @@ line -- so the use comes from a function of the file's `hlsl` block the pass cal
 The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slot (its entry is not in the file's 'hlsl' block); there is nothing to snapshot.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1005`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1014`
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:985`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:994`
 <!-- generated:end DSH8319 -->
 
 **Cause.** The `.usf` a pass names in `Shader =` could not be read when its snapshot was built. The
@@ -2982,7 +2961,7 @@ path — and readable, then compile the `.dsp` again.
 '{0}' is included by a relative path and names no file, so the snapshot of pass '{1}' cannot be built.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1040`
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1020`
 <!-- generated:end DSH8320 -->
 
 **Cause.** The pass's `.usf`, or a file it includes, has an `#include "<relative path>"` that names no
@@ -3004,7 +2983,7 @@ scan; an `#if 0` around it does not.
 '{0}' is included by a virtual path outside /Engine/, /Plugin/ and /ThirdParty/, so the snapshot of pass '{1}' keeps including the live file: an edit of it later reaches the global shaders without a pre-check. Include it by a relative path to have it copied into the snapshot.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1050`
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1030`
 <!-- generated:end DSH8321 -->
 
 **Cause.** The pass's `.usf`, or a file it includes, includes a file by a virtual path outside
@@ -3028,7 +3007,7 @@ snapshot. Keep virtual paths for shader code under `/Engine/`, `/Plugin/` and `/
 [{0}] pass '{1}' does not compile in its HLSL slot: {2}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1338`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1346`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1372`
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1310`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1318`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1344`
 <!-- generated:end DSH8322 -->
 
 **Cause.** The pre-check compiled the pass in its slot for the shader format in brackets, and the shader
@@ -3062,7 +3041,7 @@ limit of the pre-check, not a mistake in the file.
 The {0} slot shader cannot be pre-checked: the global shader type {1} is not registered, or its source no longer includes '{2}'. The DreamShaderPass module is out of step with this compiler; nothing was written.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1263`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1382`
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1243`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1354`
 <!-- generated:end DSH8323 -->
 
 **Cause.** The pre-check needs the slot shaders as the DreamShaderPass module registers them — the global
@@ -3086,7 +3065,7 @@ and the compiler match, and restart the editor.
 The project targets the shader format {0}, which this machine has no shader compiler for, so the HLSL slots were not pre-checked for it; a cook for that platform compiles them unchecked.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1201`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1223`
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1181`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1203`
 <!-- generated:end DSH8324 -->
 
 **Cause.** A pre-check compiles a changed slot for every format the project renders and cooks with —
@@ -3115,7 +3094,7 @@ passed.
 There is no shader format to pre-check the HLSL slots with: no active feature level and no target platform has a shader compiler on this machine. Nothing was written, because a slot that never compiled must not reach the global shaders.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1207`
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1187`
 <!-- generated:end DSH8325 -->
 
 **Cause.** A slot had to be pre-checked and no shader format was there to compile it with: the process
@@ -3137,7 +3116,7 @@ without `-nullrhi` and builds the pipeline as `compile` does.
 '{0}' cannot be written or deleted, so nothing of the slot registry was changed: no snapshot written, no slot deleted, no registry file rewritten. The registry and its snapshots are committed files; a file that is read-only because it is not checked out is the usual reason. Check out the whole .dreampass folder and try again.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1454`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1473`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1652`
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1426`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1445`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1624`
 <!-- generated:end DSH8326 -->
 
 **Cause.** A file of the slot registry cannot be written or deleted — a snapshot file under `Slots/`,
@@ -3167,7 +3146,7 @@ files with `Registry.json` and rewrites one that differs, whatever else it chang
 {0} slot {1} of pass '{2}' was freed: the pipeline no longer runs that pass in HLSL there.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1530`
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1502`
 <!-- generated:end DSH8327 -->
 
 **Cause.** Informational. A `.dsp` compile freed a slot its pipeline held: the pass was removed or
@@ -3411,4 +3390,17 @@ shaders belong to the sources that build them.
 
 **Fix.** Nothing. To check those shaders, run `./dsc.ps1 check <file>.dss -Shaders` on the materials'
 sources.
+
+## Retired codes
+
+> No raise site in the source has these codes any more. Their prose is kept so a renumbered code can
+> take it back; delete a section once nothing needs it.
+
+### DSH8318
+
+<!-- retired DSH8318 -->
+**Retired.** Up to 2.2.0 a pass at `BeginView` could not use the view uniform buffer, which the renderer
+makes only after that point, and this code refused one whose HLSL reached `View` through a function of the
+file's `hlsl` block. The runtime now binds a view uniform buffer of its own at `BeginView`, so `View` is
+there at every injection point and nothing raises this code.
 
