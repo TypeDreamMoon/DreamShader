@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-2155
+2153
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -381,7 +381,6 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Pipeline | FullscreenMaterialWriteSlot | A material has one output and no name for it; write 'write {0};'. |
 | DreamShader.Binder.Pipeline | FullscreenNothing | Fullscreen pass '{0}' needs code to run: 'Material = "..."' (a Post Process material), 'Shader = "<file>.usf"' with 'Entry', an 'hlsl { }' block of its own, or 'Entry' naming a function of the file's 'hlsl { }' block. |
 | DreamShader.Binder.Pipeline | FullscreenShaderBeforeBasePass | At BeforeBasePass only scene depth exists: the other scene textures pass '{0}' could read are placeholders. |
-| DreamShader.Binder.Pipeline | FullscreenShaderBeginViewNoView | At BeginView neither the scene textures nor the view uniform buffer exist yet: the SceneTextures pass '{0}' sees are placeholders, a use of 'View' in its '.usf' does not compile, and DP_Time gives the time. |
 | DreamShader.Binder.Pipeline | FullscreenShaderNoWrite | Fullscreen pass '{0}' writes nothing; a pass draws into at least one buffer, 'write Result = Buffer;'. |
 | DreamShader.Binder.Pipeline | FullscreenShaderTooMany | Fullscreen pass '{0}' reads {1} and writes {2} buffers, and the pixel slot a '.usf' pass runs in has {3} inputs and {4} outputs. |
 | DreamShader.Binder.Pipeline | HlslBlockInKind | A {0} pass runs no HLSL of its own, so pass '{1}' cannot hold an 'hlsl' block. |
@@ -492,8 +491,8 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Pipeline | SlotNameDerived | '{0}' is a name of pass '{1}' in its HLSL slot twice: the slot's registry names a read's size and UV rect <Name>Size and <Name>UVRect, and a write's size <Name>Size, beside the names the pass binds; rename one of them. |
 | DreamShader.Binder.Pipeline | SlotNameEntry | '{0}' is a name of pass '{1}' in its HLSL slot, and so is its entry point: the slot's registry renames the Entry to the slot's own entry function with a #define of that name; rename the binding. |
 | DreamShader.Binder.Pipeline | SlotNameReserved | '{0}' is a name of pass '{1}' in its HLSL slot, and names starting with DP_ are the slot's own parameters (DreamPass.ush); rename the binding. |
-| DreamShader.Binder.Pipeline | SlotNameView | '{0}' is a name of pass '{1}' in its HLSL slot, and at BeginView the slot's registry defines 'View' itself, so that a use of the view uniform buffer, which does not exist yet there, fails to compile; rename the binding. |
 | DreamShader.Binder.Pipeline | SlotParamsTooMany | The parameters of pass '{0}' do not fit the {1} float4 of a shader slot, packed in order (a float4 takes a vector of its own, a float3 three components, a float2 a half, a scalar one); pass fewer, or pack them yourself. |
+| DreamShader.Binder.Pipeline | SlotPassBeginView | At BeginView the scene textures do not exist yet: the SceneTextures pass '{0}' sees are placeholders. Its 'View' holds the camera -- transforms, position, view rect, time -- but nothing the renderer adds later: no sky or atmosphere, PreExposure 1, and last frame's transforms equal this frame's. |
 | DreamShader.Binder.Pipeline | SlotTextureParamMaterial | '{0}' is a {1}, and the parameter block of a shader slot holds numbers only, so no texture parameter reaches a '.usf' pass. A material takes one through 'param': draw this pass with a material ('Material = ...'), or let a fullscreen material pass that takes the texture by 'param' write it into a buffer this pass reads. |
 | DreamShader.Binder.Pipeline | SlotTwice | '{0}' is bound twice in pass '{1}'; inside a pass every input, output and parameter has a name of its own. |
 | DreamShader.Binder.Pipeline | SlotTwiceCase | '{0}' and '{1}' differ in case only, and pass '{2}' matches them to its material's inputs and parameters as Unreal names, which ignore case: give them names of their own. |
@@ -1453,7 +1452,6 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pass.Slots | PrecheckNoFormat | There is no shader format to pre-check the HLSL slots with: no active feature level and no target platform has a shader compiler on this machine. Nothing was written, because a slot that never compiled must not reach the global shaders. |
 | DreamShader.Pass.Slots | PrecheckNoShaderType | The {0} slot shader cannot be pre-checked: the global shader type {1} is not registered, or its source no longer includes '{2}'. The DreamShaderPass module is out of step with this compiler; nothing was written. |
 | DreamShader.Pass.Slots | PrecheckRequestedFormatUnavailable | The shader format {0} was asked for, and this machine has no shader compiler for it, so the HLSL slots were not pre-checked for it. |
-| DreamShader.Pass.Slots | PrecheckViewAtBeginView | [{0}] pass '{1}' runs at BeginView, where the view uniform buffer does not exist yet, and its slot uses 'View' all the same: a function of the file's 'hlsl' block that the pass calls reads it. Give that function what it needs as a parameter, or move the pass to a later injection point. |
 | DreamShader.Pass.Slots | RegistryNotWritable | '{0}' cannot be written or deleted, so nothing of the slot registry was changed: no snapshot written, no slot deleted, no registry file rewritten. The registry and its snapshots are committed files; a file that is read-only because it is not checked out is the usual reason. Check out the whole .dreampass folder and try again. |
 | DreamShader.Pass.Slots | RegistryUnreadable | The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose every slot it records; fix the file, or run 'dsc pass-registry -Rebuild'. |
 | DreamShader.Pass.Slots | RegistryWriteFailed | '{0}' could not be written. The slot registry is a committed file: a file that is read-only because it is not checked out is the usual reason. |

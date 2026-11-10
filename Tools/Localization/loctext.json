@@ -4,329 +4,329 @@
   "key": "ArraySizeNotLiteral",
   "src": "An array size must be an integer literal.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 653
+  "line": 654
  },
  {
   "ns": "DreamShader.Binder",
   "key": "ArraySizeOutOfRange",
   "src": "An array size must be between 1 and 4096.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 663
+  "line": 664
  },
  {
   "ns": "DreamShader.Binder",
   "key": "ConstantNeedsInitializer",
   "src": "'{0}' is a compile-time constant and must be initialised where it is declared.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 808
+  "line": 809
  },
  {
   "ns": "DreamShader.Binder",
   "key": "CustomBodyParsed",
   "src": "'@custom' on '{0}' did not make its body opaque; the directive has to sit in the '///' block directly above the declaration.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1306
+  "line": 1307
  },
  {
   "ns": "DreamShader.Binder",
   "key": "CustomMaterialParameter",
   "src": "'{0}' is '@custom', so '{1}' becomes an input pin of a Custom node, and a Custom node cannot take a material; pass the fields it needs instead.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1289
+  "line": 1290
  },
  {
   "ns": "DreamShader.Binder",
   "key": "DirectiveWrongLinkage",
   "src": "'@{0}' means nothing here; it belongs on {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 934
+  "line": 935
  },
  {
   "ns": "DreamShader.Binder",
   "key": "DuplicateParameter",
   "src": "'{0}' is declared twice in the parameter list of '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 962
+  "line": 963
  },
  {
   "ns": "DreamShader.Binder",
   "key": "DuplicateStructField",
   "src": "'{0}' is declared twice in struct '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 693
+  "line": 694
  },
  {
   "ns": "DreamShader.Binder",
   "key": "EmptyCatalog",
   "src": "The builtin catalog is empty, so no 'UE.' expression and no material attribute can be resolved; export it with 'dsc export-catalog'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 290
+  "line": 291
  },
  {
   "ns": "DreamShader.Binder",
   "key": "EntryAndExports",
   "src": "'{0}' is exported from a file whose entry is '{1}'; a file makes a material or it makes functions, not both. Move it to its own file, or drop 'export' to make it a helper.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1335
+  "line": 1336
  },
  {
   "ns": "DreamShader.Binder",
   "key": "ExternWithoutAsset",
   "src": "'extern {0}' has nothing to bind to; add '/// @asset /Game/.../MF_Name' above it.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1168
+  "line": 1169
  },
  {
   "ns": "DreamShader.Binder",
   "key": "FunctionShadowsBuiltin",
   "src": "'{0}' is a builtin operation and cannot be redeclared; rename the function.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 845
+  "line": 846
  },
  {
   "ns": "DreamShader.Binder",
   "key": "GenerateOutsidePackage",
   "src": "'{0}' asks to generate '{1}', and only a package's header generates material functions; this file is not in one, so nothing is generated. Write an 'export' function (or a 1.x ShaderFunction) to make a material function of your own.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 898
+  "line": 899
  },
  {
   "ns": "DreamShader.Binder",
   "key": "GlobalStorage",
   "src": "'{0}' is a file-scope variable with no storage class; write 'uniform' for a material parameter or 'static const' for a compile-time constant.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 758
+  "line": 759
  },
  {
   "ns": "DreamShader.Binder",
   "key": "GlobalTypeUnsupported",
   "src": "A file-scope variable of type {0} has no node; a 'uniform' or 'static const' must be numeric, bool, a texture or a sampler.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 785
+  "line": 786
  },
  {
   "ns": "DreamShader.Binder",
   "key": "HoistedCallRecursion",
   "src": "'{0}' reaches itself through the 'UE.' calls lifted out of its body, and each call makes a new custom node, so the graph would never end.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1517
+  "line": 1518
  },
  {
   "ns": "DreamShader.Binder",
   "key": "IncludeCycle",
   "src": "Including '{0}' from '{1}' closes a cycle; a header may not include itself, directly or through another header.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 450
+  "line": 451
  },
  {
   "ns": "DreamShader.Binder",
   "key": "IncludesUnavailable",
   "src": "'{0}' cannot be read: this front end was started without an include resolver, so nothing a header declares is visible.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 414
+  "line": 415
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LayerBlendNotExported",
   "src": "'@layerblend' makes '{0}' a material layer blend asset, so it has to be 'export'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1210
+  "line": 1211
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LayerBlendSignature",
   "src": "A '@layerblend' function is written 'export void {0}(material Base, material Top, ..., inout material Result)': at least one 'material' input and a final 'inout material'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1220
+  "line": 1221
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LayerNotExported",
   "src": "'@layer' makes '{0}' a material layer asset, so it has to be 'export'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1182
+  "line": 1183
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LayerSignature",
   "src": "A '@layer' function is written 'export void {0}(inout material m)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1192
+  "line": 1193
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LegacyBlockNameTaken",
   "src": "The asset of this block and a function this file can call are both named '{0}', which 1.x kept apart; the block is declared as '{1}', and a '.dss' writes that name.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 871
+  "line": 872
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LinkageTargetExport",
   "src": "an exported function",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 940
+  "line": 941
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LinkageTargetExtern",
   "src": "an 'extern' prototype",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 937
+  "line": 938
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LinkageTargetLegacyExport",
   "src": "a block of a 1.x source that produces an asset",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 939
+  "line": 940
  },
  {
   "ns": "DreamShader.Binder",
   "key": "MaterialPragmaWithoutEntry",
   "src": "'#pragma material' configures a material, and this file has no 'export void Name(inout material m)' entry to configure.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1371
+  "line": 1372
  },
  {
   "ns": "DreamShader.Binder",
   "key": "MultiDimensionalArray",
   "src": "A multi-dimensional array has no graph form; declare one dimension, or move the code into a '/// @custom' function.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 611
+  "line": 612
  },
  {
   "ns": "DreamShader.Binder",
   "key": "NoGenerationInHeader",
   "src": "'#pragma nogeneration' in '{0}' was ignored: it marks the file it is written in, a header builds nothing, and the files that include it are not marked by it. Write it in each of those files instead.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1358
+  "line": 1359
  },
  {
   "ns": "DreamShader.Binder",
   "key": "ParamDocUnknown",
   "src": "'@param {0}' does not name a parameter of '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1088
+  "line": 1089
  },
  {
   "ns": "DreamShader.Binder",
   "key": "PinDocUnknown",
   "src": "'@pin {0}' does not name a parameter of '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1062
+  "line": 1063
  },
  {
   "ns": "DreamShader.Binder",
   "key": "PrototypeWithoutExtern",
   "src": "'{0}' has no body; a prototype has to be 'extern' and carry '/// @asset'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1269
+  "line": 1270
  },
  {
   "ns": "DreamShader.Binder",
   "key": "RedefinitionAcrossFiles",
   "src": "'{0}' is declared in '{1}' and again in '{2}'; a name included from a header may not be declared a second time.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 497
+  "line": 498
  },
  {
   "ns": "DreamShader.Binder",
   "key": "RedefinitionSameFile",
   "src": "'{0}' is already declared in this file; one name declares one thing.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 487
+  "line": 488
  },
  {
   "ns": "DreamShader.Binder",
   "key": "StaticDocUnknown",
   "src": "'@static {0}' does not name a parameter of '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1040
+  "line": 1041
  },
  {
   "ns": "DreamShader.Binder",
   "key": "StaticOnNonBoolUniform",
   "src": "'@static' asks for a static switch and is only meaningful on a 'uniform bool'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 818
+  "line": 819
  },
  {
   "ns": "DreamShader.Binder",
   "key": "StaticParamNotBool",
   "src": "'@static {0}' makes a parameter a static bool pin, which only a 'bool' input can be, and '{0}' is {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1015
+  "line": 1016
  },
  {
   "ns": "DreamShader.Binder",
   "key": "StaticParamOut",
   "src": "an 'out' or 'inout' parameter",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1019
+  "line": 1020
  },
  {
   "ns": "DreamShader.Binder",
   "key": "TextureUniformInitializer",
   "src": "A texture uniform has no HLSL initializer; write its default asset as '/// @default /Game/...'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 796
+  "line": 797
  },
  {
   "ns": "DreamShader.Binder",
   "key": "TwoEntries",
   "src": "'{0}' is a second material entry; '{1}' above it is already the entry, and one file makes one material.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1240
+  "line": 1241
  },
  {
   "ns": "DreamShader.Binder",
   "key": "UniformArray",
   "src": "A 'uniform' array has no parameter node; declare one uniform per element, or make it 'static const'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 829
+  "line": 830
  },
  {
   "ns": "DreamShader.Binder",
   "key": "UnknownType",
   "src": "'{0}' is not a builtin type and no 'struct' of that name is declared before this line.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 576
+  "line": 577
  },
  {
   "ns": "DreamShader.Binder",
   "key": "UnknownTypeDidYouMean",
   "src": "'{0}' is not a type; did you mean '{1}'? Type names are case-sensitive.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 565
+  "line": 566
  },
  {
   "ns": "DreamShader.Binder",
   "key": "UnsizedArrayNeedsInitializer",
   "src": "An unsized array needs an initializer list to take its length from.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 630
+  "line": 631
  },
  {
   "ns": "DreamShader.Binder",
   "key": "UnsupportedType",
   "src": "'{0}' is not a type this front end can resolve.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 590
+  "line": 591
  },
  {
   "ns": "DreamShader.Binder",
   "key": "VoidParameter",
   "src": "A parameter cannot be 'void'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 984
+  "line": 985
  },
  {
   "ns": "DreamShader.Binder",
   "key": "VoidStructField",
   "src": "A struct field cannot be 'void'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 711
+  "line": 712
  },
  {
   "ns": "DreamShader.Binder.Directives",
@@ -2097,7 +2097,7 @@
   "key": "AfterTonemap",
   "src": "after",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3640
+  "line": 3635
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2118,28 +2118,28 @@
   "key": "BeforeTonemap",
   "src": "before",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3640
+  "line": 3635
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "BlendableLocation",
   "src": "'{0}' is compiled for BlendableLocation {1}, and pass '{2}' runs it at {3}, {4} tonemapping, so its colours are in another space than it expects; use {5}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3635
+  "line": 3630
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "BlockEntryNotFound",
   "src": "The 'hlsl' block of pass '{0}' does not define a function '{1}', which 'Entry' names; the entry is a function of the block itself.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4034
+  "line": 4029
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "BlockMainNotFound",
   "src": "The 'hlsl' block of pass '{0}' holds whole functions, and none is 'Main', the entry of a block when the pass writes no 'Entry'; name the entry function 'Main', or write 'Entry = <function>;'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4038
+  "line": 4033
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2181,14 +2181,14 @@
   "key": "BufferNeverRead",
   "src": "No pass reads buffer '{0}' and it is not exported, so writing it is wasted work; read it, export it, or remove it.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4764
+  "line": 4758
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "BufferNeverWritten",
   "src": "No pass writes buffer '{0}', so whoever reads it reads its 'Clear' value.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4754
+  "line": 4748
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2209,28 +2209,28 @@
   "key": "BuiltinNotWritable",
   "src": "'{0}' is the renderer's and pass '{1}' cannot write it at {2}; write a buffer of the pipeline instead.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4357
+  "line": 4352
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "BuiltinNotWritableSceneColorTranslucency",
   "src": "'SceneColor' is read-only at PostProcess.TranslucencyAfterDOF, where pass '{1}' runs: the post-process chain carries the translucency there, so write 'Translucency', or write the scene colour at another point.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4349
+  "line": 4344
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "BuiltinNotWritableTranslucency",
   "src": "'Translucency' is written at PostProcess.TranslucencyAfterDOF only, and pass '{1}' runs at {2}; elsewhere on the chain it is read-only.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4353
+  "line": 4348
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "BuiltinNotYet",
   "src": "'{0}' does not exist yet at {2}, where pass '{1}' runs; it exists from {3} on.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4337
+  "line": 4332
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2251,14 +2251,14 @@
   "key": "ComputeNoEntry",
   "src": "Compute pass '{0}' needs 'Entry = <function>' naming its '[numthreads]' function.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3927
+  "line": 3922
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "ComputeNoShader",
   "src": "Compute pass '{0}' needs code to run: 'Shader = \"<file>.usf\"' with 'Entry = <function>', an 'hlsl { }' block of its own, or 'Entry' naming a function of the file's 'hlsl { }' block.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4010
+  "line": 4005
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2286,28 +2286,28 @@
   "key": "CustomDepthAfterBasePass",
   "src": "'{0}' exists at AfterBasePass only when r.CustomDepth.Order draws custom depth before the base pass; where it does not, pass '{1}' reads a cleared placeholder. From AfterOpaque on it always exists.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4307
+  "line": 4302
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "CustomStencilNotBindable",
   "src": "'CustomStencil' is the stencil half of the custom depth texture, which no pass can bind as a texture of its own, and pass '{0}' {1} it; read it through the scene textures instead: a SceneTexture node in the material, CalcSceneCustomStencil in a '.usf'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4275
+  "line": 4270
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "CustomStencilReads",
   "src": "reads",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4277
+  "line": 4272
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "CustomStencilWrites",
   "src": "writes",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4277
+  "line": 4272
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2384,28 +2384,28 @@
   "key": "EntryIsComputeShader",
   "src": "'{1}' in '{0}' is a compute shader entry ('[numthreads]' is in front of it), and fullscreen pass '{2}' runs its Entry as a pixel shader; name the pixel shader function, or make the pass 'compute'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3835
+  "line": 3830
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "EntryNoNumThreads",
   "src": "'{0}' in '{1}' has no '[numthreads(x, y, z)]' the compiler can read; write 'Threads = uint3(x, y, z)' in the pass.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3795
+  "line": 3790
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "EntryNotFound",
   "src": "'{0}' does not define a function '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3807
+  "line": 3802
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "EntryNotFound2",
   "src": "'{0}' does not define a function '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3847
+  "line": 3842
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2419,14 +2419,14 @@
   "key": "EntryUnreadNumThreads",
   "src": "'{0}' is not in what the compiler could read of '{1}', which includes a file it cannot follow, so its '[numthreads(x, y, z)]' is unknown; write 'Threads = uint3(x, y, z)' in the pass.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3821
+  "line": 3816
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "EntryWithBodyForm",
   "src": "The 'hlsl' block of pass '{0}' holds the statements of its entry, whose function the compiler writes, so 'Entry' has no function to name; remove it, or write whole functions in the block: '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3953
+  "line": 3948
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2447,14 +2447,14 @@
   "key": "ExportLateFrame",
   "src": "Buffer '{0}' is exported and last written at {1}: opaque and translucent materials that sample it see the previous frame's contents, UI sees this frame's.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4780
+  "line": 4774
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "ExportMidFrame",
   "src": "Buffer '{0}' is exported and last written at {1}: opaque materials that sample it see the previous frame's contents, translucent and post-process materials and UI see this frame's.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4781
+  "line": 4775
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2489,7 +2489,7 @@
   "key": "FullscreenDomain",
   "src": "'{0}' is a {1} material, and a fullscreen pass draws a Post Process one: '#pragma material(Domain = PostProcess)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3552
+  "line": 3547
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2503,7 +2503,7 @@
   "key": "FullscreenMaterialNoFreeSlots",
   "src": "'{0}' takes {1} of the {2} post-process input slots with its SceneTexture nodes, which leaves {4} for its UserSceneTexture inputs, and it has {5}; read fewer buffers in it, or write pass '{3}' as a '.usf' pass.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3602
+  "line": 3597
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2517,7 +2517,7 @@
   "key": "FullscreenMaterialTooEarly",
   "src": "A fullscreen material pass needs the scene textures, which do not exist yet at {0}; run '{1}' at AfterBasePass or later.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4401
+  "line": 4396
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2531,7 +2531,7 @@
   "key": "FullscreenMaterialUnverified",
   "src": "A fullscreen material pass at {0} has not been verified on this engine yet; BeforePostProcess is the point it is known to work at.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4424
+  "line": 4419
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2545,21 +2545,14 @@
   "key": "FullscreenNothing",
   "src": "Fullscreen pass '{0}' needs code to run: 'Material = \"...\"' (a Post Process material), 'Shader = \"<file>.usf\"' with 'Entry', an 'hlsl { }' block of its own, or 'Entry' naming a function of the file's 'hlsl { }' block.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4013
+  "line": 4008
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "FullscreenShaderBeforeBasePass",
   "src": "At BeforeBasePass only scene depth exists: the other scene textures pass '{0}' could read are placeholders.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4447
- },
- {
-  "ns": "DreamShader.Binder.Pipeline",
-  "key": "FullscreenShaderBeginViewNoView",
-  "src": "At BeginView neither the scene textures nor the view uniform buffer exist yet: the SceneTextures pass '{0}' sees are placeholders, a use of 'View' in its '.usf' does not compile, and DP_Time gives the time.",
-  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4437
+  "line": 4441
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2587,7 +2580,7 @@
   "key": "HlslBlockOutsideDsp",
   "src": "An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only a '.dsp' file holds, and '{0}' is not one; a pipeline cannot be included.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4836
+  "line": 4830
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2601,7 +2594,7 @@
   "key": "IncludeInBodyForm",
   "src": "'#include' cannot stand among the statements of a function, and the 'hlsl' block of pass '{0}' holds the statements of its entry; include the file in the file's 'hlsl' block, or write whole functions in the pass's block.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3967
+  "line": 3962
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2615,28 +2608,28 @@
   "key": "InlineEntryIsComputeShader",
   "src": "'{0}' is a compute shader entry ('[numthreads]' is in front of it), and fullscreen pass '{1}' runs its entry as a pixel shader; name the pixel shader function, or make the pass 'compute'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4087
+  "line": 4082
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "InlineEntryNoNumThreads",
   "src": "'{0}' has no '[numthreads(x, y, z)]' in front of it that the compiler can read -- three whole numbers; write them so, or write 'Threads = uint3(x, y, z)' in pass '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4074
+  "line": 4069
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "InlineThreadsDisagree",
   "src": "'Threads = uint3({0}, {1}, {2})' disagrees with the '[numthreads({3}, {4}, {5})]' in front of '{6}' in the '.dsp', and the dispatch would be sized for groups the shader does not have; leave 'Threads' out, or write the same numbers.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4061
+  "line": 4056
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "InputUnbound",
   "src": "'{0}' reads the UserSceneTexture '{1}', and pass '{2}' binds nothing to it, so it samples black; add 'read {1} = <Buffer>;'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3583
+  "line": 3578
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2664,7 +2657,7 @@
   "key": "MaterialNotFound",
   "src": "No material '{0}' was found: a bare name is the material a '.dss' under the same source root builds, an object path any material or material instance.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3535
+  "line": 3530
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2678,35 +2671,35 @@
   "key": "MeshAfterUpscaleCopied",
   "src": "At {0} the view is upscaled and scene depth is still at render resolution; mesh pass '{1}' tests against it, or against a copy of it brought into the pixels of outputs of another size, so its depth test is only as fine as the render resolution.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4468
+  "line": 4462
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "MeshAtBeginView",
   "src": "A mesh pass draws primitives against a view that has no depth yet at BeginView; run '{0}' at BeforeBasePass or later.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4413
+  "line": 4408
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "MeshAtEndOfView",
   "src": "At EndOfView the view is at output resolution and has no depth to draw primitives against; run mesh pass '{0}' earlier.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4414
+  "line": 4409
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "MeshBeforeBasePassTestScene",
   "src": "At BeforeBasePass scene depth holds what the depth prepass drew, which may not be everything; mesh pass '{0}' is meant to run there with 'Depth = None' or 'Depth = Own(...)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4457
+  "line": 4451
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "MeshDomain",
   "src": "'{0}' is a {1} material, and a mesh pass draws primitives with a Surface one.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3657
+  "line": 3652
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2720,7 +2713,7 @@
   "key": "MeshNewTranslator",
   "src": "'{0}' asks for the new material translator, which UE.DreamPassOutput does not support; remove 'bEnableNewHLSLGenerator' from it.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3721
+  "line": 3716
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2734,28 +2727,28 @@
   "key": "MeshNoPassOutput",
   "src": "'{0}' has no UE.DreamPassOutput in its graph, so a mesh pass has nothing to write; add 'UE.DreamPassOutput(Output0 = ...);' to the material.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3669
+  "line": 3664
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "MeshOutputNotConnected",
   "src": "'{0}' leaves Output{1} of its UE.DreamPassOutput unconnected, so '{2}' would receive nothing.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3686
+  "line": 3681
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "MeshOwnDepthSceneTargets",
   "src": "Mesh pass '{0}' writes '{1}', a texture of the scene, and tests against its own depth '{2}', which is bound from its corner: in a view that does not start at the corner of the scene's textures -- the second view of split screen, the right eye in stereo -- the depth does not reach the view's pixels, and the runtime skips the pass there.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4565
+  "line": 4559
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "MeshOwnDepthSmaller",
   "src": "Mesh pass '{0}' tests against its own depth '{1}', which is {2}, and its outputs are {3}; an own depth is bound as it is, so it must be at least their size: give it their resolution and a scale no smaller than theirs, or a fixed size no smaller than theirs.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4580
+  "line": 4574
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2783,21 +2776,21 @@
   "key": "MeshSceneAndOwnTargets",
   "src": "Mesh pass '{0}' writes '{1}', a texture of the scene, together with '{2}', a buffer of the pipeline. A mesh pass draws all its targets through one viewport, so they have to be one size holding the view at one place; the scene's textures are usually larger than the view they hold (rounded up, and in the editor grown to the largest view so far) while a buffer is the view's size, and the runtime skips the pass whenever the two differ. Write them in two mesh passes.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4530
+  "line": 4524
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "MeshSizesDiffer",
   "src": "The outputs of mesh pass '{0}' are drawn together and have one size: '{1}' is {2}, and '{3}' is {4}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4547
+  "line": 4541
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "MeshUsage",
   "src": "Mesh pass '{0}' draws {1} primitives, and '{2}' is not compiled for them; give the material its usage flag ('#pragma material({3} = true)' in its '.dss'), or leave {1} out of 'Usage'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3707
+  "line": 3702
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -2951,7 +2944,7 @@
   "key": "PipelineDeclarationOutsideDsp",
   "src": "'{0} {1}' is a declaration of a Custom Pass pipeline, which only a '.dsp' file holds, and '{2}' is not one; a pipeline cannot be included.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4860
+  "line": 4854
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3077,7 +3070,7 @@
   "key": "PipelinePragmaOutsideDsp",
   "src": "'#pragma pipeline' configures a Custom Pass pipeline and belongs in a '.dsp' file of its own, and this line is in '{0}'; move it, with the pipeline's buffers and passes, into a '.dsp'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4823
+  "line": 4817
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3126,7 +3119,7 @@
   "key": "PreExposure",
   "src": "Pass '{0}' writes a data buffer, and '{1}' scales what it reads and writes by the exposure; give it '#pragma material(bDisablePreExposureScale = true)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3619
+  "line": 3614
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3140,42 +3133,42 @@
   "key": "ReadAndWrite",
   "src": "Pass '{0}' reads and writes '{1}', and one pass cannot have one texture as its input and its output; write another buffer, or read '{1}.Previous' of a 'History = true' buffer.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4502
+  "line": 4496
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "ReadBeforeWrite",
   "src": "Pass '{0}' reads '{1}' before '{2}' writes it in the frame, so it reads the buffer's 'Clear' value; move the reader after the writer, or read '{1}.Previous'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4738
+  "line": 4732
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "ReadBeforeWriteNoClear",
   "src": "Pass '{0}' reads '{1}' before '{2}' writes it, and '{1}' is 'Clear = None', so what it reads is undefined; move the reader after the writer, or give the buffer a 'Clear' value.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4729
+  "line": 4723
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "ReadNeverWrittenNoClear",
   "src": "Pass '{0}' reads '{1}', which no pass writes, and '{1}' is 'Clear = None', so what it reads is undefined.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4728
+  "line": 4722
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "ReadNotAnInput",
   "src": "'{0}' reads no UserSceneTexture of '{1}': its inputs are {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3568
+  "line": 3563
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "Reads",
   "src": "reads",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4378
+  "line": 4373
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3210,35 +3203,35 @@
   "key": "SceneColorAfterBasePass",
   "src": "At AfterBasePass scene colour holds the emissive light only; nothing is lit yet, so pass '{0}' {1} that.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4376
+  "line": 4371
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "SceneColorResolution",
   "src": "Pass '{0}' writes scene colour, which is {1} at {2}, and '{3}' with it, which is {4}; targets drawn together have one size.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4610
+  "line": 4604
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "SecondFileHlslBlock",
   "src": "This file already has an 'hlsl' block, on line {0}, and a '.dsp' has one: write every shared function and entry in it.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3867
+  "line": 3862
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "SecondPassHlslBlock",
   "src": "Pass '{0}' holds a second 'hlsl' block, and the code of a pass is one block; the one on line {1} is it.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3890
+  "line": 3885
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "ShaderAndHlslBlock",
   "src": "Pass '{0}' runs the shader file '{1}' and holds an 'hlsl' block as well, and the code of a pass is in one place: remove 'Shader' to run the block, or the block to run the file.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3915
+  "line": 3910
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3252,14 +3245,14 @@
   "key": "ShaderNeedsEntry",
   "src": "Pass '{0}' runs a shader file, and needs 'Entry = <function>' naming the function in it.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3930
+  "line": 3925
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "ShaderNotFound",
   "src": "The shader file '{0}' does not exist; a path starting with '/' is a virtual shader path, and any other is read from the folder of this '.dsp'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3740
+  "line": 3735
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3273,35 +3266,35 @@
   "key": "SharedCodeNamesBinding",
   "src": "'{0}' is in the shared code of the file's 'hlsl' block, and pass '{1}' defines it in its HLSL slot ('{2}'); the shared code is compiled into the slot of every pass whose HLSL is in the '.dsp', after those #defines. Rename it in the block: only an entry, compiled into the slots of the passes that name it, uses a pass's names.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4230
+  "line": 4225
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "SharedCodeNamesEntry",
   "src": "'{0}' is in the shared code of the file's 'hlsl' block, and is the entry of pass '{1}' as well, which the pass's slot renames to the slot's entry point with a #define; the shared code is compiled into that slot, after it. Rename it in the block.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4226
+  "line": 4221
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "SharedEntryCalled",
   "src": "'{0}' is the entry of pass '{1}' in the file's 'hlsl' block, and is called here; an entry is compiled only into the slots of the passes that name it, so nothing else can call it. Move what it shares into a function of its own in the block, and call that.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4125
+  "line": 4120
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "SharedEntryNotFound",
   "src": "The file's 'hlsl' block does not define a function '{1}', which pass '{0}' names as its 'Entry'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4029
+  "line": 4024
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "SharedEntryWithoutBlock",
   "src": "Pass '{0}' has no 'Shader' and no 'hlsl' block of its own, so 'Entry = {1}' names a function of the file's 'hlsl' block, and this '.dsp' has none; write the function in an 'hlsl { }' block at file scope, write the pass's code in an 'hlsl' block of its own, or give it 'Shader = \"<file>.usf\"'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3994
+  "line": 3989
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3315,14 +3308,14 @@
   "key": "SlotNameDerived",
   "src": "'{0}' is a name of pass '{1}' in its HLSL slot twice: the slot's registry names a read's size and UV rect <Name>Size and <Name>UVRect, and a write's size <Name>Size, beside the names the pass binds; rename one of them.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3424
+  "line": 3419
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "SlotNameEntry",
   "src": "'{0}' is a name of pass '{1}' in its HLSL slot, and so is its entry point: the slot's registry renames the Entry to the slot's own entry function with a #define of that name; rename the binding.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3411
+  "line": 3410
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3333,24 +3326,24 @@
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
-  "key": "SlotNameView",
-  "src": "'{0}' is a name of pass '{1}' in its HLSL slot, and at BeginView the slot's registry defines 'View' itself, so that a use of the view uniform buffer, which does not exist yet there, fails to compile; rename the binding.",
-  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3415
- },
- {
-  "ns": "DreamShader.Binder.Pipeline",
   "key": "SlotParamsTooMany",
   "src": "The parameters of pass '{0}' do not fit the {1} float4 of a shader slot, packed in order (a float4 takes a vector of its own, a float3 three components, a float2 a half, a scalar one); pass fewer, or pack them yourself.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3480
+  "line": 3475
+ },
+ {
+  "ns": "DreamShader.Binder.Pipeline",
+  "key": "SlotPassBeginView",
+  "src": "At BeginView the scene textures do not exist yet: the SceneTextures pass '{0}' sees are placeholders. Its 'View' holds the camera -- transforms, position, view rect, time -- but nothing the renderer adds later: no sky or atmosphere, PreExposure 1, and last frame's transforms equal this frame's.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
+  "line": 4431
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "SlotTextureParamMaterial",
   "src": "'{0}' is a {1}, and the parameter block of a shader slot holds numbers only, so no texture parameter reaches a '.usf' pass. A material takes one through 'param': draw this pass with a material ('Material = ...'), or let a fullscreen material pass that takes the texture by 'param' write it into a buffer this pass reads.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3465
+  "line": 3460
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3392,7 +3385,7 @@
   "key": "ThreadsDisagree",
   "src": "'Threads = uint3({0}, {1}, {2})' disagrees with '[numthreads({3}, {4}, {5})]' of '{6}', and the dispatch would be sized for groups the shader does not have; leave 'Threads' out, or write the same numbers.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3780
+  "line": 3775
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3406,21 +3399,21 @@
   "key": "TonemapperWritesNothing",
   "src": "Pass '{0}' replaces the tonemapper, which makes the frame's final colour, and writes no 'SceneColor'; add 'write SceneColor;'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4661
+  "line": 4655
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "TranslucencyOnlyThere",
   "src": "'Translucency' exists on the post-process chain only (PostProcess.*), and pass '{1}' runs at {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4336
+  "line": 4331
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "TwoTonemappers",
   "src": "Pass '{0}' replaces the tonemapper, and so does '{1}'; one view runs one tonemapper, so a pipeline replaces it at most once.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4647
+  "line": 4641
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3483,14 +3476,14 @@
   "key": "UnknownLayerDidYouMean",
   "src": "'{0}' is not a pass layer of this project; did you mean '{1}'?",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3516
+  "line": 3511
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "UnknownLayerFirstNames",
   "src": "'{0}' is not a pass layer of this project; the layers are the first {1} names of Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3515
+  "line": 3510
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3546,14 +3539,14 @@
   "key": "UseAfterTonemapping",
   "src": "'BlendableLocation = SceneColorAfterTonemapping'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3642
+  "line": 3637
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
   "key": "UseBeforeTonemapping",
   "src": "'BlendableLocation = SceneColorAfterDOF' or 'SceneColorBeforeDOF'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3643
+  "line": 3638
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3637,7 +3630,7 @@
   "key": "WhereHlslBlock",
   "src": "the file's 'hlsl' block",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 3872
+  "line": 3867
  },
  {
   "ns": "DreamShader.Binder.Pipeline",
@@ -3693,7 +3686,7 @@
   "key": "WritesInto",
   "src": "writes into",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderPipeline.cpp",
-  "line": 4378
+  "line": 4373
  },
  {
   "ns": "DreamShader.Binder.Statements",
@@ -5786,7 +5779,7 @@
   "key": "CreatePipelineFailed",
   "src": "The pass pipeline for '{0}' could not be created or reused. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 1058
+  "line": 1057
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
@@ -5807,7 +5800,7 @@
   "key": "ExportTargetFailed",
   "src": "The render target of the exported buffer '{0}' could not be created or reused. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 1163
+  "line": 1162
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
@@ -5842,7 +5835,7 @@
   "key": "NeedsCustomPass",
   "src": "'{0}' is a Custom Pass pipeline, which needs Unreal Engine 5.8 or later; this engine has the DreamShaderPass asset types but no runtime to run them, so nothing was built.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 1018
+  "line": 1017
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
@@ -5870,21 +5863,21 @@
   "key": "PipelineDestinationFailed",
   "src": "'{0}' does not resolve to a valid asset path. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 1028
+  "line": 1027
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "PipelineEmitCancelled",
   "src": "Building '{0}' was cancelled; the pipeline, its slots and its render targets are as they were before this compile.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 1184
+  "line": 1183
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "SavePipelineFailedRetry",
   "src": "'{0}' was built but could not be saved with its render targets; its slots are already in the registry. Make the packages writable and compile the source again to retry saving. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 1272
+  "line": 1271
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
@@ -9965,217 +9958,210 @@
   "key": "ComputeSlotWord",
   "src": "compute",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 983
+  "line": 963
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "ComputeTypeWord",
   "src": "compute",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1265
+  "line": 1245
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "ComputeWord",
   "src": "Compute",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1532
+  "line": 1504
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "PixelSlotWord",
   "src": "pixel",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 983
+  "line": 963
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "PixelTypeWord",
   "src": "pixel",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1265
+  "line": 1245
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "PixelWord",
   "src": "Pixel",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1532
+  "line": 1504
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "PrecheckErrorInFile",
   "src": "[{0}] pass '{1}' does not compile in its HLSL slot: {2}",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1339
+  "line": 1311
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "PrecheckErrorInSharedHlsl",
   "src": "[{0}] the file's 'hlsl' block does not compile in the HLSL slots of {1}: {2}",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1373
+  "line": 1345
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "PrecheckErrorInSlot",
   "src": "[{0}] pass '{1}' does not compile in its HLSL slot: {2} (a name this pass binds may clash with one the slot shader or the snapshot uses)",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1347
+  "line": 1319
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "PrecheckFormatUnavailable",
   "src": "The project targets the shader format {0}, which this machine has no shader compiler for, so the HLSL slots were not pre-checked for it; a cook for that platform compiles them unchecked.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1202
+  "line": 1182
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "PrecheckNoCustomPass",
   "src": "HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to compile them for.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1382
+  "line": 1354
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "PrecheckNoFormat",
   "src": "There is no shader format to pre-check the HLSL slots with: no active feature level and no target platform has a shader compiler on this machine. Nothing was written, because a slot that never compiled must not reach the global shaders.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1207
+  "line": 1187
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "PrecheckNoShaderType",
   "src": "The {0} slot shader cannot be pre-checked: the global shader type {1} is not registered, or its source no longer includes '{2}'. The DreamShaderPass module is out of step with this compiler; nothing was written.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1264
+  "line": 1244
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "PrecheckRequestedFormatUnavailable",
   "src": "The shader format {0} was asked for, and this machine has no shader compiler for it, so the HLSL slots were not pre-checked for it.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1224
- },
- {
-  "ns": "DreamShader.Pass.Slots",
-  "key": "PrecheckViewAtBeginView",
-  "src": "[{0}] pass '{1}' runs at BeginView, where the view uniform buffer does not exist yet, and its slot uses 'View' all the same: a function of the file's 'hlsl' block that the pass calls reads it. Give that function what it needs as a parameter, or move the pass to a later injection point.",
-  "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1311
+  "line": 1204
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "RegistryNotWritable",
   "src": "'{0}' cannot be written or deleted, so nothing of the slot registry was changed: no snapshot written, no slot deleted, no registry file rewritten. The registry and its snapshots are committed files; a file that is read-only because it is not checked out is the usual reason. Check out the whole .dreampass folder and try again.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1455
+  "line": 1427
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "RegistryUnreadable",
   "src": "The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose every slot it records; fix the file, or run 'dsc pass-registry -Rebuild'.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 898
+  "line": 878
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "RegistryWriteFailed",
   "src": "'{0}' could not be written. The slot registry is a committed file: a file that is read-only because it is not checked out is the usual reason.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1653
+  "line": 1625
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "SlotFreed",
   "src": "{0} slot {1} of pass '{2}' was freed: the pipeline no longer runs that pass in HLSL there.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1531
+  "line": 1503
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "SlotNameInvalid",
   "src": "'{0}' cannot name something in an HLSL slot: a slot name has to be an identifier, and one starting with DP_ would hide one of the slot's fixed parameters.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 186
+  "line": 184
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "SlotNameTwice",
   "src": "'{0}' would be defined twice in the pass's HLSL slot: every read, write and param needs its own name, and the slot also names a read's size and UV rect <Name>Size and <Name>UVRect, and a write's size <Name>Size, which must not meet another name either.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 199
+  "line": 197
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "SlotParamLayout",
   "src": "The pass's params do not fit an HLSL slot: {0} float4 vectors hold every param, a float4 takes one of its own, and a texture cannot be a param of a slot.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 259
+  "line": 257
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "SlotSectionFailed",
   "src": "Pass '{0}' cannot be mapped onto its HLSL slot: {1}",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1061
+  "line": 1041
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "SlotTooManyReads",
   "src": "The pass reads {0} buffers; an HLSL slot has {1} inputs.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 209
+  "line": 207
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "SlotTooManyWrites",
   "src": "The pass writes {0} buffers; an HLSL slot has {1} outputs.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 214
+  "line": 212
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "SlotWriteFailed",
   "src": "'{0}' could not be written. The slot registry and its snapshots are committed files: a file that is read-only because it is not checked out is the usual reason.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1474
+  "line": 1446
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "SlotsUsedUp",
   "src": "Pass '{0}' needs a {1} slot and all {2} are taken. Merge passes, run 'dsc pass-registry -Gc' to free the slots of pipelines whose source is gone, or raise {3} in the project's Target.cs.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 981
+  "line": 961
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "SnapshotIncludeMissing",
   "src": "'{0}' is included by a relative path and names no file, so the snapshot of pass '{1}' cannot be built.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1041
+  "line": 1021
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "SnapshotInlineRootMissing",
   "src": "The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slot (its entry is not in the file's 'hlsl' block); there is nothing to snapshot.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1006
+  "line": 986
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "SnapshotLiveIncludeNotEngine",
   "src": "'{0}' is included by a virtual path outside /Engine/, /Plugin/ and /ThirdParty/, so the snapshot of pass '{1}' keeps including the live file: an edit of it later reaches the global shaders without a pre-check. Include it by a relative path to have it copied into the snapshot.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1051
+  "line": 1031
  },
  {
   "ns": "DreamShader.Pass.Slots",
   "key": "SnapshotRootUnreadable",
   "src": "The shader '{0}' of pass '{1}' could not be read, so there is nothing to snapshot into its slot.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassSlotRegistry.cpp",
-  "line": 1015
+  "line": 995
  },
  {
   "ns": "DreamShader.PassEditor.PipelineDetails",
