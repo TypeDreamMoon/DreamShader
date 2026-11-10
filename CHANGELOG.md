@@ -1,5 +1,14 @@
 # DreamShader ChangeLog
 
+## Unreleased
+
+### Fixed
+
+- **An HLSL pass at `BeginView` crashed the editor on an engine that adds scene textures of its own.** The scene
+  textures there are placeholders the runtime fills in itself, by name; a renderer fork whose
+  `FSceneTextureUniformParameters` has more members left them null, and creating the uniform buffer asserted. Every
+  texture member is now filled, the ones the runtime does not name with a placeholder of their declared type.
+
 ## 2.2.0 - 2026-10-15
 
 ### Added

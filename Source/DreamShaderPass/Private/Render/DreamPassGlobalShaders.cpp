@@ -143,7 +143,7 @@ namespace UE::DreamPass
 		 * R/Private/SceneRendering.cpp:4303); asking for it at BeginView asserts, and creating the system textures here
 		 * would make the renderer's own Create assert instead. So until they exist, the same placeholders are registered
 		 * from the global pooled textures (R/Private/SceneTextures.cpp:1124-1140): black colour and GBuffer, mid-grey
-		 * GBufferF, white ambient occlusion, the dummy depth and stencil.
+		 * GBufferF, white ambient occlusion, the dummy depth and stencil -- and any other texture member, by its type.
 		 */
 		static TRDGUniformBufferRef<FSceneTextureUniformParameters> CreatePlaceholderSceneTextures(FRDGBuilder& GraphBuilder, ERHIFeatureLevel::Type FeatureLevel)
 		{
@@ -175,6 +175,46 @@ namespace UE::DreamPass
 			Parameters->ScreenSpaceAOTexture = Register(GSystemTextures.WhiteDummy, TEXT("WhiteDummy"));
 			Parameters->CustomDepthTexture = Depth;
 			Parameters->CustomStencilTexture = GraphBuilder.CreateSRV(FRDGTextureSRVDesc::Create(Register(GSystemTextures.StencilDummy, TEXT("StencilDummy"))));
+
+			// An engine that adds scene textures of its own (a renderer fork) has members the list above cannot name, and a
+			// null one asserts when the uniform buffer is created (RC/Private/ShaderParameterStruct.cpp, ValidateShaderParameterResourcesRHI).
+			// Each gets the placeholder its declared type takes, as the engine's own placeholder does for them.
+			uint8* const Base = reinterpret_cast<uint8*>(Parameters);
+			for (const FShaderParametersMetadata::FMember& Member : FSceneTextureUniformParameters::FTypeInfo::GetStructMetadata()->GetMembers())
+			{
+				const EUniformBufferBaseType BaseType = Member.GetBaseType();
+				if (BaseType != UBMT_RDG_TEXTURE && BaseType != UBMT_RDG_TEXTURE_SRV)
+				{
+					continue;
+				}
+				const FString ShaderType(Member.GetShaderType());
+				const bool bArray = ShaderType.Contains(TEXT("Array"), ESearchCase::CaseSensitive);
+				const bool bUInt = ShaderType.Contains(TEXT("<uint"), ESearchCase::CaseSensitive);
+				const auto Placeholder = [&]() -> FRDGTextureRef
+				{
+					if (bUInt)
+					{
+						return bArray ? GSystemTextures.GetZeroUIntArrayDummy(GraphBuilder) : GSystemTextures.GetZeroUIntDummy(GraphBuilder);
+					}
+					return bArray ? GSystemTextures.GetBlackArrayDummy(GraphBuilder) : Black;
+				};
+				if (BaseType == UBMT_RDG_TEXTURE)
+				{
+					FRDGTextureRef& Texture = *reinterpret_cast<FRDGTextureRef*>(Base + Member.GetOffset());
+					if (!Texture)
+					{
+						Texture = Placeholder();
+					}
+				}
+				else
+				{
+					FRDGTextureSRVRef& View = *reinterpret_cast<FRDGTextureSRVRef*>(Base + Member.GetOffset());
+					if (!View)
+					{
+						View = GraphBuilder.CreateSRV(FRDGTextureSRVDesc::Create(Placeholder()));
+					}
+				}
+			}
 			return GraphBuilder.CreateUniformBuffer(Parameters);
 		}
 
