@@ -492,15 +492,45 @@ namespace UE::DreamShader::Editor::MCP
 			Result.Data = MakeShared<FJsonObject>();
 			Private::FDreamShaderEditorBridge* const Bridge = Call.Mode == EEndpointMode::Editor ? Private::GetDreamShaderEditorBridge() : nullptr;
 
+			struct FFileCounts
+			{
+				FString File;
+				int32 Errors = 0;
+				int32 Warnings = 0;
+				int32 Infos = 0;
+			};
 			TArray<TSharedPtr<FJsonValue>> FileSummaries;
-			const auto AddFile = [&Result, &FileSummaries](const FString& File, const TArray<FDiagnostic>& Diagnostics)
+			TArray<FFileCounts> Counts;
+			const auto AddFile = [&Result, &FileSummaries, &Counts](const FString& File, const TArray<FDiagnostic>& Diagnostics)
 			{
 				Result.Diagnostics.Append(Diagnostics);
+				FFileCounts& Count = Counts.AddDefaulted_GetRef();
+				Count.File = Rel(File);
+				Count.Errors = CountSeverity(Diagnostics, TEXT("error"));
+				Count.Warnings = CountSeverity(Diagnostics, TEXT("warning"));
+				Count.Infos = CountSeverity(Diagnostics, TEXT("info"));
 				TSharedRef<FJsonObject> Summary = MakeShared<FJsonObject>();
-				Summary->SetStringField(TEXT("file"), Rel(File));
-				Summary->SetNumberField(TEXT("errors"), CountSeverity(Diagnostics, TEXT("error")));
-				Summary->SetNumberField(TEXT("warnings"), CountSeverity(Diagnostics, TEXT("warning")));
+				Summary->SetStringField(TEXT("file"), Count.File);
+				Summary->SetNumberField(TEXT("errors"), Count.Errors);
+				Summary->SetNumberField(TEXT("warnings"), Count.Warnings);
+				Summary->SetNumberField(TEXT("infos"), Count.Infos);
 				FileSummaries.Add(MakeShared<FJsonValueObject>(Summary));
+			};
+			// "2 errors, 1 warning": what a file has, in words.
+			const auto DescribeCounts = [](const FFileCounts& Count)
+			{
+				TArray<FString> Parts;
+				const auto Add = [&Parts](int32 N, const TCHAR* One, const TCHAR* Many)
+				{
+					if (N > 0)
+					{
+						Parts.Add(FString::Printf(TEXT("%d %s"), N, N == 1 ? One : Many)); // I18N-EXEMPT: wire text
+					}
+				};
+				Add(Count.Errors, TEXT("error"), TEXT("errors"));
+				Add(Count.Warnings, TEXT("warning"), TEXT("warnings"));
+				Add(Count.Infos, TEXT("info"), TEXT("infos"));
+				return FString::Join(Parts, TEXT(", "));
 			};
 
 			if (Call.Has(TEXT("file")))
@@ -541,10 +571,10 @@ namespace UE::DreamShader::Editor::MCP
 				}
 				AddFile(File, Diagnostics);
 				Result.Data->SetStringField(TEXT("from"), From);
-				const int32 Errors = CountSeverity(Diagnostics, TEXT("error"));
-				Result.Outcome = Errors > 0 ? EOutcome::SourceError : EOutcome::Ok;
-				Result.Summary = FString::Printf(TEXT("%s: %d error(s), %d warning(s), from %s."), *Rel(File), Errors, // I18N-EXEMPT: wire text
-					CountSeverity(Diagnostics, TEXT("warning")), *From);
+				const FString Described = DescribeCounts(Counts.Last());
+				Result.Outcome = Counts.Last().Errors > 0 ? EOutcome::SourceError : EOutcome::Ok;
+				Result.Summary = FString::Printf(TEXT("%s has %s, from %s."), *Rel(File), // I18N-EXEMPT: wire text
+					Described.IsEmpty() ? TEXT("no diagnostics") : *Described, *From);
 			}
 			else
 			{
@@ -570,11 +600,46 @@ namespace UE::DreamShader::Editor::MCP
 						AddFile(Pair.Key, Pair.Value);
 					}
 				}
+				// Only an error makes it a source error: a file whose findings are infos or warnings builds.
 				const int32 Errors = CountSeverity(Result.Diagnostics, TEXT("error"));
 				Result.Outcome = Errors > 0 ? EOutcome::SourceError : EOutcome::Ok;
 				Result.Data->SetBoolField(TEXT("known"), true);
-				Result.Summary = FString::Printf(TEXT("%d file(s) with diagnostics: %d error(s), %d warning(s)."), FileSummaries.Num(), Errors, // I18N-EXEMPT: wire text
-					CountSeverity(Result.Diagnostics, TEXT("warning")));
+
+				// The summary names each file with what it has, the ones with errors first, so it says where to look.
+				TArray<FFileCounts> WithFindings = Counts.FilterByPredicate([](const FFileCounts& Count)
+				{
+					return Count.Errors + Count.Warnings + Count.Infos > 0;
+				});
+				WithFindings.StableSort([](const FFileCounts& A, const FFileCounts& B)
+				{
+					if (A.Errors != B.Errors) { return A.Errors > B.Errors; }
+					if (A.Warnings != B.Warnings) { return A.Warnings > B.Warnings; }
+					return A.Infos > B.Infos;
+				});
+				constexpr int32 MaxNamed = 10;
+				TArray<FString> Named;
+				for (int32 Index = 0; Index < FMath::Min(WithFindings.Num(), MaxNamed); ++Index)
+				{
+					Named.Add(FString::Printf(TEXT("%s has %s"), *WithFindings[Index].File, *DescribeCounts(WithFindings[Index]))); // I18N-EXEMPT: wire text
+				}
+				if (WithFindings.Num() > MaxNamed)
+				{
+					Named.Add(FString::Printf(TEXT("%d more"), WithFindings.Num() - MaxNamed)); // I18N-EXEMPT: wire text
+				}
+				if (WithFindings.IsEmpty())
+				{
+					Result.Summary = Counts.IsEmpty()
+						? FString(TEXT("No file has diagnostics in this process yet."))
+						: FString::Printf(TEXT("None of the %d known file(s) has diagnostics."), Counts.Num()); // I18N-EXEMPT: wire text
+				}
+				else
+				{
+					Result.Summary = FString::Printf(TEXT("%d file(s) have diagnostics: %s."), WithFindings.Num(), *FString::Join(Named, TEXT("; "))); // I18N-EXEMPT: wire text
+				}
+				if (Errors > 0)
+				{
+					Result.Next.Add(FString::Printf(TEXT("Fix the errors first. diagnostics with file=%s lists that file's alone."), *WithFindings[0].File)); // I18N-EXEMPT: wire text
+				}
 				if (!Bridge)
 				{
 					Result.Next.Add(TEXT("This process only knows the files checked or compiled in it; check with all=true covers every source."));

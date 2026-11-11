@@ -533,6 +533,20 @@ bool FDreamShaderMCPCompileTest::RunTest(const FString& Parameters)
 
 	const TSharedPtr<FJsonObject> All = ParseReply(*this, Send(Test.Endpoint, TEXT("POST"), TEXT("/call"), CallBody(TEXT("diagnostics"), TEXT("{}"), TEXT("d-4"))));
 	TestTrue(TEXT("diagnostics without a file lists the broken one"), SerializeJson(All.ToSharedRef()).Contains(TEXT("M_McpCompileBad.dss")));
+	const FString AllSummary = Field(All, TEXT("summary"));
+	TestTrue(FString::Printf(TEXT("the summary names the broken file with its errors (%s)"), *AllSummary),
+		AllSummary.Contains(TEXT("M_McpCompileBad.dss has ")) && AllSummary.Contains(TEXT(" error")));
+	const int32 GoodAt = AllSummary.Find(TEXT("M_McpCompileOk.dss"));
+	TestTrue(TEXT("a file with errors comes before one without"), GoodAt == INDEX_NONE || AllSummary.Find(TEXT("M_McpCompileBad.dss")) < GoodAt);
+	TestEqual(TEXT("with errors among them, a source error"), Field(All, TEXT("outcome")), FString(TEXT("source-error")));
+
+	// With only clean files known (infos at most), the same call is ok: an info is not an error. The endpoints share
+	// what was checked; forget the broken file first.
+	ResetDreamShaderMCPActionState();
+	FTestEndpoint CleanOnly(*this, EEndpointMode::Host);
+	ResultOf(RunToEnd(*this, CleanOnly.Endpoint, CallBody(TEXT("compile"), GoodArgs, TEXT("c-5"))));
+	const TSharedPtr<FJsonObject> AllClean = ParseReply(*this, Send(CleanOnly.Endpoint, TEXT("POST"), TEXT("/call"), CallBody(TEXT("diagnostics"), TEXT("{}"), TEXT("d-5"))));
+	TestEqual(FString::Printf(TEXT("only clean files: ok (%s)"), *Field(AllClean, TEXT("summary"))), Field(AllClean, TEXT("outcome")), FString(TEXT("ok")));
 	return true;
 }
 

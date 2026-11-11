@@ -47,7 +47,7 @@
     },
     {
       "name": "diagnostics",
-      "description": "The errors and warnings this engine already holds from the last check or compile, without compiling anything. Without file: every file that has some.",
+      "description": "List the errors and warnings from the last check or compile. It compiles nothing. Without file, it lists every file that has some, with a count for each.",
       "needs": "engine",
       "writes": false,
       "long": false,
