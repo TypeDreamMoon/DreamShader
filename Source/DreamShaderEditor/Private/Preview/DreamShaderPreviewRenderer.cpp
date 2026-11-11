@@ -319,17 +319,33 @@ namespace UE::DreamShader::Editor::Private
 			PreviewWorld->SendAllEndOfFrameUpdates();
 		}
 
-		FCanvas Canvas(RenderTargetResource, nullptr, FGameTime::GetTimeSinceAppStart(), GMaxRHIFeatureLevel);
+		// Both clocks a material can read (Time with and without "ignore pause") come from this one value.
+		const FGameTime FrameTime = FrameOptions.TimeSeconds.IsSet()
+			? FGameTime::CreateUndilated(FrameOptions.TimeSeconds.GetValue(), 1.0f / 30.0f)
+			: FGameTime::GetTimeSinceAppStart();
+
+		FCanvas Canvas(RenderTargetResource, nullptr, FrameTime, GMaxRHIFeatureLevel);
 		Canvas.Clear(RenderTarget->ClearColor);
 
 		FSceneViewFamilyContext ViewFamily(FSceneViewFamily::ConstructionValues(
 			RenderTargetResource,
 			ThumbnailScene->GetScene(),
 			FEngineShowFlags(ESFIM_Game))
-			.SetTime(FGameTime::GetTimeSinceAppStart()));
+			.SetTime(FrameTime));
 		ViewFamily.EngineShowFlags.MotionBlur = 0;
 		ViewFamily.EngineShowFlags.AntiAliasing = 0;
 		ViewFamily.EngineShowFlags.SetSeparateTranslucency(ThumbnailScene->ShouldSetSeparateTranslucency(Material));
+		if (FrameOptions.bFixedExposure)
+		{
+			// The eye-adaptation parameters take this before the project's exposure settings: white point 1, exposure 1.
+			ViewFamily.ExposureSettings.bFixed = true;
+			ViewFamily.ExposureSettings.FixedEV100 = 0.0f;
+		}
+		if (!FrameOptions.bToneMap)
+		{
+			ViewFamily.EngineShowFlags.SetTonemapper(false);
+			ViewFamily.EngineShowFlags.SetBloom(false);
+		}
 
 		FSceneView* View = ThumbnailScene->CreateView(&ViewFamily, 0, 0, CachedWidth, CachedHeight);
 		if (!View)

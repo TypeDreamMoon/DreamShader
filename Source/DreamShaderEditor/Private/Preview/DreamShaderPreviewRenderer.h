@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Async/Future.h"
+#include "Misc/Optional.h"
 #include "Templates/UniquePtr.h"
 #include "UObject/StrongObjectPtr.h"
 
@@ -50,6 +51,21 @@ namespace UE::DreamShader::Editor::Private
 		// the bridge already picked up wants; true = the explicit Refresh button / the one-shot
 		// request-file path, which always rebuild.
 		bool bForceRecompile = true;
+	};
+
+	// How a frame is timed and exposed. The defaults are what every preview has always drawn: the clock since the
+	// application started, the project's own exposure, and the filmic tone mapper. A thumbnail view has no view
+	// history, so "the project's exposure" is the one the engine fixes from the auto-exposure range
+	// (GetEyeAdaptationFixedExposure) rather than one adapted to the image.
+	struct FDreamShaderPreviewFrameOptions
+	{
+		// The material's Time, in seconds. Unset: the time since the application started.
+		TOptional<double> TimeSeconds;
+		// Exposure 1 (a fixed EV100 of 0, FSceneViewFamily::ExposureSettings), whatever the project's settings say.
+		bool bFixedExposure = false;
+		// false: no filmic tone curve and no bloom -- the tone mapper's gamma-only path, so a pixel is the scene
+		// colour times the exposure, gamma-encoded and clipped at 1.
+		bool bToneMap = true;
 	};
 
 	struct FDreamShaderPreviewResult
@@ -121,6 +137,9 @@ namespace UE::DreamShader::Editor::Private
 
 		bool IsReadbackInFlight() const { return bReadbackInFlight; }
 
+		// Applies to every frame this context renders from now on.
+		void SetFrameOptions(const FDreamShaderPreviewFrameOptions& InOptions) { FrameOptions = InOptions; }
+
 	private:
 		// Shared readback pump behind both TryConsume* entry points: polls the GPU copy, then moves
 		// the staged BGRA pixels to the game thread. Returns true exactly once per kicked-off frame.
@@ -135,6 +154,7 @@ namespace UE::DreamShader::Editor::Private
 
 		TStrongObjectPtr<UTextureRenderTarget2D> RenderTarget;
 		TUniquePtr<FMaterialThumbnailScene> ThumbnailScene;
+		FDreamShaderPreviewFrameOptions FrameOptions;
 		int32 CachedWidth = 0;
 		int32 CachedHeight = 0;
 
