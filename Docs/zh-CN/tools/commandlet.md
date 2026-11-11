@@ -336,7 +336,7 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 ### 对比两次采集
 
 ```powershell
-git diff --no-index -- I:/Baseline/before I:/Baseline/after
+git diff --no-index -- <baseline>/before <baseline>/after
 ```
 
 `--no-index` 对比两个不在仓库中的目录树，而布局正是为此设计的：相同的树形结构、有序的键、每行一个值、LF 行尾。只在一侧存在的文件，是一个资产集发生变化的源文件。其他每个差异块都是行为差异，需要修复或在一致性日志中记录一条。
@@ -730,12 +730,12 @@ foreach ($Legacy in 0, 1) {
 ```powershell
 & $UnrealEditorCmd $Project -run=DreamShader compile -All -Force `
   -unattended -nopause -nosplash -stdout -log
-& $UnrealEditorCmd $Project -run=DreamShader dump-graph -All -Out="I:/Baseline/before" `
+& $UnrealEditorCmd $Project -run=DreamShader dump-graph -All -Out="<baseline>/before" `
   -unattended -nopause -nosplash -stdout -log
 
 # …change the compiler, rebuild, capture again…
 
-git diff --no-index -- I:/Baseline/before I:/Baseline/after
+git diff --no-index -- <baseline>/before <baseline>/after
 ```
 
 在 ``DShader/.dreampass/Registry.json`` 中发生冲突的合并之后，从源文件重建 slot 注册表，然后列出它：

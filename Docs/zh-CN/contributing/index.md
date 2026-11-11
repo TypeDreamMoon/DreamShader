@@ -14,6 +14,18 @@
 | 引擎 | Unreal Engine `5.3` – `5.8`，已在 Win64 验证 |
 | 许可证 | MIT |
 
+<a id="before-you-start"></a>
+
+## 开始之前
+
+| 目的 | 前往 |
+| :-- | :-- |
+| 报告问题 | 运行 `pwsh -File Plugins/DreamShader/.skill/dsc.ps1 info`，然后打开 [issue 表单](https://github.com/TypeDreamMoon/DreamShader/issues/new/choose) 并粘贴其输出 |
+| 提问或分享想法 | [GitHub Discussions](https://github.com/TypeDreamMoon/DreamShader/discussions) |
+| 提议新功能 | 先提交提案 issue，再写任何代码 |
+| 提交 pull request，无论是否借助 AI | [`CONTRIBUTING.md`](https://github.com/TypeDreamMoon/DreamShader/blob/main/CONTRIBUTING.md) —— 测试命令、需要更新的内容、AI 规则 |
+| 让 agent 指向该仓库 | [`AGENTS.md`](https://github.com/TypeDreamMoon/DreamShader/blob/main/AGENTS.md)；在项目中创作时，参见 [AI agents](../tools/ai-agents.md) |
+
 <a id="synopsis"></a>
 
 ## 概要

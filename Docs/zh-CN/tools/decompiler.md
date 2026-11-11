@@ -353,7 +353,7 @@
 无头导出 `/Game/Materials/M_Steel`，然后看结果：
 
 ```powershell
-& "$Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "I:\Project\Project.uproject" `
+& "$Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "<ProjectDir>\<Project>.uproject" `
     -run=DreamShader decompile -Asset="/Game/Materials/M_Steel" -Format=Legacy `
     -unattended -nopause -nosplash -stdout -log
 ```
@@ -443,7 +443,7 @@ Substrate 节点按源码使用的名字写出 —— `Substrate.Slab(...)`，�
 ```powershell
 ./dsc.ps1 decompile /Game/Passes/CP_Highlight                # DShader/Decompiled/Pipelines/Game/Passes/CP_Highlight.dsp
 ./dsc.ps1 decompile -SourceFile DShader/Passes/CP_Highlight.dsp
-./dsc.ps1 decompile /Game/Passes/CP_Highlight -Out I:/Work/CP_Highlight.dsp
+./dsc.ps1 decompile /Game/Passes/CP_Highlight -Out Work/CP_Highlight.dsp
 ```
 
 | 途径 | |

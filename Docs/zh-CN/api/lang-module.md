@@ -283,8 +283,8 @@ Diagnostics.Error(TEXT("DSH2151"), Span, LOCTEXT("ExpectedExpression", "expected
 为新构造添加覆盖就是往树中放入一个文件；无需 C++ 更改，无需重新编译。以无头模式运行整个层：
 
 ```
-"F:\UnrealEngine\UE_Moon\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" ^
-  "I:\UnrealProject_Moon\DEV_58\MoonEngineSample\MoonEngineSample.uproject" ^
+"<EngineDir>\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" ^
+  "<ProjectDir>\<Project>.uproject" ^
   -ExecCmds="Automation RunTests DreamShader.Lang2; Quit" ^
   -nullrhi -unattended -nopause -nosplash -log
 ```

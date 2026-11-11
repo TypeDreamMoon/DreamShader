@@ -96,6 +96,14 @@ pwsh -NoProfile -File Tools/Tests/Test-DscAssetCleanup.ps1
 
 这会在一个临时的假项目中练习驱动程序的真实辅助函数，包括并发无关写入、预先存在的资源、保存后编辑、Content 边界、无效和已消耗的保存清单，以及无法列出的 Content 文件夹。
 
+`dsc.ps1 info` 也以相同方式测试，针对假项目和假引擎根目录：
+
+```powershell
+pwsh -NoProfile -File Tools/Tests/Test-DscInfo.ps1
+```
+
+它会检查字段顺序、引擎版本和类型、引擎无法找到时的 `unknown`，以及没有任何一行会指名路径。
+
 | 目标 | 过滤器 |
 | :-- | :-- |
 | 快速门禁 — 1.x 解析等价语料库、纯辅助函数、预处理器 | `DreamShader.Lang.` |
@@ -288,13 +296,13 @@ pwsh -NoProfile -File Tools\Tests\Invoke-DreamShaderTests.ps1 -Preset Suite -Wit
 
 ```powershell
 & $UnrealEditorCmd $Project -run=DreamShader compile -All -Force -unattended -nopause -nullrhi -nosplash -stdout -log
-& $UnrealEditorCmd $Project -run=DreamShader dump-graph -All -Out="I:/Baseline/before" -unattended -nopause -nullrhi -nosplash -stdout -log
+& $UnrealEditorCmd $Project -run=DreamShader dump-graph -All -Out="<baseline>/before" -unattended -nopause -nullrhi -nosplash -stdout -log
 ```
 
 然后，在更改之后：
 
 ```powershell
-git diff --no-index -- I:/Baseline/before I:/Baseline/after
+git diff --no-index -- <baseline>/before <baseline>/after
 ```
 
 每个差异块都是一个行为差异。`./dsc.ps1 dump-graph -All -Out …` 是同样两条命令的简短写法。
