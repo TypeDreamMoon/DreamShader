@@ -1,0 +1,78 @@
+name: "Bug report / 问题反馈"
+description: "Wrong output, a crash, or behavior that differs from the docs. / 结果不对、崩溃,或与文档不符。"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        English or 中文, either is fine. / 中英文均可。
+        Questions and ideas belong in Discussions. / 提问和想法请去 Discussions。
+  - type: dropdown
+    id: area
+    attributes:
+      label: "Area / 区域"
+      options:
+        - "Language and compile / 语言与编译"
+        - "Decompile, migrate and Adopt / 反编译、迁移与 Adopt"
+        - "Editor integration and preview / 编辑器集成与预览"
+        - "Runtime and rendering, Custom Pass / 运行时与渲染(含 Custom Pass)"
+        - "Cook, packaging and build scripts / Cook、打包与构建脚本"
+        - "VS Code extension / VS Code 扩展"
+        - "Agent skills and MCP / agent 技能与 MCP"
+        - "Other / 其他"
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: "Environment / 环境"
+      description: |
+        Paste the output of `pwsh -File Plugins/DreamShader/.skill/dsc.ps1 info`.
+        If you cannot run it: plugin version or commit, engine version, launcher or source build, OS. Add GPU and RHI for rendering problems.
+        贴上面这条命令的输出;跑不了就手填:插件版本或提交、引擎版本、官方版还是源码版、系统。渲染问题请加显卡和 RHI。
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: "Minimal source / 最小复现源码"
+      description: |
+        The smallest `.dss` / `.dsi` / `.dsp` / `.dsm` / `.dsf` that shows the problem, complete enough to build on its own. Write N/A if no source is involved.
+        能独立编译、能复现问题的最小源码。与源码无关请写 N/A。
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps to reproduce / 复现步骤"
+      description: "Commands or editor actions, in order. / 按顺序写命令或编辑器操作。"
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: "Expected and actual / 期望与实际"
+      description: "What you expected, and what happened instead. Screenshots go here. / 期望的结果,和实际发生的。截图放这里。"
+    validations:
+      required: true
+  - type: input
+    id: code
+    attributes:
+      label: "Diagnostic code / 诊断码"
+      placeholder: "DSH7224"
+  - type: textarea
+    id: log
+    attributes:
+      label: "Log excerpt / 日志片段"
+      description: "The lines around the error, not the whole log. / 报错附近的几行,不要整份日志。"
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: "Checks / 确认"
+      options:
+        - label: "I searched existing issues. / 已搜过现有 issue。"
+          required: true
+        - label: "It reproduces on the latest release or on main. / 在最新发布版或 main 上能复现。"

@@ -383,7 +383,7 @@ Verified behaviour of 1.5.0. Each row is something the exported file will not re
 Export `/Game/Materials/M_Steel` headlessly, then inspect the result:
 
 ```powershell
-& "$Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "I:\Project\Project.uproject" `
+& "$Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "<ProjectDir>\<Project>.uproject" `
     -run=DreamShader decompile -Asset="/Game/Materials/M_Steel" -Format=Legacy `
     -unattended -nopause -nosplash -stdout -log
 ```
@@ -506,7 +506,7 @@ the asset's order, with every key left out that would read back as the default.
 ```powershell
 ./dsc.ps1 decompile /Game/Passes/CP_Highlight                # DShader/Decompiled/Pipelines/Game/Passes/CP_Highlight.dsp
 ./dsc.ps1 decompile -SourceFile DShader/Passes/CP_Highlight.dsp
-./dsc.ps1 decompile /Game/Passes/CP_Highlight -Out I:/Work/CP_Highlight.dsp
+./dsc.ps1 decompile /Game/Passes/CP_Highlight -Out Work/CP_Highlight.dsp
 ```
 
 | Route | |

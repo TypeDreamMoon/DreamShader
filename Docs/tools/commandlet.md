@@ -402,7 +402,7 @@ reproducible.
 ### Diffing two captures
 
 ```powershell
-git diff --no-index -- I:/Baseline/before I:/Baseline/after
+git diff --no-index -- <baseline>/before <baseline>/after
 ```
 
 `--no-index` diffs two directory trees that are not in a repository, and the layout is designed for
@@ -867,12 +867,12 @@ shape matters, because `dump-graph` will not rebuild an asset that already exist
 ```powershell
 & $UnrealEditorCmd $Project -run=DreamShader compile -All -Force `
   -unattended -nopause -nosplash -stdout -log
-& $UnrealEditorCmd $Project -run=DreamShader dump-graph -All -Out="I:/Baseline/before" `
+& $UnrealEditorCmd $Project -run=DreamShader dump-graph -All -Out="<baseline>/before" `
   -unattended -nopause -nosplash -stdout -log
 
 # …change the compiler, rebuild, capture again…
 
-git diff --no-index -- I:/Baseline/before I:/Baseline/after
+git diff --no-index -- <baseline>/before <baseline>/after
 ```
 
 After a merge that conflicted in `DShader/.dreampass/Registry.json`, rebuild the slot registry from the

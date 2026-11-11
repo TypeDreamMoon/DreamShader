@@ -18,10 +18,10 @@
     Exit code is the number of engines that failed, so 0 means the whole matrix is green.
 
 .EXAMPLE
-    ./build-plugin.ps1 I:\UnrealEngine\UE_5.3, I:\UnrealEngine\UE_5.4
+    ./build-plugin.ps1 '<UE 5.3 root>', '<UE 5.4 root>'
 
 .EXAMPLE
-    ./build-plugin.ps1 -Engine (Get-ChildItem I:\UnrealEngine\UE_5.* -Directory).FullName -StopOnFailure
+    ./build-plugin.ps1 -Engine (Get-ChildItem '<engines dir>/UE_5.*' -Directory).FullName -StopOnFailure
 
 .NOTES
     Sequential on purpose: two UAT runs on one machine contend for the same compiler processes
@@ -100,7 +100,7 @@ function Resolve-PluginFile {
 function Expand-EngineList {
     <#
         `pwsh -File` hands every argument through as one literal string, so an array written
-        at a call site arrives as "'I:\UE_5.3','I:\UE_5.4'" -- quotes and all. Splitting and
+        at a call site arrives as "'<root A>','<root B>'" -- quotes and all. Splitting and
         unquoting here means -Engine takes a real array, a comma-separated string, or the
         mangled middle ground, and all three mean the same thing.
     #>

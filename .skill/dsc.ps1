@@ -59,6 +59,10 @@
     moved aside first and every slot assigned afresh. The registry and its Slots folder
     are committed files: every editor and every cook builds the global shaders from them.
 
+    `info` starts no engine and runs no commandlet. It prints the plugin version and commit, the
+    engine version and kind, the OS, the UI language and the shell, as plain `key : value` lines
+    to paste into a bug report. It never prints a path, and a value it cannot find is `unknown`.
+
     On top of the raw commandlet it adds:
       * engine resolution from the .uproject's EngineAssociation (no hard-coded path),
       * project discovery by walking up from the source file or the working directory,
@@ -87,13 +91,13 @@
     ./dsc.ps1 compile -All -Define USE_DETAIL=0,SHIP_BUILD -Force
 
 .EXAMPLE
-    ./dsc.ps1 decompile /Game/Materials/M_Steel -Out I:/Work/M_Steel.dss
+    ./dsc.ps1 decompile /Game/Materials/M_Steel -Out Work/M_Steel.dss
 
 .EXAMPLE
     ./dsc.ps1 decompile /Game/Materials/MI_Steel_Red
 
 .EXAMPLE
-    ./dsc.ps1 decompile /Game/Materials/M_Steel -Format Legacy -Out I:/Work/M_Steel.dsm
+    ./dsc.ps1 decompile /Game/Materials/M_Steel -Format Legacy -Out Work/M_Steel.dsm
 
 .EXAMPLE
     ./dsc.ps1 migrate DShader/Materials/M_Foo.dsm -Check
@@ -105,7 +109,7 @@
     ./dsc.ps1 migrate -Root MyPlugin -Check
 
 .EXAMPLE
-    ./dsc.ps1 dump-graph -All -Out I:/Baseline/before
+    ./dsc.ps1 dump-graph -All -Out Baseline/before
 
 .EXAMPLE
     ./dsc.ps1 check -All
@@ -117,7 +121,7 @@
     ./dsc.ps1 export-catalog
 
 .EXAMPLE
-    ./dsc.ps1 dump-layout DShader/Materials/M_Toon.dss -Out I:/Work/Layout
+    ./dsc.ps1 dump-layout DShader/Materials/M_Toon.dss -Out Work/Layout
 
 .EXAMPLE
     ./dsc.ps1 pass-registry
@@ -127,6 +131,9 @@
 
 .EXAMPLE
     ./dsc.ps1 pass-registry -Rebuild
+
+.EXAMPLE
+    ./dsc.ps1 info
 
 .NOTES
     Written for and verified against UE 5.8 + DreamShader 2.1.0 on Win64, PowerShell 7.
@@ -145,8 +152,9 @@ param(
     # fmt — rewrite 2.0 sources in the printer's layout (-Check: report, write nothing)
     # list-generated — name every asset the sources build, for a .gitignore or a P4 typemap
     # pass-registry — list the Custom Pass HLSL slots (-Gc: free the dead ones, -Rebuild: rebuild the registry)
+    # info — print the plugin, engine and system versions for a bug report; starts no engine
     [Parameter(Mandatory, Position = 0)]
-    [ValidateSet('compile', 'decompile', 'dump-graph', 'check', 'dump-ir', 'dump-layout', 'index', 'export-catalog', 'migrate', 'fmt', 'list-generated', 'pass-registry')]
+    [ValidateSet('compile', 'decompile', 'dump-graph', 'check', 'dump-ir', 'dump-layout', 'index', 'export-catalog', 'migrate', 'fmt', 'list-generated', 'pass-registry', 'info')]
     [string]$Command,
 
     # compile / dump-graph / check / dump-ir / index: path to a compilable source -- .dss, .dsi,
@@ -549,7 +557,101 @@ function Get-LogRecords {
     return , $records
 }
 
+function Get-EnvironmentInfo {
+    <#
+        The lines `info` prints. They go into public bug reports, so every value is a version, a name or `unknown`,
+        never a path. Nothing here may stop the script: a value that cannot be read is `unknown`.
+    #>
+    param([string]$PluginDir, [string]$ExplicitProject, [string]$ExplicitEngine)
+
+    $unknown = 'unknown'
+    $fields = [ordered]@{
+        'plugin.version' = $unknown
+        'plugin.commit'  = $unknown
+        'engine.version' = $unknown
+        'engine.kind'    = $unknown
+        'os'             = $unknown
+        'locale'         = $unknown
+        'shell'          = $unknown
+    }
+
+    try {
+        $descriptor = Get-Content -LiteralPath (Join-Path $PluginDir 'DreamShader.uplugin') -Raw | ConvertFrom-Json
+        if ($descriptor.VersionName) { $fields['plugin.version'] = [string]$descriptor.VersionName }
+    }
+    catch { }
+
+    try {
+        if (Get-Command git -ErrorAction SilentlyContinue) {
+            # Only the plugin's own repository answers. A plugin copied into a game repository would report the
+            # game's commit, which is worse than none.
+            $top = & git -C $PluginDir rev-parse --show-toplevel 2>$null
+            $own = $LASTEXITCODE -eq 0 -and $top -and
+                ([IO.Path]::GetFullPath("$top").TrimEnd('\', '/') -ieq [IO.Path]::GetFullPath($PluginDir).TrimEnd('\', '/'))
+            if ($own) {
+                $hash = & git -C $PluginDir rev-parse --short HEAD 2>$null
+                if ($LASTEXITCODE -eq 0 -and $hash) {
+                    $branch = & git -C $PluginDir rev-parse --abbrev-ref HEAD 2>$null
+                    if ($LASTEXITCODE -ne 0 -or -not $branch -or $branch -eq 'HEAD') { $branch = 'detached' }
+                    $changes = & git -C $PluginDir status --porcelain --untracked-files=no 2>$null
+                    $fields['plugin.commit'] = "$hash ($branch)" + $(if ($changes) { ' dirty' } else { '' })
+                }
+            }
+        }
+    }
+    catch { }
+
+    $engineRoot = $null
+    try {
+        $uproject = $null
+        try { $uproject = Resolve-Uproject -Explicit $ExplicitProject -StartAt $PluginDir } catch { }
+        if ($ExplicitEngine -or $env:UE_ENGINE_ROOT -or $uproject) {
+            $engineRoot = Resolve-EngineRoot -Explicit $ExplicitEngine -UprojectPath $uproject
+        }
+    }
+    catch { }
+
+    if ($engineRoot) {
+        try {
+            $build = Get-Content -LiteralPath (Join-Path $engineRoot 'Engine/Build/Build.version') -Raw | ConvertFrom-Json
+            if ($null -ne $build.MajorVersion -and $null -ne $build.MinorVersion) {
+                $fields['engine.version'] = "$($build.MajorVersion).$($build.MinorVersion).$([int]$build.PatchVersion)"
+            }
+        }
+        catch { }
+        # An installed build (the launcher's, or one made with BuildGraph) carries InstalledBuild.txt; a source
+        # build does not, and has the engine's Source tree instead.
+        if (Test-Path -LiteralPath (Join-Path $engineRoot 'Engine/Build/InstalledBuild.txt') -PathType Leaf) {
+            $fields['engine.kind'] = 'launcher'
+        }
+        elseif (Test-Path -LiteralPath (Join-Path $engineRoot 'Engine/Source/Runtime') -PathType Container) {
+            $fields['engine.kind'] = 'source'
+        }
+    }
+
+    try {
+        $os = [Runtime.InteropServices.RuntimeInformation]::OSDescription
+        if ($os) { $fields['os'] = $os.Trim() }
+    }
+    catch { }
+
+    $culture = [Globalization.CultureInfo]::CurrentUICulture.Name
+    if ($culture) { $fields['locale'] = $culture }
+
+    $fields['shell'] = "pwsh $($PSVersionTable.PSVersion)"
+
+    $lines = @('DreamShader environment')
+    foreach ($key in $fields.Keys) { $lines += '{0,-14} : {1}' -f $key, $fields[$key] }
+    return $lines
+}
+
 # ---------------------------------------------------------------- run
+
+if ($Command -eq 'info') {
+    # No project, engine or commandlet is needed, so nothing below runs.
+    Get-EnvironmentInfo -PluginDir (Split-Path -Parent $PSScriptRoot) -ExplicitProject $Project -ExplicitEngine $Engine
+    exit 0
+}
 
 $uproject = Resolve-Uproject -Explicit $Project -StartAt $(if ($SourceFile) { $SourceFile } else { $Target })
 $projectDir = Split-Path -Parent $uproject

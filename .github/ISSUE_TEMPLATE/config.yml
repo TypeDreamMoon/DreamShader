@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "Questions and ideas / 提问与想法"
+    url: https://github.com/TypeDreamMoon/DreamShader/discussions
+    about: "Usage questions, design ideas, show and tell. / 用法提问、设计想法、作品展示。"
+  - name: "Documentation / 文档"
+    url: https://shader.toolchain.64hz.cn
+    about: "Language reference, diagnostics, tools. / 语言参考、诊断码、工具。"

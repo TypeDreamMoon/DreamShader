@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Added
+
+- **`dsc.ps1 info` prints what a bug report needs.** The plugin version and commit, the engine version and whether
+  it is an installed or a source build, the OS, the UI language and the PowerShell version, one `key : value` line
+  each. It starts no engine, prints no path, and writes `unknown` for what it cannot find, so it also runs from a
+  zip download without git. Paste its output into the issue form.
+
 ### Changed
 
 - **An HLSL pass at `BeginView` can read `View`.** The renderer makes a view's uniform buffer only after

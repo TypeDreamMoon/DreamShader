@@ -13,6 +13,16 @@ lives.
 | Engines | Unreal Engine `5.3` – `5.8`, Win64 verified |
 | License | MIT |
 
+## Before you start
+
+| To | Go to |
+| :-- | :-- |
+| Report a problem | run `pwsh -File Plugins/DreamShader/.skill/dsc.ps1 info`, then open an [issue form](https://github.com/TypeDreamMoon/DreamShader/issues/new/choose) and paste its output |
+| Ask a question or share an idea | [GitHub Discussions](https://github.com/TypeDreamMoon/DreamShader/discussions) |
+| Propose a feature | a proposal issue first, before any code |
+| Open a pull request, with or without AI help | [`CONTRIBUTING.md`](https://github.com/TypeDreamMoon/DreamShader/blob/main/CONTRIBUTING.md) — the test command, what to update, the AI rules |
+| Point an agent at the repository | [`AGENTS.md`](https://github.com/TypeDreamMoon/DreamShader/blob/main/AGENTS.md); for authoring in a project, [AI agents](../tools/ai-agents.md) |
+
 ## Synopsis
 
 Validate the plugin standalone, without building a full project target:
