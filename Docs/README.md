@@ -25,7 +25,7 @@ The compact [getting-started reference](getting-started.md) remains available fo
 | Nodes and parameters | [Builtins](builtins/index.md), [parameters](parameters/index.md), [settings](settings/index.md) |
 | Generation | [Pipeline and asset lifecycle](generation/index.md), [output bindings](generation/outputs.md), [source control](generation/source-control.md) |
 | Examples | [Reference examples](examples/index.md), [patterns](examples/patterns.md), [recipes](examples/recipes.md), [Custom Pass examples](examples/custom-pass.md) |
-| Tools | [Editor tools](tools/index.md), [VSCode and Rider](tools/vscode.md), [commandlet](tools/commandlet.md) |
+| Tools | [Editor tools](tools/index.md), [VSCode and Rider](tools/vscode.md), [commandlet](tools/commandlet.md), [AI agents](tools/agents.md) |
 | Custom Pass | [Runtime](runtime/index.md), [HLSL passes](runtime/hlsl.md), [pipeline language](language-v2/passes.md) |
 | Diagnostics | [Error and warning lookup](diagnostics/index.md), [limitations](diagnostics/limitations.md) |
 | Development | [C++ API](api/index.md), [contributing](contributing/index.md), [testing](contributing/testing.md), [release](contributing/release.md) |
