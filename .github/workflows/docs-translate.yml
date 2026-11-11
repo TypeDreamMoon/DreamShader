@@ -48,7 +48,7 @@ jobs:
           ref: v${{ steps.tool.outputs.version }}
           path: .dreamdocs
           persist-credentials: false
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/dreamdocs-cache
           key: dreamdocs-cache-${{ github.run_id }}
