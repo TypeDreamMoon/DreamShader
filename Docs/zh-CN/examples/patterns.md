@@ -735,7 +735,7 @@ Shader(Name="Materials/M_Buffered")
 }
 ```
 
-**提示：**
+**注意：**
 
 这个例子引用的 `/Game/MaterialFunctions/F_BufferWriter` 是项目资产。请换成你项目里真实存在的路径—— 或者让编辑器帮你写：`UMaterialFunction` 右键菜单里的 **CreateVirtualFunction** 会在 `DShader/VirtualFunctions` 下写一个对应的 `.dsh`，**Create extern Prototype (2.0)** 写出 `.dss` include 用的 `extern` 形式。见[编辑器工具](../tools/editor-integration.md)。
 

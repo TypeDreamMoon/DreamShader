@@ -17,7 +17,7 @@
 Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or 'import'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1401`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1401`
 <!-- generated:end DSH3200 -->
 
 **原因。** 解析器在文件作用域遇到了一个无法作为任何内容开头的标记：一个游离的 `)`、`}`、运算符、数字或字符串，位于任何声明之外。常见来源是函数之后多出的一个右花括号、写在文件作用域中的语句（`x = 1;` 前面需要一个类型），或一个丢失了关键字的 1.x 块。
@@ -37,7 +37,7 @@ Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or '
 Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' belong here, and '#if' / '#define' lines must be resolved by the preprocessor first.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:648`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:648`
 <!-- generated:end DSH3201 -->
 
 **原因。** 一行 `#`（而非 `#pragma` 或 `#include`（`#if`、`#define`、`#endif`、`#error`……））到达了解析器。2.0 解析器期望的是预处理后的文本：`#if` 和 `#define` 会在解析之前由 DreamShader 预处理器解析，且保留行数，因此在这里看到其中一个，说明文本是原始解析的，或某个指令拼写错误（`#pragam`）。
@@ -57,7 +57,7 @@ Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' 
 '#pragma' needs a name: material, instance, pipeline, layout, region or endregion.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:668`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:734`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:668`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:734`
 <!-- generated:end DSH3202 -->
 
 **原因。** 一行 `#pragma` 的形态不是解析器所读取的形态：
@@ -81,7 +81,7 @@ Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' 
 '#include' needs a quoted path: #include "/Game/Shared/Common.dsh".
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:627`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:824`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:627`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:824`
 <!-- generated:end DSH3203 -->
 
 **原因。** `#include` 后面没有双引号中的 `"path"`，或 `import` 后面没有带引号的字符串。未加引号的路径（`#include /Game/X.dsh`）、只有一侧带引号的路径，以及 HLSL 系统包含的写法 `#include <path>` 都是常见情况。尖括号不被接受：DreamShader 没有系统包含目录，因此该写法毫无意义，打印器也将不得不凭空编造一个。
@@ -101,7 +101,7 @@ Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' 
 Expected a type name, found {0}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:415`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:415`
 <!-- generated:end DSH3204 -->
 
 **原因。** 期望一个类型名称，却发现了其他内容：`uniform = 1;`（缺少类型）、前缀关键字吃掉了唯一标识符后的 `float3 = ...`、参数列表中的 `out x`，或被用作类型的关键字（参数列表中的 `struct`）。
@@ -121,7 +121,7 @@ Expected a type name, found {0}.
 Expected a name after 'struct', found {1}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1137`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1300`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:859`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:894`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:953`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1137`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1300`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:859`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:894`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:953`
 <!-- generated:end DSH3205 -->
 
 **原因。** 期望一个名称，而那里的标记不是标识符。会针对变量或函数（`float ;`）、结构体（`struct {`）、字段或参数（`float f(float)` —— 即使未使用，参数也必须命名）的名称引发。
@@ -141,7 +141,7 @@ Expected a name after 'struct', found {1}.
 Expected '`{' or ';' after the parameter list of '{0}', found {1}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1227`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:997`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1227`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:997`
 <!-- generated:end DSH3206 -->
 
 **原因。** 在函数的参数列表之后，解析器既未找到 `{`，也未找到 `;`。通常是 `)` 与 `{` 之间有一个游离标记（`float f() const {`、`float f() 5`），或缺少一个 `{`。
@@ -161,7 +161,7 @@ Expected '`{' or ';' after the parameter list of '{0}', found {1}.
 '{0}' is 'extern' and binds to an existing asset, so it cannot have a body; write a prototype ending in ';'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1181`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1181`
 <!-- generated:end DSH3207 -->
 
 **原因。** 一个 `extern` 函数带有主体。`extern` 的意思是“将此名称绑定到现有的材质函数资产”（通过 `/// @asset` 或库查找），因此主体将无处安放。
@@ -181,7 +181,7 @@ Expected '`{' or ';' after the parameter list of '{0}', found {1}.
 '{0}' has no body. Only an 'extern' prototype may end in ';'; a function you define needs '`{...`}'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1218`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1218`
 <!-- generated:end DSH3208 -->
 
 **原因。** 一个不是 `extern` 的函数以 `;` 而不是主体结尾。2.0 源文件没有前向声明：辅助函数可以按任意顺序定义，并会按名称跨文件及其包含进行解析。
@@ -201,7 +201,7 @@ Expected '`{' or ';' after the parameter list of '{0}', found {1}.
 A '.dsh' header cannot export '{0}'; only a '.dss' file produces assets.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangParser.cpp:74`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParser.cpp:74`
 <!-- generated:end DSH3210 -->
 
 **原因。** 一个 `.dsh` 头文件包含了一个 `export` 函数。头文件会被包含进材质和函数中，从不单独编译，因此其中的 `export` 没有可以成为的资产，并且会被复制到每个包含者中。
@@ -221,7 +221,7 @@ A '.dsh' header cannot export '{0}'; only a '.dss' file produces assets.
 Expected the end of the expression, found {0}.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Lang/LangParser.cpp:572`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParser.cpp:572`
 <!-- generated:end DSH3211 -->
 
 **原因。** `ParseDreamShaderLangExpression`（测试、语言服务、`#pragma` 值）接收到的文本在一个完整表达式之后还有其他内容：`a + b c`、`x = 1;`（`;` 不是表达式的一部分）。
@@ -241,7 +241,7 @@ Expected the end of the expression, found {0}.
 '{0}' cannot be combined with the keywords before it; a declaration is 'uniform', 'static const', 'static', 'const', 'extern' or 'export', not a mix.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1087`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1155`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1241`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1087`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1155`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1241`
 <!-- generated:end DSH3213 -->
 
 **原因。** 声明的前缀关键字不搭配，或与错误类型的声明搭配：
@@ -265,7 +265,7 @@ Expected the end of the expression, found {0}.
 Parameter '{0}' is 'out' and cannot have a default value; only inputs are optional.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:972`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:972`
 <!-- generated:end DSH3214 -->
 
 **原因。** 一个 `out` 参数带有默认值：`out float Alpha = 1.0`。输出由函数写入，对调用方而言不可能是可选的，因此默认值没有意义。
@@ -285,7 +285,7 @@ Parameter '{0}' is 'out' and cannot have a default value; only inputs are option
 Expected ']' to close the array dimension, found {1}.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:453`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:453`
 <!-- generated:end DSH3215 -->
 
 **原因。** 数组维度以 `[` 开始但未闭合：`float Weights[4;`、 `float3 P[;`。该维度必须是 `[` 与 `]` 之间的单个表达式。
@@ -305,7 +305,7 @@ Expected ']' to close the array dimension, found {1}.
 Expected ';' after the import path, found {1}.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1277`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1324`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:838`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:902`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:911`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1277`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1324`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:838`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:902`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:911`
 <!-- generated:end DSH3216 -->
 
 **原因。** 某个声明缺少其 `;`：在变量及其初始化器之后、在 `import "x.dsh"` 之后、在结构体字段之后、在结构体的闭合 `}` 之后，或在 `uniform float a, b` 中两个声明符之间。
@@ -325,7 +325,7 @@ Expected ';' after the import path, found {1}.
 Expected '{' after the struct name, found {1}.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:863`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:863`
 <!-- generated:end DSH3217 -->
 
 **原因。** `struct Name` 之后未跟随 `{`。通常是前向声明（`struct X;`），2.0 不支持；或基类冒号（`struct X : Y`），它也不支持。
@@ -345,7 +345,7 @@ Expected '{' after the struct name, found {1}.
 Expected ')' to close the parameter list, found {1}.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:986`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:986`
 <!-- generated:end DSH3218 -->
 
 **原因。** 参数列表未以 `)` 闭合。要么缺少 `)`，要么参数之间使用了 `,` 以外的分隔符（`float a; float b`），要么参数带有解析器不认识的限定符（`const float a` —— 2.0 参数只接受 `in`、`out`、`inout`）。
@@ -365,7 +365,7 @@ Expected ')' to close the parameter list, found {1}.
 '#pragma nogeneration' takes no arguments, and '{0}' was ignored: the file is still marked. Remove the line to have it built automatically again.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:691`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:691`
 <!-- generated:end DSH3219 -->
 
 **原因。** `#pragma nogeneration` *（2.1.2 之后）* 后面写有其他内容，例如 `(false)`。它不接受任何内容，且文件**会保持**标记状态：除了移除该行外无法关闭它。
@@ -385,7 +385,7 @@ Expected ')' to close the parameter list, found {1}.
 A '@' in a '///' line must be followed by a directive name; the text is kept as description.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:577`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:577`
 <!-- generated:end DSH3220 -->
 
 **原因。** *（警告）* 一行 `///` 中，`@` 位于指令位置（文本开头或空格之后）且未跟随指令名称：`/// see @ the docs`、`/// @ desc Foo`、 `/// @123`。该行会作为描述文本保留，因此不会丢失任何内容，但如果本意是指令则未被读取。
@@ -405,7 +405,7 @@ A '@' in a '///' line must be followed by a directive name; the text is kept as 
 This '///' block is not followed by a field and is ignored.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1352`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:884`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1352`、`Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:884`
 <!-- generated:end DSH3221 -->
 
 **原因。** *（警告）* 一个 `///` 块未附加到任何内容：它位于文件末尾且之后没有任何声明，或位于结构体主体末尾且之后没有任何字段。文档块属于其后的声明，因此后面没有内容的块会被丢弃。
@@ -425,7 +425,7 @@ This '///' block is not followed by a field and is ignored.
 Expected a 2.0 declaration, found the 1.x declaration '{0}'; 1.x declarations belong in a .dsh header or in a .dsm or .dsf file.
 ```
 
-**触发自** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1119`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1119`
 <!-- generated:end DSH3222 -->
 
 **原因。** 在 2.0 声明应开始的位置发现了 1.x 声明词——`Function`、`GraphFunction`、`Namespace`、`VirtualFunction`、 `Shader`、`ShaderFunction`、`ShaderLayer`、`ShaderLayerBlend`。2.0 前端不读取 1.x 块语法：由扩展选择前端，而 `.dss` 要求使用这一前端。
@@ -445,7 +445,7 @@ Expected a 2.0 declaration, found the 1.x declaration '{0}'; 1.x declarations be
 Expected a property type and a name, found {0}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1042`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:719`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:731`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:773`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1042`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:719`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:731`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:773`
 <!-- generated:end DSH3250 -->
 
 **原因。** `Properties` 节的某一行没有以类型和名称开头。每个属性均为 `<Type> <Name> [= default] [ [metadata] ];`。
@@ -465,7 +465,7 @@ Expected a property type and a name, found {0}.
 Expected a property type after 'const', found {0}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:674`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:674`
 <!-- generated:end DSH3251 -->
 
 **原因。** `const` 后面没有跟随属性类型。
@@ -485,7 +485,7 @@ Expected a property type after 'const', found {0}.
 Expected a property type such as 'float', 'float4', 'Texture2D' or 'ScalarParameter', found '{0}'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:839`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:839`
 <!-- generated:end DSH3252 -->
 
 **原因。** 类型位置上的词不是 1.x 属性可以具有的类型：既不是 HLSL 值类型，也不是纹理类型，也不是 1.x 按名称识别的某个参数节点类。
@@ -505,7 +505,7 @@ Expected a property type such as 'float', 'float4', 'Texture2D' or 'ScalarParame
 Expected a property type with a 2.0 spelling, found '{0}{1}', which has none; move this material to a .dss file and write the node with UE.Expression.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:851`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:851`
 <!-- generated:end DSH3253 -->
 
 **原因。** 该属性是 1.x 可以声明而 2.0 没有对应声明的节点类，或 `const` 作用于一个不能作为常量的属性（参数节点）。两个前端构建同一个 AST，因此属性需要一种 2.0 形式：`uniform`、`static const`，或在读取处展开的节点。
@@ -525,7 +525,7 @@ Expected a property type with a 2.0 spelling, found '{0}{1}', which has none; mo
 Expected a default value after '{0} =', found {1}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:753`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:869`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:911`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:935`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:753`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:869`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:911`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:935`
 <!-- generated:end DSH3254 -->
 
 **原因。** 某属性具有 `=`，且其后没有任何前端可读作默认值的内容。默认值可以是数字、构造函数（`float4(1, 0, 0, 1)`）、`true` / `false`、资源引用（`Path(...)`、带引号的对象路径、内容浏览器引用），或内建属性的 `UE.*` 节点。
@@ -545,7 +545,7 @@ Expected a default value after '{0} =', found {1}.
 Expected ']' to close the metadata block, found {0}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:186`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:199`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:253`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:273`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:186`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:199`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:253`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:273`
 <!-- generated:end DSH3255 -->
 
 **原因。** 属性或参数之后的元数据块 `[ ... ]` 未闭合，或其中的某一项不是 `Key = value;`。
@@ -565,7 +565,7 @@ Expected ']' to close the metadata block, found {0}.
 Expected the metadata key '{0}' once, found it again.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:307`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:307`
 <!-- generated:end DSH3256 -->
 
 **原因。** 同一个 `[ ... ]` 块中某个元数据键被写了两次。
@@ -585,7 +585,7 @@ Expected the metadata key '{0}' once, found it again.
 Expected 'Slider(min, max)' with two numbers, found '{0}'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:236`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:299`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:236`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:299`
 <!-- generated:end DSH3257 -->
 
 **原因。** `Slider` 不具有带有两个数字的 `Slider(min, max)` 形式，或范围给出了两次：`Slider(...)` 与同一元数据块中的 `SliderMin` / `SliderMax` 风格边界同时出现。
@@ -605,7 +605,7 @@ Expected 'Slider(min, max)' with two numbers, found '{0}'.
 Expected 'SortPriority' to be a whole number, found '{0}'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1797`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:473`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1797`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:473`
 <!-- generated:end DSH3258 -->
 
 **原因。** `SortPriority`（或其简写形式 `Sort`）不是整数。引擎按整数对参数排序。
@@ -625,7 +625,7 @@ Expected 'SortPriority' to be a whole number, found '{0}'.
 Expected ')' to close the arguments of 'UE.{0}', found {1}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:703`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:817`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:703`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:817`
 <!-- generated:end DSH3259 -->
 
 **原因。** 某内建属性（`float3 Cam = UE.CameraPositionWS();`）打开了其 `UE.*` 节点的参数列表且从未闭合，或将节点的参数作为默认值写在名称之后，而不是写在括号内。
@@ -645,7 +645,7 @@ Expected ')' to close the arguments of 'UE.{0}', found {1}.
 Expected a name inside 'Group("...")', found an empty string.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:635`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:635`
 <!-- generated:end DSH3260 -->
 
 **原因。** `Group("") { ... }` 的名称为空。此类块的成员会将此名称作为其参数组。
@@ -665,7 +665,7 @@ Expected a name inside 'Group("...")', found an empty string.
 Expected a setting name such as 'BlendMode', found {0}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1110`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1135`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1147`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1161`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1110`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1135`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1147`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1161`
 <!-- generated:end DSH3261 -->
 
 **原因。** `Settings` 节的某一行没有以设置名称开头。每项设置均为 `<Name> = <value>;`。
@@ -685,7 +685,7 @@ Expected a setting name such as 'BlendMode', found {0}.
 The setting '{0}' is written twice; the later value wins, as it did in 1.x.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1181`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1181`
 <!-- generated:end DSH3262 -->
 
 **原因。** 某项设置被写了两次。1.x 保留后出现的值，此前端也如此。
@@ -705,7 +705,7 @@ The setting '{0}' is written twice; the later value wins, as it did in 1.x.
 '{0}' is not a setting of '{1}'; 1.x ignored it and so does this front end.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1199`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1199`
 <!-- generated:end DSH3263 -->
 
 **原因。** 该设置不属于块的类别所拥有的设置（ShaderFunction 中的材质设置、拼写错误的函数设置）。1.x 会忽略它不认识的内容，因此源会像以往一样构建 ——只是没有该设置。
@@ -725,7 +725,7 @@ The setting '{0}' is written twice; the later value wins, as it did in 1.x.
 'UserExposedCaption' has no 2.0 spelling and is not applied; its value is kept for migration.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1187`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1187`
 <!-- generated:end DSH3264 -->
 
 **原因。** `UserExposedCaption` 被设置在某个函数上。2.0 没有针对它的指令，编译器也不会写入它：新资源没有标题，而早期版本已设置过标题的资源会保留其原有标题。该值会保留在迁移记录中。
@@ -745,7 +745,7 @@ The setting '{0}' is written twice; the later value wins, as it did in 1.x.
 Expected 'true' or 'false' for 'ExposeToLibrary', found '{0}'; 1.x ignored the setting and so does this front end.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1173`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1173`
 <!-- generated:end DSH3265 -->
 
 **原因。** `ExposeToLibrary` 既不是 `true` 也不是 `false`。1.x 会忽略此类的值，并将函数留在原处。
@@ -765,7 +765,7 @@ Expected 'true' or 'false' for 'ExposeToLibrary', found '{0}'; 1.x ignored the s
 Expected ';' after the output declaration '{0}', found {1}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1202`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1322`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1627`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1202`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1322`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1627`
 <!-- generated:end DSH3266 -->
 
 **原因。** 一个 `Outputs` 节不是前端所读取的内容：该节未以 `{` 开头，某个声明之后没有 `;`，或者某行既不是输出声明、`Base.<Attribute> =
@@ -786,7 +786,7 @@ Expected ';' after the output declaration '{0}', found {1}.
 Expected 'Pin[<index>] = <source>' for an Expression(...) output target, found {0}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1230`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1415`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1425`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1437`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1448`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1464`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1493`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1559`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1230`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1415`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1425`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1437`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1448`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1464`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1493`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1559`
 <!-- generated:end DSH3267 -->
 
 **原因。** 绑定到自定义输出节点的 `Outputs` 不是 `Expression(Class = "...").Pin[<index>] = <source>;` (or, in block form, `Pin[<index>] = <source>;`（位于花括号内）这一形式。
@@ -806,7 +806,7 @@ Expected 'Pin[<index>] = <source>' for an Expression(...) output target, found {
 Expected each pin of Expression(Class = "{0}") to be bound once, found Pin[{1}] bound again.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1606`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1606`
 <!-- generated:end DSH3268 -->
 
 **原因。** `Expression(...)` 输出目标的块形式对同一个引脚绑定了两次。
@@ -826,7 +826,7 @@ Expected each pin of Expression(Class = "{0}") to be bound once, found Pin[{1}] 
 Expected at least one 'Pin[<index>] = <source>;' in the Expression(...) block, found none.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1549`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1549`
 <!-- generated:end DSH3269 -->
 
 **原因。** `Expression(...)` 输出目标的块形式中没有任何引脚绑定，因此该节点将在没有任何连线的情况下构建。
@@ -846,7 +846,7 @@ Expected at least one 'Pin[<index>] = <source>;' in the Expression(...) block, f
 Expected a source after 'Pin[{0}] =', found none.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1246`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1302`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1367`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1246`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1302`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1367`
 <!-- generated:end DSH3270 -->
 
 **原因。** `Outputs` 节中的 `=` 后面没有任何内容：`Pin[<index>] =`、`Base.<Attribute> =`，或输出声明的初始化器。
@@ -866,7 +866,7 @@ Expected a source after 'Pin[{0}] =', found none.
 Expected a parameter type and name such as 'float Amount', found {0}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1659`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1694`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1730`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1756`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1659`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1694`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1730`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1756`
 <!-- generated:end DSH3271 -->
 
 **原因。** 函数的 `Inputs` 或 `Outputs` 节中的某行不是 `[opt] <Type> <Name> [= default] [ [metadata] ];`。
@@ -886,7 +886,7 @@ Expected a parameter type and name such as 'float Amount', found {0}.
 'opt' on the output '{0}' means nothing; 1.x ignored it and so does this front end.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1770`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1770`
 <!-- generated:end DSH3272 -->
 
 **原因。** `opt` 位于输出上。只有输入可以是可选的；1.x 会读取该词但不做任何处理。
@@ -906,7 +906,7 @@ Expected a parameter type and name such as 'float Amount', found {0}.
 A default on the output '{0}' means nothing; 1.x ignored it, so it is dropped.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1778`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1778`
 <!-- generated:end DSH3273 -->
 
 **原因。** 输出带有默认值。输出是 Graph 所赋的值；1.x 会读取默认值并将其丢弃。
@@ -926,7 +926,7 @@ A default on the output '{0}' means nothing; 1.x ignored it, so it is dropped.
 Expected 'Node(...)' or 'Comment(...)' in the Layout section, found {0}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1838`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1863`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1884`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1894`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1906`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1922`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1938`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1957`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1838`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1863`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1884`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1894`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1906`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1922`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1938`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1957`
 <!-- generated:end DSH3274 -->
 
 **原因。** `Layout` 节中包含的内容不是 `Node(...)` 和 `Comment(...)` 条目。
@@ -946,7 +946,7 @@ Expected 'Node(...)' or 'Comment(...)' in the Layout section, found {0}.
 Expected the argument '{0}' in '{1}(...)', found none.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1998`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:2010`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1998`、`Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:2010`
 <!-- generated:end DSH3275 -->
 
 **原因。** `Node(...)` 或 `Comment(...)` 条目缺少一个它不能缺少的参数——对于节点是 `Var`、 `X`、`Y`；对于注释是 `Name`、`X`、`Y`、`W`、`H`——或者某个位置或大小不是整数。
@@ -966,7 +966,7 @@ Expected the argument '{0}' in '{1}(...)', found none.
 Expected 'Color' to be a vector literal such as '(0.1, 0.16, 0.22, 0.35)', found '{0}'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:2036`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:2036`
 <!-- generated:end DSH3276 -->
 
 **原因。** `Comment(...)` 的 `Color` 不是括号中的四个数字。
@@ -986,7 +986,7 @@ Expected 'Color' to be a vector literal such as '(0.1, 0.16, 0.22, 0.35)', found
 The layer input '{0}' becomes the 'inout material' parameter named after the output '{1}', so the input pin changes its name.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1252`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1252`
 <!-- generated:end DSH3277 -->
 
 **原因。** 1.x 图层为其 MaterialAttributes 输入和输出使用了不同的名称。2.0 图层有一个 `inout material` 参数，它同时是两个引脚，并采用输出的名称——因此图层资源的输入引脚被重命名。在主体内部，旧的输入名称仍读取传入的材质。
@@ -1006,7 +1006,7 @@ The layer input '{0}' becomes the 'inout material' parameter named after the out
 Expected a MaterialAttributes output on '{0}', found none.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1222`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1222`
 <!-- generated:end DSH3278 -->
 
 **原因。** `ShaderLayer` 或 `ShaderLayerBlend` 没有类型为 `MaterialAttributes` 的输出。图层堆栈从图层或混合中恰好读取一个此类输出。
@@ -1026,7 +1026,7 @@ Expected a MaterialAttributes output on '{0}', found none.
 Expected the buffer's name after 'buffer', found {1}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:122`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:122`
 <!-- generated:end DSH3300 -->
 
 **原因。** `buffer` 开始了 `.dsp` 的声明，但其后没有名称：名称缺失（`buffer : R8;`）、被引号括起（`buffer "Mask" : R8;`），或者是该语言的关键字（`buffer in : R8;`）。
@@ -1046,7 +1046,7 @@ Expected the buffer's name after 'buffer', found {1}.
 Expected ':' and a format after 'buffer {0}', found {1}.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:126`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:126`
 <!-- generated:end DSH3301 -->
 
 **原因。** 缓冲区的名称之后没有跟随 `:` 及其格式：格式缺失（`buffer Mask;`）、`:` 为（`buffer Mask R8;`、`buffer Mask = R8;`）、参数列表出现在格式之前（`buffer Mask(Clear = 0) : R8;`），或两个名称共用一个声明（`buffer Mask, Edge : R8;`）。
@@ -1071,7 +1071,7 @@ buffer Edge : R8;
 Expected a buffer format such as 'R8' or 'RGBA16F', found {1}.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:130`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:130`
 <!-- generated:end DSH3302 -->
 
 **原因。** 缓冲区名称之后的 `:` 没有跟随格式词：格式缺失（`buffer Mask : ;`、`buffer Mask : (Clear = 0);`）或被引用（`buffer Mask : "R8";`）。此处任何名称都可解析；不是格式的名称（`RGBA16`、`rgba16f`）是绑定器的 DSH7305。
@@ -1091,7 +1091,7 @@ Expected a buffer format such as 'R8' or 'RGBA16F', found {1}.
 Expected the pass's name after 'pass', found {1}.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:226`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:226`
 <!-- generated:end DSH3303 -->
 
 **原因。** `pass` 开始一个 `.dsp` 的声明，且其后没有名称：`pass : mesh { ... }`、 `pass "DrawMask" : mesh { ... }`，或一个关键字出现在名称应处的位置。
@@ -1111,7 +1111,7 @@ Expected the pass's name after 'pass', found {1}.
 Expected ':' and a pass kind after 'pass {0}', found {1}.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:230`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:230`
 <!-- generated:end DSH3304 -->
 
 **原因。** 通道的名称之后没有跟随 `:` 及其种类：种类缺失（`pass Blur { ... }`）、`:` 为（`pass Blur compute { ... }`），或种类被写成了参数（`pass Blur(compute) { ... }`）。
@@ -1131,7 +1131,7 @@ Expected ':' and a pass kind after 'pass {0}', found {1}.
 Expected a pass kind: fullscreen, compute, mesh, clear or copy, found {1}.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:234`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:234`
 <!-- generated:end DSH3305 -->
 
 **原因。** 通道名称之后的 `:` 没有跟随种类：它缺失（`pass Blur : { ... }`）或被引用（`pass Blur : "compute" { ... }`）。此处任何名称都可解析；不是种类的名称（`Compute`、`postprocess`）是绑定器的 DSH7304。
@@ -1151,7 +1151,7 @@ Expected a pass kind: fullscreen, compute, mesh, clear or copy, found {1}.
 'buffer {0}' declares a buffer of a Custom Pass pipeline, which only a '.dsp' file holds; move it into the pipeline's '.dsp'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:99`
+**触发位置** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:99`
 <!-- generated:end DSH3310 -->
 
 **原因。** 一个 `.dss`、`.dsh` 或 `.dsi` 声明了 `buffer <Name> : ...` 或 `pass <Name> : ...`（消息随后显示 `'pass ...' declares a pass`）。缓冲区和通道属于自定义通道管线，而 `buffer` 和 `pass` 是 `.dsp` 中的声明词；在其他任何地方它们都是普通名称，而这段文本一直是语法错误——消息现在会指出它应属之处。一个仅仅叫做 `buffer` 或 `pass` 的变量没有问题：是名称之后的 `:` 使其成为管线声明。
@@ -1171,7 +1171,7 @@ Expected a pass kind: fullscreen, compute, mesh, clear or copy, found {1}.
 '#pragma pipeline' configures a Custom Pass pipeline and belongs in a '.dsp' file of its own, and this line is in '{0}'; move it, with the pipeline's buffers and passes, into a '.dsp'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4812`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4812`
 <!-- generated:end DSH3311 -->
 
 **原因。** `#pragma pipeline(...)` 出现在 `.dss`、`.dsh` 或 `.dsi` 中——消息会指出文件名。自定义通道管线是一个独立的源文件：`.dsp` 持有该 pragma 以及管线的参数、缓冲区和通道，并成为一个以该文件命名的 `UDreamPassPipeline`。
@@ -1191,7 +1191,7 @@ Expected a pass kind: fullscreen, compute, mesh, clear or copy, found {1}.
 An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only a '.dsp' file holds, and '{0}' is not one; a pipeline cannot be included.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4825`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4849`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4825`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4849`
 <!-- generated:end DSH3312 -->
 
 **原因。** 一个 `buffer` 或 `pass` 声明，或一个文件级 `hlsl` 块，到达了 `.dss` 或 `.dsh` 的绑定器——即，一个 `.dsp` 被包含了。解析器仅在 `.dsp` 中进行这些声明（在其他地方该文本是 DSH3310），因此这里的唯一途径是某个宿主的包含解析器解析了一个 `.dsp`；编辑器与 `dsc` 的解析器在此发生之前拒绝包含除 `.dsh` 或 `.dss` 之外的任何内容（DSH8295）。它会在 `.dsp` 中报告，每个缓冲区和通道一次，并指出正在编译的文件。
@@ -1211,7 +1211,7 @@ An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only 
 '#pragma pipeline' is written a second time, and one '.dsp' is one pipeline; the line {0} already configures it.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:691`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:691`
 <!-- generated:end DSH3313 -->
 
 **原因。** 一个 `.dsp` 有第二个 `#pragma pipeline(...)`。第一个配置管线；这一个被整体拒绝，其所有键都不会合并到第一个中。
@@ -1231,7 +1231,7 @@ An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only 
 '#pragma material' configures a material, and a '.dsp' is configured by '#pragma pipeline(...)'; the material a pass draws with is a '.dss' of its own.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:708`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:741`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:751`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:761`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:708`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:741`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:751`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:761`
 <!-- generated:end DSH3314 -->
 
 **原因。** 一个 `.dsp` 持有只有材质源才能使用的声明。管线持有 `#pragma pipeline`、`uniform`、`static const`、`buffer` 和 `pass` 声明以及一个 `hlsl` 块；另外四种种类属于此错误，各有一条消息：
@@ -1248,7 +1248,7 @@ An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only 
 ## DSH3315
 
 <!-- generated:begin DSH3315 -->
-**严重程度** 警告
+**严重性** 警告
 
 **消息**
 
@@ -1256,7 +1256,7 @@ An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only 
 '#pragma {0}' boxes or places graph nodes, and a '.dsp' has no graph; the line was ignored.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:722`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:722`
 <!-- generated:end DSH3315 -->
 
 **原因。** `#pragma layout`、`#pragma region` 或 `#pragma endregion` 位于 `.dsp` 中。在 `.dss` 中，这些内容会放置生成的节点并用注释将其框起；而管线不生成图，因此该行会被忽略，管线会当作它不存在一样进行构建。
@@ -1268,7 +1268,7 @@ An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only 
 ## DSH3316
 
 <!-- generated:begin DSH3316 -->
-**严重程度** 错误
+**严重性** 错误
 
 **消息**
 
@@ -1276,7 +1276,7 @@ An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only 
 '{0}' is a file-scope variable of a '.dsp', which is a 'uniform' (a parameter an activation may override) or a 'static const' (a compile-time value).
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:826`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:826`
 <!-- generated:end DSH3316 -->
 
 **原因。** `.dsp` 的文件作用域变量在声明时没有 `uniform` 或 `static const`： `float Radius = 2.0;`、`static float Scale = 0.5;`。管线有两种值：参数 -- 激活项（体积、组件、项目设置、蓝图）可以覆盖它 -- 以及常量，常量在使用处折叠（普通的 `const` 会当作常量）。普通变量两者都不是。该声明会被丢弃，因此命名它的 `param` 或 `Enabled` 也会 DSH4404。
@@ -1294,7 +1294,7 @@ static const float HalfRes = 0.5;
 ## DSH3317
 
 <!-- generated:begin DSH3317 -->
-**严重程度** 警告
+**严重性** 警告
 
 **消息**
 
@@ -1302,7 +1302,7 @@ static const float HalfRes = 0.5;
 '@{0}' has no effect on {1} in a '.dsp'; remove it.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:793`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:793`
 <!-- generated:end DSH3317 -->
 
 **原因。** 位于 `.dsp` 声明上方的 `///` 指令对管线没有意义。每种声明接受的内容：

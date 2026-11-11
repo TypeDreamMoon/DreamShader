@@ -9,7 +9,7 @@
 ## DSH4200
 
 <!-- generated:begin DSH4200 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -17,7 +17,7 @@
 '{0}' is not declared; did you mean '{1}'? Names are case-sensitive.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:757`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:768`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:757`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:768`
 <!-- generated:end DSH4200 -->
 
 **原因。** 一个标识符并未命名此处可见的局部变量、参数或文件作用域声明。在 2.0 中名称是**区分大小写**的（1.x 不区分），因此 `intensity` 和 `Intensity` 是两个不同的名称；当唯一的区别只是大小写时，消息会说明这一点，并给出它找到的声明名称。
@@ -29,7 +29,7 @@
 ## DSH4201
 
 <!-- generated:begin DSH4201 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -37,7 +37,7 @@
 '{0}' is not a type; did you mean '{1}'? Type names are case-sensitive.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:561`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:572`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:586`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:708`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:981`、`Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:544`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:561`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:572`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:586`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:708`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:981`、`Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:544`
 <!-- generated:end DSH4201 -->
 
 **原因。** 一个类型拼写既不是内置类型（`float3`、`Texture2D`、`material`、`Substrate`、……），也不是在此行**之前**声明的 `struct`。对于需要值类型的 `void`——字段、参数或变量——也会引发此错误。
@@ -49,7 +49,7 @@
 ## DSH4202
 
 <!-- generated:begin DSH4202 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -57,7 +57,7 @@
 A string has no value in an expression; it is only ever the value of a reflected property, as in 'UE.Expression(Class = "...")'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:625`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:625`
 <!-- generated:end DSH4202 -->
 
 **原因。** 一个带引号的字符串进入了表达式。该语言没有字符串值：字符串只能是反射字面量属性的值，如 `UE.Expression(Class = "…")` 或 `Desc = "…"`。
@@ -69,7 +69,7 @@ A string has no value in an expression; it is only ever the value of a reflected
 ## DSH4203
 
 <!-- generated:begin DSH4203 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -77,7 +77,7 @@ A string has no value in an expression; it is only ever the value of a reflected
 '{0}' is a namespace, not a value; write '{0}.SomeNode(...)'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:717`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:717`
 <!-- generated:end DSH4203 -->
 
 **原因。** `UE` 或 `Substrate` 被当作变量使用。它们是命名空间；跟在它们后面的只能是节点名称和调用。
@@ -89,7 +89,7 @@ A string has no value in an expression; it is only ever the value of a reflected
 ## DSH4204
 
 <!-- generated:begin DSH4204 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -97,7 +97,7 @@ A string has no value in an expression; it is only ever the value of a reflected
 '{0}' is a type, not a value; write '{0}(...)' to construct one.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:512`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:512`
 <!-- generated:end DSH4204 -->
 
 **原因。** 在需要值的地方出现了类型名称：`float3;`、`x = float3`、`f(float3)`。
@@ -109,7 +109,7 @@ A string has no value in an expression; it is only ever the value of a reflected
 ## DSH4205
 
 <!-- generated:begin DSH4205 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -117,7 +117,7 @@ A string has no value in an expression; it is only ever the value of a reflected
 '{0}' has no field called '{1}'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1125`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1125`
 <!-- generated:end DSH4205 -->
 
 **原因。** 向一个 `struct` 值请求了它没有的字段。消息会指出该结构体，并在存在仅大小写不同的字段时建议该字段。
@@ -129,7 +129,7 @@ A string has no value in an expression; it is only ever the value of a reflected
 ## DSH4206
 
 <!-- generated:begin DSH4206 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -137,7 +137,7 @@ A string has no value in an expression; it is only ever the value of a reflected
 '{0}' on a texture is a call: write 'Tex.{0}(UV)'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1264`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1264`
 <!-- generated:end DSH4206 -->
 
 **原因。** `Tex.Sample`（或 `Tex.SampleLevel`）出现时没有其参数列表。纹理的方法都是调用；方法本身没有可取的值。
@@ -149,7 +149,7 @@ A string has no value in an expression; it is only ever the value of a reflected
 ## DSH4207
 
 <!-- generated:begin DSH4207 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -157,7 +157,7 @@ A string has no value in an expression; it is only ever the value of a reflected
 A value of type {0} has no member '{1}'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1274`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1274`
 <!-- generated:end DSH4207 -->
 
 **原因。** 在类型没有该类成员的某个值上编写了成员访问：对纹理的 swizzle、对数字的字段、对并非 `material` 的对象的属性。
@@ -169,7 +169,7 @@ A value of type {0} has no member '{1}'.
 ## DSH4208
 
 <!-- generated:begin DSH4208 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -177,7 +177,7 @@ A value of type {0} has no member '{1}'.
 A value of type {0} has no method '{1}'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2985`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3103`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3118`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4909`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2985`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3103`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3118`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4909`
 <!-- generated:end DSH4208 -->
 
 **原因。** 对并非可调用的对象编写了调用：不是函数的名称、内置函数、`struct` 或后接节点的 `UE.`/`Substrate.`；或纹理没有的方法。与某个已声明名称仅大小写不同的情况会在消息中指出。
@@ -189,7 +189,7 @@ A value of type {0} has no method '{1}'.
 ## DSH4210
 
 <!-- generated:begin DSH4210 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -197,7 +197,7 @@ A value of type {0} has no method '{1}'.
 '{0}' is already declared in this file; one name declares one thing.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:483`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:493`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:861`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:483`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:493`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:861`
 <!-- generated:end DSH4210 -->
 
 **原因。** 同一个名称被声明了两次。结构体、文件作用域变量和函数共用一个命名空间，因为结构体的构造函数和函数调用的写法相同。当两个声明位于不同文件时，消息会指出两者——常见原因是某个头文件声明了该文件也声明的名称，或两个头文件都声明了它。
@@ -211,7 +211,7 @@ A value of type {0} has no method '{1}'.
 ## DSH4211
 
 <!-- generated:begin DSH4211 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -219,7 +219,7 @@ A value of type {0} has no method '{1}'.
 Including '{0}' from '{1}' closes a cycle; a header may not include itself, directly or through another header.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:446`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:446`
 <!-- generated:end DSH4211 -->
 
 **原因。** 沿着 `#include` / `import` 追踪会回到一个已在读取的文件。消息会指出闭合该循环的文件以及包含它的文件。
@@ -231,7 +231,7 @@ Including '{0}' from '{1}' closes a cycle; a header may not include itself, dire
 ## DSH4212
 
 <!-- generated:begin DSH4212 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -239,7 +239,7 @@ Including '{0}' from '{1}' closes a cycle; a header may not include itself, dire
 '{0}' cannot be read: this front end was started without an include resolver, so nothing a header declares is visible.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:410`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:410`
 <!-- generated:end DSH4212 -->
 
 **原因。** 该文件带有 `#include` / `import`，而此前端在启动时没有包含解析器，因此头文件声明的任何内容都不可见。在一次编译内部不会发生这种情况；这说明某个工具调用 `BindDreamShaderLang` 时 `FBindOptions::IncludeResolver` 为空。
@@ -251,7 +251,7 @@ Including '{0}' from '{1}' closes a cycle; a header may not include itself, dire
 ## DSH4213
 
 <!-- generated:begin DSH4213 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -259,7 +259,7 @@ Including '{0}' from '{1}' closes a cycle; a header may not include itself, dire
 '{0}' is declared twice in struct '{1}'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:689`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:689`
 <!-- generated:end DSH4213 -->
 
 **原因。** 一个 `struct` 声明了两个同名字段。
@@ -279,7 +279,7 @@ Including '{0}' from '{1}' closes a cycle; a header may not include itself, dire
 '{0}' is declared twice in the parameter list of '{1}'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:958`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:958`
 <!-- generated:end DSH4214 -->
 
 **原因。** 参数列表中将同一个名字声明了两次。
@@ -299,7 +299,7 @@ Including '{0}' from '{1}' closes a cycle; a header may not include itself, dire
 The '{0}' argument of '{1}' is given twice.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3461`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3791`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4458`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4537`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4575`、`Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:697`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3461`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3791`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4458`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4537`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4575`、`Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:697`
 <!-- generated:end DSH4215 -->
 
 **原因。** 调用中同一个参数槽被填充了两次：同一个参数被命名了两次；某个命名参数重复了位置参数已经填充的内容；或者某个引脚及其字面量副本同时被提供。
@@ -319,7 +319,7 @@ The '{0}' argument of '{1}' is given twice.
 '{0}' takes its arguments in order and has no argument called '{1}'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3426`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3769`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3426`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3769`
 <!-- generated:end DSH4216 -->
 
 **原因。** 命名参数在被调方中找不到任何对应项：该函数没有此名称的参数，或该内建项没有此名称的引脚。消息会列出内建项的参数名，并会为函数的参数建议一个仅大小写不同的匹配项。
@@ -339,7 +339,7 @@ The '{0}' argument of '{1}' is given twice.
 '{0}' is missing its '{1}' argument.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3489`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3843`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3489`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3843`
 <!-- generated:end DSH4217 -->
 
 **原因。** 调用使某个参数既没有实参也没有默认值，或某个内建项缺少其中一个实参。
@@ -359,7 +359,7 @@ The '{0}' argument of '{1}' is given twice.
 '{0}' writes back {1}, and this variable is {2}; an out argument has to match exactly.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3904`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3949`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3904`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3949`
 <!-- generated:end DSH4218 -->
 
 **原因。** 传递给 `out` / `inout` 参数的实参是不同类型的变量。与输入不同，`out` 实参会被写回，而转换在返回途中无处安放。
@@ -379,7 +379,7 @@ The '{0}' argument of '{1}' is given twice.
 '{0}' is already declared in this block.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:149`、`Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:159`、`Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:169`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:149`、`Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:159`、`Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:169`
 <!-- generated:end DSH4220 -->
 
 **原因。** 局部变量在同一代码块中重新声明了某个名称，或隐藏了外层代码块或参数中的某个名称。HLSL 允许这种隐藏；本语言不允许，因为在图中这两个变量会成为两个同名但互不相关的节点，此后每个下游节点描述都会搞错自己引用的是哪一个。
@@ -399,7 +399,7 @@ The '{0}' argument of '{1}' is given twice.
 {0}() has no components; write the value, as in 'float3(0.0)'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3176`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3176`
 <!-- generated:end DSH4221 -->
 
 **原因。** 构造函数在编写时没有提供任何实参：`float3()`。
@@ -419,7 +419,7 @@ The '{0}' argument of '{1}' is given twice.
 '{0}' has {1} fields and this list has {2}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2704`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2809`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2842`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3242`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3314`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2704`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2809`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2842`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3242`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3314`
 <!-- generated:end DSH4222 -->
 
 **原因。** 各分量对不上：构造函数的实参分量总数与目标不符、初始化列表长度错误，或构造结构体时字段数量错误。
@@ -439,7 +439,7 @@ The '{0}' argument of '{1}' is given twice.
 {0} expects {1}, and this is {2}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1917`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2603`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2615`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2630`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3155`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1917`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2603`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2615`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2630`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3155`
 <!-- generated:end DSH4223 -->
 
 **原因。** 图无法承载的强制转换：转换的目标或来源不是数字或布尔类型，或该转换会丢弃分量（`(float3)v4`）。
@@ -459,7 +459,7 @@ The '{0}' argument of '{1}' is given twice.
 '{0}' takes at most {1} arguments.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3447`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3507`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3717`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4953`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:5020`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3447`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3507`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3717`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4953`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:5020`
 <!-- generated:end DSH4224 -->
 
 **原因。** 调用的实参数量多于或少于被调方所需的参数数量。对于纹理采样，消息会给出确切的写法，因为采样器参数是可选的，参数数量取决于是否写出了它。
@@ -479,7 +479,7 @@ The '{0}' argument of '{1}' is given twice.
 A constructor takes its components in order; named arguments belong on 'UE.' nodes and on function calls.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3167`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4921`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3167`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4921`
 <!-- generated:end DSH4225 -->
 
 **原因。** 在只接受位置参数的地方使用了命名参数：构造函数、纹理采样。
@@ -499,7 +499,7 @@ A constructor takes its components in order; named arguments belong on 'UE.' nod
 {0} expects {1}, and this is {2}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1951`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1999`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2542`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3210`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3222`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1951`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1999`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2542`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3210`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3222`
 <!-- generated:end DSH4226 -->
 
 **原因。** 某个操作数与其使用位置不匹配。两种常见情形是宽度不匹配（`float3 * float2`——向量绝不会静默加宽）以及类型根本不是数字（在算术中出现纹理、`material`、`struct`）。
@@ -519,7 +519,7 @@ A constructor takes its components in order; named arguments belong on 'UE.' nod
 '{0}' is not an operation this language spells as a call.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2103`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2219`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2262`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2299`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2458`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2103`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2219`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2262`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2299`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2458`
 <!-- generated:end DSH4227 -->
 
 **原因。** 某个运算符没有对应的图形式：`&`、`|`、`^`、`<<`、`>>`、`~` 及其赋值形式。图承载的是浮点数，而不是位模式。
@@ -539,7 +539,7 @@ A constructor takes its components in order; named arguments belong on 'UE.' nod
 {0} expects {1}, and this is {2}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1906`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1906`
 <!-- generated:end DSH4228 -->
 
 **原因。** 某个值无法放入其所存储的位置：``=`` 的右侧、初始化器、参数默认值或 ``return``。消息中会给出这两种类型。
@@ -551,7 +551,7 @@ A constructor takes its components in order; named arguments belong on 'UE.' nod
 ## DSH4229
 
 <!-- generated:begin DSH4229 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -559,7 +559,7 @@ A constructor takes its components in order; named arguments belong on 'UE.' nod
 A 'uniform' is an input and a 'static const' is a constant; neither can be assigned to. Copy it into a local first.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2392`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2433`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2441`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2392`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2433`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2441`
 <!-- generated:end DSH4229 -->
 
 **原因。** 赋值语句的左侧不可赋值。共有三种消息：它是 ``uniform``（输入）或 ``static const``（常量）；它是正在构建的 Substrate 值成员的某一个分量（``S.DiffuseAlbedo.r = 1;``）—— 这样的成员是一个引脚，而引脚是整体连接的；或者它根本不是变量、结构体字段、材质引脚或其中之一的 swizzle（如调用、字面量、算术结果）。
@@ -571,7 +571,7 @@ A 'uniform' is an input and a 'static const' is a constant; neither can be assig
 ## DSH4230
 
 <!-- generated:begin DSH4230 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -579,7 +579,7 @@ A 'uniform' is an input and a 'static const' is a constant; neither can be assig
 '.{0}' is not a swizzle; a swizzle is one to four of 'xyzw' or 'rgba'.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1291`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1310`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1326`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1346`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1713`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2409`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1291`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1310`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1326`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1346`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1713`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2409`
 <!-- generated:end DSH4230 -->
 
 **原因。** 以下五种情况之一：
@@ -599,7 +599,7 @@ A 'uniform' is an input and a 'static const' is a constant; neither can be assig
 ## DSH4231
 
 <!-- generated:begin DSH4231 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -607,7 +607,7 @@ A 'uniform' is an input and a 'static const' is a constant; neither can be assig
 '{0}.{1}' is an output node, not a value: write it as a statement on a line of its own.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4802`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4802`
 <!-- generated:end DSH4231 -->
 
 **原因。** 一个没有值的节点被当作值使用。自定义输出类（``ClearCoatBottomNormal``、``ThinTranslucentMaterialOutput``、体积高级输出等……）会写入材质，而不是产生可供读取的内容，没有输出引脚的类也属于同一情况。
@@ -619,7 +619,7 @@ A 'uniform' is an input and a 'static const' is a constant; neither can be assig
 ## DSH4233
 
 <!-- generated:begin DSH4233 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -627,7 +627,7 @@ A 'uniform' is an input and a 'static const' is a constant; neither can be assig
 A component index must be a compile-time constant; write a swizzle such as '.z', or select with 'lerp'.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1704`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1704`
 <!-- generated:end DSH4233 -->
 
 **原因。** ``v[i]`` 使用了绑定器无法求值的索引。分量索引会变成 swizzle，而 swizzle 在图构建时即已固定。
@@ -639,7 +639,7 @@ A component index must be a compile-time constant; write a swizzle such as '.z',
 ## DSH4234
 
 <!-- generated:begin DSH4234 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -647,7 +647,7 @@ A component index must be a compile-time constant; write a swizzle such as '.z',
 A value of type {0} cannot be indexed.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1740`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1740`
 <!-- generated:end DSH4234 -->
 
 **原因。** ``[...]`` 被用在了既不是数组、也不是向量或矩阵的值上。
@@ -659,7 +659,7 @@ A value of type {0} cannot be indexed.
 ## DSH4235
 
 <!-- generated:begin DSH4235 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -667,7 +667,7 @@ A value of type {0} cannot be indexed.
 '++' and '--' write back into what they read, so they need a variable.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2233`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2233`
 <!-- generated:end DSH4235 -->
 
 **原因。** ``++`` 或 ``--`` 被应用于不是变量的内容。它们会读取并写回，因此需要有可写入的位置。
@@ -679,7 +679,7 @@ A value of type {0} cannot be indexed.
 ## DSH4236
 
 <!-- generated:begin DSH4236 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -687,7 +687,7 @@ A value of type {0} cannot be indexed.
 An 'in' parameter is a function input pin and cannot be written to; declare it 'out' or 'inout', or copy it into a local.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2400`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2400`
 <!-- generated:end DSH4236 -->
 
 **原因。** 对一个 ``in`` 参数进行了赋值。在图中，输入参数是函数输入引脚，而引脚不能被写入。
@@ -699,7 +699,7 @@ An 'in' parameter is a function input pin and cannot be written to; declare it '
 ## DSH4237
 
 <!-- generated:begin DSH4237 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -707,7 +707,7 @@ An 'in' parameter is a function input pin and cannot be written to; declare it '
 An initializer list only has a meaning against a declared type; it cannot stand on its own.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2681`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2748`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2832`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2681`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2748`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2832`
 <!-- generated:end DSH4237 -->
 
 **原因。** 初始化列表出现在没有任何内容指明其应成为什么的场合 —— 或者目标无法作为列表写入（如纹理、``material``），或者用不是列表的内容初始化了数组。
@@ -719,7 +719,7 @@ An initializer list only has a meaning against a declared type; it cannot stand 
 ## DSH4238
 
 <!-- generated:begin DSH4238 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -727,7 +727,7 @@ An initializer list only has a meaning against a declared type; it cannot stand 
 '{0}' returns nothing, so its call has no value; its results come back through its out parameters.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3978`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3978`
 <!-- generated:end DSH4238 -->
 
 **原因。** 对返回 ``void`` 的函数的调用被当作值使用。
@@ -739,7 +739,7 @@ An initializer list only has a meaning against a declared type; it cannot stand 
 ## DSH4239
 
 <!-- generated:begin DSH4239 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -747,7 +747,7 @@ An initializer list only has a meaning against a declared type; it cannot stand 
 '{0}' is an out parameter of '{1}', so its argument has to be a variable.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3875`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3931`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3875`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3931`
 <!-- generated:end DSH4239 -->
 
 **原因。** 传给 ``out`` / ``inout`` 参数的参数不是变量，因此没有可写入结果的位置。
@@ -759,7 +759,7 @@ An initializer list only has a meaning against a declared type; it cannot stand 
 ## DSH4240
 
 <!-- generated:begin DSH4240 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -767,7 +767,7 @@ An initializer list only has a meaning against a declared type; it cannot stand 
 '#pragma endregion' closes a box that was never opened.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:869`、`Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:888`、`Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:896`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:869`、`Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:888`、`Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:896`
 <!-- generated:end DSH4240 -->
 
 **原因。** ``#pragma region`` 和 ``#pragma endregion`` 不成对 —— 有 ``endregion`` 却没有打开任何区域，或者有 ``region`` 从未关闭。区域可以嵌套，并且按文件、按函数体分别计数，因此在头文件中打开的区域无法由包含它的文件来关闭。
@@ -779,7 +779,7 @@ An initializer list only has a meaning against a declared type; it cannot stand 
 ## DSH4241
 
 <!-- generated:begin DSH4241 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -787,7 +787,7 @@ An initializer list only has a meaning against a declared type; it cannot stand 
 A multi-dimensional array has no graph form; declare one dimension, or move the code into a '/// @custom' function.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:608`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:608`
 <!-- generated:end DSH4241 -->
 
 **原因。** 一个声明有多个 ``[n]``。图中完全没有数组；唯一受支持的一个维度只是为了能在编译时对 ``static const`` 表进行索引。
@@ -799,7 +799,7 @@ A multi-dimensional array has no graph form; declare one dimension, or move the 
 ## DSH4242
 
 <!-- generated:begin DSH4242 -->
-**严重级别** 错误
+**严重性** 错误
 
 **消息**
 
@@ -807,7 +807,7 @@ A multi-dimensional array has no graph form; declare one dimension, or move the 
 An array index must be a compile-time constant: the graph has no arrays, so every element is read at compile time.
 ```
 
-**触发者** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1639`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1648`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1676`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1639`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1648`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1676`
 <!-- generated:end DSH4242 -->
 
 **原因。** 无法在编译时解析数组元素：非常量索引、索引超出范围，或者数组的初始化器不是常量。图中没有数组，因此每次元素读取都必须在编译期间折叠为一个值。
@@ -827,7 +827,7 @@ An array index must be a compile-time constant: the graph has no arrays, so ever
 Both sides of this '/' are integers, and the material graph has no integer division; write 'float(a) / b' for the fraction, or 'floor(float(a) / b)' for the whole part.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2052`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2052`
 <!-- generated:end DSH4243 -->
 
 **原因。** `/` 的两个操作数都是整数。HLSL 会将它们作为整数相除并舍去小数部分；而材质图根本没有整数除法——其中的每个值都是浮点数——因此两者会产生分歧，编译器不会默默选择其中一种。在 1.x 的 `Graph` 中，只有两个整数构造函数调用（`int(7) / int(2)`）的除法会被拒绝，正如 1.x 拒绝它一样（`DSH4063`）；1.x 会将每个数字字面量都视为浮点数，因此那里的 `7 / 2` 为 3.5（旧规则 L27；*2.0.0 – 2.1.0 拒绝它*）。
@@ -847,7 +847,7 @@ Both sides of this '/' are integers, and the material graph has no integer divis
 A matrix row cannot be read: the graph has no matrices. Move the code into a '/// @custom' function, where the matrix is an input.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1691`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1691`
 <!-- generated:end DSH4244 -->
 
 **原因。** 读取了矩阵的一行（`M[1]`）。矩阵没有图值；它仅作为 `/// @custom` 的输入或输出存在，或者作为完全折叠掉的常量存在。
@@ -867,7 +867,7 @@ A matrix row cannot be read: the graph has no matrices. Move the code into a '//
 An unsized array needs an initializer list to take its length from.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:627`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:650`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:660`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:627`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:650`、`Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:660`
 <!-- generated:end DSH4245 -->
 
 **原因。** 数组大小不是介于 1 到 4096 之间的整数字面量，或者未指定大小的 `[]` 没有初始化列表来确定其长度。大小在绑定任何内容之前就被读取，因此表达式——即使是常量表达式——也无法使用。
@@ -887,7 +887,7 @@ An unsized array needs an initializer list to take its length from.
 The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it in a '/// @custom' body, where the shader compiler has it.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3366`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3366`
 <!-- generated:end DSH4246 -->
 
 **原因。** 调用了 `sinh`、`cosh` 或 `tanh`。核心表包含这三者，以便 `/// @custom` 主体与类型检查器对它们达成一致，但材质图没有双曲节点，并且发射器不会从 `exp` 中合成一个——否则看起来正确的链会与着色器编译器自身的实现悄然不同。
@@ -907,7 +907,7 @@ The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it 
 '{0}' is the GLSL spelling; this language is HLSL, so write '{1}'.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3034`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3034`
 <!-- generated:end DSH4250 -->
 
 **原因。** 使用了 GLSL 拼写：`mix`、`fract`、`mod`。1.x 会将这些静默重写为对应的 HLSL 等价物；2.0 则不会，因为将一个标识符静默重写为另一个正是此前端旨在阻止的那类错误。
@@ -927,7 +927,7 @@ The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it 
 '{0}' hides the file-scope declaration of the same name for the rest of this function.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:181`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:181`
 <!-- generated:end DSH4251 -->
 
 **原因。** 局部变量与文件作用域声明同名，通常是来自头文件的声明。这是允许的——不能指望文件了解其头文件声明的每个名称——但从那一刻起，该名称的 uniform 或常量在此函数中将无法访问。
@@ -947,7 +947,7 @@ The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it 
 {0} expects {1}, and this is {2}.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1928`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2511`、`Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:628`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1928`、`Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2511`、`Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:628`
 <!-- generated:end DSH4260 -->
 
 **原因。** `if`、`for`、`while`、`do` 或 `?:` 的条件不是单个真或假值：而是向量（`if (v3 < 1.0)`）、纹理、`material`、`struct`。
@@ -967,7 +967,7 @@ The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it 
 '{0}' returns {1}, so this 'return' needs a value.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:735`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:735`
 <!-- generated:end DSH4261 -->
 
 **原因。** 在声明了返回类型的函数中出现了裸 `return;`。
@@ -987,7 +987,7 @@ The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it 
 '{0}' returns nothing, so this 'return' cannot carry a value; extra results are written to 'out' parameters.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:751`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:751`
 <!-- generated:end DSH4262 -->
 
 **原因。** 在 `void` 函数中出现了 `return <value>;`。
@@ -1007,7 +1007,7 @@ The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it 
 'discard' belongs in a material entry or a layer; a material function has no pixel of its own to drop. Write the mask into 'm.OpacityMask' instead.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:493`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:493`
 <!-- generated:end DSH4263 -->
 
 **原因。** 在不是材质入口、`@layer` 或 `@layerblend` 的函数中出现了 `discard`。材质函数是调用它的任何内容的子图；它没有自己的像素可以丢弃。
@@ -1027,7 +1027,7 @@ The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it 
 'break' leaves a loop, and this one is not inside a 'for', 'while' or 'do'.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:472`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:472`
 <!-- generated:end DSH4264 -->
 
 **原因。** `break` 或 `continue` 出现在任何循环之外。
@@ -1047,7 +1047,7 @@ The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it 
 Node {0} reads {1} from node %{2}, which does not exist; the graph has {3} nodes.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:221`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:221`
 <!-- generated:end DSH4300 -->
 
 **原因。** 节点的操作数或命名输入引用了节点 `%N`，而图中没有该索引的节点。IR 按在 `FIRGraph::Nodes` 中的位置寻址值，因此这意味着构建器或某个 pass 针对不同（或更旧）的图生成了索引——最常见的是某个 pass 移除了节点却没有重新指向其使用者，或者某个值跨越两个产品传递。
@@ -1067,7 +1067,7 @@ Node {0} reads {1} from node %{2}, which does not exist; the graph has {3} nodes
 Node {0} reads {1} from node {2}, which is a statement and produces no value.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:240`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:253`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:240`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:253`
 <!-- generated:end DSH4301 -->
 
 **原因。** 有两种情况。要么某个节点读取了输出少于 *k*+1 个的节点的输出 *k*——多输出节点（`TextureSample`、具有多个输出的类上的 `Reflected`、带附加输出的 `Custom`、`GetMaterialAttributes`）是唯一具有非 0 输出的节点，因此这通常是解析到错误输出索引的成员访问——要么某个节点读取了**语句**，而语句根本不产生值。语句是材质汇点、函数输出，或反射的自定义输出类，例如 `UE.VolumetricAdvancedMaterialOutput`（`FIRNode::IsStatement()`）。
@@ -1087,7 +1087,7 @@ Node {0} reads {1} from node {2}, which is a statement and produces no value.
 Node {0} has {1} operand(s); this op takes exactly {2}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:382`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:393`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:382`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:393`
 <!-- generated:end DSH4302 -->
 
 **原因。** 该节点的操作数比其 op 所接受的更多或更少。元数来自 `GetCoreOpInfo`，这是唯一拥有该信息的表，因此不匹配意味着构建器是手动组装该节点，而不是从该表构建。
@@ -1107,7 +1107,7 @@ Node {0} has {1} operand(s); this op takes exactly {2}.
 Node {0} has nothing connected to {1}; every operand of this op must carry a value.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:209`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:209`
 <!-- generated:end DSH4303 -->
 
 **原因。** 一个必须携带值的操作数槽为空。整个 IR 中只有两个槽可以保持未设置：`Compare` 的操作数 3（引擎 If 节点的可选 `AEqualsB` 引脚）以及 `TextureSample` 的操作数 2 和 3（可选的采样器和 mip 值）。其他所有内容都是发射器无法填补的漏洞。
@@ -1127,7 +1127,7 @@ Node {0} has nothing connected to {1}; every operand of this op must carry a val
 Node {0} carries {1} positional operand(s); this op takes {2}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:347`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:364`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:347`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:364`
 <!-- generated:end DSH4304 -->
 
 **原因。** 该节点为其 op 使用了错误的连接风格。`IR.h` 针对每个 op 修正了这一点：核心数学 op、`Swizzle`、`Append`、`Select`、`Compare`、`StaticSwitch`、`TextureSample`、 `FunctionOutput`、`Convert` 和 `Broadcast` 使用位置操作数；`Reflected`、`FunctionCall`、 `Custom`、三个材质属性 op 和 `MaterialSink` 使用命名输入；四个叶子（`Constant`、`Parameter`、`TextureParameter`、`FunctionInput`）两者都不使用。
@@ -1147,7 +1147,7 @@ Node {0} carries {1} positional operand(s); this op takes {2}.
 Node {0} has a named input with no pin name.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:948`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:961`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:948`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:961`
 <!-- generated:end DSH4305 -->
 
 **原因。** 命名输入的引脚名称为空，或者同一引脚名称在一个节点上出现两次。一个引擎 `FExpressionInput` 恰好接受一个连接，因此对同一引脚的第二次绑定将意味着两个值中的一个被无声地丢弃。
@@ -1167,7 +1167,7 @@ Node {0} has a named input with no pin name.
 Node {0} does arithmetic on operand {1}, which is a {2}; the graph carries only float1 to float4, so a matrix, a texture or a material cannot reach a math node.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:690`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:704`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:690`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:704`
 <!-- generated:end DSH4306 -->
 
 **原因。** 一个数学节点读取或产生了一个材质图表没有连线对应的值。该图表携带 `float1` 到 `float4` 以及除此之外什么都没有：矩阵、纹理对象、采样器、一个 `material` 以及一个 `Substrate` 值对 `FIRType::GraphComponentCount()` 都回答 0。
@@ -1187,7 +1187,7 @@ Node {0} does arithmetic on operand {1}, which is a {2}; the graph carries only 
 Node {0} is a statement and must have no outputs, but it declares {1}.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:289`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:300`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:289`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:300`
 <!-- generated:end DSH4307 -->
 
 **原因。** 要么一个值节点没有声明任何输出——没有任何东西可以读取它，因此它不可能是为了某个原因而被构建的——要么一个语句节点声明了一些输出。
@@ -1209,7 +1209,7 @@ Node {0} is a statement and must have no outputs, but it declares {1}.
 Node {0} has {1} output name(s) for {2} output(s); the two lists are either parallel or the names are omitted.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:311`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:331`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:311`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:331`
 <!-- generated:end DSH4308 -->
 
 **原因。** `OutputNames` 的存在是为了命名多输出节点，它要么为空（该节点的输出是按位置的），要么恰好与 `Outputs` 一样长。列表过短意味着发射器会读取超过其末尾；两个具有相同名称的输出意味着成员访问无法在它们之间进行选择。
@@ -1229,7 +1229,7 @@ Node {0} has {1} output name(s) for {2} output(s); the two lists are either para
 Node {0} is a reflected node with catalog index {1}, which is not an entry of the builtin catalog.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1038`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:721`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1038`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:721`
 <!-- generated:end DSH4309 -->
 
 **原因。** 同一错误的两种形态。要么一个 `Reflected` 节点的 `CatalogIndex` 没有指向内置目录中的某个条目——因此发射器无法知道要创建哪个类——要么一个*并非*反射的节点携带了目录索引，这会使发射器对 `Multiply` 走反射路径。
@@ -1249,7 +1249,7 @@ Node {0} is a reflected node with catalog index {1}, which is not an entry of th
 Node {0} connects pin '{1}', which '{2}' does not have.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:758`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:758`
 <!-- generated:end DSH4310 -->
 
 **原因。** 一个反射节点连接了该类没有的引脚。目录的 `Inputs` 列表是从该类的 `FExpressionInput` 成员构建的，因此不在其中的引脚在该引擎类上不存在。
@@ -1269,7 +1269,7 @@ Node {0} connects pin '{1}', which '{2}' does not have.
 Node {0} sets property '{1}', which '{2}' does not have.
 ```
 
-**抛出位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:800`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:800`
 <!-- generated:end DSH4311 -->
 
 **原因。** 一个被反射的节点设置了该类不具有的属性。`ClassSpecifier`（IR 中对作者所写内容的自身记录）和引脚的 `Const*` 孪生项是被接受的；其他所有内容必须是该类的被反射属性。
@@ -1289,7 +1289,7 @@ Node {0} sets property '{1}', which '{2}' does not have.
 Node {0} names class '{1}' but its catalog entry is '{2}'; the two must agree.
 ```
 
-**抛出位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:735`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:735`
 <!-- generated:end DSH4312 -->
 
 **原因。** 该节点的 `ClassName` 与其 `CatalogIndex` 所指向的目录条目命名了两个不同的类。发射器使用两者之一，而验证器拒绝猜测使用哪一个。
@@ -1309,7 +1309,7 @@ Node {0} names class '{1}' but its catalog entry is '{2}'; the two must agree.
 Material product {0} has {1} MaterialSink node(s); a material has exactly one.
 ```
 
-**抛出位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1072`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1082`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1096`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1107`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1072`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1082`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1096`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1107`
 <!-- generated:end DSH4313 -->
 
 **原因。** 产品的汇点与其种类不匹配。`Material` 产品恰好有一个 `MaterialSink` 节点，并且 `FIRGraph::Sink` 指向它；而 `MaterialFunction`、`MaterialLayer` 或 `MaterialLayerBlend` 没有汇点，并且 `Sink` 为 `INDEX_NONE`。
@@ -1329,7 +1329,7 @@ Material product {0} has {1} MaterialSink node(s); a material has exactly one.
 Product {0} lists node %{1} in its {2}, and that node does not exist.
 ```
 
-**抛出位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1125`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1137`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1158`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1168`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1182`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1125`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1137`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1158`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1168`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1182`
 <!-- generated:end DSH4314 -->
 
 **原因。** 图的 `FunctionInputs` / `FunctionOutputs` 列表与其中的 FunctionInput / FunctionOutput 节点不一致：列出的索引不存在、列出的节点操作符错误、正确操作符的节点未被列出，或者 `Material` 产品声明了签名。这些列表赋予了资产输入和输出的顺序（它们密集的 SortPriority），因此未列在其中的节点最终会无序。
@@ -1349,7 +1349,7 @@ Product {0} lists node %{1} in its {2}, and that node does not exist.
 Product {0} is a {1} and produces nothing; a material function needs at least one FunctionOutput.
 ```
 
-**抛出位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1192`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1192`
 <!-- generated:end DSH4315 -->
 
 **原因。** 材质函数、层或层混合没有 `FunctionOutput` 节点，因此该资产将没有可连接的对象。导出的函数为其返回值（名为 `Result`）贡献一个输出，并为每个 `out` 参数贡献一个输出；两者都没有的函数不产生任何资产。
@@ -1369,7 +1369,7 @@ Product {0} is a {1} and produces nothing; a material function needs at least on
 Product {0} cannot be ordered: these nodes feed themselves, directly or through others -- {1}.
 ```
 
-**抛出位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1516`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1516`
 <!-- generated:end DSH4316 -->
 
 **原因。** 图无法排列成每个操作数都先于其使用者的顺序，这意味着某个节点直接地或通过链间接地馈送到自身。材质图是一个 DAG；发射器遍历 `TopologicalOrder()`，否则会在其读取的节点之前写入该节点。
@@ -1389,7 +1389,7 @@ Product {0} cannot be ordered: these nodes feed themselves, directly or through 
 Node {0} needs a string Mask property holding the component letters.
 ```
 
-**抛出位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:512`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:524`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:554`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:567`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:585`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:512`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:524`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:554`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:567`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:585`
 <!-- generated:end DSH4317 -->
 
 **原因。** `Swizzle` 节点的掩码缺失、不是字符串、为空、长度超过四个字符、包含 `x`、`y`、`z` 和 `w` 以外的内容、两次命名同一组件，或者**未按严格升序排列**（`xz` 是掩码；`zx` 不是）。规范掩码是小写的 `xyzw`；`rgba` 在绑定时被重写为它，因此到达 IR 的任何其他内容都是构建器的错误。
@@ -1411,7 +1411,7 @@ Node {0} needs a string Mask property holding the component letters.
 Node {0} masks '{1}' out of a {2}, which has only {3} component(s).
 ```
 
-**抛出位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:615`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:615`
 <!-- generated:end DSH4318 -->
 
 **原因。** 掩码命名了操作数不具有的组件——`float3` 上的 `.w`，`float2` 上的 `.z`。在 HLSL 中这是一个错误；在图中它会静默地读取连线并未携带的通道。
@@ -1431,7 +1431,7 @@ Node {0} masks '{1}' out of a {2}, which has only {3} component(s).
 Node {0} switches on a {1}; a StaticSwitch condition is a single static bool.
 ```
 
-**抛出位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:648`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:661`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:648`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:661`
 <!-- generated:end DSH4319 -->
 
 **原因。** 分支节点的条件类型错误。`StaticSwitch` 条件必须是单个静态布尔值——一个 `StaticBoolParameter`，或者对静态布尔值的 `!`、`&&`、`||`。`Select` 条件必须是一个分量，即降低后的 If 与 0.5 进行比较的 0/1 值。
@@ -1451,7 +1451,7 @@ Node {0} switches on a {1}; a StaticSwitch condition is a single static bool.
 Node {0} sits in region {1}, which does not exist; the graph has {2} region(s).
 ```
 
-**抛出者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1211`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1228`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:408`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1211`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1228`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:408`
 <!-- generated:end DSH4320 -->
 
 **原因。** 区域引用无法解析：某个节点位于图中不存在的区域索引中，某个区域指定了一个不存在的父级，或者父级链回环到自身。区域来自 `#pragma region` / `#pragma endregion`，并严格嵌套。
@@ -1471,7 +1471,7 @@ Node {0} sits in region {1}, which does not exist; the graph has {2} region(s).
 Product {0} has dedupe keys on {1} of its {2} nodes; the key is either computed for the whole graph or for none of it.
 ```
 
-**抛出者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1537`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1537`
 <!-- generated:end DSH4321 -->
 
 **原因。** 图中的部分节点有 `DedupeKey`，而其他节点没有。该键是结构性的：它要么在一次遍历中为整张图计算，要么完全不为任何节点计算，因为由没有自身键的操作数构建出的键根本不是结构性的。
@@ -1491,7 +1491,7 @@ Product {0} has dedupe keys on {1} of its {2} nodes; the key is either computed 
 Nodes %{0} and %{1} of product {2} have the same dedupe key, so the dedupe pass should have merged them into one.
 ```
 
-**抛出者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1586`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1586`
 <!-- generated:end DSH4322 -->
 
 **原因。** 同一张图的两个节点具有相同的去重键，因此它们描述的是同一个表达式，去重遍历本应将它们合并为一个节点，并使用两方使用者的集合。
@@ -1511,7 +1511,7 @@ Nodes %{0} and %{1} of product {2} have the same dedupe key, so the dedupe pass 
 Node {0} needs property '{1}' and does not have it.
 ```
 
-**抛出者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:492`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:492`
 <!-- generated:end DSH4323 -->
 
 **原因。** 某个节点缺少其运算不可或缺的属性：`Constant` 缺少 `Value`，`Parameter` 或 `TextureParameter` 缺少 `ParameterName`，`FunctionInput` 缺少 `InputName`，`FunctionOutput` 缺少 `OutputName`，`Custom` 缺少 `Code`。
@@ -1531,7 +1531,7 @@ Node {0} needs property '{1}' and does not have it.
 Node {0} carries a property with no name.
 ```
 
-**抛出者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:432`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:445`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:467`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:432`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:445`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:467`
 <!-- generated:end DSH4324 -->
 
 **原因。** 有三种形态：属性没有名称，同一属性在同一节点上被设置两次，或者属性的存储种类不是 IR 为该名称定义的种类（`Value` 和 `DefaultValue` 是 `Float4`，`SortPriority` 是 `Int`，`Code` 是 `String`，`SamplerType` 是 `Enum`，依此类推——`IR.h` 中的 `Prop::` 逐一列出了每一种）。种类表只应用于 IR 自身的属性名称，绝不应用于 `Reflected` 节点，后者的属性是直接透传的引擎名称。
@@ -1551,7 +1551,7 @@ Node {0} carries a property with no name.
 Node {0} writes attribute '{1}', which is not in the engine's material attribute table.
 ```
 
-**抛出者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:886`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:904`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:886`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:904`
 <!-- generated:end DSH4325 -->
 
 **原因。** 写入 `MakeMaterialAttributes`、`SetMaterialAttributes`、`GetMaterialAttributes` 或 `MaterialSink` 节点的某个属性名称——或者列在 `AttributeSetTypes` 中的属性名称——不在引擎的材质属性表中。该表来自目录，且匹配区分大小写。
@@ -1571,7 +1571,7 @@ Node {0} writes attribute '{1}', which is not in the engine's material attribute
 Product {0} has no name; the asset name comes from the exported function or from '/// @name'.
 ```
 
-**抛出者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1641`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1654`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1641`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1654`
 <!-- generated:end DSH4326 -->
 
 **原因。** 某个产物具有空的 `Name`，或者某个文件的两个产物会被赋予相同的名称。资源名称来自导出函数的名称或来自 `/// @name`，而同一目标文件夹中两个同名的资源会互相覆盖。
@@ -1591,7 +1591,7 @@ Product {0} has no name; the asset name comes from the exported function or from
 Node {0} calls local product {1}, which this module does not have; it has {2}.
 ```
 
-**抛出者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:825`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:837`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:853`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:825`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:837`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:853`
 <!-- generated:end DSH4327 -->
 
 **原因。** 某个 `FunctionCall` 节点没有说明它调用什么。它需要 `Prop::LocalFunction`（本模块另一个产物的索引，用于调用同一文件中的 `export`），或者一个非空的函数资源路径——`Prop::FunctionPath`，或 `ClassName`。超出范围的局部索引，或者指向该节点自身所属产物的局部索引，都是同样的失败。
@@ -1611,7 +1611,7 @@ Node {0} calls local product {1}, which this module does not have; it has {2}.
 Layout hint {0} of product {1} has kind '{2}'; a hint is spelled exactly 'Node' or 'Comment', so this one places nothing.
 ```
 
-**抛出者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1261`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1273`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1283`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1294`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1261`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1273`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1283`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1294`
 <!-- generated:end DSH4328 -->
 
 **原因。** 某个 `#pragma layout(...)` 提示是布局遍历无法应用的：其种类既不是 `Node` 也不是 `Comment`，`Node` 提示未指定任何变量，或者 `Comment` 提示没有标题。这是一个警告而非错误：产物仍会编译，自动布局仍会运行；只是此提示不放置任何内容。
@@ -1631,7 +1631,7 @@ Layout hint {0} of product {1} has kind '{2}'; a hint is spelled exactly 'Node' 
 Product {0} is a material instance, which assigns its parent's parameters and has no graph, and it carries {1} node(s), a sink or a function signature.
 ```
 
-**抛出者** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1366`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1366`
 <!-- generated:end DSH4329 -->
 
 **原因。** 某个种类为 MaterialInstance 的 IR 产物携带了图节点、汇点或函数签名。实例只赋值其父级的参数。这是 IR 验证器的内部一致性检查：任何源文本都无法导致它。
@@ -1651,7 +1651,7 @@ Product {0} is a material instance, which assigns its parent's parameters and ha
 Material instance product {0} needs the material it is an instance of, and its parent reference is empty.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1377`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1377`
 <!-- generated:end DSH4330 -->
 
 **原因。** 某 MaterialInstance 产物没有父引用。绑定器在缺少 `Parent`（DSH7250、DSH7252）时会拒绝 `.dsi`，因此触发此错误属于内部错误。
@@ -1663,7 +1663,7 @@ Material instance product {0} needs the material it is an instance of, and its p
 ## DSH4331
 
 <!-- generated:begin DSH4331 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -1671,7 +1671,7 @@ Material instance product {0} needs the material it is an instance of, and its p
 Override '{0}' of product {1} is a {2} override holding a {3} value, and a {2} override holds {4}.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1403`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1416`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1403`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1416`
 <!-- generated:end DSH4331 -->
 
 **原因。** 某实例覆写所持有的值类型与其参数类型不符 —— Scalar 是一个数，Vector 是四个，StaticSwitch 是 bool，资源类则是对象路径 —— 或者某 Font 覆写指定了负数页。这是内部一致性检查：绑定器在源中会拒绝二者（`DSH7259`、`DSH7266`）。
@@ -1683,7 +1683,7 @@ Override '{0}' of product {1} is a {2} override holding a {3} value, and a {2} o
 ## DSH4332
 
 <!-- generated:begin DSH4332 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -1691,7 +1691,7 @@ Override '{0}' of product {1} is a {2} override holding a {3} value, and a {2} o
 Product {0} overrides '{1}' twice, and an instance sets each parameter once.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1433`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1433`
 <!-- generated:end DSH4332 -->
 
 **原因。** 某个参数在某实例产物中被覆写了两次。绑定器会在源上报告同样的问题（DSH7261）；这是验证器的兜底。
@@ -1703,7 +1703,7 @@ Product {0} overrides '{1}' twice, and an instance sets each parameter once.
 ## DSH4333
 
 <!-- generated:begin DSH4333 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -1711,7 +1711,7 @@ Product {0} overrides '{1}' twice, and an instance sets each parameter once.
 Override '{0}' of product {1} names a parameter, and the parent schema the product carries has no such parameter.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1449`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1459`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1449`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1459`
 <!-- generated:end DSH4333 -->
 
 **原因。** 某实例产物覆写了一个其父架构未列出的参数，或以另一种类型列出了该参数。绑定器会针对同一架构检查二者（`DSH7258`、`DSH7259`），因此触发此错误意味着二者看到的是不同的架构。
@@ -1723,7 +1723,7 @@ Override '{0}' of product {1} names a parameter, and the parent schema the produ
 ## DSH4334
 
 <!-- generated:begin DSH4334 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -1731,7 +1731,7 @@ Override '{0}' of product {1} names a parameter, and the parent schema the produ
 This module holds a material instance and {0} other product(s), and a material instance is the only product of its file.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1613`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1627`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1613`、`Source/DreamShaderLang/Private/IR/IRValidator.cpp:1627`
 <!-- generated:end DSH4334 -->
 
 **原因。** 某模块将材质实例与其他产物放在一起。一个 `.dsi` 就是一个实例，别无其他；前端会拒绝其中的函数与其他声明，因此这是验证器的兜底。
@@ -1743,7 +1743,7 @@ This module holds a material instance and {0} other product(s), and a material i
 ## DSH4335
 
 <!-- generated:begin DSH4335 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -1751,7 +1751,7 @@ This module holds a material instance and {0} other product(s), and a material i
 Material instance product {0} carries backend {1}, and an instance is a plain material instance with the default backend.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1387`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1387`
 <!-- generated:end DSH4335 -->
 
 **原因。** 某 MaterialInstance 产物携带了后端。`Backend` 是材质的属性；实例始终是普通的 UMaterialInstanceConstant。
@@ -1763,7 +1763,7 @@ Material instance product {0} carries backend {1}, and an instance is a plain ma
 ## DSH4350
 
 <!-- generated:begin DSH4350 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -1771,7 +1771,7 @@ Material instance product {0} carries backend {1}, and an instance is a plain ma
 The IR builder cannot read '{0}' here: the binder typed what it is read from as a material, but that did not lower to one.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:386`、`Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:516`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:386`、`Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:516`
 <!-- generated:end DSH4350 -->
 
 **原因。** IR 构建器遇到了一个其 `EBoundExprKind` 没有对应分支的已绑定表达式。这属于内部错误，而非编写错误：绑定器产出了构建器未曾针对其编写的记录，当 `LangBound.h` 新增了一种表达式种类而只有两侧之一被更新时，就会发生这种情况。
@@ -1785,7 +1785,7 @@ The IR builder cannot read '{0}' here: the binder typed what it is read from as 
 ## DSH4352
 
 <!-- generated:begin DSH4352 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -1793,7 +1793,7 @@ The IR builder cannot read '{0}' here: the binder typed what it is read from as 
 This module was bound without a builtin catalog, so no 'UE.*' call and no material attribute can be named; run the bind with a catalog, or pass one in FIRBuildOptions.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:121`、`Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1582`、`Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:915`、`Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:420`、`Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:532`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:121`、`Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1582`、`Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:915`、`Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:420`、`Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:532`
 <!-- generated:end DSH4352 -->
 
 **原因。** 有三种形态，可通过消息指向的位置加以区分。
@@ -1811,7 +1811,7 @@ This module was bound without a builtin catalog, so no 'UE.*' call and no materi
 ## DSH4360
 
 <!-- generated:begin DSH4360 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -1819,7 +1819,7 @@ This module was bound without a builtin catalog, so no 'UE.*' call and no materi
 This loop runs a number of times the compiler cannot fix at {0} or fewer, and a material graph has no loops; give it a constant trip count, or move it into a '/// @custom' function.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:425`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:425`
 <!-- generated:end DSH4360 -->
 
 **原因。** 某个 `for`、`while` 或 `do`，其循环次数绑定器无法证明为常量，或证明其大于 `MaxUnrolledIterations`（默认为 64）。材质图完全没有循环：其中唯一能存在循环的方式是在编译期展开，而这需要一个在着色器运行之前就已知的计数。
@@ -1831,7 +1831,7 @@ This loop runs a number of times the compiler cannot fix at {0} or fewer, and a 
 ## DSH4361
 
 <!-- generated:begin DSH4361 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -1839,7 +1839,7 @@ This loop runs a number of times the compiler cannot fix at {0} or fewer, and a 
 This expression is {0} and the material graph has no matrices; compute it inside the custom body instead.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:254`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:254`
 <!-- generated:end DSH4361 -->
 
 **原因。** 某个表达式是矩阵（`float3x3`、`float4x4`），而有东西需要它的值。材质图没有矩阵插针：引擎的变换节点接受向量和基，而非矩阵，因此没有地方可以放置它。
@@ -1859,7 +1859,7 @@ This expression is {0} and the material graph has no matrices; compute it inside
 'discard' has no material-graph form; set the material's OpacityMask to zero instead, or move the branch into a '/// @custom' function.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:125`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:125`
 <!-- generated:end DSH4362 -->
 
 **原因。** `discard` 出现在一个会成为图的函数体中。材质图没有提前退出：材质是每个输出引脚一个表达式，并且每个引脚都会被求值。
@@ -1879,7 +1879,7 @@ This expression is {0} and the material graph has no matrices; compute it inside
 '{0}' inside an 'if' cannot be unrolled, because both arms of the 'if' become nodes and only one of them may leave the loop; move it to the top of the loop body, or write the loop in a '/// @custom' function.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:114`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:114`
 <!-- generated:end DSH4363 -->
 
 **原因。** `break` 或 `continue` 位于构建器正在展开的循环内部的 `if` 中。展开会将循环体转换为节点，并将 `if` 转换为覆盖两个分支的 `Select`——因此两个分支都会执行，而“离开循环”不是其中任何一个分支能做到的事情。
@@ -1899,7 +1899,7 @@ This expression is {0} and the material graph has no matrices; compute it inside
 A parameter of type {0} cannot be a material function input; the graph has no pin that carries one.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:251`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:251`
 <!-- generated:end DSH4364 -->
 
 **原因。** 一个导出函数的参数类型不能作为材质函数输入。`SamplerState` 和用户 `struct` 参数是常见的两种：引擎的 `UMaterialExpressionFunctionInput` 有一个固定的类型列表（标量、三种向量宽度、各种纹理类型、static bool、MaterialAttributes、Substrate），而两者都不在其中。
@@ -1919,7 +1919,7 @@ A parameter of type {0} cannot be a material function input; the graph has no pi
 A struct has no graph form; pass one of its fields, or move the whole thing into a '/// @custom' function.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:183`、`Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:536`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:183`、`Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:536`
 <!-- generated:end DSH4365 -->
 
 **原因。** 一个结构体值到达了需要单个图值的位置——一个引脚、一个操作数、一个材质属性。DreamShaderLang 中的 `struct` 是编译期聚合体：它的存在是为了在文件编译期间对值进行分组，随后会被展平，因此它没有单一的节点。
@@ -1939,7 +1939,7 @@ A struct has no graph form; pass one of its fields, or move the whole thing into
 '{0}' is a constant texture, which is a TextureObject node, and this engine has no such material expression; declare it 'uniform'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:640`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:640`
 <!-- generated:end DSH4366 -->
 
 **原因。** `static const` 纹理（在 1.x 中为 `const Texture2D T = Path(...)`）被构建为 TextureObject 节点，而此引擎的内置目录中没有此类。原版引擎都有它；精简过的目录，或从不完整清单加载的目录，可能没有。
@@ -1959,7 +1959,7 @@ A struct has no graph form; pass one of its fields, or move the whole thing into
 '{0}' is read before anything wrote it; a material attribute has no value until this function assigns one.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:453`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:453`
 <!-- generated:end DSH4370 -->
 
 **原因。** 在没有任何写入之前读取了材质属性：在某个函数中 `float r = m.Roughness;`，而此前没有 `m.Roughness = ...`。在文件编译期间，`material` 是一个先写后读的记录——没有人连接的引脚不存在“当前值”。
@@ -1979,7 +1979,7 @@ A struct has no graph form; pass one of its fields, or move the whole thing into
 A 'material' value reached a pin that carries {0}; only a MaterialAttributes pin accepts one.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:173`、`Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:222`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:173`、`Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:222`
 <!-- generated:end DSH4371 -->
 
 **原因。** 一个 `material` 值被传递给了无法接受它的对象：反射节点中携带数字的引脚，或声明为数值类型的函数参数。只有 MaterialAttributes 引脚才接受材质。
@@ -1999,7 +1999,7 @@ A 'material' value reached a pin that carries {0}; only a MaterialAttributes pin
 '{0}' is assigned in only one arm of this 'if' and has no value before it; assign it in both arms, or give it a value before the 'if'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:624`、`Source/DreamShaderLang/Private/IR/IRBuilder.cpp:648`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:624`、`Source/DreamShaderLang/Private/IR/IRBuilder.cpp:648`
 <!-- generated:end DSH4372 -->
 
 **原因。** 变量或材质属性在 `if` 或 `?:` 的一个分支中被赋值，而在另一分支中没有，并且在分支之前没有值。两个分支都会变成节点，并由条件在它们之间进行选择，因此未赋值的分支仍然必须有可供选择的内容。
@@ -2021,7 +2021,7 @@ A 'material' value reached a pin that carries {0}; only a MaterialAttributes pin
 '{0}' is a property of {1} and needs a literal; this argument is computed at run time.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1014`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1014`
 <!-- generated:end DSH4373 -->
 
 **原因。** 绑定到反射节点*属性*上的实参不是字面量。属性在资产生成时就被写入其中（一个 `SceneTextureId`、一个 `ParameterName`、一个坐标索引）；它不是引脚，没有任何地方可以连接计算出的值。
@@ -2041,7 +2041,7 @@ A 'material' value reached a pin that carries {0}; only a MaterialAttributes pin
 This builds a {0}-component value, but a material graph carries at most four components.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1120`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1120`
 <!-- generated:end DSH4374 -->
 
 **原因。** 一个构造函数、一个 swizzle 或一次强制转换请求了超过四个分量：`float4(A.rgb, B.rg)` 是五个。材质图的值是 float1 到 float4，`AppendVector` 无法构造出更宽的任何东西。
@@ -2061,7 +2061,7 @@ This builds a {0}-component value, but a material graph carries at most four com
 The two sides of this branch end with a different whole material, and DreamShader chooses between attribute values, not between whole materials; assign the attributes one at a time on both sides, or mix the two materials with UE.BlendMaterialAttributes.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:846`、`Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:850`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:846`、`Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:850`
 <!-- generated:end DSH4375 -->
 
 **原因。** 一个 `if` 的两个分支——或一个 `?:` 的两侧，或一个 `if` 内部的 `return` 及其之后的代码——在同一个变量中留下了不同的*完整*材质。一个分支替换了该材质（`m = UE.BlendMaterialAttributes(...)`、`R = A`，或一次会写回 `inout material` 的材质函数调用），而另一个分支没有，或者每个分支用不同的材质替换了它。分支的降级方式是通过逐个属性在两条分支留下的内容之间进行选择；完整材质不是属性值，而在没有替换材质的那一侧，没人写入的属性没有值可供编译器命名并与之比较。这在下移一个属性时同样成立：`m.MaterialAttributes` 持有一个完整材质，因此在每个分支中向其写入不同的材质同样会触发此错误——绝不是对两个材质进行数值条件判断。
@@ -2081,7 +2081,7 @@ The two sides of this branch end with a different whole material, and DreamShade
 '{0}' is read here, but nothing gives it a value on any path that reaches this line; assign it first, or give it an initializer where it is declared.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1459`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1459`
 <!-- generated:end DSH4376 -->
 
 **原因。** 在没有任何通过函数的路径为其赋值的点上读取了局部变量——或对其进行了复合赋值（`x += 1`、`++x`，这会先读取它）：`float x; m.Opacity = x;`。材质图没有“未初始化”这回事：该读取会降级为空，而它所馈入的任何内容都会悄无声息地不被连接。读取没人写入过的结构体局部变量字段（`P.B`）是同样的错误，只是以字段命名。
@@ -2103,7 +2103,7 @@ The two sides of this branch end with a different whole material, and DreamShade
 '{0}' writes into the material held in an attribute, and an attribute takes one whole value, not a write to part of it; assign that attribute a whole material, or set the attribute on the material itself.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1475`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1475`
 <!-- generated:end DSH4377 -->
 
 **原因。** 一个赋值写入了某个属性所持有的材质：`m.MaterialAttributes.Roughness = 0.5`。在文件编译期间，`material` 是一个从每个属性到单个值的映射。`m.MaterialAttributes` 所持有的是一个完整的属性集，而该映射在记录内部没有记录，因此对其一部分的写入没有可降级的目标。读取这样的字段是可以的：`=` 右侧的 `m.MaterialAttributes.Roughness` 会从所存储的集合中读取它。
@@ -2123,7 +2123,7 @@ The two sides of this branch end with a different whole material, and DreamShade
 A branch chooses between two {0} values or between two numbers, and this one has one of each.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1538`、`Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1556`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1538`、`Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1556`
 <!-- generated:end DSH4378 -->
 
 **原因。** 一个针对 Substrate 值、无法构建的分支。有两条消息：分支的一侧是 Substrate 值，另一侧是数字；或者该分支在运行时决定，这会变成一个 `Substrate.Select` 节点，而此引擎没有该节点（该节点从 Unreal Engine 5.6 起存在）。
@@ -2143,7 +2143,7 @@ A branch chooses between two {0} values or between two numbers, and this one has
 A branch can only choose between numbers, bools and static Substrate values, and these are {0} objects, which no material graph node switches; sample each texture first and branch on the samples.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1527`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1527`
 <!-- generated:end DSH4379 -->
 
 **原因。** 一个分支将纹理对象或采样器留在变量中，且每一侧都不相同。没有任何材质图节点能在两个纹理对象之间进行选择，无论条件是否为静态。
@@ -2163,7 +2163,7 @@ A branch can only choose between numbers, bools and static Substrate values, and
 This branch becomes a 'Substrate.Select', which parameter-blends its two inputs; they are a '{0}' and a '{1}', and the engine may refuse to blend unlike BSDFs.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1571`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1571`
 <!-- generated:end DSH4380 -->
 
 **原因。** 运行时的 `if` 或 `?:` 在两种不同类型的一个 Substrate 值之间进行选择——例如一侧是 slab，另一侧是 Unlit。该分支会变成一个 `Substrate.Select` 节点，而 Select 总是对其两个输入进行参数混合；引擎能混合哪些 BSDF 对是引擎的事，它会在材质编译时报告无法混合的那些。这是一个警告：节点已被创建。
@@ -2183,7 +2183,7 @@ This branch becomes a 'Substrate.Select', which parameter-blends its two inputs;
 '{0}' is converted by the node 'Substrate.{1}', and this engine has no such node; give the pins it feeds directly.
 ```
 
-**由以下抛出** `Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:507`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:507`
 <!-- generated:end DSH4381 -->
 
 **原因。** Substrate 调用的一个虚参 —— `BaseColor` / `Metallic` / `Specular`、 `Haziness`、`Transmittance` / `Thickness` —— 代表 BSDF 前面的一个转换节点（`Substrate.MetalnessToDiffuseAlbedoF0`、`Substrate.HazinessToSecondaryRoughness`、 `Substrate.TransmittanceToMFP`），而此引擎的目录中没有这样的节点。绑定器接受了这个参数，因为节点名称是已知的；但构建器找不到任何东西可做。
@@ -2203,7 +2203,7 @@ This branch becomes a 'Substrate.Select', which parameter-blends its two inputs;
 This material drives FrontMaterial and says 'Substrate = Native', and Substrate is off in this project; the engine could not compile the asset. Turn Substrate on, or write 'Substrate = Bridge' and the legacy attributes.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:416`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:416`
 <!-- generated:end DSH4382 -->
 
 **原因。** 材质写着 `#pragma material(Substrate = Native)`、驱着 `FrontMaterial`，而此项目中的 Substrate 处于关闭状态（`r.Substrate`，即内置定义 `DS_SUBSTRATE`）。引擎无法编译这样的资产，因此在这里被拒绝，此处的消息可以说出原因，而不是作为稍后的着色器错误。
@@ -2223,7 +2223,7 @@ This material drives FrontMaterial and says 'Substrate = Native', and Substrate 
 '{0}' is not the Substrate value being built any more when a loop comes round to '{0}.{1}': an earlier trip assigned it. Declare the value inside the loop, or finish it before the loop.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:201`、`Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:247`、`Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:277`、`Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:304`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:201`、`Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:247`、`Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:277`、`Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp:304`
 <!-- generated:end DSH4383 -->
 
 **原因。** 一个逐成员构建的 Substrate 值（`Substrate S = Substrate.Slab(); S.Roughness = r;`）遇到了会转回来的循环。绑定器按源代码顺序检查构建器，看不到循环的第二轮，因此图形的构建器会在四种情况下报告：在循环的早先一轮已经使用了该值之后某个成员被写入（其节点是当时的样子）；在早先一轮将局部变量赋为整值时某个成员被访问，而整值没有成员；在写入该成员的行未运行的路径上，某个成员被读取，或作为 `*=` 及其同类表达式的左侧。
@@ -2243,7 +2243,7 @@ This material drives FrontMaterial and says 'Substrate = Native', and Substrate 
 '{0}' is declared but nothing reads it, so it is not in the generated material.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/IR/IRPasses.cpp:872`
+**触发位置** `Source/DreamShaderLang/Private/IR/IRPasses.cpp:872`
 <!-- generated:end DSH4390 -->
 
 **原因。** 信息。声明了一个 `uniform` 但文件中没有任何地方读取它，因此没有生成参数节点，材质也就没有这样的参数。这些遍历在剪除之后报告，因此它也会对只被本身被证明是死代码的代码读取的 uniform 触发。
@@ -2263,7 +2263,7 @@ This material drives FrontMaterial and says 'Substrate = Native', and Substrate 
 Buffer '{0}' is declared twice; the declaration on line {1} already makes it.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1541`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1555`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1568`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1541`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1555`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1568`
 <!-- generated:end DSH4400 -->
 
 **原因。** 一个缓冲区以一个已被占用的名称声明。三条消息：
@@ -2289,7 +2289,7 @@ Buffer '{0}' is declared twice; the declaration on line {1} already makes it.
 A pass named '{0}' is already declared on line {1}; RDG events and stats are named after passes, so each name is used once.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1811`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1824`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1811`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1824`
 <!-- generated:end DSH4401 -->
 
 **原因。** 同一条管线的两个通道名称相同，或名称仅在大小写上不同（`Pass 'blur' differs from 'Blur', declared on line 7, in case only; ...`）：管线资产将通道名称保存为 Unreal 名称，比较时忽略大小写，因此 `Blur` 和 `blur` 在那里会是同一个通道。运行时会以通道命名其 GPU 事件和统计（`<Pipeline>.<Pass>`），因此一个名称必须指向一个通道。第二个通道会被整体跳过：在重命名之前，其中的任何内容都不会被检查或构建。
@@ -2309,7 +2309,7 @@ A pass named '{0}' is already declared on line {1}; RDG events and stats are nam
 '{0}' is a built-in texture a pass binds without declaring it, and cannot be declared as a buffer.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1530`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1530`
 <!-- generated:end DSH4402 -->
 
 **原因。** 一个 `buffer` 声明使用了内置纹理的名称：`SceneColor`、`SceneDepth`、 `CustomDepth`、`CustomStencil`、`GBufferA` 到 `GBufferF`、`Velocity` 或 `Translucency`。通道无需声明即按名称绑定这些纹理，因此同名的缓冲区无法与渲染器的纹理区分开。该声明被丢弃，对该名称的绑定仍然绑定内置纹理。
@@ -2329,7 +2329,7 @@ A pass named '{0}' is already declared on line {1}; RDG events and stats are nam
 '{0}' is neither a buffer of this pipeline nor a built-in texture; declare it with 'buffer {0} : <Format>;'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1509`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1509`
 <!-- generated:end DSH4403 -->
 
 **原因。** 通道指定了一个不存在的缓冲区：在 `read` 或 `write` 绑定中，在 `Dispatch = <Buffer>`（或 `<Buffer> / n`、`<Buffer> * n`）中，或在 `Depth = Own(<Buffer>)` 中。名称区分大小写；当已声明的缓冲区或内置纹理仅大小写不同时，消息会提示它（`read sceneColor;`）。通道只绑定管线自身的缓冲区和内置纹理： `Texture2D` 参数，或另一条管线的缓冲区，在这里都不是缓冲区。声明被拒绝的缓冲区（DSH4400）也未被声明，因此其绑定也会落到这里。
@@ -2349,7 +2349,7 @@ A pass named '{0}' is already declared on line {1}; RDG events and stats are nam
 '{0}' is not a 'uniform' or 'static const' of this pipeline; 'Enabled' takes a 'uniform bool' or 'true'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1056`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2608`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1056`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2608`
 <!-- generated:end DSH4404 -->
 
 **原因。** 管线值中的某个名称未声明。有两个地方会引发它：
@@ -2366,7 +2366,7 @@ A pass named '{0}' is already declared on line {1}; RDG events and stats are nam
 ## DSH4405
 
 <!-- generated:begin DSH4405 -->
-**严重程度** 错误
+**严重性** 错误
 
 **消息**
 
@@ -2374,7 +2374,7 @@ A pass named '{0}' is already declared on line {1}; RDG events and stats are nam
 '{0}' is a '{1}', and 'Enabled' takes a 'uniform bool' or 'true'.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1070`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1070`
 <!-- generated:end DSH4405 -->
 
 **原因。** `Enabled` 在 `#pragma pipeline(...)` 中或在某个 pass 中指向了一个已声明的值，而该值不是 `bool`：一个 `uniform float`、一个 `int`、一个向量。管线或 pass 仅由 bool 切换。
@@ -2394,7 +2394,7 @@ uniform bool bShowOutline = true;
 ## DSH4406
 
 <!-- generated:begin DSH4406 -->
-**严重程度** 错误
+**严重性** 错误
 
 **消息**
 
@@ -2402,7 +2402,7 @@ uniform bool bShowOutline = true;
 No material '{0}' was found: a bare name is the material a '.dss' under the same source root builds, an object path any material or material instance.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3525`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3525`
 <!-- generated:end DSH4406 -->
 
 **原因。** 全屏 pass 或网格 pass 的 `Material` 解析不到任何内容。裸名称（`"PP_Outline"`）会在 `.dsp` 的源根目录下的 DreamShader 源产物中查找—— `.dss` 导出的材质，或一个 `.dsi`——必须完全按拼写匹配，包括大小写；材质函数不算。对象路径（`"/Game/FX/PP_Outline.PP_Outline"`）必须指向一个存在的资产，或源根目录下的某个源所构建的资产。该检查需要宿主来查找材质，编辑器中的编译或通过 `dsc` 的编译会进行此操作；否则会跳过（DSH7360）。
@@ -2414,7 +2414,7 @@ No material '{0}' was found: a bare name is the material a '.dss' under the same
 ## DSH4407
 
 <!-- generated:begin DSH4407 -->
-**严重程度** 错误
+**严重性** 错误
 
 **消息**
 
@@ -2422,7 +2422,7 @@ No material '{0}' was found: a bare name is the material a '.dss' under the same
 '{0}' is not a '.usf' or '.ush' file; the engine compiles shader files of those two kinds only.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2026`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2026`
 <!-- generated:end DSH4407 -->
 
 **原因。** `Shader =` 指向的文件扩展名不是 `.usf` 或 `.ush`（任意大小写）：完全没有扩展名（`"Passes/Blur"`）、`.hlsl`，或 DreamShader 源（`"PP_Blur.dss"`）。引擎的着色器编译器只读取这两种文件。
@@ -2434,7 +2434,7 @@ No material '{0}' was found: a bare name is the material a '.dss' under the same
 ## DSH4408
 
 <!-- generated:begin DSH4408 -->
-**严重程度** 错误
+**严重性** 错误
 
 **消息**
 
@@ -2442,7 +2442,7 @@ No material '{0}' was found: a bare name is the material a '.dss' under the same
 The shader file '{0}' does not exist; a path starting with '/' is a virtual shader path, and any other is read from the folder of this '.dsp'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3730`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3730`
 <!-- generated:end DSH4408 -->
 
 **原因。** `Shader =` 指向的文件不存在。不以 `/` 开头的路径相对于 `.dsp` 所在的文件夹——`"BoxBlur.usf"` 与它相邻，`"../Shared/Blur.usf"` 位于其上一级文件夹；以 `/` 开头的路径是虚拟着色器路径，只能通过引擎映射的目录解析（`/Engine/...`、`/Plugin/<Name>/...`，或模块通过 `AddShaderSourceDirectoryMapping` 添加的映射）。在 DSH4406 所在之处检查。
@@ -2454,7 +2454,7 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 ## DSH4410
 
 <!-- generated:begin DSH4410 -->
-**严重程度** 错误
+**严重性** 错误
 
 **消息**
 
@@ -2462,7 +2462,7 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 '{0}' does not define a function '{1}'.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3797`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3825`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3837`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3984`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4018`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4077`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3797`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3825`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3837`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3984`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4018`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4077`
 <!-- generated:end DSH4410 -->
 
 **原因。** HLSL pass 的 `Entry` 未指向该 pass 可运行的函数。共有两种消息：
@@ -2485,7 +2485,7 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 ## DSH4411
 
 <!-- generated:begin DSH4411 -->
-**严重程度** 错误
+**严重性** 错误
 
 **消息**
 
@@ -2493,7 +2493,7 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 '{0}' in '{1}' has no '[numthreads(x, y, z)]' the compiler can read; write 'Threads = uint3(x, y, z)' in the pass.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3785`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3811`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4064`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3785`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3811`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4064`
 <!-- generated:end DSH4411 -->
 
 **原因。** 某个 compute pass 的 `Entry` 具有编译器无法读取的线程组大小，并且该 pass 未提供 `Threads` 来说明这一点。调度按该大小的组来计数。共有两种消息：
@@ -2517,7 +2517,7 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 '{0}' is not a pass layer of this project; the layers are the first {1} names of Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3505`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3505`
 <!-- generated:end DSH4412 -->
 
 **原因。** 网格 pass 的 `Filter` 通过 `Layer(...)` 选择了一个项目并不具有的名称。Pass 层是项目自己的：Project Settings ▸ DreamPlugin ▸ DreamShader Custom Pass 的 **Layer Names** 列表的前 32 个名称，即消息中所指出的；只有这些名称具有位，因此列表中更靠后的名称也不是层。名称的比较区分大小写，当某个层仅在其大小写上与之不同时，消息会改为建议那一个（`'<Layer>' is not a pass layer of this project; did you mean '<Name>'?`）。每个未知名称产生一个错误，位于 `Filter` 行。在 DSH4406 处检查。
@@ -2537,7 +2537,7 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 'Threads = uint3({0}, {1}, {2})' disagrees with '[numthreads({3}, {4}, {5})]' of '{6}', and the dispatch would be sized for groups the shader does not have; leave 'Threads' out, or write the same numbers.
 ```
 
-**引发自** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3770`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4051`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3770`、`Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4051`
 <!-- generated:end DSH4413 -->
 
 **原因。** 一个计算 pass 写入 `Threads = uint3(...)`，而其入口的 `[numthreads(...)]` （编译器可以读取 -- 在 `.usf` 中，或者当入口编写在那里时在 `.dsp` 中）表示的是其他数字（消息中给出了两者）。组数是根据 `Threads` 计算出来的，而着色器以 `[numthreads]` 的组运行，因此该 pass 会覆盖其缓冲区过多或过少的内容。`Threads = uint2(x, y)` 计为 `z = 1`。
@@ -2557,7 +2557,7 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 'DreamPassWeight' is the pipeline's weight in a view, which every pass can read as 'param P = DreamPassWeight'; it cannot be declared.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:838`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:838`
 <!-- generated:end DSH4414 -->
 
 **原因。** `.dsp` 的 `uniform` 或 `static const` 被命名为 `DreamPassWeight`。该名称是管线在视图中的权重 -- 其激活中的最大权重，也就是体积的淡入到达特效的方式 -- 由运行时提供。该声明会被丢弃。该名称的缓冲区 DSH4400。
@@ -2577,7 +2577,7 @@ The shader file '{0}' does not exist; a path starting with '/' is a virtual shad
 '{0}.Previous': a built-in texture keeps no history.
 ```
 
-**引发者** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2497`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2507`
+**触发位置** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2497`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2507`
 <!-- generated:end DSH4415 -->
 
 **原因。** `read` 命名了 `.Previous`，即某个不保留内容的纹理的上一帧内容。两条消息：
