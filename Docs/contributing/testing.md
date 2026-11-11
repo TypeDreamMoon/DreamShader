@@ -98,6 +98,15 @@ This exercises the driver's real helper functions in a temporary fake project, i
 unrelated writes, pre-existing assets, post-save edits, Content boundaries, invalid and consumed save
 manifests, and Content folders that cannot be listed.
 
+`dsc.ps1 info` is tested the same way, against fake projects and fake engine roots:
+
+```powershell
+pwsh -NoProfile -File Tools/Tests/Test-DscInfo.ps1
+```
+
+It checks the field order, the engine version and kind, `unknown` for an engine that cannot be found,
+and that no line names a path.
+
 | Goal | Filter |
 | :-- | :-- |
 | Fast gate — 1.x parse-equivalence corpus, pure helpers, the preprocessor | `DreamShader.Lang.` |

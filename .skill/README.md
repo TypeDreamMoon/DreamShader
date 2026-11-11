@@ -63,6 +63,7 @@ Run it from anywhere inside the project. The driver walks up for the `.uproject`
 | `fmt <file>` \| `-All` | rewrites 2.0 sources in the printer's layout, refusing any file it cannot vouch for; `-Check` writes nothing |
 | `list-generated <file>` \| `-All` | names every asset the sources build, building none: `-ListAs Packages \| Files \| GitIgnore \| Json` — [`Docs/generation/source-control.md`](../Docs/generation/source-control.md) |
 | `pass-registry` | lists the Custom Pass HLSL slots in `DShader/.dreampass`; `-Gc` frees the dead ones; `-Rebuild` compiles every `.dsp` again and rewrites the registry — [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md#pass-registry) |
+| `info` | prints the plugin version and commit, the engine version and kind, the OS, the UI language and the shell, for a bug report. Starts no engine, prints no path; a value it cannot find is `unknown` |
 
 Every verb that takes a source takes all five compilable kinds: `.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf`. The full
 flag surface: [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md); the skills' view of it:
