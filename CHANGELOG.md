@@ -13,7 +13,11 @@
   `compile` (optionally with the shaders), `diagnostics`, `lookup` of the `UE.*` / `Substrate.*` node catalog,
   `preview` to a PNG, `info` and `decompile`. Every answer has one shape — an outcome, a reason code, diagnostics
   with their codes, lines and documentation links, the assets written — so a server never reads a log line, and
-  long actions run as jobs a client polls or cancels while the editor keeps answering. The user's editor serves it
+  long actions run as jobs a client polls or cancels while the editor keeps answering. A preview is measured for
+  an agent that cannot see it — how much of the mesh shows or is see-through, the mean colour, the brightness, the
+  near-white and near-black shares — and its summary leads with the finding that matters, such as "invisible" or
+  "mostly white"; it renders at a given `time`, as a strip of `frames` to show an animation, and with
+  `tone: "linear"` to read a material's output values past the tone mapper. The user's editor serves it
   while it is open; without one, the server starts a host that serves it: the editor with `-DreamMCPHost
   -RenderOffscreen` (no window, no bridge, no settings written) when it needs pictures, the new
   `-run=DreamShaderHost` commandlet when it does not. *Project Settings > DreamShader > Enable DreamMCP Endpoint*

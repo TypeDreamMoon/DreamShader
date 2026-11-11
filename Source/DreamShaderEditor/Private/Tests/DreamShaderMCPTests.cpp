@@ -779,25 +779,82 @@ bool FDreamShaderMCPPreviewTest::RunTest(const FString& Parameters)
 	FTestEndpoint Test(*this, EEndpointMode::Host, /*bCanRender*/ true);
 	FDreamShaderCompile2Fixture Good(TEXT("M_McpPreviewOk"), TEXT("MCP"));
 	FDreamShaderCompile2Fixture Bad(TEXT("M_McpPreviewBad"), TEXT("MCP"));
-	if (!Good.WriteSource(*this, OkMaterial(TEXT("M_McpPreviewOk"))) || !Bad.WriteSource(*this, BrokenMaterial(TEXT("M_McpPreviewBad"))))
+	FDreamShaderCompile2Fixture Red(TEXT("M_McpPreviewRed"), TEXT("MCP"));
+	FDreamShaderCompile2Fixture Pulse(TEXT("M_McpPreviewPulse"), TEXT("MCP"));
+	if (!Good.WriteSource(*this, OkMaterial(TEXT("M_McpPreviewOk"))) || !Bad.WriteSource(*this, BrokenMaterial(TEXT("M_McpPreviewBad")))
+		|| !Red.WriteSource(*this, TEXT("#pragma material(ShadingModel = Unlit, BlendMode = Opaque)\n"
+			"export void M_McpPreviewRed(inout material m) { m.EmissiveColor = float3(1.0, 0.0, 0.0); }\n"))
+		|| !Pulse.WriteSource(*this, TEXT("#pragma material(ShadingModel = Unlit, BlendMode = Opaque)\n"
+			"export void M_McpPreviewPulse(inout material m) { m.EmissiveColor = float3(0.5 + 0.5 * sin(UE.Time()), 0.2, 0.1); }\n")))
 	{
 		return false;
 	}
+	// Deletes an artifact once the test has looked at it.
+	const auto ExpectImage = [this](const TSharedPtr<FJsonObject>& Result, const TCHAR* What)
+	{
+		const TArray<TSharedPtr<FJsonValue>> Artifacts = ArrayField(Result, TEXT("artifacts"));
+		if (!TestEqual(FString::Printf(TEXT("%s: one image"), What), Artifacts.Num(), 1))
+		{
+			return;
+		}
+		const FString Path = Field(Artifacts[0]->AsObject(), TEXT("path"));
+		TestEqual(TEXT("an image artifact"), Field(Artifacts[0]->AsObject(), TEXT("kind")), FString(TEXT("image")));
+		TestTrue(TEXT("under Saved/DreamMCP/artifacts"), Path.StartsWith(TEXT("Saved/DreamMCP/artifacts/")));
+		TestTrue(FString::Printf(TEXT("%s: the summary says where the image is"), What), Field(Result, TEXT("summary")).Contains(Path));
+		const FString Absolute = FPaths::Combine(FPaths::ProjectDir(), Path);
+		TestTrue(TEXT("a PNG on disk"), IFileManager::Get().FileSize(*Absolute) > 100);
+		IFileManager::Get().Delete(*Absolute, false, true, true);
+	};
 
 	const TSharedPtr<FJsonObject> Rendered = ResultOf(RunToEnd(*this, Test.Endpoint,
 		CallBody(TEXT("preview"), FString::Printf(TEXT("{\"file\":\"%s\",\"width\":128,\"height\":128,\"mesh\":\"cube\"}"), *JsonPath(Rel(Good.GetSourceFilePath()))))));
 	TestEqual(TEXT("a clean material previews"), Field(Rendered, TEXT("outcome")), FString(TEXT("ok")));
-	const TArray<TSharedPtr<FJsonValue>> Artifacts = ArrayField(Rendered, TEXT("artifacts"));
-	if (TestEqual(TEXT("one image"), Artifacts.Num(), 1))
+	ExpectImage(Rendered, TEXT("one frame"));
+	const TSharedPtr<FJsonObject> Stats = ObjectField(ObjectField(Rendered, TEXT("data")), TEXT("stats"));
+	double Coverage = 0.0;
+	if (TestTrue(TEXT("the result measures the picture"), Stats.IsValid() && Stats->TryGetNumberField(TEXT("coverage"), Coverage)))
 	{
-		const FString Path = Field(Artifacts[0]->AsObject(), TEXT("path"));
-		TestEqual(TEXT("an image artifact"), Field(Artifacts[0]->AsObject(), TEXT("kind")), FString(TEXT("image")));
-		TestTrue(TEXT("under Saved/DreamMCP/artifacts"), Path.StartsWith(TEXT("Saved/DreamMCP/artifacts/")));
-		const FString Absolute = FPaths::Combine(FPaths::ProjectDir(), Path);
-		TestTrue(TEXT("a PNG on disk"), IFileManager::Get().FileSize(*Absolute) > 100);
-		IFileManager::Get().Delete(*Absolute, false, true, true);
+		TestTrue(FString::Printf(TEXT("the cube covers part of the image (%.3f)"), Coverage), Coverage > 0.05 && Coverage < 0.95);
+		TestTrue(TEXT("an opaque material has a mean colour"), Field(Stats, TEXT("meanColor")).StartsWith(TEXT("#")));
+		double Transparent = 1.0;
+		Stats->TryGetNumberField(TEXT("transparent"), Transparent);
+		TestTrue(FString::Printf(TEXT("an opaque material hides the background (%.3f)"), Transparent), Transparent < 0.02);
 	}
 	Good.TrackObjectPath(Good.MakeObjectPath(TEXT("M_McpPreviewOk")));
+
+	// tone=linear: exposure 1 and no curve, so a pixel is the output -- pure red stays pure red.
+	const TSharedPtr<FJsonObject> Linear = ResultOf(RunToEnd(*this, Test.Endpoint,
+		CallBody(TEXT("preview"), FString::Printf(TEXT("{\"file\":\"%s\",\"width\":96,\"height\":96,\"tone\":\"linear\"}"), *JsonPath(Rel(Red.GetSourceFilePath()))), TEXT("p-3"))));
+	TestEqual(TEXT("a linear preview renders"), Field(Linear, TEXT("outcome")), FString(TEXT("ok")));
+	ExpectImage(Linear, TEXT("tone=linear"));
+	const FString RedMean = Field(ObjectField(ObjectField(Linear, TEXT("data")), TEXT("stats")), TEXT("meanColor"));
+	const FColor RedColor = FColor::FromHex(RedMean);
+	TestTrue(FString::Printf(TEXT("emissive (1,0,0) reads as pure red with tone=linear (%s)"), *RedMean),
+		RedColor.R >= 250 && RedColor.G <= 5 && RedColor.B <= 5);
+	Red.TrackObjectPath(Red.MakeObjectPath(TEXT("M_McpPreviewRed")));
+
+	// frames: a strip over one period of a sine on Time animates; the same strip of a constant does not.
+	const TSharedPtr<FJsonObject> Strip = ResultOf(RunToEnd(*this, Test.Endpoint,
+		CallBody(TEXT("preview"), FString::Printf(TEXT("{\"file\":\"%s\",\"width\":64,\"height\":64,\"frames\":4,\"duration\":1}"), *JsonPath(Rel(Pulse.GetSourceFilePath()))), TEXT("p-4"))));
+	TestEqual(TEXT("a strip renders"), Field(Strip, TEXT("outcome")), FString(TEXT("ok")));
+	ExpectImage(Strip, TEXT("frames=4"));
+	const TSharedPtr<FJsonObject> StripData = ObjectField(Strip, TEXT("data"));
+	TestEqual(TEXT("one entry per frame"), ArrayField(StripData, TEXT("frames")).Num(), 4);
+	bool bChanges = false;
+	TestTrue(TEXT("a sine on Time animates"), ObjectField(StripData, TEXT("animation")).IsValid()
+		&& ObjectField(StripData, TEXT("animation"))->TryGetBoolField(TEXT("changes"), bChanges) && bChanges);
+	Pulse.TrackObjectPath(Pulse.MakeObjectPath(TEXT("M_McpPreviewPulse")));
+
+	const TSharedPtr<FJsonObject> Still = ResultOf(RunToEnd(*this, Test.Endpoint,
+		CallBody(TEXT("preview"), FString::Printf(TEXT("{\"file\":\"%s\",\"width\":64,\"height\":64,\"frames\":2}"), *JsonPath(Rel(Red.GetSourceFilePath()))), TEXT("p-5"))));
+	ExpectImage(Still, TEXT("frames=2"));
+	bChanges = true;
+	TestTrue(TEXT("a constant does not animate"), ObjectField(ObjectField(Still, TEXT("data")), TEXT("animation")).IsValid()
+		&& ObjectField(ObjectField(Still, TEXT("data")), TEXT("animation"))->TryGetBoolField(TEXT("changes"), bChanges) && !bChanges);
+
+	const TSharedPtr<FJsonObject> TooWide = ResultOf(RunToEnd(*this, Test.Endpoint,
+		CallBody(TEXT("preview"), FString::Printf(TEXT("{\"file\":\"%s\",\"width\":1024,\"frames\":16}"), *JsonPath(Rel(Red.GetSourceFilePath()))), TEXT("p-6"))));
+	TestEqual(TEXT("a strip wider than the limit is refused"), Field(TooWide, TEXT("reason")), FString(TEXT("strip-too-wide")));
 
 	const TSharedPtr<FJsonObject> Broken = ResultOf(RunToEnd(*this, Test.Endpoint,
 		CallBody(TEXT("preview"), FString::Printf(TEXT("{\"file\":\"%s\"}"), *JsonPath(Rel(Bad.GetSourceFilePath()))), TEXT("p-2"))));

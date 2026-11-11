@@ -3,6 +3,7 @@
 #include "MCP/DreamShaderMCPActions.h"
 
 #include "MCP/DreamShaderMCPEndpoint.h"
+#include "MCP/DreamShaderMCPPreviewStats.h"
 #include "MCP/DreamShaderMCPResult.h"
 
 #include "Bridge/DreamShaderEditorBridge.h"
@@ -26,10 +27,13 @@
 
 #include "AssetCompilingManager.h"
 #include "HAL/FileManager.h"
+#include "ImageUtils.h"
 #include "Interfaces/IPluginManager.h"
 #include "MaterialShared.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/Material.h"
+#include "Materials/MaterialExpressionConstant.h"
+#include "Materials/MaterialExpressionConstant3Vector.h"
 #include "Materials/MaterialInterface.h"
 #include "ThumbnailRendering/ThumbnailManager.h"
 #include "Misc/App.h"
@@ -826,18 +830,111 @@ namespace UE::DreamShader::Editor::MCP
 			return false;
 		}
 
+		/**
+		 * The two reference materials a preview is measured against, both unlit, masked and magenta: the silhouette
+		 * (opacity mask 1) draws wherever the mesh is, whatever the previewed material does there; the background
+		 * (opacity mask 0) draws nothing, which leaves the scene behind the mesh. Two-sided, so the silhouette covers a
+		 * face the previewed material culls -- a see-through pixel, as far as the picture goes. Constants rather than
+		 * one material with a parameter: an instance made before its parent's first compile can draw with the default
+		 * value. Built once per process, the first time a preview needs them.
+		 */
+		struct FPreviewMaskMaterials
+		{
+			TStrongObjectPtr<UMaterial> Silhouette;
+			TStrongObjectPtr<UMaterial> Background;
+		};
+
+		FPreviewMaskMaterials& GetPreviewMaskMaterials()
+		{
+			static FPreviewMaskMaterials Materials;
+			return Materials;
+		}
+
+		UMaterial* MakePreviewMaskMaterial(const TCHAR* BaseName, float Coverage)
+		{
+			UPackage* const Package = GetTransientPackage();
+			UMaterial* const Material = NewObject<UMaterial>(Package, MakeUniqueObjectName(Package, UMaterial::StaticClass(), BaseName), RF_Transient);
+			Material->BlendMode = BLEND_Masked;
+			Material->SetShadingModel(MSM_Unlit);
+			Material->TwoSided = true;
+
+			UMaterialExpressionConstant3Vector* const Color = NewObject<UMaterialExpressionConstant3Vector>(Material);
+			Color->Constant = FLinearColor(1.0f, 0.0f, 1.0f);
+			UMaterialExpressionConstant* const Mask = NewObject<UMaterialExpressionConstant>(Material);
+			Mask->R = Coverage;
+			Material->GetExpressionCollection().AddExpression(Color);
+			Material->GetExpressionCollection().AddExpression(Mask);
+			Material->GetEditorOnlyData()->EmissiveColor.Connect(0, Color);
+			Material->GetEditorOnlyData()->OpacityMask.Connect(0, Mask);
+			Material->PostEditChange();
+			return Material;
+		}
+
+		FPreviewMaskMaterials& EnsurePreviewMaskMaterials()
+		{
+			FPreviewMaskMaterials& Materials = GetPreviewMaskMaterials();
+			if (!Materials.Silhouette.IsValid())
+			{
+				Materials.Silhouette.Reset(MakePreviewMaskMaterial(TEXT("DreamMCP_PreviewSilhouette"), 1.0f));
+			}
+			if (!Materials.Background.IsValid())
+			{
+				Materials.Background.Reset(MakePreviewMaskMaterial(TEXT("DreamMCP_PreviewBackground"), 0.0f));
+			}
+			return Materials;
+		}
+
+		/** `tone`: editor (what the editor's thumbnails show), fixed (exposure 1, the filmic curve), linear (exposure 1, no curve). */
+		Private::FDreamShaderPreviewFrameOptions MakeFrameOptions(const FString& Tone)
+		{
+			Private::FDreamShaderPreviewFrameOptions Options;
+			Options.bFixedExposure = Tone == TEXT("fixed") || Tone == TEXT("linear");
+			Options.bToneMap = Tone != TEXT("linear");
+			return Options;
+		}
+
+		const TCHAR* DescribeTone(const FString& Tone)
+		{
+			// The figures are measured: Unlit emissive greys on the plugin's test host, which has default exposure settings.
+			if (Tone == TEXT("linear"))
+			{
+				return TEXT("Exposure 1, no tone curve, no bloom: a pixel is the material's output with gamma 2.2, clipped at 1. Emissive (1,0,0) is #FF0000; 0.5 is 186 of 255.");
+			}
+			if (Tone == TEXT("fixed"))
+			{
+				return TEXT("Tone-mapped at exposure 1. The filmic curve compresses values, so nothing clips and bright colours drift toward white: emissive 0.18 reads 117 of 255, 0.5 reads 178, 1 reads 208, 4 reads 240. tone=\"linear\" shows the values.");
+			}
+			return TEXT("Tone-mapped as the engine's thumbnails are: the project's exposure and the filmic curve. The curve compresses values, so nothing clips and bright colours drift toward white. With default exposure settings, emissive 0.18 reads 117 of 255, 0.5 reads 178, 1 reads 208, 4 reads 240. tone=\"linear\" shows the values.");
+		}
+
+		/** The widest strip a multi-frame preview writes. */
+		constexpr int32 MaxPreviewStripWidth = 8192;
+
 		TUniquePtr<IJob> StartPreview(const FActionCall& Call)
 		{
 			struct FState
 			{
 				int32 Stage = 0;
 				FString File;
+				FString Tone;
 				Private::FDreamShaderPreviewRequest Request;
 				Private::FDreamShaderPreviewResult Preview;
 				TStrongObjectPtr<UMaterialInterface> Material;
 				TArray<TWeakObjectPtr<UObject>> Meshes;
+				TUniquePtr<Private::FDreamShaderPreviewRenderContext> Renderer;
+				double StartTime = 0.0;
+				double Duration = 1.0;
+				int32 FrameCount = 1;
+				TArray<FColor> BackgroundPixels;
+				TArray<FColor> SilhouettePixels;
+				TArray<TArray<FColor>> Frames;
 				double WaitStarted = 0.0;
 				FResult Result;
+
+				double GetFrameTime(int32 Index) const
+				{
+					return FrameCount > 1 ? StartTime + Duration * double(Index) / double(FrameCount) : StartTime;
+				}
 			};
 			TSharedRef<FState> State = MakeShared<FState>();
 			const FActionCall CallCopy = Call;
@@ -849,6 +946,9 @@ namespace UE::DreamShader::Editor::MCP
 					OutResult = MakeCancelled();
 					return true;
 				}
+
+				// Progress: compile, shaders, background, then one step per frame (the count is known after the first step).
+				const int32 TotalSteps = 3 + State->FrameCount;
 
 				if (State->Stage == 0)
 				{
@@ -864,15 +964,34 @@ namespace UE::DreamShader::Editor::MCP
 							FString::Printf(TEXT("%s builds no material; preview takes a .dss, .dsi or .dsm."), *Rel(File))); // I18N-EXEMPT: wire text
 						return true;
 					}
+
+					State->FrameCount = FMath::Clamp(static_cast<int32>(CallCopy.GetNumber(TEXT("frames"), 1.0)), 1, 16);
+					State->StartTime = CallCopy.GetNumber(TEXT("time"), 0.0);
+					State->Duration = CallCopy.GetNumber(TEXT("duration"), 1.0);
+					State->Tone = CallCopy.Has(TEXT("tone")) ? CallCopy.GetString(TEXT("tone")) : FString(TEXT("editor"));
+					// A strip of frames is small frames side by side; one image is the full default size.
+					const double DefaultSize = State->FrameCount > 1 ? 256.0 : 512.0;
+
 					State->File = File;
 					State->Request.SourceFilePath = File;
 					State->Request.Mesh = CallCopy.Has(TEXT("mesh")) ? CallCopy.GetString(TEXT("mesh")) : FString(TEXT("sphere"));
-					State->Request.Width = FMath::Clamp(static_cast<int32>(CallCopy.GetNumber(TEXT("width"), 512.0)), 64, 2048);
-					State->Request.Height = FMath::Clamp(static_cast<int32>(CallCopy.GetNumber(TEXT("height"), 512.0)), 64, 2048);
+					State->Request.Width = FMath::Clamp(static_cast<int32>(CallCopy.GetNumber(TEXT("width"), DefaultSize)), 64, 2048);
+					State->Request.Height = FMath::Clamp(static_cast<int32>(CallCopy.GetNumber(TEXT("height"), DefaultSize)), 64, 2048);
 					State->Request.OrbitYaw = static_cast<float>(CallCopy.GetNumber(TEXT("yaw"), -157.5));
 					State->Request.OrbitPitch = static_cast<float>(CallCopy.GetNumber(TEXT("pitch"), -11.25));
 					State->Request.bForceRecompile = CallCopy.GetBool(TEXT("force"), false);
-					Context.SetProgress(TEXT("compile"), 0, 3);
+
+					const int32 StripWidth = State->Request.Width * State->FrameCount;
+					if (StripWidth > MaxPreviewStripWidth)
+					{
+						OutResult = FResult::MakeRefused(TEXT("strip-too-wide"),
+							FString::Printf(TEXT("%d frames of %d px make a strip %d px wide; the limit is %d."), // I18N-EXEMPT: wire text
+								State->FrameCount, State->Request.Width, StripWidth, MaxPreviewStripWidth),
+							TEXT("Lower width or frames."));
+						return true;
+					}
+
+					Context.SetProgress(TEXT("compile"), 0, 3 + State->FrameCount);
 					CollectPreviewMeshes(State->Meshes);
 
 					// The preview's own compile: interactive, so a ThinCustom product stays in memory.
@@ -897,16 +1016,19 @@ namespace UE::DreamShader::Editor::MCP
 						return true;
 					}
 					State->Material.Reset(Material);
+
+					EnsurePreviewMaskMaterials();
 					State->WaitStarted = FPlatformTime::Seconds();
 					State->Stage = 1;
-					Context.SetProgress(TEXT("shaders"), 1, 3);
+					Context.SetProgress(TEXT("shaders"), 1, TotalSteps);
 					return false;
 				}
 
 				if (State->Stage == 1)
 				{
 					// The shaders and the meshes build in the background; waiting a tick at a time keeps the endpoint answering.
-					const bool bMaterialCompiling = IsStillCompiling(State->Material.Get());
+					const bool bMaterialCompiling = IsStillCompiling(State->Material.Get())
+						|| IsStillCompiling(GetPreviewMaskMaterials().Silhouette.Get()) || IsStillCompiling(GetPreviewMaskMaterials().Background.Get());
 					const bool bMeshCompiling = IsAnyStillCompiling(State->Meshes);
 					if (bMaterialCompiling || bMeshCompiling)
 					{
@@ -919,40 +1041,146 @@ namespace UE::DreamShader::Editor::MCP
 							*Context.GetJobId(), bMaterialCompiling ? TEXT(" the material's shaders") : TEXT(""), bMeshCompiling ? TEXT(" a preview mesh") : TEXT(""));
 					}
 					State->Stage = 2;
-					Context.SetProgress(TEXT("render"), 2, 3);
+					Context.SetProgress(TEXT("warm-up"), 2, TotalSteps);
 					return false;
 				}
 
-				// Render, read back, encode, save.
 				UMaterialInterface* const Material = State->Material.Get();
-				if (!Material)
+				FPreviewMaskMaterials& Masks = GetPreviewMaskMaterials();
+				if (!Material || !Masks.Silhouette.IsValid() || !Masks.Background.IsValid())
 				{
 					OutResult = FResult::MakeEngineError(TEXT("preview-material-lost"), TEXT("The compiled material was collected before it could be rendered."));
 					return true;
 				}
-				TArray<UObject*> Objects;
-				Objects.Add(Material);
-				for (const TWeakObjectPtr<UObject>& Mesh : State->Meshes)
+				const int32 Width = State->Request.Width;
+				const int32 Height = State->Request.Height;
+
+				// The scene puts a material that asks for a plane (UI, sprites) on a plane seen level, whatever the request
+				// says; the two reference renders have to frame the same mesh the same way.
+				UMaterial* const Base = Material->GetBaseMaterial();
+				const bool bForcedPlane = Base ? Base->ShouldForcePlanePreview() : Material->ShouldForcePlanePreview();
+				const FString MaskMesh = bForcedPlane ? FString(TEXT("plane")) : State->Request.Mesh;
+				const float MaskPitch = bForcedPlane ? 0.0f : State->Request.OrbitPitch;
+
+				if (State->Stage == 2)
 				{
-					if (UObject* const Loaded = Mesh.Get())
+					// A warm-up draw of all three. A material that has never been drawn may not have asked for its shaders
+					// yet -- it does when it is first drawn, and until they are in, it draws as the engine's default
+					// material. Measured on a fresh ThinCustom material: the first preview of each came out flat grey
+					// whatever its emissive, and the first job of a process had no silhouette. The draws here are thrown
+					// away; the next stage waits for what they asked for.
+					State->Renderer = MakeUnique<Private::FDreamShaderPreviewRenderContext>();
+					Private::FDreamShaderPreviewFrameOptions Options = MakeFrameOptions(State->Tone);
+					Options.TimeSeconds = State->StartTime;
+					State->Renderer->SetFrameOptions(Options);
+
+					TArray<FColor> Discarded;
+					FString RenderError;
+					if (!State->Renderer->RenderFramePixels(Material, Width, Height, State->Request.Mesh, State->Request.OrbitYaw,
+							State->Request.OrbitPitch, Discarded, RenderError)
+						|| !State->Renderer->RenderFramePixels(Masks.Background.Get(), Width, Height, MaskMesh, State->Request.OrbitYaw, MaskPitch,
+							Discarded, RenderError)
+						|| !State->Renderer->RenderFramePixels(Masks.Silhouette.Get(), Width, Height, MaskMesh, State->Request.OrbitYaw, MaskPitch,
+							Discarded, RenderError))
 					{
-						Objects.Add(Loaded);
+						OutResult = FResult::MakeEngineError(TEXT("render-failed"), FString::Printf(TEXT("The preview did not render: %s"), *RenderError)); // I18N-EXEMPT: wire text
+						return true;
+					}
+					State->WaitStarted = FPlatformTime::Seconds();
+					State->Stage = 3;
+					return false;
+				}
+
+				if (State->Stage == 3)
+				{
+					const bool bCompiling = IsStillCompiling(Material) || IsStillCompiling(Masks.Silhouette.Get()) || IsStillCompiling(Masks.Background.Get());
+					if (bCompiling)
+					{
+						if (FPlatformTime::Seconds() - State->WaitStarted < 120.0)
+						{
+							Context.SetWaiting();
+							return false;
+						}
+						UE_LOG(LogDreamShader, Warning, TEXT("DreamMCP: preview %s stopped waiting after 120 s for shaders the first draw asked for. It renders what there is."),
+							*Context.GetJobId());
+					}
+
+					TArray<UObject*> Objects;
+					Objects.Add(Material);
+					Objects.Add(Masks.Silhouette.Get());
+					Objects.Add(Masks.Background.Get());
+					for (const TWeakObjectPtr<UObject>& Mesh : State->Meshes)
+					{
+						if (UObject* const Loaded = Mesh.Get())
+						{
+							Objects.Add(Loaded);
+						}
+					}
+					FAssetCompilingManager::Get().FinishCompilationForObjects(Objects);
+
+					FString RenderError;
+					if (!State->Renderer->RenderFramePixels(Masks.Background.Get(), Width, Height, MaskMesh, State->Request.OrbitYaw, MaskPitch,
+							State->BackgroundPixels, RenderError)
+						|| !State->Renderer->RenderFramePixels(Masks.Silhouette.Get(), Width, Height, MaskMesh, State->Request.OrbitYaw, MaskPitch,
+							State->SilhouettePixels, RenderError))
+					{
+						OutResult = FResult::MakeEngineError(TEXT("render-failed"), FString::Printf(TEXT("The preview did not render: %s"), *RenderError)); // I18N-EXEMPT: wire text
+						return true;
+					}
+					State->Stage = 4;
+					Context.SetProgress(TEXT("render"), 3, TotalSteps);
+					return false;
+				}
+
+				if (State->Stage == 4)
+				{
+					// One frame a step: a strip of sixteen does not hold the endpoint for its whole length.
+					const int32 Index = State->Frames.Num();
+					Private::FDreamShaderPreviewFrameOptions Options = MakeFrameOptions(State->Tone);
+					Options.TimeSeconds = State->GetFrameTime(Index);
+					State->Renderer->SetFrameOptions(Options);
+
+					TArray<FColor> Pixels;
+					FString RenderError;
+					if (!State->Renderer->RenderFramePixels(Material, Width, Height, State->Request.Mesh, State->Request.OrbitYaw,
+							State->Request.OrbitPitch, Pixels, RenderError))
+					{
+						OutResult = FResult::MakeEngineError(TEXT("render-failed"), FString::Printf(TEXT("The preview did not render: %s"), *RenderError)); // I18N-EXEMPT: wire text
+						return true;
+					}
+					State->Frames.Add(MoveTemp(Pixels));
+					Context.SetProgress(TEXT("render"), 3 + State->Frames.Num(), TotalSteps);
+					if (State->Frames.Num() < State->FrameCount)
+					{
+						return false;
+					}
+					State->Renderer.Reset();
+					State->Stage = 5;
+				}
+
+				// Stitch, encode, save, measure.
+				const int32 FrameCount = State->Frames.Num();
+				const int32 StripWidth = Width * FrameCount;
+				TArray<FColor> Strip;
+				Strip.SetNumUninitialized(StripWidth * Height);
+				for (int32 FrameIndex = 0; FrameIndex < FrameCount; ++FrameIndex)
+				{
+					const TArray<FColor>& Frame = State->Frames[FrameIndex];
+					for (int32 Row = 0; Row < Height; ++Row)
+					{
+						FMemory::Memcpy(&Strip[Row * StripWidth + FrameIndex * Width], &Frame[Row * Width], Width * sizeof(FColor));
 					}
 				}
-				FAssetCompilingManager::Get().FinishCompilationForObjects(Objects);
-
-				TArray64<uint8> Png;
-				FString RenderError;
-				if (!Private::FDreamShaderPreviewRenderer::RenderMaterialPreviewFrame(Material, State->Request.Width, State->Request.Height,
-						State->Request.Mesh, State->Request.OrbitYaw, State->Request.OrbitPitch, Png, RenderError))
+				for (FColor& Pixel : Strip)
 				{
-					OutResult = FResult::MakeEngineError(TEXT("render-failed"), FString::Printf(TEXT("The preview did not render: %s"), *RenderError)); // I18N-EXEMPT: wire text
-					return true;
+					Pixel.A = 255;
 				}
+				TArray64<uint8> Png;
+				FImageUtils::PNGCompressImageArray(StripWidth, Height, TArrayView64<const FColor>(Strip.GetData(), Strip.Num()), Png);
 
 				const FString ImagePath = FPaths::Combine(FEndpoint::GetArtifactDirectory(), Context.GetJobId() + TEXT(".png"));
 				IFileManager::Get().MakeDirectory(*FPaths::GetPath(ImagePath), true);
-				if (!FFileHelper::SaveArrayToFile(TArrayView64<const uint8>(Png.GetData(), Png.Num()), *ImagePath))
+				if (Png.IsEmpty() || !FFileHelper::SaveArrayToFile(TArrayView64<const uint8>(Png.GetData(), Png.Num()), *ImagePath))
 				{
 					OutResult = FResult::MakeEngineError(TEXT("artifact-not-written"), FString::Printf(TEXT("The preview image could not be written to %s."), *Rel(ImagePath))); // I18N-EXEMPT: wire text
 					return true;
@@ -962,7 +1190,9 @@ namespace UE::DreamShader::Editor::MCP
 				FArtifact Image;
 				Image.Kind = TEXT("image");
 				Image.Path = Rel(ImagePath);
-				Image.Title = FString::Printf(TEXT("%s on a %s"), *State->Preview.AssetPath, *State->Preview.Mesh); // I18N-EXEMPT: wire text
+				Image.Title = FrameCount > 1
+					? FString::Printf(TEXT("%s on a %s, %d frames side by side"), *State->Preview.AssetPath, *State->Preview.Mesh, FrameCount) // I18N-EXEMPT: wire text
+					: FString::Printf(TEXT("%s on a %s"), *State->Preview.AssetPath, *State->Preview.Mesh); // I18N-EXEMPT: wire text
 				Result.Artifacts.Add(Image);
 
 				// A shader that did not compile renders as the engine's default material: the picture alone would hide it.
@@ -988,12 +1218,56 @@ namespace UE::DreamShader::Editor::MCP
 					Result.Diagnostics.Add(Diagnostic);
 				}
 
+				// What the pixels show: each frame alone, and all of them together.
+				FPreviewStats Overall;
+				TArray<TSharedPtr<FJsonValue>> FrameValues;
+				double MaxDifference = 0.0;
+				for (int32 FrameIndex = 0; FrameIndex < FrameCount; ++FrameIndex)
+				{
+					FPreviewStats Stats;
+					Stats.Add(State->Frames[FrameIndex], State->BackgroundPixels, State->SilhouettePixels);
+					Overall.Add(State->Frames[FrameIndex], State->BackgroundPixels, State->SilhouettePixels);
+					if (FrameIndex > 0)
+					{
+						MaxDifference = FMath::Max(MaxDifference, MeanFrameDifference(State->Frames[FrameIndex], State->Frames[0]));
+					}
+					if (FrameCount > 1)
+					{
+						TSharedRef<FJsonObject> FrameJson = MakeShared<FJsonObject>();
+						FrameJson->SetNumberField(TEXT("index"), FrameIndex);
+						FrameJson->SetNumberField(TEXT("time"), FMath::RoundToDouble(State->GetFrameTime(FrameIndex) * 10000.0) / 10000.0);
+						FrameJson->SetObjectField(TEXT("stats"), Stats.ToJson());
+						FrameValues.Add(MakeShared<FJsonValueObject>(FrameJson));
+					}
+				}
+
 				Result.Data = MakeShared<FJsonObject>();
 				Result.Data->SetStringField(TEXT("asset"), State->Preview.AssetPath);
 				Result.Data->SetStringField(TEXT("mesh"), State->Preview.Mesh);
-				Result.Data->SetNumberField(TEXT("width"), State->Request.Width);
-				Result.Data->SetNumberField(TEXT("height"), State->Request.Height);
+				Result.Data->SetNumberField(TEXT("width"), Width);
+				Result.Data->SetNumberField(TEXT("height"), Height);
+				Result.Data->SetStringField(TEXT("tone"), State->Tone);
+				Result.Data->SetStringField(TEXT("toneNote"), DescribeTone(State->Tone));
+				Result.Data->SetNumberField(TEXT("time"), State->StartTime);
 				Result.Data->SetNumberField(TEXT("shaderErrors"), ShaderErrors.Num());
+				Result.Data->SetObjectField(TEXT("stats"), Overall.ToJson());
+				FString AnimationSentence;
+				if (FrameCount > 1)
+				{
+					const bool bAnimates = MaxDifference > FPreviewStatsThresholds::SameFrameDifference;
+					TSharedRef<FJsonObject> Animation = MakeShared<FJsonObject>();
+					Animation->SetNumberField(TEXT("frames"), FrameCount);
+					Animation->SetNumberField(TEXT("duration"), State->Duration);
+					Animation->SetNumberField(TEXT("maxDifference"), FMath::RoundToDouble(MaxDifference * 100.0) / 100.0);
+					Animation->SetBoolField(TEXT("changes"), bAnimates);
+					Result.Data->SetObjectField(TEXT("animation"), Animation);
+					Result.Data->SetArrayField(TEXT("frames"), FrameValues);
+					AnimationSentence = bAnimates
+						? FString::Printf(TEXT(" It animates: the %d frames over %g s differ from the first by up to %.1f/255 per pixel."), // I18N-EXEMPT: wire text
+							FrameCount, State->Duration, MaxDifference)
+						: FString::Printf(TEXT(" The %d frames over %g s are the same: nothing animates."), FrameCount, State->Duration); // I18N-EXEMPT: wire text
+				}
+
 				if (ShaderErrors.Num() > 0)
 				{
 					Result.Outcome = EOutcome::SourceError;
@@ -1003,8 +1277,13 @@ namespace UE::DreamShader::Editor::MCP
 				}
 				else
 				{
-					Result.Summary = FString::Printf(TEXT("Rendered %s on a %s, %dx%d."), *State->Preview.AssetPath, *State->Preview.Mesh, // I18N-EXEMPT: wire text
-						State->Request.Width, State->Request.Height);
+					const FString Finding = DescribePreview(Overall, State->Tone == TEXT("linear"), Result.Next);
+					if (FrameCount > 1 && MaxDifference <= FPreviewStatsThresholds::SameFrameDifference)
+					{
+						Result.Next.Add(TEXT("If it should move, check that Time (or a Panner) reaches the output, or set duration to one period of it."));
+					}
+					Result.Summary = FString::Printf(TEXT("%s.%s Image: %s (%s, %dx%d%s)."), *Finding, *AnimationSentence, *Rel(ImagePath), // I18N-EXEMPT: wire text
+						*State->Preview.Mesh, Width, Height, FrameCount > 1 ? *FString::Printf(TEXT(", %d frames side by side"), FrameCount) : TEXT("")); // I18N-EXEMPT: wire text
 				}
 				GetCheckedDiagnostics().Add(UE::DreamShader::NormalizeSourceFilePath(State->File), Result.Diagnostics);
 				OutResult = Result;
@@ -1189,5 +1468,7 @@ namespace UE::DreamShader::Editor::MCP
 	void ResetDreamShaderMCPActionState()
 	{
 		GetCheckedDiagnostics().Reset();
+		GetPreviewMaskMaterials().Silhouette.Reset();
+		GetPreviewMaskMaterials().Background.Reset();
 	}
 }

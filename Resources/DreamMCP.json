@@ -75,7 +75,7 @@
     },
     {
       "name": "preview",
-      "description": "Compile a material source and render one PNG of it on a mesh. Builds the material as the editor does: a ThinCustom material stays in memory, a Graph material is saved.",
+      "description": "Render a material source to a PNG and measure the picture. It compiles the source first, as compile does in the editor. The result says what the image shows: how much of the mesh is visible or see-through, the mean colour, the brightness, and how much is near white or near black. With frames, it renders several moments side by side, to show an animation.",
       "needs": "render",
       "writes": true,
       "long": true,
@@ -84,11 +84,15 @@
         "properties": {
           "file": { "type": "string", "description": "A .dss, .dsi or .dsm path relative to the project root" },
           "mesh": { "type": "string", "enum": ["sphere", "plane", "cube", "cylinder", "shaderball"], "description": "Preview mesh; default sphere. UI materials always draw on a plane" },
-          "width": { "type": "integer", "minimum": 64, "maximum": 2048, "description": "Image width in pixels; default 512" },
-          "height": { "type": "integer", "minimum": 64, "maximum": 2048, "description": "Image height in pixels; default 512" },
+          "width": { "type": "integer", "minimum": 64, "maximum": 2048, "description": "Width of one frame in pixels; default 512, or 256 with frames" },
+          "height": { "type": "integer", "minimum": 64, "maximum": 2048, "description": "Height in pixels; default 512, or 256 with frames" },
           "yaw": { "type": "number", "description": "Camera orbit yaw in degrees; default -157.5" },
           "pitch": { "type": "number", "description": "Camera orbit pitch in degrees; default -11.25" },
-          "force": { "type": "boolean", "description": "Recompile even when the source has not changed" }
+          "force": { "type": "boolean", "description": "Recompile even when the source has not changed" },
+          "time": { "type": "number", "description": "The material's Time in seconds, for the first frame; default 0" },
+          "frames": { "type": "integer", "minimum": 1, "maximum": 16, "description": "How many frames to render side by side, spread evenly over duration; default 1. The strip is at most 8192 pixels wide" },
+          "duration": { "type": "number", "minimum": 0.01, "maximum": 3600, "description": "Seconds the frames cover, starting at time; default 1. One period of the animation shows all of it" },
+          "tone": { "type": "string", "enum": ["editor", "fixed", "linear"], "description": "How colour reaches the image. editor (default): the project's exposure and the filmic tone curve, as the editor shows it; bright colours drift toward white. fixed: the same at exposure 1. linear: exposure 1 and no tone curve, so a pixel shows the output value, clipped at 1" }
         },
         "required": ["file"]
       }

@@ -152,7 +152,7 @@ it runs, and `busy` is `true` while any job is queued or running. One job runs a
 | `state` | Meaning |
 | :-- | :-- |
 | `queued` | waiting for the job ahead of it |
-| `running` | `progress` is `{ current, total, message }`: `check` counts files, `preview` its three stages; `message` names the stage |
+| `running` | `progress` is `{ current, total, message }`: `check` counts files, `preview` its stages (compile, shaders, warm-up, then one per frame); `message` names the stage |
 | `done` | finished with a result: `ok`, `source-error` or `refused` |
 | `failed` | finished with an `engine-error` result |
 | `cancelled` | stopped on request; its result's `reason` is `cancelled` |
@@ -200,15 +200,87 @@ Every sentence is invariant English whatever the editor's language — compiler 
 | `compile` | yes | assets | `file`; `force`, `shaders` | builds the source's assets; `shaders: true` takes `check -Shaders`'s route and maps HLSL errors to source lines (always saves) |
 | `diagnostics` | no | no | `file` (optional) | what this process already holds: the editor's diagnostics store, else the last check or compile through the endpoint |
 | `lookup` | no | no | `name`; `limit` (1–200, default 20) | the [builtin node catalog](../builtins/ue-expression.md): an exact name, alias or `m.` attribute gives the entry as `export-catalog` writes it; anything else the names that contain the text |
-| `preview` | yes | maybe | `file`; `mesh`, `width`, `height`, `yaw`, `pitch`, `force` | compiles the material as the [preview](preview.md) does, waits for its shaders a tick at a time, renders one PNG to `Saved/DreamMCP/artifacts/<job>.png`; a shader error is a `source-error` with the image of the default material |
+| `preview` | yes | maybe | `file`; `mesh`, `width`, `height`, `yaw`, `pitch`, `force`, `time`, `frames`, `duration`, `tone` | compiles the material as the [preview](preview.md) does, waits for its shaders a tick at a time, renders a PNG to `Saved/DreamMCP/artifacts/<job>.png` and [measures it](#what-preview-measures); a shader error is a `source-error` with the image of the default material |
 | `info` | no | no | — | plugin and engine versions, the source roots, the default backend, `mode`, `render`, whether Custom Pass and Substrate are compiled in |
 | `decompile` | yes | a source file | `asset`; `out`, `readable`, `overwrite` | the [decompiler](decompiler.md), written as the commandlet writes it; refuses `file-exists` unless `overwrite` |
 
 The refusal reasons the actions use: `file-not-found`, `not-a-source` (a `.dsh`, or not a DreamShader file),
 `not-previewable`, `asset-not-found`, `not-decompilable`, `file-exists`, `asset-hand-edited` (the asset was
-[edited by hand](../generation/divergence.md), `DSH8115` — `force` does not get past it), `cancelled`.
+[edited by hand](../generation/divergence.md), `DSH8115` — `force` does not get past it), `strip-too-wide`
+(`frames × width` over 8192 pixels), `cancelled`.
 The engine errors: `compiler-unavailable`, `compile-failed`, `preview-compile-failed`, `render-failed`,
 `artifact-not-written`, `source-not-written`.
+
+### What `preview` measures
+
+A model that cannot look at the image still has to know what it shows, so `preview` measures its pixels and says
+the one fact that matters most in the first sentence of `summary`, with what to do about it in `next`. The
+summary ends with the image's path.
+
+Three renders go into the measurement, all with the same mesh, camera, time and tone: the material; the
+background alone (the mesh drawn with nothing on it); the mesh's silhouette (unlit magenta, two-sided). The
+background and the silhouette are rendered once per job, at the first frame's time — a World Position Offset that
+moves the mesh is not followed. All three are drawn once and thrown away first: a material that has never been
+drawn asks for its shaders when it is, and draws as the engine's default material until they are in.
+
+| Term | Means |
+| :-- | :-- |
+| mesh pixel | the silhouette render differs from the background in some channel by more than **32** (of 255) |
+| transparent | a mesh pixel whose every channel is within **4** of the background: the material lets the background through |
+| foreground | a mesh pixel that is not transparent — what the material draws |
+| near white | a foreground pixel with every channel at **240** or above |
+| near black | a foreground pixel with every channel at **12** or below |
+| luminance | Rec. 709 weights (0.2126, 0.7152, 0.0722) on the PNG's 0–1 values — the gamma-encoded image as it looks, not scene light |
+| flat | luminance and every channel with a standard deviation of **0.012** or less |
+
+`data.stats` (all frames together) and `data.frames[].stats` (each frame) hold:
+
+| Field | |
+| :-- | :-- |
+| `coverage` | share of the image the mesh covers, 0–1 |
+| `transparent` | share of the mesh that is transparent, 0–1 |
+| `foreground` | share of the image that is foreground, 0–1 |
+| `meanColor`, `meanColorName` | the foreground's mean, `#RRGGBB`, and a plain name for it (`orange`, `dark blue`, `light grey`) |
+| `luminance` | `{ min, max, mean, stdDev }` of the foreground, 0–1 |
+| `nearWhite`, `nearBlack` | shares of the foreground, 0–1 |
+| `flat` | the foreground is one colour |
+
+The first rule that holds gives the summary's fact:
+
+| Rule | Fact | `next` |
+| :-- | :-- | :-- |
+| coverage under 0.5% | the mesh is not in the picture | check `yaw`, `pitch`, `mesh`, a World Position Offset |
+| transparent 95% or more | the material is invisible | check Opacity, OpacityMask and the blend mode |
+| near black 90% or more | the material renders black | an Unlit material shows only EmissiveColor; a lit one needs BaseColor |
+| near white 30% or more | the material is mostly white (`tone: "linear"`: clipped at 1) | bright values are pressed toward white; `tone: "linear"` reads the values |
+| flat | one flat colour, with its `#RRGGBB` | check what should make it vary |
+| otherwise | the mean colour and the luminance range, and the see-through share when it is 5% or more | — |
+
+`tone` decides how colour reaches the image:
+
+| `tone` | Exposure | Tone curve | Use it to |
+| :-- | :-- | :-- | :-- |
+| `editor` (default) | the project's, as the engine's thumbnail views use it: a thumbnail has no view history, so it is the exposure the engine fixes from the auto-exposure range | filmic, with bloom | see what the [preview](preview.md) shows the user |
+| `fixed` | 1 (EV100 0), whatever the project's settings | filmic, with bloom | compare across projects with different exposure settings |
+| `linear` | 1 (EV100 0) | none and no bloom — the tone mapper's gamma-only path, gamma 2.2 | read the material's output: emissive (1, 0, 0) is `#FF0000`, a value of 1 or more clips to white |
+
+Measured with Unlit emissive greys on the plugin's test host, whose exposure settings are the defaults (there
+`editor` and `fixed` draw the same):
+
+| Emissive | 0.05 | 0.18 | 0.5 | 1 | 2 | 4 | (1, 0, 0) |
+| :-- | --: | --: | --: | --: | --: | --: | :-- |
+| `editor`, `fixed` | 54 | 117 | 178 | 208 | 227 | 240 | (227, 0, 6) |
+| `linear` | 65 | 117 | 186 | 255 | 255 | 255 | (255, 0, 0) |
+
+The filmic curve compresses: nothing clips, and bright colours drift toward white — that is what an
+emissive-heavy preview looks like, and `data.toneNote` says so on every result.
+
+`time` sets the material's Time (both clocks, with and without *Ignore Pause*) in seconds; default `0`, so a
+preview of the same source is the same image every time. `frames` renders that many moments spread evenly
+over `duration` seconds from `time` — frame *i* at `time + duration × i / frames` — side by side in one PNG, each
+`width × height` (default 256 with `frames`, 512 without). `data.animation` is `{ frames, duration,
+maxDifference, changes }`: `maxDifference` is the largest mean per-pixel difference from the first frame (0–255),
+and `changes` is whether it is above 0.5. A strip whose frames are all the same says so in the summary.
 
 ## Example
 
