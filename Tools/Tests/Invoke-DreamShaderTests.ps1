@@ -13,7 +13,7 @@
               as expected (see $ExpectedUnderNullRhi), not as failures.
       Fast    the Core-only layers and the Custom Pass logic tests, -nullrhi. Seconds, no assets.
       Rhi     the tests that need a renderer -- Custom Pass render and lifecycle, the HLSL slot registry and its
-              pre-check, pixel parity, preview probes --
+              pre-check, pixel parity, preview probes, the DreamMCP endpoint's preview --
               with a real RHI (-RenderOffscreen, D3D12, no window).
 
     -WithoutCustomPass builds the plugin the way an engine before 5.8 builds it -- the Custom Pass asset types
@@ -72,7 +72,7 @@ $ExpectedMissingContent = @(
 $Presets = @{
     Suite = @{ Filter = 'DreamShader'; Rhi = $false }
     Fast  = @{ Filter = 'DreamShader.Lang+DreamShader.Lang2+DreamShader.Pass.Logic'; Rhi = $false }
-    Rhi   = @{ Filter = 'DreamShader.Pass.Render+DreamShader.Pass.Lifecycle+DreamShader.Compiler2.Pipeline.Registry+DreamShader.Render+DreamShader.Preview'; Rhi = $true }
+    Rhi   = @{ Filter = 'DreamShader.Pass.Render+DreamShader.Pass.Lifecycle+DreamShader.Compiler2.Pipeline.Registry+DreamShader.Render+DreamShader.Preview+DreamShader.MCP.Render'; Rhi = $true }
 }
 
 # ------------------------------------------------------------------------------------------ inputs
