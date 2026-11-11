@@ -27,7 +27,8 @@
   (`"5.8"`) failed at once with `EngineAssociation '5.8' is not registered` unless `-Engine` was passed: the driver
   looked only in the registry, and the launcher writes its `Unreal Engine\<version>` key on some installs only. The
   driver now also reads the launcher's own list, `%ProgramData%\Epic\UnrealEngineLauncher\LauncherInstalled.dat`, for
-  the entry named `UE_<version>`. `dsc.ps1 info` resolves the engine the same way.
+  the entry named `UE_<version>`. `dsc.ps1 info` resolves the engine the same way, and so do the test host, the test
+  runner and the Custom Pass demo script under `Tools/`.
 
 - **An HLSL pass at `BeginView` crashed the editor on an engine that adds scene textures of its own.** The scene
   textures there are placeholders the runtime fills in itself, by name; a renderer fork whose
