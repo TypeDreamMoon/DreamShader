@@ -1,0 +1,36 @@
+name: "Feature or syntax proposal / 功能或语法提案"
+description: "Something the plugin cannot express or do yet. / 插件现在表达不了或做不到的事。"
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problem / 要解决的问题"
+      description: "What you are trying to make, and where the plugin stops you. / 你想做什么,卡在哪。"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "Proposed source / 希望写成什么样"
+      description: "The `.dss` / `.dsi` / `.dsp` / `.dsm` / `.dsf` you wish you could write. / 你希望能这样写。"
+      render: text
+  - type: input
+    id: engine
+    attributes:
+      label: "Engine feature it maps to / 对应的引擎功能"
+      description: "The node, module, property or API in Unreal this would drive, if you know it. / 对应 Unreal 里的节点、模块、属性或 API(知道的话)。"
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Workarounds and alternatives / 现有绕法与其他方案"
+  - type: dropdown
+    id: implement
+    attributes:
+      label: "Would you implement it? / 愿意自己实现吗"
+      options:
+        - "Yes / 愿意"
+        - "With guidance / 有人指路的话可以"
+        - "No / 不了"
+    validations:
+      required: true

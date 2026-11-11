@@ -1,0 +1,39 @@
+name: "Docs or translation / 文档或翻译"
+description: "A page that is wrong, unclear, missing, or badly translated. / 文档有错、看不懂、缺内容,或翻译有问题。"
+labels: ["documentation"]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: "Page / 页面"
+      description: "URL on https://shader.toolchain.64hz.cn or path under Docs/. / 文档站链接或 Docs/ 下的路径。"
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: "Language / 语言"
+      options:
+        - "English"
+        - "简体中文 (zh-CN)"
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: "Kind / 类型"
+      options:
+        - "Wrong or outdated / 有错或过时"
+        - "Unclear / 看不懂"
+        - "Missing / 缺内容"
+        - "Translation / 翻译问题"
+        - "Broken link or rendering / 坏链接或渲染问题"
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: "Details / 细节"
+      description: "Quote the sentence, and say what it should be if you know. / 引用原句;知道正确内容的话请写上。"
+    validations:
+      required: true

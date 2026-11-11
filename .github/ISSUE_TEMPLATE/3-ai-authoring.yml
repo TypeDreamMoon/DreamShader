@@ -1,0 +1,76 @@
+name: "AI wrote it wrong / AI 写错了"
+description: "An AI tool wrote DreamShader source that failed to build, looked wrong, or used things that do not exist. / AI 写出的源码编不过、效果不对,或用了不存在的东西。"
+labels: ["ai-authoring"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        These reports improve the agent guide, the skills and the examples. English or 中文, either is fine.
+        这类反馈用来改进 agent 指南、技能和示例。中英文均可。
+  - type: input
+    id: tool
+    attributes:
+      label: "Tool and model / 工具与模型"
+      placeholder: "Claude Code + Opus 5.5, OpenCode + deepseek-flash, Cursor + …"
+    validations:
+      required: true
+  - type: dropdown
+    id: support
+    attributes:
+      label: "What it had to work with / 它用到了什么"
+      multiple: true
+      options:
+        - "AGENTS.md"
+        - "Plugin skills / 插件技能"
+        - "MCP server / MCP 服务"
+        - "Docs site / 文档站"
+        - "Nothing / 都没有"
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: "Environment / 环境"
+      description: "Output of `pwsh -File Plugins/DreamShader/.skill/dsc.ps1 info`, or the plugin version. / 上面这条命令的输出,或插件版本。"
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: request
+    attributes:
+      label: "What you asked for / 你的原始需求"
+      description: "The prompt, as you wrote it. / 你当时写的提示词原文。"
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: "What it wrote / 它写出的源码"
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: failure
+    attributes:
+      label: "What went wrong / 错在哪"
+      multiple: true
+      options:
+        - "Did not build / 编不过"
+        - "Built, but the result is wrong / 编过了但效果不对"
+        - "Invented syntax or names / 编造了语法或名字"
+        - "Used outdated syntax / 用了旧语法"
+        - "Too many round trips / 来回次数太多"
+        - "Other / 其他"
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: "Details / 细节"
+      description: "Diagnostics, screenshots, what the correct source turned out to be. / 诊断信息、截图、最后正确的写法。"
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: "Reuse / 再利用"
+      options:
+        - label: "The request and source above may be added to this plugin's public examples and evaluation set. / 上面的需求和源码可以收进本插件公开的示例与评测集。"
