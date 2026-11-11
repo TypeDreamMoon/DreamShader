@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "tool": "0.3.1",
+  "tool": "0.3.2",
   "source": "en",
   "targets": [
     "zh-CN"
