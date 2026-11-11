@@ -139,4 +139,5 @@ Presets, filters and the RHI gate: `Docs/contributing/testing.md`.
 - Don't hand-edit the generated half of `Docs/diagnostics/` or a published skill under `.claude/skills/`.
 - Don't run the test suite on a project that has an editor open.
 - Don't open a pull request without the result line of `Invoke-DreamShaderTests.ps1 -Preset Suite`.
-- Don't write syntax you have not seen in the reference or in `Tests/Corpus/`.
+- Don't write syntax you have not seen in `.skill/reference/`. Don't copy from `Tests/Corpus/`: it holds 1.x
+  sources and deliberately broken test cases.
