@@ -48,7 +48,7 @@ sys.setrecursionlimit(20000)
 
 LEGACY_PARITY_FILTER_KEYS = ("Code", "IncludeFilePaths", "AdditionalOutputs")
 
-# Engine output layouts (F:/UnrealEngine/UE_Moon/Engine/Source/Runtime/Engine/Private/Materials/MaterialExpressions.cpp).
+# Engine output layouts (<engine root>/Engine/Source/Runtime/Engine/Private/Materials/MaterialExpressions.cpp).
 # A "view" class publishes several outputs that are channel views of ONE value; its input masks are absolute channel
 # flags on that full value.
 VIEW_OUTPUTS = {

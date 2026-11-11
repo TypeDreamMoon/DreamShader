@@ -305,13 +305,13 @@ an asset, so an asset already on disk is dumped as it stands rather than rebuilt
 
 ```powershell
 & $UnrealEditorCmd $Project -run=DreamShader compile -All -Force -unattended -nopause -nullrhi -nosplash -stdout -log
-& $UnrealEditorCmd $Project -run=DreamShader dump-graph -All -Out="I:/Baseline/before" -unattended -nopause -nullrhi -nosplash -stdout -log
+& $UnrealEditorCmd $Project -run=DreamShader dump-graph -All -Out="<baseline>/before" -unattended -nopause -nullrhi -nosplash -stdout -log
 ```
 
 Then, after the change:
 
 ```powershell
-git diff --no-index -- I:/Baseline/before I:/Baseline/after
+git diff --no-index -- <baseline>/before <baseline>/after
 ```
 
 Every hunk is a behavioural difference. `./dsc.ps1 dump-graph -All -Out …` is the shorter spelling of

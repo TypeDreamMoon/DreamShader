@@ -91,13 +91,13 @@
     ./dsc.ps1 compile -All -Define USE_DETAIL=0,SHIP_BUILD -Force
 
 .EXAMPLE
-    ./dsc.ps1 decompile /Game/Materials/M_Steel -Out I:/Work/M_Steel.dss
+    ./dsc.ps1 decompile /Game/Materials/M_Steel -Out Work/M_Steel.dss
 
 .EXAMPLE
     ./dsc.ps1 decompile /Game/Materials/MI_Steel_Red
 
 .EXAMPLE
-    ./dsc.ps1 decompile /Game/Materials/M_Steel -Format Legacy -Out I:/Work/M_Steel.dsm
+    ./dsc.ps1 decompile /Game/Materials/M_Steel -Format Legacy -Out Work/M_Steel.dsm
 
 .EXAMPLE
     ./dsc.ps1 migrate DShader/Materials/M_Foo.dsm -Check
@@ -109,7 +109,7 @@
     ./dsc.ps1 migrate -Root MyPlugin -Check
 
 .EXAMPLE
-    ./dsc.ps1 dump-graph -All -Out I:/Baseline/before
+    ./dsc.ps1 dump-graph -All -Out Baseline/before
 
 .EXAMPLE
     ./dsc.ps1 check -All
@@ -121,7 +121,7 @@
     ./dsc.ps1 export-catalog
 
 .EXAMPLE
-    ./dsc.ps1 dump-layout DShader/Materials/M_Toon.dss -Out I:/Work/Layout
+    ./dsc.ps1 dump-layout DShader/Materials/M_Toon.dss -Out Work/Layout
 
 .EXAMPLE
     ./dsc.ps1 pass-registry

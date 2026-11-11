@@ -286,8 +286,8 @@ scratch 区 `Pipeline2`）覆盖；规则 V1-V13 的每个 DSH 码一正一反�
 命令行（headless）：
 
 ```
-"F:\UnrealEngine\UE_Moon\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" ^
-  "I:\UnrealProject_Moon\DEV_58\MoonEngineSample\MoonEngineSample.uproject" ^
+"<EngineDir>\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" ^
+  "<ProjectDir>\<Project>.uproject" ^
   -ExecCmds="Automation RunTests DreamShader.Lang.Parse; Quit" ^
   -nullrhi -unattended -nopause -nosplash -log
 ```
