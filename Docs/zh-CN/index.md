@@ -191,6 +191,7 @@ DreamShader 将 **DreamShaderLang** 源文件——`.dsm`、`.dsf`、`.dsh`，�
 | [Package](tools/packages.md) | ``DShader/Packages`` 共享库 |
 | [Commandlet](tools/commandlet.md) | 无头编译与反编译 |
 | [编辑器 bridge](tools/bridge.md) | 请求文件、WebSocket 协议、产物 |
+| [AI 代理](tools/ai-agents.md) | 代理指南、技能、MCP 服务器、创作循环 |
 
 <a id="c-apiapiindexmd"></a>
 

@@ -359,10 +359,10 @@ commandlet 运行通过不同途径达到相同状态：每当 `IsRunningCommand
 
 ```powershell
 # No menus, no watcher, no bridge.
-& "$Engine\Binaries\Win64\UnrealEditor.exe" "I:\Project\Project.uproject" -NoDreamShaderEditorBridge
+& "$Engine\Binaries\Win64\UnrealEditor.exe" "<ProjectDir>\<Project>.uproject" -NoDreamShaderEditorBridge
 
 # The commandlet is unaffected by the switch.
-& "$Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "I:\Project\Project.uproject" `
+& "$Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "<ProjectDir>\<Project>.uproject" `
     -run=DreamShader compile -All -Force -unattended -nopause -nosplash -stdout -log
 ```
 

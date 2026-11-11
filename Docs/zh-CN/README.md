@@ -29,7 +29,7 @@
 | 节点与参数 | [内置](builtins/index.md)、[参数](parameters/index.md)、[设置](settings/index.md) |
 | 生成 | [管线与资产生命周期](generation/index.md)、[输出绑定](generation/outputs.md)、[版本控制](generation/source-control.md) |
 | 示例 | [参考示例](examples/index.md)、[常用写法](examples/patterns.md)、[完整示例](examples/recipes.md)、[Custom Pass 示例](examples/custom-pass.md) |
-| 工具 | [编辑器工具](tools/index.md)、[VSCode 与 Rider](tools/vscode.md)、[命令行](tools/commandlet.md) |
+| 工具 | [编辑器工具](tools/index.md)、[VSCode 与 Rider](tools/vscode.md)、[commandlet](tools/commandlet.md)、[AI 智能体](tools/ai-agents.md) |
 | Custom Pass | [运行时](runtime/index.md)、[HLSL pass](runtime/hlsl.md)、[管线语言](language-v2/passes.md) |
 | 诊断 | [错误与警告速查](diagnostics/index.md)、[当前限制](diagnostics/limitations.md) |
 | 开发 | [C++ API](api/index.md)、[参与贡献](contributing/index.md)、[测试](contributing/testing.md)、[发布](contributing/release.md) |

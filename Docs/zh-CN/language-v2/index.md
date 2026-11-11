@@ -245,8 +245,8 @@ float Pulse(float2 UV, float Gain)
 无头运行：
 
 ```
-"F:\UnrealEngine\UE_Moon\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" ^
-  "I:\UnrealProject_Moon\DEV_58\MoonEngineSample\MoonEngineSample.uproject" ^
+"<EngineDir>\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" ^
+  "<ProjectDir>\<Project>.uproject" ^
   -ExecCmds="Automation RunTests DreamShader.Lang2; Quit" ^
   -nullrhi -unattended -nopause -nosplash -log
 ```
