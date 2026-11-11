@@ -272,6 +272,13 @@ Windows 上 UE `5.3` 和 `5.4` 可能需要 MSVC `14.38` 工具链——更新�
 - 更深入的 Material Layer Stack 与 Layer Instance 工作流支持。
 - 更深入的 Moon Engine 集成——参考：<https://zhuanlan.zhihu.com/p/21979494450>
 
+## 参与贡献
+
+欢迎提 bug、提案和 PR,请先读 [CONTRIBUTING.zh-CN.md](CONTRIBUTING.zh-CN.md);报 bug 前先运行
+`pwsh -File Plugins/DreamShader/.skill/dsc.ps1 info`,把输出贴进表单。提问请去
+[Discussions](https://github.com/TypeDreamMoon/DreamShader/discussions)。编码 agent 从 [AGENTS.md](AGENTS.md) 开始;
+技能和可选的 MCP 服务见 [AI agents](Docs/tools/agents.md)。
+
 ## 许可证
 
 DreamShader 以 [MIT 许可证](LICENSE)发布。Bug 报告和功能建议请提
