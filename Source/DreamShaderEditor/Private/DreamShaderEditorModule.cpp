@@ -1,4 +1,5 @@
 #include "Bridge/DreamShaderEditorBridge.h"
+#include "MCP/DreamShaderMCPService.h"
 #include "Navigation/DreamShaderSourceNavigation.h"
 #include "Pass/DreamPassPipelineCustomization.h"
 #include "DreamShaderCompilerService.h"
@@ -60,11 +61,22 @@ public:
 					this,
 					&FDreamShaderEditorModule::HandlePostEngineInitForCook);
 			}
+			// A Dream...Host commandlet serves the DreamMCP endpoint; every other commandlet starts none.
+			UE::DreamShader::Editor::MCP::StartupDreamShaderMCP(/*bEditorBridge*/ false);
 			return;
 		}
 
 		// The details panel of a pass pipeline reads the asset alone, so it is there with or without the bridge.
 		UE::DreamShader::Editor::Private::FDreamPassPipelineCustomization::Register();
+
+		// A windowless editor a DreamMCP server started (-DreamMCPHost) is nobody's editor: no bridge -- no startup
+		// sweep, no file watcher, no preview WebSocket, no claim on the project's bridge ownership -- no browser tab, no
+		// menus. Only the endpoint, which compiles through the compiler service as the host commandlet does.
+		if (UE::DreamShader::Editor::MCP::IsDreamMCPHostProcess())
+		{
+			UE::DreamShader::Editor::MCP::StartupDreamShaderMCP(/*bEditorBridge*/ false);
+			return;
+		}
 
 		if (ShouldSkipDreamShaderEditorBridge())
 		{
@@ -83,10 +95,17 @@ public:
 
 		// After the bridge, because ownership decides whether this process may rewrite sources at all.
 		UE::DreamShader::Editor::Private::FDreamShaderAssetRenameSyncService::Startup();
+
+		// After the bridge too: the endpoint's compile goes through it. -NoDreamShaderEditorBridge therefore also means
+		// no endpoint, which keeps an automation run from listening or publishing itself.
+		UE::DreamShader::Editor::MCP::StartupDreamShaderMCP(/*bEditorBridge*/ true);
 	}
 
 	virtual void ShutdownModule() override
 	{
+		// First: the endpoint's jobs and routes reach the bridge, which goes below.
+		UE::DreamShader::Editor::MCP::ShutdownDreamShaderMCP();
+
 		if (CookPostEngineInitHandle.IsValid())
 		{
 			DREAMSHADER_POST_ENGINE_INIT_DELEGATE().Remove(CookPostEngineInitHandle);

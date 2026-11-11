@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "protocol": 1,
+  "id": "shader",
+  "plugin": "DreamShader",
+  "title": "DreamShader",
+  "description": "DreamShader turns text into Unreal materials. A .dss source is HLSL with declarations: uniforms become parameters and one export function becomes a material, or material functions. A .dsi builds a material instance, a .dsp a Custom Pass render pipeline (UE 5.8), a .dsh holds shared helpers; .dsm/.dsf are the older 1.x language. Sources live under the project's DShader/ folder and build assets at the same path under /Game. Use this tool to check, compile and preview sources, read their diagnostics, look up the UE.* and Substrate.* nodes a source can call, and turn an existing material back into text. Read the language reference before writing a source.",
+  "route": "/dream/shader",
+  "host": { "commandlet": "DreamShaderHost" },
+  "extensions": [".dss", ".dsi", ".dsp", ".dsh", ".dsm", ".dsf"],
+  "sourceRoots": ["DShader"],
+  "reference": [
+    { "title": "DreamShaderLang 2.0: .dss, .dsi and .dsh sources", "path": ".skill/reference/dss.md" },
+    { "title": "Custom Pass pipelines: .dsp sources", "path": ".skill/reference/dsp.md" },
+    { "title": "The 1.x language: .dsm and .dsf sources", "path": ".skill/reference/legacy.md" }
+  ],
+  "actions": [
+    {
+      "name": "check",
+      "description": "Parse and validate a source without building anything; writes nothing. The fast first test after every edit.",
+      "needs": "engine",
+      "writes": false,
+      "long": true,
+      "args": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string", "description": "Source path relative to the project root, e.g. DShader/UI/M_Panel.dss" },
+          "all": { "type": "boolean", "description": "Check every source of the project instead of one file" }
+        }
+      }
+    },
+    {
+      "name": "compile",
+      "description": "Build the assets a source declares. Writes assets: in the editor a ThinCustom material stays in memory, in the host it is saved. shaders=true also compiles its shaders and reports HLSL errors at source lines (always saves).",
+      "needs": "engine",
+      "writes": true,
+      "long": true,
+      "args": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string", "description": "Source path relative to the project root" },
+          "force": { "type": "boolean", "description": "Rebuild even when the source has not changed" },
+          "shaders": { "type": "boolean", "description": "Also compile the shaders and report their errors" }
+        },
+        "required": ["file"]
+      }
+    },
+    {
+      "name": "diagnostics",
+      "description": "The errors and warnings this engine already holds from the last check or compile, without compiling anything. Without file: every file that has some.",
+      "needs": "engine",
+      "writes": false,
+      "long": false,
+      "args": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string", "description": "Source path relative to the project root" }
+        }
+      }
+    },
+    {
+      "name": "lookup",
+      "description": "Search the node catalog sources call: UE.* and Substrate.* nodes with their inputs, outputs and properties, and material attributes (m.BaseColor). An exact name gives the full entry; otherwise a list of names containing the text.",
+      "needs": "engine",
+      "writes": false,
+      "long": false,
+      "args": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "A node or attribute name, or part of one: UE.TextureSample, Lerp, BaseColor" },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 200, "description": "Most matches to list; default 20" }
+        },
+        "required": ["name"]
+      }
+    },
+    {
+      "name": "preview",
+      "description": "Compile a material source and render one PNG of it on a mesh. Builds the material as the editor does: a ThinCustom material stays in memory, a Graph material is saved.",
+      "needs": "render",
+      "writes": true,
+      "long": true,
+      "args": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string", "description": "A .dss, .dsi or .dsm path relative to the project root" },
+          "mesh": { "type": "string", "enum": ["sphere", "plane", "cube", "cylinder", "shaderball"], "description": "Preview mesh; default sphere. UI materials always draw on a plane" },
+          "width": { "type": "integer", "minimum": 64, "maximum": 2048, "description": "Image width in pixels; default 512" },
+          "height": { "type": "integer", "minimum": 64, "maximum": 2048, "description": "Image height in pixels; default 512" },
+          "yaw": { "type": "number", "description": "Camera orbit yaw in degrees; default -157.5" },
+          "pitch": { "type": "number", "description": "Camera orbit pitch in degrees; default -11.25" },
+          "force": { "type": "boolean", "description": "Recompile even when the source has not changed" }
+        },
+        "required": ["file"]
+      }
+    },
+    {
+      "name": "info",
+      "description": "Plugin and engine versions, the source roots, the default backend, and what this engine process can do (editor or host, renders or not).",
+      "needs": "engine",
+      "writes": false,
+      "long": false,
+      "args": { "type": "object", "properties": {} }
+    },
+    {
+      "name": "decompile",
+      "description": "Write an existing material, material function or material instance out as a DreamShader source (.dss, .dsi or .dsp). Writes a source file, never an asset.",
+      "needs": "engine",
+      "writes": true,
+      "long": true,
+      "args": {
+        "type": "object",
+        "properties": {
+          "asset": { "type": "string", "description": "Object or package path, e.g. /Game/Materials/M_Rock" },
+          "out": { "type": "string", "description": "Destination relative to the project root; default under DShader/Decompiled/" },
+          "readable": { "type": "boolean", "description": "Prefer HLSL operators over exact node calls (a rebuild may then use other node classes)" },
+          "overwrite": { "type": "boolean", "description": "Replace the destination when it exists" }
+        },
+        "required": ["asset"]
+      }
+    }
+  ]
+}
