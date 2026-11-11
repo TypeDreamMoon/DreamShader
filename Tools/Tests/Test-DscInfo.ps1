@@ -103,6 +103,41 @@ try {
         $env:UE_ENGINE_ROOT = $savedRoot
     }
 
+    # A launcher engine with no registry key: only the launcher's LauncherInstalled.dat lists it. The driver
+    # runs with ProgramData pointed at a fake manifest, and the association is a version no registry has.
+    # A plugin artifact named after the same version comes first, and is not the engine.
+    $launcherProject = Join-Path $scratchPath 'Launcher Project/LauncherTest.uproject'
+    Write-TestFile -Path $launcherProject -Text '{"FileVersion":3,"EngineAssociation":"0.0"}'
+    $fakeProgramData = Join-Path $scratchPath 'ProgramData'
+    $manifest = [ordered]@{
+        InstallationList = @(
+            [ordered]@{ InstallLocation = $source; AppName = 'FabPlugin_0.0' }
+            [ordered]@{ InstallLocation = $installed; AppName = 'UE_0.0' }
+            [ordered]@{ InstallLocation = (Join-Path $scratchPath 'Gone Engine'); AppName = 'UE_0.1' }
+        )
+    }
+    Write-TestFile -Path (Join-Path $fakeProgramData 'Epic/UnrealEngineLauncher/LauncherInstalled.dat') -Text ($manifest | ConvertTo-Json -Depth 4)
+    $savedRoot = $env:UE_ENGINE_ROOT
+    $savedProgramData = $env:ProgramData
+    try {
+        $env:UE_ENGINE_ROOT = $null
+        $env:ProgramData = $fakeProgramData
+        $report = Invoke-Info @('-Project', $launcherProject)
+        Assert-Report $report 'launcher manifest' @($scratchName, 'Installed Engine', 'Launcher Project')
+        Assert-True ($report.Values['engine.version'] -ceq '5.8.1') 'launcher manifest: the engine is found by its UE_ name'
+        Assert-True ($report.Values['engine.kind'] -ceq 'launcher') 'launcher manifest: not the plugin artifact listed before it'
+
+        # An engine the manifest lists whose directory is gone resolves to nothing.
+        Write-TestFile -Path $launcherProject -Text '{"FileVersion":3,"EngineAssociation":"0.1"}'
+        $report = Invoke-Info @('-Project', $launcherProject)
+        Assert-Report $report 'launcher manifest, engine gone' @($scratchName, 'Gone Engine')
+        Assert-True ($report.Values['engine.version'] -ceq 'unknown') 'launcher manifest, engine gone: engine.version is unknown'
+    }
+    finally {
+        $env:UE_ENGINE_ROOT = $savedRoot
+        $env:ProgramData = $savedProgramData
+    }
+
     Write-Host "PASS: dsc info ($script:assertions assertions; no engine required)."
 }
 finally {

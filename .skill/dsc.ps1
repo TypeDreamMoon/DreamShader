@@ -352,15 +352,48 @@ function Resolve-EngineRoot {
         return $builds.$association.TrimEnd('\', '/')
     }
 
-    # Launcher installs register a version number instead ("5.8"). If neither key has it, pass
-    # -Engine or set UE_ENGINE_ROOT.
+    # Launcher installs register a version number instead ("5.8").
     foreach ($hive in 'HKLM:', 'HKCU:') {
         $key = "$hive\SOFTWARE\EpicGames\Unreal Engine\$association"
         $installed = (Get-ItemProperty $key -ErrorAction SilentlyContinue).InstalledDirectory
         if ($installed) { return $installed.TrimEnd('\', '/') }
     }
 
+    # Not every launcher install writes that key; the launcher's own manifest still lists the engine.
+    $launcher = Get-LauncherEngineRoot -Association $association
+    if ($launcher) { return $launcher }
+
     throw "EngineAssociation '$association' is not registered. Pass -Engine or set UE_ENGINE_ROOT."
+}
+
+function Get-LauncherEngineRoot {
+    # The Epic Games Launcher records every engine it installs in LauncherInstalled.dat, but writes the
+    # "Unreal Engine\<version>" registry key only on some installs: an engine moved to another drive, or
+    # installed by a newer launcher, has the manifest entry and no key. The engine is the entry whose
+    # AppName is exactly UE_<association>; the same InstallLocation also appears under plugin artifacts
+    # (FabPlugin_5.8, QuixelBridge_5.8), which is why the name is matched whole.
+    param(
+        [string]$Association,
+        [string]$ManifestPath = $(if ($env:ProgramData) { Join-Path $env:ProgramData 'Epic/UnrealEngineLauncher/LauncherInstalled.dat' })
+    )
+
+    if (-not $Association -or -not $ManifestPath -or -not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) { return $null }
+    try {
+        $manifest = Get-Content -LiteralPath $ManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    }
+    catch {
+        return $null
+    }
+
+    foreach ($entry in @($manifest.PSObject.Properties['InstallationList'] | ForEach-Object { $_.Value })) {
+        $name = $entry.PSObject.Properties['AppName']
+        $location = $entry.PSObject.Properties['InstallLocation']
+        if ($name -and $location -and $name.Value -ceq "UE_$Association" -and $location.Value -and
+            (Test-Path -LiteralPath $location.Value -PathType Container)) {
+            return ([string]$location.Value).TrimEnd('\', '/')
+        }
+    }
+    return $null
 }
 
 function Remove-EmptyParents {
