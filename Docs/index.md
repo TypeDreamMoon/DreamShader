@@ -174,7 +174,7 @@ screen-space effects, compute shaders writing data textures.
 | [Packages](tools/packages.md) | `DShader/Packages` shared libraries |
 | [Commandlet](tools/commandlet.md) | Headless compile and decompile |
 | [Editor bridge](tools/bridge.md) | Request files, WebSocket protocol, artifacts |
-| [AI agents](tools/agents.md) | Agent guide, skills, MCP server, the authoring loop |
+| [AI agents](tools/ai-agents.md) | Agent guide, skills, MCP server, the authoring loop |
 
 ### [C++ API](api/index.md)
 

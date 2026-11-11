@@ -21,7 +21,7 @@ lives.
 | Ask a question or share an idea | [GitHub Discussions](https://github.com/TypeDreamMoon/DreamShader/discussions) |
 | Propose a feature | a proposal issue first, before any code |
 | Open a pull request, with or without AI help | [`CONTRIBUTING.md`](https://github.com/TypeDreamMoon/DreamShader/blob/main/CONTRIBUTING.md) — the test command, what to update, the AI rules |
-| Point an agent at the repository | [`AGENTS.md`](https://github.com/TypeDreamMoon/DreamShader/blob/main/AGENTS.md); for authoring in a project, [AI agents](../tools/agents.md) |
+| Point an agent at the repository | [`AGENTS.md`](https://github.com/TypeDreamMoon/DreamShader/blob/main/AGENTS.md); for authoring in a project, [AI agents](../tools/ai-agents.md) |
 
 ## Synopsis
 

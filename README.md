@@ -297,7 +297,7 @@ again; their buffers can be read by any material. See [Custom Pass runtime](Docs
 Bug reports, proposals and pull requests are welcome — read [CONTRIBUTING.md](CONTRIBUTING.md) first; before
 reporting a bug, run `pwsh -File Plugins/DreamShader/.skill/dsc.ps1 info` and paste its output into the form.
 Questions go to [Discussions](https://github.com/TypeDreamMoon/DreamShader/discussions). Coding agents start at
-[AGENTS.md](AGENTS.md); [AI agents](Docs/tools/agents.md) covers the skills and the optional MCP server.
+[AGENTS.md](AGENTS.md); [AI agents](Docs/tools/ai-agents.md) covers the skills and the optional MCP server.
 
 ## License
 

@@ -127,7 +127,7 @@ Presets, filters and the RHI gate: `Docs/contributing/testing.md`.
 - `Docs/contributing/index.md` — modules, build rules, engine matrix, localization
 - `Docs/contributing/testing.md` — the automation suite and the fixture corpus
 - `Docs/contributing/release.md` — tags, the release workflow, the archive
-- `Docs/tools/agents.md` — skills, publishing them, and the optional MCP server
+- `Docs/tools/ai-agents.md` — skills, publishing them, and the optional MCP server
 - `Docs/tools/commandlet.md` — every `-run=DreamShader` verb and flag
 - `Docs/language-v2/index.md` — the 2.0 language reference
 - `.skill/README.md` — the `dsc.ps1` driver and its verbs

@@ -277,7 +277,7 @@ Windows 上 UE `5.3` 和 `5.4` 可能需要 MSVC `14.38` 工具链——更新�
 欢迎提 bug、提案和 PR,请先读 [CONTRIBUTING.zh-CN.md](CONTRIBUTING.zh-CN.md);报 bug 前先运行
 `pwsh -File Plugins/DreamShader/.skill/dsc.ps1 info`,把输出贴进表单。提问请去
 [Discussions](https://github.com/TypeDreamMoon/DreamShader/discussions)。编码 agent 从 [AGENTS.md](AGENTS.md) 开始;
-技能和可选的 MCP 服务见 [AI agents](Docs/tools/agents.md)。
+技能和可选的 MCP 服务见 [AI agents](Docs/tools/ai-agents.md)。
 
 ## 许可证
 
