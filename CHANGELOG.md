@@ -23,6 +23,10 @@
   `-run=DreamShaderHost` commandlet when it does not. *Project Settings > DreamShader > Enable DreamMCP Endpoint*
   and `-NoDreamMCP` turn it off; `-NoDreamShaderEditorBridge` keeps it off too. See
   [DreamMCP endpoint](Docs/tools/dreammcp.md).
+- **The language references stand alone.** `.skill/reference/dss.md`, `dsp.md` and `legacy.md`, the pages the
+  skills and a DreamMCP server hand an agent, linked into `Docs/`, which an agent reading a copy of the page cannot
+  open. What an author needs is now on the page, and its links go to the online manual. `dss.md` gained the enum
+  spellings `#pragma material` accepts and the warning that `sin`, `cos` and `tan` take cycles, not radians.
 
 ### Changed
 

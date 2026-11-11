@@ -1,8 +1,12 @@
 # DreamShaderLang 1.x — what you need to read and maintain it
 
-Condensed from [`Docs/language/`](../../Docs/language/index.md) and checked against the compiler. When this page
-and `Docs/` disagree, `Docs/` wins — except for messages: several 1.x pages still quote messages from the 1.x
+Condensed from [the 1.x language manual](https://shader.toolchain.64hz.cn/en/docs/plugin/language/) and checked against the compiler. When this
+page and the manual disagree, the manual wins — except for messages: several 1.x pages still quote messages from the 1.x
 generator, which is gone, and the codes below are what is reported today.
+
+This page stands on its own: what an author needs is here, and an agent that cannot open the links
+loses nothing it needs. The links lead to the online manual for depth. A `UE.` node's pins come from
+DreamMCP's `lookup` action; every diagnostic carries a `doc` link of its own.
 
 **Write new sources as `.dss`** ([`dss.md`](dss.md)). This page is for a project that already has `.dsm` /
 `.dsf` files: they keep building, through the **legacy front end**, which reads the 1.x language into the same
@@ -119,11 +123,11 @@ values (`DSH4361`; a `mat3` property is `DSH3252`).
 | `VirtualFunction` | `/// @asset` + `extern` prototype |
 | `import "x.dsh";` | `#include "x.dsh"` |
 
-The full rewrite table, rule by rule: [`Docs/tools/migrate.md`](../../Docs/tools/migrate.md).
+The full rewrite table, rule by rule: [Migrating from 1.x](https://shader.toolchain.64hz.cn/en/docs/language-v2/migrate/).
 
 ## See also
 
-- [`Docs/language/index.md`](../../Docs/language/index.md) — the 1.x grammar
-- [`Docs/graph/index.md`](../../Docs/graph/index.md) — what `Graph` accepts
-- [`Docs/diagnostics/README.md`](../../Docs/diagnostics/README.md) — every code
+- [The 1.x language](https://shader.toolchain.64hz.cn/en/docs/plugin/language/) — the 1.x grammar
+- [Graph evaluation](https://shader.toolchain.64hz.cn/en/docs/graph/overview/) — what `Graph` accepts
+- [Diagnostics](https://shader.toolchain.64hz.cn/en/docs/diagnostics/) — every code
 - [`dss.md`](dss.md) — the 2.0 language, for anything new

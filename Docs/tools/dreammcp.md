@@ -11,6 +11,7 @@ editor when it is open and in a host process the server starts when it is not.
 | Kind | editor service — `UE::DreamShader::Editor::MCP::FEndpoint`, in the `DreamShaderEditor` module (`Source/DreamShaderEditor/Private/MCP/`) |
 | Protocol | DreamMCP protocol `1` |
 | Manifest | `<Plugin>/Resources/DreamMCP.json` — the actions, their arguments as JSON Schema, the route, the host commandlet |
+| Language references | `.skill/reference/dss.md`, `dsp.md`, `legacy.md`, named by the manifest's `reference` and packaged with the plugin (`Config/FilterPlugin.ini`). Each page stands alone: its links lead to the online manual, and an agent that cannot open them misses nothing it needs |
 | Route | `http://127.0.0.1:<port>/dream/shader` |
 | Port | `47800`, or `-DreamMCPPort=<n>`; a port that cannot be bound is skipped for the next, up to 16 |
 | Bind address | `127.0.0.1` only — proven at startup, see [Loopback only](#loopback-only) |
