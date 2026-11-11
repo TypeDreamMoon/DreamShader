@@ -8,6 +8,17 @@
   it is an installed or a source build, the OS, the UI language and the PowerShell version, one `key : value` line
   each. It starts no engine, prints no path, and writes `unknown` for what it cannot find, so it also runs from a
   zip download without git. Paste its output into the issue form.
+- **An AI agent can drive DreamShader through a DreamMCP server.** The plugin ships a capability manifest,
+  `Resources/DreamMCP.json`, and serves its actions over HTTP on `127.0.0.1` only, behind a token: `check`,
+  `compile` (optionally with the shaders), `diagnostics`, `lookup` of the `UE.*` / `Substrate.*` node catalog,
+  `preview` to a PNG, `info` and `decompile`. Every answer has one shape — an outcome, a reason code, diagnostics
+  with their codes, lines and documentation links, the assets written — so a server never reads a log line, and
+  long actions run as jobs a client polls or cancels while the editor keeps answering. The user's editor serves it
+  while it is open; without one, the server starts a host that serves it: the editor with `-DreamMCPHost
+  -RenderOffscreen` (no window, no bridge, no settings written) when it needs pictures, the new
+  `-run=DreamShaderHost` commandlet when it does not. *Project Settings > DreamShader > Enable DreamMCP Endpoint*
+  and `-NoDreamMCP` turn it off; `-NoDreamShaderEditorBridge` keeps it off too. See
+  [DreamMCP endpoint](Docs/tools/dreammcp.md).
 
 ### Changed
 
