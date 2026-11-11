@@ -19,8 +19,25 @@ headlessly, read the diagnostics, fix.
 ## The agent guide
 
 `AGENTS.md` is the entry point for any agent, with or without skills. It has two halves: authoring sources in a
-game project, and changing the plugin itself. Tell your agent to read it first. Claude Code reads it through
-`CLAUDE.md`; other tools that read `AGENTS.md` find it by name.
+game project, and changing the plugin itself. When an agent works in the plugin repository itself, it finds the
+file by name; Claude Code reads it through the repository's `CLAUDE.md`.
+
+## Giving the guide to the agent in your game project
+
+An agent reads the instruction file at the root of the folder it works in. In a game project that is the
+project root, not `Plugins/DreamShader/`, so it does not read `Plugins/DreamShader/AGENTS.md` by itself.
+
+Add this line to your project's instruction file (`AGENTS.md`, or whatever file your tool reads):
+
+```text
+Before writing or fixing any DreamShader source, read Plugins/DreamShader/AGENTS.md and follow its Authoring section.
+```
+
+In Claude Code, you can import the guide instead. Add this line to the project's `CLAUDE.md`:
+
+```text
+@Plugins/DreamShader/AGENTS.md
+```
 
 ## Skills
 
