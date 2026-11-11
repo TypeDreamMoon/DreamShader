@@ -41,6 +41,12 @@
   the entry named `UE_<version>`. `dsc.ps1 info` resolves the engine the same way, and so do the test host, the test
   runner and the Custom Pass demo script under `Tools/`.
 
+- **Previews came out pale.** The preview renders into a render target that was an sRGB texture, so the
+  hardware encoded the tone mapper's already gamma-encoded output a second time: an Unlit emissive of 0.5 showed as
+  218 of 255 instead of 178, and colours lost their saturation. The target is now a plain texture that keeps the
+  display gamma of 2.2, so a preview stores the tone mapper's output as it is. This changes what the VSCode
+  extension's preview shows, not how it talks to the editor.
+
 - **An HLSL pass at `BeginView` crashed the editor on an engine that adds scene textures of its own.** The scene
   textures there are placeholders the runtime fills in itself, by name; a renderer fork whose
   `FSceneTextureUniformParameters` has more members left them null, and creating the uniform buffer asserted. Every

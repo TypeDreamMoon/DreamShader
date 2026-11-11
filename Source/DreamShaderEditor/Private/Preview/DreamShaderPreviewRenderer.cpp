@@ -267,7 +267,14 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 		NewRenderTarget->ClearColor = FLinearColor(0.025f, 0.025f, 0.03f, 1.0f);
-		NewRenderTarget->InitCustomFormat(PreviewWidth, PreviewHeight, PF_B8G8R8A8, false);
+		// A plain UNorm target that still reports a display gamma of 2.2. The tone mapper writes gamma-encoded values
+		// for a target whose display gamma is 2.2 (FTonemapperOutputDeviceParameters::InverseGamma). An sRGB texture
+		// -- what bForceLinearGamma = false makes of an override format (UTextureRenderTarget2D::IsSRGB) -- has the
+		// hardware encode them a second time on write, which is how every preview came out pale: emissive 0.5 read
+		// 222/255 through the gamma-only path, where 2.2 gives 186. TargetGamma wins over bForceLinearGamma in
+		// GetDisplayGamma, so the tone mapper still encodes, and the texture stores what it writes.
+		NewRenderTarget->TargetGamma = 2.2f;
+		NewRenderTarget->InitCustomFormat(PreviewWidth, PreviewHeight, PF_B8G8R8A8, /*bInForceLinearGamma*/ true);
 		NewRenderTarget->UpdateResourceImmediate(true);
 
 		RenderTarget = TStrongObjectPtr<UTextureRenderTarget2D>(NewRenderTarget);

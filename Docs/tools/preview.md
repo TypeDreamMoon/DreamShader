@@ -128,7 +128,9 @@ drag-to-orbit viewport write. One is created lazily if the material has none.
 
 | Aspect | Value |
 | :-- | :-- |
-| Render target | transient, `PF_B8G8R8A8`, linear gamma not forced, cleared to `(0.025, 0.025, 0.03, 1.0)` |
+| Render target | transient, `PF_B8G8R8A8`, a plain UNorm texture (`bForceLinearGamma`) with a display gamma of 2.2 (`TargetGamma`), cleared to `(0.025, 0.025, 0.03, 1.0)`. The tone mapper gamma-encodes for that display gamma, and the texture stores what it writes; an sRGB texture would have the hardware encode it a second time |
+| Colour | tone-mapped as the engine's thumbnail views are: the project's exposure — with no view history, the one the engine fixes from the auto-exposure range — and the filmic curve. On a project with default exposure settings an Unlit emissive of 0.18 reads 117 of 255, 0.5 reads 178, 1 reads 208, 4 reads 240 |
+| Time | the time since the application started, for the material's Time node |
 | Reuse | the render target and thumbnail scene persist across frames; changing size recreates the render target and GPU readback buffer |
 | Show flags | game show flags, with **motion blur disabled** and **anti-aliasing disabled** |
 | Screen percentage | fixed at 1.0 |
