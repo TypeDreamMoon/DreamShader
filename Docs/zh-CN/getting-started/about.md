@@ -53,7 +53,7 @@ Unreal 材质图一旦变大，就很难 review、diff、复用和迁移。Dream
 
 三个 Runtime 模块在 `PostConfigInit` 阶段加载，早到设置对象、shader 目录映射和 `DreamShaderPass` 的全局 shader 类型在引擎确定 shader 类型列表之前就已就位；两个 Editor 模块在 `Default` 阶段加载。
 
-**提示：**
+**注意：**
 
 `DreamShaderEditor` 不导出任何符号，也无法被链接 —— 它根本没有 `Public/` 目录。受支持的 C++ 入口是 `IDreamShaderCompiler` —— 声明在 `DreamShader`（`DreamShaderCompilerInterface.h`），通过 `GetDreamShaderCompiler()` 拿到，由 `DreamShaderCompiler` 实现 —— 以及 `DreamShaderPass` 的 C++ 与蓝图 API。其余能力只能通过编辑器 UI、commandlet 或桥接文件访问。
 

@@ -365,7 +365,7 @@ Outputs = {
 | `ShaderFunction`、`ShaderLayer`、`ShaderLayerBlend` | 三个键有效：`Description`、`ExposeToLibrary`、`LibraryCategories`。 |
 | `VirtualFunction` | `Options` 的别名：`Asset` 是资产引用，`Description` 作为声明的描述保留，其他键读取后忽略。 |
 
-**提示：**
+**注意：**
 
 那三个函数键每次构建都会应用，**缺省时会被重置**，所以从源码里删掉一个键就等于从资产上删掉它。`LibraryCategories` 按逗号切分，每项去空白，空项丢弃。`ExposeToLibrary` 只有为 `true` **且** `LibraryCategories` 非空时才会置位 （自 2.0.0 起）；它的值不是 `true` / `false` 时是警告 `DSH3265`，按 `false` 处理。`UserExposedCaption` 不再写入 —— 给出警告 `DSH3264`，值保留给 `dsc migrate` （自 2.0.0 起）。其他任何键是警告 `DSH3263` 并被忽略。
 

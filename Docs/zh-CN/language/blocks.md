@@ -119,7 +119,7 @@ Shader(Name="Materials/M_Emissive", Root="Game")
 - 绑定 `Base.MaterialAttributes` 会自动打开 *Use Material Attributes*。`Base.FrontMaterial` （需要 （自 UE 5.4 起））现在是普通属性 （自 2.0.0 起）：不再强制把着色模型设为 Substrate，也不再拒绝和 `Base.MaterialAttributes` 并用；需要时在 `Settings` 里自己写 `ShadingModel = "Substrate";`。见[输出绑定](../generation/outputs.md)。
 - `Inputs`、`Results` 和 `Options` 不是 `Shader` 认识的 section（`DSH2245`）；`Code` 是 `DSH2246`。`Graph` 或 `Layout` 写两次时后一个胜出，并给出警告 `DSH2258`。
 
-**提示：**
+**注意：**
 
 目标路径上最终落地的是哪个 UClass，取决于解析出的后端。`ThinCustom` —— 默认值 —— 写出一个 `UDreamShaderMaterialInstance`，其父级是名为 `MB_DreamThinBase_<leaf>` 的隐藏 `UMaterial` 子对象；`Graph` 写出普通的 `UMaterial`。`Instance` 是 `ThinCustom` 的已弃用别名（警告 `DSH7204`）。`Graph` 后端的材质每次构建成功都会保存（自 2.0.0 起）；`ThinCustom` 产物在 cook、显式 *Materialize* 或有子实例之前一直是 **Ephemeral** 的（只在内存里）。见 [Backend](../settings/backend.md) 与 [内存材质](../generation/ephemeral.md)。
 
@@ -174,7 +174,7 @@ ShaderFunction(Name="Functions/F_Tint", Root="Game")
 
 在同一个文件另一个块的 `Graph` 里，被调用名是资产的叶子名： `F_Tint` 就是 `Name="Functions/F_Tint"`。资产块不能被导入（`DSH2249`），所以其他文件通过 [``VirtualFunction``](#virtualfunction) 使用生成的资产。如果文件能调用的另一个函数（比如导入 header 里的 `Function`）已经占了这个名字，这个块的函数会改名为 `<Leaf>_Asset` 并给出 info `DSH5290`，资产本身保持原名。
 
-**提示：**
+**注意：**
 
 重新生成时，每个输入输出引脚的 `Id` GUID 会按名字缓存并还原（自 1.3.2 起），所以已有的手工 `MaterialFunctionCall` 节点能保住连线 —— **前提是引脚名没变**。改名等同于删掉再新建：调用点会丢连接。
 
@@ -232,7 +232,7 @@ ShaderLayer(Name="Layers/L_Rust", Root="Game")
 }
 ```
 
-**提示：**
+**注意：**
 
 在 （自 UE 5.7 起） 上，混合块的每个 `MaterialAttributes` 输入会根据名字得到一个 `BlendInputRelevance` —— 去掉空格、`_` 和 `-` 后忽略大小写比较：`Top` / `TopLayer` 映射为 `Top`； `Bottom` / `BottomLayer` / `Base` / `BaseLayer` 映射为 `Bottom`。其他名字按位置回退：第一个输入是 `Bottom`，之后的是 `Top`。UE 5.3–5.6 上这个属性不存在，不会写入任何东西。
 

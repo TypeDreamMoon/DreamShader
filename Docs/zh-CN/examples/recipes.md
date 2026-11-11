@@ -103,7 +103,7 @@ Shader(Name="Materials/M_Panned")
 }
 ```
 
-**提示：**
+**注意：**
 
 `UE.Panner` 的参数分两类。`Coordinate`、`Time` 和 `Speed` 是**输入 pin**，接受表达式 —— 所以上面能用 `PanSpeed` 驱动平移。而 `SpeedX`、`SpeedY` 和 `FractionalPart` 是节点上的**字面量属性**，只接常量：`SpeedX = PanSpeed` 是 `DSH4373`。拼错的参数名在 1.x 源文件里被丢掉并给出 warning `DSH5254`，在 `.dss` 里是错误 `DSH5213`。见 [UE.Panner](../builtins/ue.md#uepanner)。
 

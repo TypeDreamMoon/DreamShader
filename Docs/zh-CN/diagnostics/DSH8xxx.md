@@ -17,7 +17,7 @@
 %s contains an invalid folder segment.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:42`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:42`
 <!-- generated:end DSH8088 -->
 
 **原因。** 源所声明的资源名称包含一个不能作为包路径一部分的文件夹段：为空（`A//B`）、`.` 或 `..`，或者包含引擎在路径中拒绝接受的字符。
@@ -37,7 +37,7 @@
 DreamShader Root '%s' references project plugin '%s', but no enabled plugin with that name was found.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:59`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:59`
 <!-- generated:end DSH8089 -->
 
 **原因。** 源通过根指定其资源的位置：`Game`、`Engine` 或 `Plugin.<Name>`（在 1.x 中为块上的 `Root = "..."`；在 2.0 中为文件所在的源根，或带有对象路径的 `/// @name`）。此根所命名的插件不是项目已启用插件中的任何一个。
@@ -57,7 +57,7 @@ DreamShader Root '%s' references project plugin '%s', but no enabled plugin with
 DreamShader Root '%s' must reference a project plugin under '%s'.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:65`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:65`
 <!-- generated:end DSH8090 -->
 
 **原因。** 源通过根指定其资源的位置：`Game`、`Engine` 或 `Plugin.<Name>`（在 1.x 中为块上的 `Root = "..."`；在 2.0 中为文件所在的源根，或带有对象路径的 `/// @name`）。此根所命名的插件不属于项目自身（引擎插件或商城插件）。DreamShader 只会将资源写入项目 `Plugins` 文件夹下的插件中。
@@ -79,7 +79,7 @@ DreamShader Root '%s' must reference a project plugin under '%s'.
 DreamShader Root '%s' references project plugin '%s', but the plugin is not enabled.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:70`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:70`
 <!-- generated:end DSH8091 -->
 
 **原因。** 源通过根指定其资源的位置：`Game`、`Engine` 或 `Plugin.<Name>`（在 1.x 中为块上的 `Root = "..."`；在 2.0 中为文件所在的源根，或带有对象路径的 `/// @name`）。该插件存在但已被禁用，因此其内容路径未被挂载。
@@ -99,7 +99,7 @@ DreamShader Root '%s' references project plugin '%s', but the plugin is not enab
 DreamShader Root '%s' references project plugin '%s', but the plugin cannot contain content.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:75`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:75`
 <!-- generated:end DSH8092 -->
 
 **原因。** 源通过根指定其资源的位置：`Game`、`Engine` 或 `Plugin.<Name>`（在 1.x 中为块上的 `Root = "..."`；在 2.0 中为文件所在的源根，或带有对象路径的 `/// @name`）。该插件已启用，且其描述符标明 `CanContainContent: false`。
@@ -119,7 +119,7 @@ DreamShader Root '%s' references project plugin '%s', but the plugin cannot cont
 DreamShader Root '%s' references project plugin '%s', but its Content directory does not exist: '%s'.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:81`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:81`
 <!-- generated:end DSH8093 -->
 
 **原因。** 源通过根指定其资源的位置：`Game`、`Engine` 或 `Plugin.<Name>`（在 1.x 中为块上的 `Root = "..."`；在 2.0 中为文件所在的源根，或带有对象路径的 `/// @name`）。该插件可以存放内容，但其 `Content` 目录不在磁盘上。
@@ -139,7 +139,7 @@ DreamShader Root '%s' references project plugin '%s', but its Content directory 
 DreamShader Root '%s' references project plugin '%s', but the plugin content is not mounted.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:87`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:87`
 <!-- generated:end DSH8094 -->
 
 **原因。** 源通过根指定其资源的位置：`Game`、`Engine` 或 `Plugin.<Name>`（在 1.x 中为块上的 `Root = "..."`；在 2.0 中为文件所在的源根，或带有对象路径的 `/// @name`）。该插件的内容目录存在，但引擎尚未挂载它——通常是在编辑器运行期间启用或创建的插件。
@@ -159,7 +159,7 @@ DreamShader Root '%s' references project plugin '%s', but the plugin content is 
 DreamShader Root '%s' has an invalid plugin name.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:164`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:164`
 <!-- generated:end DSH8095 -->
 
 **原因。** 源通过根指定其资源的位置：`Game`、`Engine` 或 `Plugin.<Name>`（在 1.x 中为块上的 `Root = "..."`；在 2.0 中为文件所在的源根，或带有对象路径的 `/// @name`）。此根的插件部分为空或不是名称（`Plugin.` 后面没有任何内容）。
@@ -179,7 +179,7 @@ DreamShader Root '%s' has an invalid plugin name.
 DreamShader Root '%s' has an invalid plugin name.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:178`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:178`
 <!-- generated:end DSH8096 -->
 
 **原因。** 与 DSH8095 相同，针对该根的 `Plugins.<Name>` 拼写形式。
@@ -199,7 +199,7 @@ DreamShader Root '%s' has an invalid plugin name.
 DreamShader Root '%s' has an invalid package root.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:191`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:191`
 <!-- generated:end DSH8097 -->
 
 **原因。** 源通过根指定其资源的位置：`Game`、`Engine` 或 `Plugin.<Name>`（在 1.x 中为块上的 `Root = "..."`；在 2.0 中为文件所在的源根，或带有对象路径的 `/// @name`）。此根不属于上述任何一种，或者解析为引擎未知的包根。
@@ -219,7 +219,7 @@ DreamShader Root '%s' has an invalid package root.
 DreamShader asset name must resolve to a non-empty asset path.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:324`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:324`
 <!-- generated:end DSH8098 -->
 
 **原因。** 所声明的资源名称在去除空白后为空。
@@ -239,7 +239,7 @@ DreamShader asset name must resolve to a non-empty asset path.
 DreamShader asset name must resolve to a non-empty asset path.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:331`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:331`
 <!-- generated:end DSH8099 -->
 
 **原因。** 所声明的资源名称仅由分隔符组成（`/`），因此没有留下任何资源名称。
@@ -259,7 +259,7 @@ DreamShader asset name must resolve to a non-empty asset path.
 DreamShader asset name '%s' produced an invalid asset name.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:337`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:337`
 <!-- generated:end DSH8100 -->
 
 **原因。** 所声明的资源名称的最后一段不是有效的对象名称（它包含引擎拒绝接受的字符，例如 `.`、`:` 或空格）。
@@ -279,7 +279,7 @@ DreamShader asset name '%s' produced an invalid asset name.
 Asset '%s' is open in an asset editor, so it was NOT rebuilt. An open editor works on its own copy of the asset and writes that copy back when you press Apply or Save, 
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:422`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:422`
 <!-- generated:end DSH8101 -->
 
 **原因。** 该资源已在资源编辑器中打开。打开的编辑器作用于该资源的副本，并在应用或保存时将其写回，这会撤销重建；带有未保存更改的材质编辑器也可能已与源产生分歧。
@@ -299,7 +299,7 @@ Asset '%s' is open in an asset editor, so it was NOT rebuilt. An open editor wor
 Asset '%s' already exists and is not a Material.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:516`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:516`
 <!-- generated:end DSH8102 -->
 
 **原因。** 材质将要生成的位置已存在一个包（Package），且其中的对象不是 UMaterial。
@@ -319,7 +319,7 @@ Asset '%s' already exists and is not a Material.
 Asset '%s' already exists and was not generated by DreamShader. Rename your shader or move/delete the existing asset before regenerating.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:525`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:525`
 <!-- generated:end DSH8103 -->
 
 **原因。** 目标路径已存在一个材质，但它不带 DreamShader 来源信息，因此是手工创建的。DreamShader 从不覆盖不是由它生成的资产。
@@ -339,7 +339,7 @@ Asset '%s' already exists and was not generated by DreamShader. Rename your shad
 Failed to create package '%s'.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:534`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:534`
 <!-- generated:end DSH8104 -->
 
 **原因。** `CreatePackage` 对材质的包操作失败 -- 长包名无效，或引擎拒绝该挂载点。
@@ -359,7 +359,7 @@ Failed to create package '%s'.
 Failed to create material '%s'.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:550`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:550`
 <!-- generated:end DSH8105 -->
 
 **原因。** 无法在其包中创建 UMaterial 对象。
@@ -379,7 +379,7 @@ Failed to create material '%s'.
 Asset '%s' already exists and is not a DreamShader instance material. Delete it (or remove Backend="Instance") before switching backends.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:578`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:578`
 <!-- generated:end DSH8106 -->
 
 **原因。** `Backend = ThinCustom` 生成 DreamShader 实例材质，而该路径上的资产属于另一种类（通常是较早的 Graph 构建生成的普通材质）。
@@ -399,7 +399,7 @@ Asset '%s' already exists and is not a DreamShader instance material. Delete it 
 Asset '%s' already exists and was not generated by DreamShader. Rename your shader or move/delete the existing asset before regenerating.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:588`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:588`
 <!-- generated:end DSH8107 -->
 
 **原因。** 与 DSH8103 相同，但针对 ThinCustom 实例：已有资产并非由 DreamShader 生成。
@@ -419,7 +419,7 @@ Asset '%s' already exists and was not generated by DreamShader. Rename your shad
 Failed to create package '%s'.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:598`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:598`
 <!-- generated:end DSH8108 -->
 
 **原因。** `CreatePackage` 对 ThinCustom 实例的包操作失败。
@@ -439,7 +439,7 @@ Failed to create package '%s'.
 Failed to create instance material '%s'.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:610`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:610`
 <!-- generated:end DSH8109 -->
 
 **原因。** 无法创建 ThinCustom 实例材质对象。
@@ -459,7 +459,7 @@ Failed to create instance material '%s'.
 Asset '%s' already exists as '%s', but %s generation requires '%s'. Delete or move the existing asset and regenerate it.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:649`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:649`
 <!-- generated:end DSH8110 -->
 
 **原因。** 目标路径已存在一个函数资产，其种类与源所构建的不同：源是层（Layer）之处是普通 MaterialFunction，源是混合（Blend）之处是层。这三者是彼此不同的引擎种类，资产无法就地更改种类。
@@ -479,7 +479,7 @@ Asset '%s' already exists as '%s', but %s generation requires '%s'. Delete or mo
 Asset '%s' already exists and is not a MaterialFunction asset.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:655`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:655`
 <!-- generated:end DSH8111 -->
 
 **原因。** 函数将要生成的位置已存在一个包，且其中的对象根本不是材质函数。
@@ -499,7 +499,7 @@ Asset '%s' already exists and is not a MaterialFunction asset.
 Asset '%s' already exists and was not generated by DreamShader. Rename your function or move/delete the existing asset before regenerating.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:662`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:662`
 <!-- generated:end DSH8112 -->
 
 **原因。** 目标路径已存在一个材质函数，且并非由 DreamShader 生成。
@@ -519,7 +519,7 @@ Asset '%s' already exists and was not generated by DreamShader. Rename your func
 Failed to create package '%s'.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:671`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:671`
 <!-- generated:end DSH8113 -->
 
 **原因。** `CreatePackage` 对函数的包操作失败。
@@ -539,7 +539,7 @@ Failed to create package '%s'.
 Failed to create material function '%s'.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:684`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:684`
 <!-- generated:end DSH8114 -->
 
 **原因。** 无法创建材质函数对象。
@@ -559,14 +559,14 @@ Failed to create material function '%s'.
 Asset '%s' was edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). %s
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:412`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:412`
 <!-- generated:end DSH8115 -->
 
 **原因。** 该资产与其上次生成时标记的输出摘要不再匹配 -- 有人手工编辑过它，重新构建会破坏这些改动
 
 **修复。** 响应通知，或右键单击资产 > DreamShader：**还原到源**（源是正确的）、**采纳到源**（资产是正确的）、**从 DreamShader 分离**（两者都不对，停止管理它）。`-Force` 无法通过此检查
 
-**另请参阅** [Divergence](../generation/divergence.md)
+**参见** [Divergence](../generation/divergence.md)
 
 <a id="dsh8116"></a>
 
@@ -581,7 +581,7 @@ Asset '%s' was edited by hand since DreamShader generated it from '%s', so it wa
 Generated DreamShader asset '%s' could not be saved.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:494`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:494`
 <!-- generated:end DSH8116 -->
 
 **原因。** 无法将生成的资产写入磁盘：`.uasset` 是只读的或已签入，其他进程占用了它，或磁盘已满。
@@ -601,7 +601,7 @@ Generated DreamShader asset '%s' could not be saved.
 Generated DreamShader asset packages could not be saved.%s
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:527`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:527`
 <!-- generated:end DSH8117 -->
 
 **原因。** 保存生成包的批处理失败；消息之后的列表会列出每个包及其原因。
@@ -621,7 +621,7 @@ Generated DreamShader asset packages could not be saved.%s
 Asset Path root '%s' references plugin '%s', but no enabled plugin with that name was found.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:123`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:123`
 <!-- generated:end DSH8118 -->
 
 **原因。** `Path(Root, "Folder/Asset")` 将其第一个参数解析为挂载点：`Game`、`Engine` 或 `Plugin.<Name>` / `Plugins.<Name>`。此处指定的插件没有任何已启用的插件与之对应。
@@ -641,7 +641,7 @@ Asset Path root '%s' references plugin '%s', but no enabled plugin with that nam
 Asset Path root '%s' references plugin '%s', but the plugin is not enabled.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:128`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:128`
 <!-- generated:end DSH8119 -->
 
 **原因。** `Path(Root, "Folder/Asset")` 将其第一个参数解析为挂载点：`Game`、`Engine` 或 `Plugin.<Name>` / `Plugins.<Name>`。该插件存在但已被禁用。
@@ -661,7 +661,7 @@ Asset Path root '%s' references plugin '%s', but the plugin is not enabled.
 Asset Path root '%s' references plugin '%s', but the plugin cannot contain content.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:133`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:133`
 <!-- generated:end DSH8120 -->
 
 **原因。** `Path(Root, "Folder/Asset")` 将其第一个参数解析为挂载点：`Game`、 `Engine`，或 `Plugin.<Name>` / `Plugins.<Name>`。插件无法包含内容 (`CanContainContent: false`)。
@@ -681,7 +681,7 @@ Asset Path root '%s' references plugin '%s', but the plugin cannot contain conte
 Asset Path root '%s' references plugin '%s', but its Content directory does not exist: '%s'.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:139`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:139`
 <!-- generated:end DSH8121 -->
 
 **原因。** `Path(Root, "Folder/Asset")` 将其第一个参数解析为挂载点：`Game`、 `Engine`，或 `Plugin.<Name>` / `Plugins.<Name>`。插件的 `Content` 目录在磁盘上缺失。
@@ -701,7 +701,7 @@ Asset Path root '%s' references plugin '%s', but its Content directory does not 
 Asset Path root '%s' references plugin '%s', but the plugin content is not mounted.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:145`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:145`
 <!-- generated:end DSH8122 -->
 
 **原因。** `Path(Root, "Folder/Asset")` 将其第一个参数解析为挂载点：`Game`、 `Engine`，或 `Plugin.<Name>` / `Plugins.<Name>`。插件的内容未在此会话中挂载。
@@ -721,7 +721,7 @@ Asset Path root '%s' references plugin '%s', but the plugin content is not mount
 Relative asset Path(...) references require a root such as Game, Engine, or Plugin.PluginName.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:190`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:190`
 <!-- generated:end DSH8123 -->
 
 **原因。** 带一个参数的 `Path("Folder/Asset")` 必须是绝对对象路径（`/Game/...`）。相对路径需要将根作为其第一个参数。
@@ -741,7 +741,7 @@ Relative asset Path(...) references require a root such as Game, Engine, or Plug
 Asset Path root '%s' has an invalid plugin name.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:210`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:210`
 <!-- generated:end DSH8124 -->
 
 **原因。** `Plugin.<Name>` 或 `Plugins.<Name>` 根的插件部分是空的或不是名称。
@@ -761,7 +761,7 @@ Asset Path root '%s' has an invalid plugin name.
 Asset Path root '%s' has an invalid plugin name.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:223`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:223`
 <!-- generated:end DSH8125 -->
 
 **原因。** 与 DSH8124 相同，针对斜杠拼写 `Plugin/<Name>` 和 `Plugins/<Name>`。
@@ -781,7 +781,7 @@ Asset Path root '%s' has an invalid plugin name.
 Unsupported asset Path root '%s'. Use Game, Engine, or Plugin.PluginName.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:233`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:233`
 <!-- generated:end DSH8126 -->
 
 **原因。** `Path(...)` 的第一个参数不是 DreamShader 已知的任何根。
@@ -801,7 +801,7 @@ Unsupported asset Path root '%s'. Use Game, Engine, or Plugin.PluginName.
 Asset reference cannot be empty.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:318`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:318`
 <!-- generated:end DSH8127 -->
 
 **原因。** 资产引用为空：`Path()`、空字符串，或留空的默认值。
@@ -821,7 +821,7 @@ Asset reference cannot be empty.
 Asset Path(...) reference is missing a closing ')'.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:327`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:327`
 <!-- generated:end DSH8128 -->
 
 **原因。** `Path(` 从未闭合。
@@ -841,7 +841,7 @@ Asset Path(...) reference is missing a closing ')'.
 Asset Path(...) contains an unterminated string literal.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:334`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:334`
 <!-- generated:end DSH8129 -->
 
 **原因。** `Path(...)` 中的字符串没有闭合引号。
@@ -861,7 +861,7 @@ Asset Path(...) contains an unterminated string literal.
 Asset Path(...) expects either 1 argument (/Game/... path) or 2 arguments (Game|Engine|Plugin.PluginName, asset path).
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:348`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:348`
 <!-- generated:end DSH8130 -->
 
 **原因。** `Path(...)` 没有参数或超过两个参数。
@@ -881,7 +881,7 @@ Asset Path(...) expects either 1 argument (/Game/... path) or 2 arguments (Game|
 Asset reference requires a non-empty path.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:378`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:378`
 <!-- generated:end DSH8131 -->
 
 **原因。** 资产引用的路径部分为空（`Path(Game, "")`）。
@@ -901,7 +901,7 @@ Asset reference requires a non-empty path.
 Invalid asset path '%s'.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:402`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:402`
 <!-- generated:end DSH8132 -->
 
 **原因。** 引用解析出的内容不是有效的对象路径：它包含引擎拒绝的字符、重复的 `/`，或没有资产名称。
@@ -921,7 +921,7 @@ Invalid asset path '%s'.
 DSH8133: '{0}' is built from '{1}', a file of an installed package, which the package's installer replaces on every update; anything adopted into it would be lost then. Use Revert to Source to undo the edit, or Detach to keep the asset as it is.
 ```
 
-**引发者** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:444`
+**触发位置** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:444`
 <!-- generated:end DSH8133 -->
 
 **原因。** 对由包构建的资产请求了 *Adopt Into Source*（或 *Adopt Tweaks Into Source*）。包的文件属于其安装程序，每次更新时都会替换它们，因此 Adopt 写入其中的任何内容都会在下次更新时丢失——连同它本应保留的编辑一起丢失。未写入任何内容。
@@ -941,14 +941,14 @@ DSH8133: '{0}' is built from '{1}', a file of an installed package, which the pa
 DSH8149: '{0}' uses conditional compilation, and '{1}' holds only the branch that was taken -- adopting it would write that one branch back over the file and delete the rest. Move the change into the matching branch of the source by hand, or use DreamShader > Detach first if this asset should stop being generated from it.
 ```
 
-**引发者** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:1166`、`Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:527`、`Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:726`、`Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:905`
+**触发位置** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:1166`、`Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:527`、`Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:726`、`Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:905`
 <!-- generated:end DSH8149 -->
 
 **原因。** **Adopt Into Source** 被要求重写使用条件编译（`#if` / `#ifdef` / `#ifndef`）的源。Adopt 从资产重建源文本，而资产只保存所采用的分支——因此采纳会将该分支写回文件，并静默删除所有其他分支
 
 **修复。** 手动将更改移入源的匹配分支（资产的反编译器输出是一个很好的起点），或者如果此资产应停止从该源生成，请先使用 **Detach From DreamShader**。Revert 和 Detach 不受影响，因为两者都不写入源
 
-**另见** [Preprocessor](../language/preprocessor.md)、[Divergence](../generation/divergence.md)
+**参见** [Preprocessor](../language/preprocessor.md)、[Divergence](../generation/divergence.md)
 
 <a id="dsh8155"></a>
 
@@ -963,14 +963,14 @@ DSH8149: '{0}' uses conditional compilation, and '{1}' holds only the branch tha
 rebuilding '%s' from '%s' dropped %d parameter override(s) the rebuilt material no longer declares: %s.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderThinCustomParameterOverrides.cpp:287`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderThinCustomParameterOverrides.cpp:287`
 <!-- generated:end DSH8155 -->
 
 **原因。** 对 ThinCustom 材质的重建捕获了在生成的实例上设置的参数覆盖，并在之后将其放回，但其中一个或多个覆盖命名的参数在重建后的材质中不再声明——源重命名了它、移除了它，或更改了它的类型——因此这些值无处可去并被丢弃。恢复按名称和类型匹配，因为名称是生成器拆除并重建的图中唯一幸存的东西。同一行还报告了此构建无法重新应用的参数类型的覆盖（例如纹理集合）
 
 **修复。** 没有损坏，重建成功；在新名称下再次在实例上设置该值，或将其作为 `Properties` 默认值移入源，这样就不需要覆盖。如果参数已重命名且你希望将值保留下来，请将其重命名回来，重建，然后在与覆盖相同的编辑中再次重命名
 
-**另见** [Divergence](../generation/divergence.md#parameter-overrides-on-a-generated-thincustom-instance)
+**参见** [Divergence](../generation/divergence.md#parameter-overrides-on-a-generated-thincustom-instance)
 
 <a id="dsh8200"></a>
 
@@ -985,7 +985,7 @@ rebuilding '%s' from '%s' dropped %d parameter override(s) the rebuilt material 
 '{0}' does not resolve to a valid asset path. {1}
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1287`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1336`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1287`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1336`
 <!-- generated:end DSH8200 -->
 
 **原因。** 产品的资产名称，或 `/// @name /Game/...` 路径覆盖，无法解析为 Unreal 可接受的包路径。引用的 1.x 消息会说明违反了哪条规则：清理后叶节点为空、某个文件夹段清理后为空、`Root` 指定了未启用或无法承载内容的插件，或路径被 Unreal 本身拒绝。
@@ -1005,7 +1005,7 @@ rebuilding '%s' from '%s' dropped %d parameter override(s) the rebuilt material 
 The material for '{0}' could not be created or reused. {1}
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:528`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:528`
 <!-- generated:end DSH8201 -->
 
 **原因。** 材质产品的目标位置已存在且不是 `UMaterial`，或它在磁盘上存在但没有 DreamShader 的源元数据，或无法创建该包。最后一种情况很少见，通常意味着路径不可写。
@@ -1025,7 +1025,7 @@ The material for '{0}' could not be created or reused. {1}
 The material function for '{0}' could not be created or reused. {1}
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:749`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:749`
 <!-- generated:end DSH8202 -->
 
 **原因。** 与 DSH8201 相同，针对材质函数产品——多了一种失败方式：该路径下的资产存在，但函数类错误。`@layer` 需要 `UMaterialFunctionMaterialLayer`，`@layerblend` 需要 `UMaterialFunctionMaterialLayerBlend`，而普通导出需要 `UMaterialFunction`。改变导出函数的类型会改变它必须成为的类。
@@ -1045,7 +1045,7 @@ The material function for '{0}' could not be created or reused. {1}
 The ThinCustom instance for '{0}' could not be created or reused. {1}
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:604`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:604`
 <!-- generated:end DSH8203 -->
 
 **原因。** 与 DSH8201 相同，针对 ThinCustom 材质所变成的 `UDreamShaderMaterialInstance`。
@@ -1065,7 +1065,7 @@ The ThinCustom instance for '{0}' could not be created or reused. {1}
 The emitter needs the builtin catalog the front end was bound against, but the emit context carries none.
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1273`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1273`
 <!-- generated:end DSH8204 -->
 
 **原因。** 调用 `EmitDreamShaderIRProduct` 时未提供 `FIREmitContext::Catalog`，或提供的为空。目录是发射器将属性名称转换为 `EMaterialProperty` 的方式，也是它精确解析反射类的方式，因此没有它就无法继续。
@@ -1085,7 +1085,7 @@ The emitter needs the builtin catalog the front end was bound against, but the e
 Product index {0} does not exist in this module, which has {1}.
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1262`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:253`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1262`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:253`
 <!-- generated:end DSH8205 -->
 
 **原因。** 内部不一致：产品索引超出模块的范围，或图的拓扑顺序指定了图中不存在的节点。
@@ -1105,7 +1105,7 @@ Product index {0} does not exist in this module, which has {1}.
 '{0}' is open in an asset editor, so it was not rebuilt. {1}
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:390`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:390`
 <!-- generated:end DSH8206 -->
 
 **原因。** 资产已在资产编辑器中打开。打开的编辑器并不会编辑资产本身：它会复制资产，并在 Apply 或 Save 时将副本复制回去，因此在重建期间打开的编辑器持有重建前的副本，下一次 Apply 会静默还原重建所做的一切。
@@ -1125,7 +1125,7 @@ Product index {0} does not exist in this module, which has {1}.
 '{0}' no longer holds what DreamShader generated into it, so it was not rebuilt. {1}
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:400`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:400`
 <!-- generated:end DSH8207 -->
 
 **原因。** 资产不再保存 DreamShader 上次生成到其中的内容——有人手动编辑了图。上次成功生成结束时打上的输出摘要不再与资产的内容匹配。
@@ -1145,7 +1145,7 @@ Product index {0} does not exist in this module, which has {1}.
 '{0}' could not be snapshotted before rebuilding it, so a failed rebuild will not be rolled back.
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:444`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:799`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:444`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:799`
 <!-- generated:end DSH8208 -->
 
 **原因。** 原子回滚无法在重建开始前对资产进行快照，因此中途失败的重建会使资产被清空，而不是将其恢复。编译会继续；这是关于如果之后有东西失败时会发生什么的警告。
@@ -1165,7 +1165,7 @@ Product index {0} does not exist in this module, which has {1}.
 '{0}' was left alone: another editor owns writing this project's generated assets to disk.
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:365`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:365`
 <!-- generated:end DSH8209 -->
 
 **原因。** 另一个编辑器持有本项目的 DreamShader 桥接所有权锁，而只有该进程会将生成的资产写入磁盘。两个编辑器保存同一个包不是合并；而是包损坏或编辑器死亡。
@@ -1185,7 +1185,7 @@ Product index {0} does not exist in this module, which has {1}.
 '{0}' has no property named '{1}', so that value was not written.
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1795`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:324`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:361`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1795`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:324`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:361`
 <!-- generated:end DSH8210 -->
 
 **原因。** 在 uniform 上，或在 Group / Desc / SortPriority / 滑块上，`/// @key value` 的名称未在表达式类中反射。该值未被写入；参数上的其他所有内容都已写入。
@@ -1205,7 +1205,7 @@ Product index {0} does not exist in this module, which has {1}.
 '{0}' is not a material expression class this engine has.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:510`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:666`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:510`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:666`
 <!-- generated:end DSH8211 -->
 
 **原因。** `UE.X(...)` 或 `UE.Expression(Class = "X")` 指定了此引擎构建中不存在的材质表达式类。绑定器已针对目录解析它，因此这通常意味着目录与正在运行的引擎不一致 —— 可能是导出的目录已过期，或该类位于某个构建标志之后。
@@ -1225,7 +1225,7 @@ Product index {0} does not exist in this module, which has {1}.
 MakeMaterialAttributes has no pin for the attribute '{0}'.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:124`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:156`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:220`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1774`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:124`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:156`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:220`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1774`
 <!-- generated:end DSH8212 -->
 
 **原因。** 某个值在创建的节点上没有可连接的引脚。对于反射节点，指定的输入在其表达式类上不匹配任何 `FExpressionInput`，也不匹配活动节点在引脚上显示的任何名称；与 DSH8211 一样，这通常意味着目录已过期，因为绑定器是依据目录检查引脚名称的。对于属性节点：`MakeMaterialAttributes` 有一个固定的引脚列表，而它没有对应引脚的属性（`FrontMaterial`、`SurfaceThickness`）由它上面的 `SetMaterialAttributes` 进行设置 —— 当该 Set 也无法接收该属性时、当该属性是整体材质伪属性（一组属性无法包含它）时，或当它自己的某个 `SetMaterialAttributes` 无法接收值时，会引发该代码。
@@ -1245,7 +1245,7 @@ MakeMaterialAttributes has no pin for the attribute '{0}'.
 '{0}' has no property named '{1}'.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1802`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1815`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:315`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:372`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1802`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1815`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:315`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:372`
 <!-- generated:end DSH8213 -->
 
 **原因。** 反射属性拒绝了该值：类型的字面量形状错误。字面量写入器引用的消息会说明是哪种 —— 不是数字、不是有效的枚举值、对象路径无法加载或加载到了错误的类。
@@ -1265,7 +1265,7 @@ MakeMaterialAttributes has no pin for the attribute '{0}'.
 Failed to create a FunctionInput node.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:123`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:152`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:281`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:40`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:142`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:173`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:239`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:339`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:75`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1019`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1137`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1170`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1209`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1244`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1276`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1313`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1365`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1769`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:360`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:371`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:383`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:398`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:518`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:675`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:743`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:777`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:797`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:818`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:839`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:874`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:896`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:915`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:940`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:971`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:136`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:150`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:170`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:208`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:123`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:152`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:281`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:40`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:142`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:173`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:239`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:339`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:75`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1019`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1137`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1170`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1209`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1244`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1276`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1313`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1365`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1769`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:360`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:371`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:383`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:398`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:518`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:675`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:743`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:777`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:797`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:818`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:839`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:874`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:896`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:915`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:940`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:971`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:136`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:150`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:170`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:208`
 <!-- generated:end DSH8214 -->
 
 **原因。** `UMaterialEditingLibrary` 拒绝在该资产中创建该类的表达式。常见的实际原因是该资产种类不允许使用该类 —— 有些表达式仅适用于材质，不能放入材质函数，反之亦然。
@@ -1285,7 +1285,7 @@ Failed to create a FunctionInput node.
 A material setting on '{0}' was refused. {1}
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:460`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:460`
 <!-- generated:end DSH8215 -->
 
 **原因。** `#pragma material(...)` 键不是 `UMaterial` 上可设置的属性路径，或其值对该属性无效。引用的 1.x 消息会说明是其中哪一种情况。
@@ -1305,7 +1305,7 @@ A material setting on '{0}' was refused. {1}
 BreakMaterialAttributes does not publish the attribute '{0}', so it cannot be read from a material that came through a pin.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1602`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1845`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1602`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1845`
 <!-- generated:end DSH8216 -->
 
 **原因。** 两种情况之一。材质属性名称（`m.SomeThing`，一个 `MakeMaterialAttributes` 输入）不在此引擎的属性表中。或者，从通过引脚传来的材质（LayerBlend 输入、反射节点的材质输出、函数调用的材质结果）中读取了某个属性，而读取它的 `BreakMaterialAttributes` 节点没有对应的引脚：`MaterialAttributes` 本身、`FrontMaterial`、`SurfaceThickness`。第二种形式在读取处引发，绝不会在节点上引发：节点为每个属性都带有一个槽位，而无人读取的槽位不是错误。
@@ -1325,7 +1325,7 @@ BreakMaterialAttributes does not publish the attribute '{0}', so it cannot be re
 This material has no input for the attribute '{0}'; check the material domain and shading model the file asks for.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:387`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:387`
 <!-- generated:end DSH8217 -->
 
 **原因。** 属性存在，但此材质没有对应的输入引脚。材质的可用输出取决于其域、混合模式和着色模型：后期处理材质没有 Roughness，不透明材质没有 Opacity。
@@ -1345,7 +1345,7 @@ This material has no input for the attribute '{0}'; check the material domain an
 The default texture for parameter '{0}' could not be loaded from '{1}'.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:236`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:236`
 <!-- generated:end DSH8218 -->
 
 **原因。** 纹理参数的默认资产路径无法加载。
@@ -1365,7 +1365,7 @@ The default texture for parameter '{0}' could not be loaded from '{1}'.
 This function call names no material function asset.
 ```
 
-**由以下项引发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:247`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:272`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:288`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:247`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:272`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:288`
 <!-- generated:end DSH8219 -->
 
 **原因。** `FunctionCall` 节点的材质函数资产无法加载，或引擎拒绝将其赋给调用节点。拒绝的情况是循环：材质函数不能直接或通过另一个函数调用自身。
@@ -1385,7 +1385,7 @@ This function call names no material function asset.
 '{0}' has no input named '{1}'.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:331`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:331`
 <!-- generated:end DSH8220 -->
 
 **原因。** 某次调用指定了一个函数资源并不具有的输入。可能是该函数以不同的参数列表被重新构建，或者源中的 `extern` 原型与资源不匹配。
@@ -1405,7 +1405,7 @@ This function call names no material function asset.
 '{0}' has no output named '{1}'.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:385`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:385`
 <!-- generated:end DSH8221 -->
 
 **原因。** 与 DSH8220 相同，但针对输出。函数的单个未命名返回值称为 `Result`。
@@ -1425,7 +1425,7 @@ This function call names no material function asset.
 This call targets product {0} of the same file, but that product has not been emitted yet; the pipeline must compile products in dependency order.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:229`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:229`
 <!-- generated:end DSH8222 -->
 
 **原因。** 对同一文件中另一个导出函数的调用在该函数的资源被发出之前就运行了，因此它的路径尚未确定。内部性：管线按依赖顺序编译文件的产物，正是为了防止这种情况发生。
@@ -1445,7 +1445,7 @@ This call targets product {0} of the same file, but that product has not been em
 The emitter has no rule for the IR operation '{0}'.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1062`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:335`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1062`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:335`
 <!-- generated:end DSH8223 -->
 
 **原因。** IR 携带了发射器没有规则可处理的操作：某个核心操作的表中条目未指定引擎表达式类，且没有手写的降级实现。
@@ -1465,7 +1465,7 @@ The emitter has no rule for the IR operation '{0}'.
 A SetMaterialAttributes node has no MaterialAttributes input; there is nothing for it to modify.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:181`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:245`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1155`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1183`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1225`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1260`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1299`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1660`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:347`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:695`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:181`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:245`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1155`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1183`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1225`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1260`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1299`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1660`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:347`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:695`
 <!-- generated:end DSH8224 -->
 
 **原因。** 节点的操作数或输入数量与其操作不匹配——例如带两个操作数的 Select、带三个操作数的 Append、没有基础输入的 `SetMaterialAttributes`。IR 验证器本应捕获这一问题。
@@ -1485,7 +1485,7 @@ A SetMaterialAttributes node has no MaterialAttributes input; there is nothing f
 This node reads node {0}, which has not been emitted; the graph's topological order is inconsistent.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1587`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1587`
 <!-- generated:end DSH8225 -->
 
 **原因。** 节点从尚未被发出的节点读取值，这意味着图表的拓扑顺序并未真正将操作数置于其使用者之前。
@@ -1505,7 +1505,7 @@ This node reads node {0}, which has not been emitted; the graph's topological or
 A Swizzle node carries no Mask property.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1091`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1100`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1091`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1100`
 <!-- generated:end DSH8226 -->
 
 **原因。** Swizzle 节点的 `Mask` 属性缺失、为空、长度超过四个分量，或包含 `x`、`y`、`z`、`w` 之外的内容。规范掩码是按顺序的小写 `xyzw`； `rgba` 在绑定时被重写为该形式。
@@ -1525,7 +1525,7 @@ A Swizzle node carries no Mask property.
 '{0}' is not a Custom node output type; expected Float1 through Float4 or MaterialAttributes.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1403`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1436`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1444`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1403`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1436`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1444`
 <!-- generated:end DSH8227 -->
 
 **原因。** `@custom` 函数的返回类型，或其某个 `out` 参数，无法映射到 Custom 节点输出类型。引擎恰好有五种：`Float1`、`Float2`、`Float3`、`Float4` 和 `MaterialAttributes`。
@@ -1545,7 +1545,7 @@ A Swizzle node carries no Mask property.
 '{0}' is not a material function input type; write one of Scalar, Vector2, Vector3, Vector4, Texture2D, TextureCube, Texture2DArray, VolumeTexture, StaticBool, Bool, MaterialAttributes or Substrate.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:55`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:55`
 <!-- generated:end DSH8228 -->
 
 **原因。** 材质函数输入的类型无法映射到 `EFunctionInputType`。
@@ -1565,7 +1565,7 @@ A Swizzle node carries no Mask property.
 '{0}' was built but could not be saved. {1}
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1219`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:571`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:720`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:875`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1219`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:571`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:720`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:875`
 <!-- generated:end DSH8229 -->
 
 **原因。** 资源已成功构建，但其包无法写入磁盘——文件只读、源控制，或路径已不存在。
@@ -1585,7 +1585,7 @@ A Swizzle node carries no Mask property.
 Cannot create a ThinCustom base material without an instance.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:305`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:326`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:352`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:643`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:305`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:326`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:352`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:643`
 <!-- generated:end DSH8230 -->
 
 **原因。** ThinCustom 实例所父级化的隐藏基础 `UMaterial` 无法作为该实例的子对象创建。
@@ -1605,7 +1605,7 @@ Cannot create a ThinCustom base material without an instance.
 '{0}' has a product kind the emitter does not know how to materialize.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1316`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1316`
 <!-- generated:end DSH8232 -->
 
 **原因。** 产品类型没有发射器知道如何构建的资源形态。内部性。
@@ -1625,7 +1625,7 @@ Cannot create a ThinCustom base material without an instance.
 This graph carries a MaterialSink, which only a material product has; a material function drives FunctionOutput nodes instead.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:372`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:372`
 <!-- generated:end DSH8233 -->
 
 **原因。** 图表携带了 `MaterialSink`，但正被发出到材质函数中。只有材质产品才拥有自己的输出引脚；函数驱动 `FunctionOutput` 节点。
@@ -1645,7 +1645,7 @@ This graph carries a MaterialSink, which only a material product has; a material
 Function output '{0}' has {1} operands; it needs exactly the one value it returns.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:179`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:179`
 <!-- generated:end DSH8234 -->
 
 **原因。** `FunctionOutput` 节点没有操作数，因此输出引脚不会驱动任何东西。
@@ -1665,7 +1665,7 @@ Function output '{0}' has {1} operands; it needs exactly the one value it return
 '{0}' is not a sampler type; write one of the EMaterialSamplerType names, such as Color, Normal or LinearColor.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:278`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:278`
 <!-- generated:end DSH8235 -->
 
 **原因。** 纹理 uniform 的 `@sampler` 指定的名称不是 `EMaterialSamplerType`。
@@ -1685,7 +1685,7 @@ Function output '{0}' has {1} operands; it needs exactly the one value it return
 '{0}' was left alone: its source hash is unchanged since it was last built.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:377`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:377`
 <!-- generated:end DSH8237 -->
 
 **原因。** 本产品编译到的资源已带有此构建的源哈希：该文件及它包含的每个头文件的预处理文本，以及它读取的宏定义。编译未被强制，因此没有任何内容被重新构建。编译结果会显示 `Skipped <asset> from <source>; source hash is unchanged (build key <hash>).`，即 1.x 生成器为同样的跳过写出的行，并且它不会将该资源列为已生成。
@@ -1705,7 +1705,7 @@ Function output '{0}' has {1} operands; it needs exactly the one value it return
 The material instance for '{0}' could not be created or reused. {1}
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1030`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1030`
 <!-- generated:end DSH8240 -->
 
 **原因。** `.dsi` 的实例资源无法被创建或复用；其后的句子是原因（DSH8241、DSH8242 或 DSH8253 的文字说明）。
@@ -1725,7 +1725,7 @@ The material instance for '{0}' could not be created or reused. {1}
 Asset '%s' already exists as a '%s'; a .dsi builds a plain MaterialInstanceConstant. Rename the instance file or move the existing asset.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:260`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:260`
 <!-- generated:end DSH8241 -->
 
 **原因。** 另一个类的资源已经位于 `.dsi` 将构建其实例的位置——一个材质，或一个同名 `.dss` 的 ThinCustom 实例。
@@ -1745,7 +1745,7 @@ Asset '%s' already exists as a '%s'; a .dsi builds a plain MaterialInstanceConst
 Asset '%s' already exists and was not generated by DreamShader. Rename the instance file or move/delete the existing asset before building it.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:269`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:269`
 <!-- generated:end DSH8242 -->
 
 **原因。** 目标路径处已存在一个材质实例，且它不是由 DreamShader 生成的。
@@ -1765,7 +1765,7 @@ Asset '%s' already exists and was not generated by DreamShader. Rename the insta
 The parent '{0}' of '{1}' does not load; compile the source that builds it, or correct the Parent key.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1057`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1082`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1057`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1082`
 <!-- generated:end DSH8243 -->
 
 **原因。** `Parent = ...` 指定的父项无法加载，或它只存在于内存中——是本次运行的产物——并且在需要它的实例写入磁盘之前无法被保存。裸名称会在同一根下的源的产物中查找；对象路径按所写内容加载。
@@ -1785,7 +1785,7 @@ The parent '{0}' of '{1}' does not load; compile the source that builds it, or c
 '{0}' was memory-only, so it was saved to disk first: '{1}' parents to it.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1090`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1090`
 <!-- generated:end DSH8244 -->
 
 **原因。** 父项仅被构建到内存中（一次 Ephemeral 构建），而磁盘上的实例无法指向一个不在磁盘上的对象。父项已被先保存。
@@ -1805,7 +1805,7 @@ The parent '{0}' of '{1}' does not load; compile the source that builds it, or c
 '{0}' cannot parent to '{1}': that parent already descends from this instance.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1101`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1101`
 <!-- generated:end DSH8245 -->
 
 **原因。** `Parent` 指定的实例自身派生自这个实例，因此父链会形成循环。
@@ -1825,7 +1825,7 @@ The parent '{0}' of '{1}' does not load; compile the source that builds it, or c
 The parent asset '{0}' has no parameter {1} of the kind this instance overrides; the asset is older than its source. Compile the parent source first.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1123`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1123`
 <!-- generated:end DSH8246 -->
 
 **原因。** 磁盘上的父项资源缺少实例所覆盖的某个参数，尽管父项的源声明了它：父项资源比其源更旧。
@@ -1845,7 +1845,7 @@ The parent asset '{0}' has no parameter {1} of the kind this instance overrides;
 The engine dropped '{0}' as the parent of '{1}' while applying the static overrides; that parent does not allow them.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1196`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1196`
 <!-- generated:end DSH8247 -->
 
 **原因。** 应用静态开关覆盖导致引擎清除了实例的父项。当父项可能无法获得新的着色器排列时引擎会这样做：一个已烘焙的材质（未附带其编辑器数据而发布的内容），引擎会拒绝为它编译实例自身的排列。
@@ -1865,7 +1865,7 @@ The engine dropped '{0}' as the parent of '{1}' while applying the static overri
 The parent '{0}' exists only in memory and no DreamShader source builds it, so '{1}' cannot be saved against it; save the parent first.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1070`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1070`
 <!-- generated:end DSH8248 -->
 
 **原因。** 父项仅存在于内存中，且没有任何 DreamShader 源构建它（一个在编辑器中创建且从未保存的材质），因此实例在磁盘上没有任何可引用的内容。
@@ -1885,7 +1885,7 @@ The parent '{0}' exists only in memory and no DreamShader source builds it, so '
 '{0}' is not an instance key; a key is a material property an instance can override, such as BlendMode, TwoSided, OpacityMaskClipValue or PhysMaterial.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:365`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:365`
 <!-- generated:end DSH8249 -->
 
 **原因。** `#pragma instance(...)` 的一个键不是材质实例可以覆盖的内容。这些键是引擎基础属性覆盖的字段（`BlendMode`、`TwoSided`、 `ShadingModel`、`OpacityMaskClipValue`、`DitheredLODTransition`、……）以及一个固定的实例属性表（`PhysMaterial`、`SubsurfaceProfile`、……）。
@@ -1905,7 +1905,7 @@ The parent '{0}' exists only in memory and no DreamShader source builds it, so '
 '{0}' is not a valid value for the instance key '{1}'. {2}
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:374`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:374`
 <!-- generated:end DSH8250 -->
 
 **原因。** 某个实例键的值不符合其属性；其后的句子说明了期望的内容。
@@ -1925,7 +1925,7 @@ The parent '{0}' exists only in memory and no DreamShader source builds it, so '
 '{0}' cannot be set from an instance file: {1}
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:341`
+**触发位置** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:341`
 <!-- generated:end DSH8251 -->
 
 **原因。** 该键命名了实例文件不会以这种方式设置的内容；其后的句子说明了是哪一种：`Backend`（实例没有此项）、`UsageFlags`（引擎会与父项的位掩码合并的位掩码）、`BasePropertyOverrides` 结构体整体或其某个 `bOverride...` 标志（一个标志由其设置值的键产生），或 `...ParameterValues` 数组（参数是 `uniform` 覆盖）。
@@ -1945,7 +1945,7 @@ The parent '{0}' exists only in memory and no DreamShader source builds it, so '
 The override of '{0}' could not be applied: {1}
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1141`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1141`
 <!-- generated:end DSH8252 -->
 
 **原因。** 某个覆盖无法写入实例；原因见后文。通常某个类纹理覆盖所指定的资源无法加载或属于错误的类。
@@ -1957,315 +1957,315 @@ The override of '{0}' could not be applied: {1}
 ## DSH8253
 
 <!-- generated:begin DSH8253 -->
-**Severity** 错误
+**严重性** 错误
 
-**Message**
+**消息**
 
 ```
 Failed to create package '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:281`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:288`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:281`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:288`
 <!-- generated:end DSH8253 -->
 
-**Cause.** 实例的包，或其中的 `UMaterialInstanceConstant`，无法创建：对于消息所指的路径，`CreatePackage` 或 `NewObject` 失败了。
+**原因。** 实例的包，或其中的 `UMaterialInstanceConstant`，无法创建：对于消息所指的路径，`CreatePackage` 或 `NewObject` 失败了。
 
-**Fix.** 检查 `.dsi` 所在的位置：它在源根下的文件夹会成为包路径，而文件名会成为资产的名称。
+**修复。** 检查 `.dsi` 所在的位置：它在源根下的文件夹会成为包路径，而文件名会成为资产的名称。
 
 <a id="dsh8254"></a>
 
 ## DSH8254
 
 <!-- generated:begin DSH8254 -->
-**Severity** 错误
+**严重性** 错误
 
-**Message**
+**消息**
 
 ```
 The material parameter collection '{0}' has no parameter called '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:579`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:579`
 <!-- generated:end DSH8254 -->
 
-**Cause.** 一个 `CollectionParameter` 节点指定了一个其材质参数集里没有的参数。引擎按 id 存储该参数，并从中读回名称，所以一个没有 id 的名称会悄无声息地变成 `None`。
+**原因。** 一个 `CollectionParameter` 节点指定了一个其材质参数集里没有的参数。引擎按 id 存储该参数，并从中读回名称，所以一个没有 id 的名称会悄无声息地变成 `None`。
 
-**Fix.** 使用参数集资产中已有的参数名（标量或向量），或者将其添加到参数集中。
+**修复。** 使用参数集资产中已有的参数名（标量或向量），或者将其添加到参数集中。
 
 <a id="dsh8260"></a>
 
 ## DSH8260
 
 <!-- generated:begin DSH8260 -->
-**Severity** 错误
+**严重性** 错误
 
-**Message**
+**消息**
 
 ```
 The parent source '{0}' failed to compile, so this instance has no parent to build against. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1126`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:534`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:561`、`Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:591`、`Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:620`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1126`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:534`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:561`、`Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:591`、`Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:620`
 <!-- generated:end DSH8260 -->
 
-**Cause.** 一个 `.dsi` 的父项无法使用。它由一个无法编译的 DreamShader 源构建，所以没有参数列表可用于检查覆写，也没有资产可用于构建；或者 `Parent` 未解析到资产路径；又或者它什么都不指向：那里不存在资产，源根下也没有源构建它。
+**原因。** 一个 `.dsi` 的父项无法使用。它由一个无法编译的 DreamShader 源构建，所以没有参数列表可用于检查覆写，也没有资产可用于构建；或者 `Parent` 未解析到资产路径；又或者它什么都不指向：那里不存在资产，源根下也没有源构建它。
 
-**Fix.** 编译父项的源并修复它所报告的问题，或者修正 `Parent`。
+**修复。** 编译父项的源并修复它所报告的问题，或者修正 `Parent`。
 
 <a id="dsh8261"></a>
 
 ## DSH8261
 
 <!-- generated:begin DSH8261 -->
-**Severity** 错误
+**严重性** 错误
 
-**Message**
+**消息**
 
 ```
 No material or instance named '{0}' is built by a source under '{1}'; write the parent's asset path, or check the name.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:656`
+**触发位置** `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:656`
 <!-- generated:end DSH8261 -->
 
-**Cause.** `Parent` 是一个裸名称，并且此文件的源根下没有任何源构建该名称的材质或实例。
+**原因。** `Parent` 是一个裸名称，并且此文件的源根下没有任何源构建该名称的材质或实例。
 
-**Fix.** 检查该名称，或者写出父项的对象路径（`/Game/...`）。
+**修复。** 检查该名称，或者写出父项的对象路径（`/Game/...`）。
 
 <a id="dsh8262"></a>
 
 ## DSH8262
 
 <!-- generated:begin DSH8262 -->
-**Severity** 错误
+**严重性** 错误
 
-**Message**
+**消息**
 
 ```
 '{0}' names more than one product under '{1}' ({2}); write the parent's asset path instead.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:670`
+**触发位置** `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:670`
 <!-- generated:end DSH8262 -->
 
-**Cause.** `Parent` 是一个被该根下多个源构建的裸名称。
+**原因。** `Parent` 是一个被该根下多个源构建的裸名称。
 
-**Fix.** 改为写出父项的对象路径。
+**修复。** 改为写出父项的对象路径。
 
 <a id="dsh8263"></a>
 
 ## DSH8263
 
 <!-- generated:begin DSH8263 -->
-**Severity** 错误
+**严重性** 错误
 
-**Message**
+**消息**
 
 ```
 '{0}' is its own ancestor: following Parent from it comes back to it ({1}).
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:486`、`Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:602`、`Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:650`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:486`、`Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:602`、`Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:650`
 <!-- generated:end DSH8263 -->
 
-**Cause.** 实例是它自己的祖先：`Parent` 通过路径或名称指向实例自身，或者从它出发跟随 `Parent` 会回到它自身（消息会列出该链）。
+**原因。** 实例是它自己的祖先：`Parent` 通过路径或名称指向实例自身，或者从它出发跟随 `Parent` 会回到它自身（消息会列出该链）。
 
-**Fix.** 打破循环：将 `Parent` 指向该链应终止于的材质。
+**修复。** 打破循环：将 `Parent` 指向该链应终止于的材质。
 
 <a id="dsh8264"></a>
 
 ## DSH8264
 
 <!-- generated:begin DSH8264 -->
-**Severity** 信息
+**严重性** 信息
 
-**Message**
+**消息**
 
 ```
 '{0}' was missing or older than its source, so '{1}' was compiled first.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:596`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:596`
 <!-- generated:end DSH8264 -->
 
-**Cause.** 在编译实例时，父项的资产缺失或早于其源，所以父项被优先编译。
+**原因。** 在编译实例时，父项的资产缺失或早于其源，所以父项被优先编译。
 
-**Fix.** 无需修复。
+**修复。** 无需修复。
 
 <a id="dsh8265"></a>
 
 ## DSH8265
 
 <!-- generated:begin DSH8265 -->
-**Severity** 错误
+**严重性** 错误
 
-**Message**
+**消息**
 
 ```
 The Parent chain above '{0}' is more than {1} instances deep; a chain that long is almost always a mistake in a Parent key.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:494`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:494`
 <!-- generated:end DSH8265 -->
 
-**Cause.** 此实例之上的 `Parent` 键链比编译器所能跟随的更深。真实的实例链只有几层深。
+**原因。** 此实例之上的 `Parent` 键链比编译器所能跟随的更深。真实的实例链只有几层深。
 
-**Fix.** 查找指向错误方向的 `Parent`。
+**修复。** 查找指向错误方向的 `Parent`。
 
 <a id="dsh8270"></a>
 
 ## DSH8270
 
 <!-- generated:begin DSH8270 -->
-**Severity** 错误
+**严重性** 错误
 
-**Message**
+**消息**
 
 ```
 The function reference '{0}' does not resolve to an asset path. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:259`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:259`
 <!-- generated:end DSH8270 -->
 
-**Cause.** 一个 `extern` 函数的 `/// @asset`（或 1.x VirtualFunction 的 `Asset`）未解析到对象路径；原因随附其后（即以文字表述的 DSH8118-DSH8132 之一）。
+**原因。** 一个 `extern` 函数的 `/// @asset`（或 1.x VirtualFunction 的 `Asset`）未解析到对象路径；原因随附其后（即以文字表述的 DSH8118-DSH8132 之一）。
 
-**Fix.** 修正该引用；内容浏览器中的 *Copy Reference* 会给出一个总能解析的路径。
+**修复。** 修正该引用；内容浏览器中的 *Copy Reference* 会给出一个总能解析的路径。
 
 <a id="dsh8271"></a>
 
 ## DSH8271
 
 <!-- generated:begin DSH8271 -->
-**Severity** 错误
+**严重性** 错误
 
-**Message**
+**消息**
 
 ```
 The default texture reference '{0}' of parameter '{1}' does not resolve to an asset path. {2}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:221`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:221`
 <!-- generated:end DSH8271 -->
 
-**Cause.** 参数的 `/// @default` 纹理未解析到对象路径；原因随附其后。
+**原因。** 参数的 `/// @default` 纹理未解析到对象路径；原因随附其后。
 
-**Fix.** 修正该引用。
+**修复。** 修正该引用。
 
 <a id="dsh8273"></a>
 
 ## DSH8273
 
 <!-- generated:begin DSH8273 -->
-**Severity** 错误
+**严重性** 错误
 
-**Message**
+**消息**
 
 ```
 '{0}' holds a placeholder other than '`{Name`}', the only one a generate template has.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp:160`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp:160`
 <!-- generated:end DSH8273 -->
 
-**Cause.** 一个 `#pragma generate(...)` 的 `Functions` 模板在 `{Name}` 被替换为函数名后仍保留着一个 `{...}`。`{Name}` 是唯一的占位符。
+**原因。** 一个 `#pragma generate(...)` 的 `Functions` 模板在 `{Name}` 被替换为函数名后仍保留着一个 `{...}`。`{Name}` 是唯一的占位符。
 
-**Fix.** 精确写出 `{Name}`（它区分大小写），或者在函数上使用 `/// @generate` 逐一写出每个名称。
+**修复。** 精确写出 `{Name}`（它区分大小写），或者在函数上使用 `/// @generate` 逐一写出每个名称。
 
 <a id="dsh8274"></a>
 
 ## DSH8274
 
 <!-- generated:begin DSH8274 -->
-**Severity** 错误
+**严重性** 错误
 
-**Message**
+**消息**
 
 ```
 '{0}' cannot be generated as the material function '{1}': {2}.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp:172`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp:172`
 <!-- generated:end DSH8274 -->
 
-**Cause.** 一个包头从无法成为材质函数的函数请求材质函数：一个 `export` 函数，它会构建自己的资产；一个 `extern` 原型，它指向一个存在但没有函数体的资产；一个没有函数体的函数；或者一个带数组参数的函数，而任何材质函数引脚都无法接受数组参数。
+**原因。** 一个包头从无法成为材质函数的函数请求材质函数：一个 `export` 函数，它会构建自己的资产；一个 `extern` 原型，它指向一个存在但没有函数体的资产；一个没有函数体的函数；或者一个带数组参数的函数，而任何材质函数引脚都无法接受数组参数。
 
-**Fix.** 从一个有函数体且没有数组参数的辅助函数生成——如有需要，将函数包装进一个这样的函数——或者移除该注解。`#pragma generate` 模板会自动跳过导出和原型；此错误是针对在其中一个上显式使用 `@generate` 而引发的。
+**修复。** 从一个有函数体且没有数组参数的辅助函数生成——如有需要，将函数包装进一个这样的函数——或者移除该注解。`#pragma generate` 模板会自动跳过导出和原型；此错误是针对在其中一个上显式使用 `@generate` 而引发的。
 
 <a id="dsh8275"></a>
 
 ## DSH8275
 
 <!-- generated:begin DSH8275 -->
-**Severity** 错误
+**严重性** 错误
 
-**Message**
+**消息**
 
 ```
 '{0}' is generated a second time here; the line {1} already generates it from another function.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp:201`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp:201`
 <!-- generated:end DSH8275 -->
 
-**Cause.** 一个包头的两个函数请求同一个材质函数：相同的 `@generate` 名称，或者一个将两个函数映射到同一个名称的模板。第一个会被生成；第二个不会。
+**原因。** 一个包头的两个函数请求同一个材质函数：相同的 `@generate` 名称，或者一个将两个函数映射到同一个名称的模板。第一个会被生成；第二个不会。
 
-**Fix.** 给其中一个另取名称，并使用其自己的 `/// @generate`（或在 1.x 中的 `Generate =`）。
+**修复。** 给其中一个另取名称，并使用其自己的 `/// @generate`（或在 1.x 中的 `Generate =`）。
 
 <a id="dsh8276"></a>
 
 ## DSH8276
 
 <!-- generated:begin DSH8276 -->
-**Severity** 警告
+**严重性** 警告
 
-**Message**
+**消息**
 
 ```
 '{0}' is not a key of '#pragma generate', and was ignored; it takes Functions, Library and Desc.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp:112`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp:112`
 <!-- generated:end DSH8276 -->
 
-**Cause.** 一个 `#pragma generate(...)` 指定的键不是 `Functions`、`Library`、`Desc` 和 `Description`。它被忽略。
+**原因。** 一个 `#pragma generate(...)` 指定的键不是 `Functions`、`Library`、`Desc` 和 `Description`。它被忽略。
 
-**Fix.** 将该键拼写为其中之一，或将其移除。
+**修复。** 将该键拼写为其中之一，或将其移除。
 
 <a id="dsh8277"></a>
 
 ## DSH8277
 
 <!-- generated:begin DSH8277 -->
-**Severity** 信息
+**严重性** 信息
 
-**Message**
+**消息**
 
 ```
 '{0}' was left alone: '{1}' marks it NoGeneration, and only a compile that names the file builds it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1186`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1186`
 <!-- generated:end DSH8277 -->
 
-**Cause.** 不是问题：未指定源的编译会让 [NoGeneration](../generation/no-generation.md) 资产保持其在磁盘上的原样，即使源自其构建以来已发生变化。其结果行会显示 `Skipped`。
+**原因。** 不是问题：未指定源的编译会让 [NoGeneration](../generation/no-generation.md) 资产保持其在磁盘上的原样，即使源自其构建以来已发生变化。其结果行会显示 `Skipped`。
 
-**Fix.** 无需修复。要重建该资产，请按名称编译源：材质内容浏览器中的 *Compile*，或 `compile -Source`。
+**修复。** 无需修复。要重建该资产，请按名称编译源：材质内容浏览器中的 *Compile*，或 `compile -Source`。
 
 <a id="dsh8278"></a>
 
 ## DSH8278
 
 <!-- generated:begin DSH8278 -->
-**Severity** 警告
+**严重性** 警告
 
-**Message**
+**消息**
 
 ```
 '{0}' has never been built: '{1}' marks it NoGeneration, so only a compile that names the file builds it, and none has. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1194`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1194`
 <!-- generated:end DSH8278 -->
 
 **原因。** 一个 [NoGeneration](../generation/no-generation.md) 资产从未被构建：只有命名其源文件的编译才会构建它，而这样的编译尚未发生。没有为它写入任何内容；在它存在之前，任何使用它的东西都会失败（[`DSH8279`](#dsh8279)）。
@@ -2277,7 +2277,7 @@ The default texture reference '{0}' of parameter '{1}' does not resolve to an as
 ## DSH8279
 
 <!-- generated:begin DSH8279 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2285,7 +2285,7 @@ The default texture reference '{0}' of parameter '{1}' does not resolve to an as
 The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is nothing to build this instance against. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1216`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:575`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:473`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1216`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:575`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:473`
 <!-- generated:end DSH8279 -->
 
 **原因。** 某物需要 [NoGeneration](../generation/no-generation.md) 源所构建的资产，而该资产不存在：同一文件的导出调用它，某个 `.dsi` 将其命名为其 `Parent`，某个 `.dsp` pass 将其命名为其 `Material`，或者某个 `.dss` 读取该管线的缓冲区。NoGeneration 源绝不会替任何人先被编译。
@@ -2297,7 +2297,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 ## DSH8290
 
 <!-- generated:begin DSH8290 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2305,7 +2305,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 '{0}' could not be read.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:702`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:702`
 <!-- generated:end DSH8290 -->
 
 **原因。** 编译器无法打开要求它编译的 `.dss`。路径已先被规范化，因此消息显示的是它实际尝试过的绝对路径。通常原因包括：文件在监视器注意到它与编译开始之间被删除或重命名；某个 `-Source=` 命名了不存在的文件（命令行工具先相对 `DShader/` 解析相对路径，然后相对项目目录解析，当两者都不存在时回退为字面文本）；或文件被另一个进程锁定。
@@ -2317,7 +2317,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 ## DSH8291
 
 <!-- generated:begin DSH8291 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2325,7 +2325,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 '{0}' failed conditional compilation: {1}: {2}
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:758`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:228`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp:315`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:758`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:228`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp:315`
 <!-- generated:end DSH8291 -->
 
 **原因。** 条件编译预处理器拒绝处理该文件。消息携带预处理器自身的 DSH103x 代码及其消息，因为那些才说明了实际出错的地方——不匹配的 `#if`、`#elif` 位于 `#else` 之后、它无法求值的表达式、对保留 `DS_` 名称的 `#define`。此代码补充了预处理器无法知道的唯一一件事：它是本次编译中的哪个文件，这很重要，因为头文件是单独进行预处理的，其失败会针对包含它的 `.dss` 报告。
@@ -2337,7 +2337,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 ## DSH8292
 
 <!-- generated:begin DSH8292 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2345,7 +2345,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 '{0}', included from '{1}', could not be resolved: {2}.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:174`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:174`
 <!-- generated:end DSH8292 -->
 
 **原因。** 某个 `#include`（或 `import`）命名了一个任何源根目录都不包含的文件。解析规则按顺序如下：存在的绝对路径就是它本身；以 `/` 开头的说明符是根锚定的，会先针对包含文件自身的根目录尝试，然后针对每个其他根目录，`DShader/` 先于 `DShader/Packages/`；其他任何内容都走 1.x 导入规则——根限定符（`Plugin.MoonToon:Shared/Common.dsh`），然后是包含文件自身的目录，然后是它的根目录，然后是它的 Packages 树。不带扩展名的说明符会获得 `.dsh`。
@@ -2359,7 +2359,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 ## DSH8293
 
 <!-- generated:begin DSH8293 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2367,7 +2367,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 '{0}', included from '{1}', resolved but could not be read.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:209`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:209`
 <!-- generated:end DSH8293 -->
 
 **原因。** include 解析到了一个真实路径，但打开它失败了。与 DSH8292 不同，文件已被找到，因此这是权限或锁定问题，而不是拼写问题。
@@ -2379,7 +2379,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 ## DSH8294
 
 <!-- generated:begin DSH8294 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2387,7 +2387,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 '{0}', included from '{1}', could not be parsed; its own errors are above.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:258`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:258`
 <!-- generated:end DSH8294 -->
 
 **原因。** 被包含的头文件未能解析。它自身的解析错误已先针对该头文件自己的文件和行号报告；此代码是“因此”那一行，指出哪个 include 失败以及哪个文件将其引入，因此当某个头文件从二十处被包含时，失败仍可归因。
@@ -2399,7 +2399,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 ## DSH8295
 
 <!-- generated:begin DSH8295 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2407,7 +2407,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 '{0}' is not a DreamShader header; an include names a '.dsh' (or a '.dss'), not a '{1}' file.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:198`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:198`
 <!-- generated:end DSH8295 -->
 
 **原因。** 某个 include 解析到了一个不是 DreamShader 头文件的文件。只有 `.dsh`（以及对于有意跨编译单元的 include，`.dss`）可以被包含；`.dsm` 或 `.dsf` 是语法不同的 1.x 源，包含其中之一会被当作 2.0 文本解析并逐行失败。
@@ -2419,7 +2419,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 ## DSH8296
 
 <!-- generated:begin DSH8296 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2427,7 +2427,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 '{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it, unless it is a package's asset header.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:645`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:645`
 <!-- generated:end DSH8296 -->
 
 **原因。** 管线收到了一个它不会单独构建的文件：某个 `.dsh` 头文件，或其扩展名不属于 `.dss`、`.dsi`、`.dsp`、`.dsm` 和 `.dsf` 的文件。头文件不产生资产，只在包含或导入它的源中作为一部分被编译，因此直接编译头文件无论如何都只会产出空结果。
@@ -2439,7 +2439,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 ## DSH8297
 
 <!-- generated:begin DSH8297 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2447,7 +2447,7 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:875`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:875`
 <!-- generated:end DSH8297 -->
 
 **原因。** 内置表达式目录——即取自 UE 反射的每个 `UE.*` 节点、其引脚、其属性以及材质属性表——返回时没有任何条目。在空目录下，任何为内置项命名的事物都无法进行绑定，因此编译会直接停止，而不是将文件中的每个 `UE.*` 都报告为未知名称。
@@ -2469,7 +2469,7 @@ The builtin expression catalog came back empty, so nothing that names a 'UE.*' n
 Building '{0}' was cancelled; the asset is as it was before this compile.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:316`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1182`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:684`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:316`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1182`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:684`
 <!-- generated:end DSH8298 -->
 
 **原因。** 用户在编译进度对话框上按了取消。没有任何内容被写入：emit（输出）是运行的最后一个阶段，并且在每个阶段之前以及每个产物之前都会检查取消。
@@ -2489,7 +2489,7 @@ Building '{0}' was cancelled; the asset is as it was before this compile.
 The exported functions {0} call one another in a cycle, so there is no order in which they can be built; an exported function may call another only in one direction.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1146`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1146`
 <!-- generated:end DSH8299 -->
 
 **原因。** 同一个文件中有两个或更多导出函数直接或通过其他函数互相调用。每个导出函数都会成为各自独立的材质函数资产，而对其中一个的调用会绑定到 LIVE（实时）资产——emitter（发射器）从对象上读取被调用方的引脚，而不是从源代码读取——因此必须存在一种顺序，使得每个被调用方都在其调用方之前构建。而循环不存在这样的顺序。
@@ -2511,7 +2511,7 @@ The exported functions {0} call one another in a cycle, so there is no order in 
 '{0}' is a Custom Pass pipeline, which needs Unreal Engine 5.8 or later; this engine has the DreamShaderPass asset types but no runtime to run them, so nothing was built.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1016`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1016`
 <!-- generated:end DSH8300 -->
 
 **原因。** 一个 `.dsp` 在早于 Unreal Engine 5.8 的引擎上被编译。DreamShaderPass 模块在那里会仅以其资产类型构建（`DREAMSHADER_WITH_CUSTOM_PASS` 是 `0`）：没有运行时来运行管线，也没有全局着色器持有 HLSL pass，因此 emitter（发射器）在创建或触碰任何内容之前就会停止。前半部分仍会运行——文件会被解析、格式化并绑定，只是跳过需要运行时的检查（DSH7360）——因此 `check` 可以通过，而 `compile` 不能。
@@ -2531,7 +2531,7 @@ The exported functions {0} call one another in a cycle, so there is no order in 
 Failed to create package '%s'.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1026`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1056`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:341`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:346`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1026`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1056`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:341`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:346`
 <!-- generated:end DSH8301 -->
 
 **原因。** 无法在其 `.dsp` 解析到的路径上创建管线资产。消息 `The pass pipeline for '…' could not be created or reused.` 后面跟着带有其自身代码的原因：当 `CreatePackage` 或 `NewObject` 拒绝了该路径时为 DSH8301 again、`Failed to create package '…'` 或 `Failed to create the pass pipeline '…'`，这种情况很少见；或者当已经有东西位于那里时为 DSH8302 / DSH8303。第三种形式 `'…' does not resolve to a valid asset path` 是目标检查，编译会首先执行该检查，并将其报告为 DSH8200。
@@ -2551,7 +2551,7 @@ Failed to create package '%s'.
 Asset '%s' already exists as a '%s'; a .dsp builds a DreamPassPipeline. Rename the .dsp or move the existing asset.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:324`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:324`
 <!-- generated:end DSH8302 -->
 
 **原因。** `.dsp` 要构建其管线的地方已经有另一个类的资产——例如同一文件夹中同名的材质。`.dsp` 会依据其文件来命名其管线。该内容被引用于 DSH8301 的消息中。
@@ -2571,7 +2571,7 @@ Asset '%s' already exists as a '%s'; a .dsp builds a DreamPassPipeline. Rename t
 Asset '%s' already exists and was not generated by DreamShader. Rename the .dsp or move/delete the existing asset before building it.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:331`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:331`
 <!-- generated:end DSH8303 -->
 
 **原因。** 一个 `UDreamPassPipeline` 被保存在管线的路径上，但没有 DreamShader 的源戳记：可能是手工制作的，或是从 DreamShader 分离出来的。所有权保护机制从不接管不是它生成的资产。该内容被引用于 DSH8301 的消息中。
@@ -2591,7 +2591,7 @@ Asset '%s' already exists and was not generated by DreamShader. Rename the .dsp 
 '{1}' is not a {0} the Custom Pass runtime knows; the pipeline was not built. This is a compiler gap: the binder should have refused it.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:599`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:599`
 <!-- generated:end DSH8304 -->
 
 **原因。** 管线的某个值以 DreamShaderPass 运行时没有对应枚举值的拼写方式到达 emitter（发射器）；该消息会指出值的类型（注入点、视图类型、缓冲区格式、pass 类型、网格 pass 的模式、深度、剔除、混合、用途或 Nanite 策略，参数的来源或常量类型）以及该拼写。binder（绑定器）会先检查其中每一项，因此两者不一致，而这不是文件的问题。没有构建任何内容。
@@ -2611,7 +2611,7 @@ Asset '%s' already exists and was not generated by DreamShader. Rename the .dsp 
 The material '{0}' of pass '{1}' does not load; compile the source that builds it, or correct the Material key.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:778`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:778`
 <!-- generated:end DSH8305 -->
 
 **原因。** 在组装管线时，全屏 pass 或网格 pass 所命名的材质未能从其 `Material` 解析到的对象路径加载。构建之前的检查发现了它，而且一次编译会先构建一个缺失或比其源更旧的材质（DSH8332），因此该资产是在这中间不见了：被删除、被重命名而没有重定向器，或者是一个不再能加载的包。
@@ -2631,7 +2631,7 @@ The material '{0}' of pass '{1}' does not load; compile the source that builds i
 The default of '{0}' could not be applied: {1}.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:660`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:660`
 <!-- generated:end DSH8306 -->
 
 **原因。** `Texture2D` uniform 的 `/// @default` 无法被写入管线：该引用没有解析为资产路径（原因紧随其后，是 DSH8118-DSH8132 之一的文字描述），或者没有纹理从它解析到的路径加载。binder（绑定器）会按所写的内容取用默认值，因此这是它第一次被加载。
@@ -2643,7 +2643,7 @@ The default of '{0}' could not be applied: {1}.
 ## DSH8307
 
 <!-- generated:begin DSH8307 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2651,7 +2651,7 @@ The default of '{0}' could not be applied: {1}.
 Pass '{0}' selects the layer '{1}', which is not one of the project's pass layers (Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names).
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:854`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:854`
 <!-- generated:end DSH8307 -->
 
 **原因。** 某个网格 Pass 的 `Filter = Layer(...)` 命名了一个在管线构建时不带位（bit）的层。绑定器接受项目层表列出（未列出的名称是 DSH4412）的任何名称，但表中只有前 32 个条目有位，因此在此处列出第 32 个之后的名称会被拒绝。未构建任何内容。
@@ -2663,7 +2663,7 @@ Pass '{0}' selects the layer '{1}', which is not one of the project's pass layer
 ## DSH8308
 
 <!-- generated:begin DSH8308 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2671,7 +2671,7 @@ Pass '{0}' selects the layer '{1}', which is not one of the project's pass layer
 Buffer '{0}' is {1} and cannot be exported: materials, Blueprints and UMG read an exported buffer as a float texture, which an integer or a depth buffer cannot be. Export a float or normalized buffer, or drop Export.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:705`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:705`
 <!-- generated:end DSH8308 -->
 
 **原因。** 一个声明为 `Export = true` 的缓冲区具有整数或深度格式（`R32U`、`RG32U`、`Depth32`）。导出的缓冲区会成为渲染目标，材质、蓝图和 UMG 将其作为浮点纹理采样，而这两者都不能是整数或深度格式。绑定器会先拒绝相同的声明（DSH7355）；这是发射器在将格式映射到渲染目标格式时的自身检查。
@@ -2683,7 +2683,7 @@ Buffer '{0}' is {1} and cannot be exported: materials, Blueprints and UMG read a
 ## DSH8309
 
 <!-- generated:begin DSH8309 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2691,7 +2691,7 @@ Buffer '{0}' is {1} and cannot be exported: materials, Blueprints and UMG read a
 The render target of the exported buffer '{0}' could not be created or reused. {1}
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1161`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1161`
 <!-- generated:end DSH8309 -->
 
 **原因。** 导出的缓冲区的渲染目标——`<Pipeline>_<Buffer>`，位于管线的文件夹中—— 无法创建或接管；其后的句子是原因，带有其代码（DSH8313 或 DSH8314）。渲染目标在写入任何内容之前就已找到或创建，因此管线、槽位注册表和快照保持原样。
@@ -2703,7 +2703,7 @@ The render target of the exported buffer '{0}' could not be created or reused. {
 ## DSH8310
 
 <!-- generated:begin DSH8310 -->
-**严重性** warning
+**严重性** 警告
 
 **消息**
 
@@ -2711,7 +2711,7 @@ The render target of the exported buffer '{0}' could not be created or reused. {
 '{0}' was left in place although its buffer is no longer exported: {1}. Delete it by hand once nothing reads it.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:577`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:577`
 <!-- generated:end DSH8310 -->
 
 **原因。** 管线过去导出而现已不再导出的缓冲区——其 `Export` 被移除、缓冲区被重命名或删除——因此在管线保存后其渲染目标本应被删除。它被保留了：其他东西仍在引用它（消息列出了包，通常是某个材质，其 `UE.DreamPassBuffer` 读取该缓冲区），或者，在未列出任何引用者时，删除操作在此过程中被拒绝。管线本身已构建并保存。
@@ -2723,7 +2723,7 @@ The render target of the exported buffer '{0}' could not be created or reused. {
 ## DSH8311
 
 <!-- generated:begin DSH8311 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2731,7 +2731,7 @@ The render target of the exported buffer '{0}' could not be created or reused. {
 '{0}' was built but could not be saved with its render targets; its slots are already in the registry. Make the packages writable and compile the source again to retry saving. {1}
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1270`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1270`
 <!-- generated:end DSH8311 -->
 
 **原因。** 管线已构建且其渲染目标已配置，但保存包失败——例如文件因未签出而为只读，或路径不再存在；资产层的原因随后给出。保存之前的一切仍然有效：槽位注册表和快照已写入，在编辑器中槽位着色器已重新编译，内存中的管线已在运行新版本。
@@ -2743,7 +2743,7 @@ The render target of the exported buffer '{0}' could not be created or reused. {
 ## DSH8312
 
 <!-- generated:begin DSH8312 -->
-**严重性** info
+**严重性** 信息
 
 **消息**
 
@@ -2751,7 +2751,7 @@ The render target of the exported buffer '{0}' could not be created or reused. {
 '{0}' was deleted: its buffer is no longer exported.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:565`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:565`
 <!-- generated:end DSH8312 -->
 
 **原因。** 信息性。管线过去导出而现已不再导出的缓冲区，除了管线之外没有任何东西引用其渲染目标，因此该渲染目标在管线不带它保存后被删除。
@@ -2763,7 +2763,7 @@ The render target of the exported buffer '{0}' could not be created or reused. {
 ## DSH8313
 
 <!-- generated:begin DSH8313 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2771,7 +2771,7 @@ The render target of the exported buffer '{0}' could not be created or reused. {
 Asset '%s' already exists as a '%s'; an exported buffer needs a TextureRenderTarget2D there. Move the existing asset or rename the buffer.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:372`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:379`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:372`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:379`
 <!-- generated:end DSH8313 -->
 
 **原因。** 在导出的缓冲区的渲染目标所在处（`<Pipeline>_<Buffer>`，紧邻管线）存在非本管线渲染目标的东西：另一类的资产，或一个没有 DreamShader 源标记的 `TextureRenderTarget2D`——手动创建的，永远不会被接管。在 DSH8309 的消息内引用。
@@ -2783,7 +2783,7 @@ Asset '%s' already exists as a '%s'; an exported buffer needs a TextureRenderTar
 ## DSH8314
 
 <!-- generated:begin DSH8314 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2791,7 +2791,7 @@ Asset '%s' already exists as a '%s'; an exported buffer needs a TextureRenderTar
 Failed to create package '%s'.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:389`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:394`
+**触发位置** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:389`、`Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:394`
 <!-- generated:end DSH8314 -->
 
 **原因。** 导出的缓冲区的渲染目标所在的包，或其中的 `TextureRenderTarget2D`，无法创建：`CreatePackage` 或 `NewObject` 对于消息所命名的路径失败。罕见；在 DSH8309 的消息内引用。
@@ -2803,7 +2803,7 @@ Failed to create package '%s'.
 ## DSH8315
 
 <!-- generated:begin DSH8315 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2811,7 +2811,7 @@ Failed to create package '%s'.
 The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose every slot it records; fix the file, or run 'dsc pass-registry -Rebuild'.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:877`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:877`
 <!-- generated:end DSH8315 -->
 
 **原因。** 每次 `.dsp` 编译都会读取项目的槽位注册表 `<DShader>/.dreampass/Registry.json`—— 以给其 HLSL pass 分配槽位，并释放其丢弃的 pass 的槽位——而该文件存在但无法使用：无法打开、不是有效的 JSON（其中留下的合并冲突是常见原因），或某个条目没有槽位编号、管线或 pass。覆盖它会丢失其记录的每一个槽位，因此未写入任何内容。
@@ -2823,7 +2823,7 @@ The Custom Pass slot registry cannot be read: {0}. Nothing was written, because 
 ## DSH8316
 
 <!-- generated:begin DSH8316 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2831,7 +2831,7 @@ The Custom Pass slot registry cannot be read: {0}. Nothing was written, because 
 Pass '{0}' needs a {1} slot and all {2} are taken. Merge passes, run 'dsc pass-registry -Gc' to free the slots of pipelines whose source is gone, or raise {3} in the project's Target.cs.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:960`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:960`
 <!-- generated:end DSH8316 -->
 
 **原因。** 新的 HLSL pass 需要一个槽位——`compute` pass 需要计算表中的一个，带 `fullscreen` 且含 `Shader =` 的 pass 需要像素表中的一个——而该表的每个槽位在项目的注册表中都已被占用（默认 32 个计算槽位和 16 个像素槽位）。管线丢弃的 pass 会在该管线再次编译时释放其槽位；被删除或重命名的 `.dsp` 的槽位在被回收之前仍保持占用。
@@ -2843,7 +2843,7 @@ Pass '{0}' needs a {1} slot and all {2} are taken. Merge passes, run 'dsc pass-r
 ## DSH8317
 
 <!-- generated:begin DSH8317 -->
-**严重性** error
+**严重性** 错误
 
 **消息**
 
@@ -2851,7 +2851,7 @@ Pass '{0}' needs a {1} slot and all {2} are taken. Merge passes, run 'dsc pass-r
 Pass '{0}' cannot be mapped onto its HLSL slot: {1}
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1040`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1040`
 <!-- generated:end DSH8317 -->
 
 **原因。** 该 pass 的绑定无法写入其槽位的 section —— 即把绑定映射到槽位固定参数上的 `#define`；原因如下。名称不是标识符或以 `DP_` 开头；名称被定义两次（`read` 也定义了 `<Name>Size` 和 `<Name>UVRect`，`write` 定义 `<Name>Size`，而 `Entry` 也是槽位中的名称）；读取超过 8 次或写入超过 4 次；参数无法放入槽位的 16 个 `float4`，或其中包含纹理。绑定器会先拒绝上述每一项（DSH7319、DSH7347），因此两者不一致。
@@ -2871,7 +2871,7 @@ Pass '{0}' cannot be mapped onto its HLSL slot: {1}
 The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slot (its entry is not in the file's 'hlsl' block); there is nothing to snapshot.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:985`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:994`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:985`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:994`
 <!-- generated:end DSH8319 -->
 
 **原因。** pass 在 `Shader =` 中命名的 `.usf` 在构建其快照时无法被读取。绑定器找到了该文件（缺失的文件是 DSH4408），因此它在这期间丢失或变得不可读：被删除或移动、被另一个程序锁定，或本进程无法读取。对于 HLSL 在 `.dsp` 中的 pass，其快照的根无法由 `.dsp` 的文本拼装：其条目不在该文件的 `hlsl` 块中，绑定器会先报告这一点（DSH4410）。
@@ -2891,7 +2891,7 @@ The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slo
 '{0}' is included by a relative path and names no file, so the snapshot of pass '{1}' cannot be built.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1020`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1020`
 <!-- generated:end DSH8320 -->
 
 **原因。** 该 pass 的 `.usf`，或它包含的某个文件，有一个 `#include "<relative path>"`，其命名的文件相对于存放它的文件不存在。槽位的快照会复制通过相对路径包含的每个文件，因此每个文件都必须存在。该扫描是文本式的，不会求值 `#if`：位于从未被编译的分支中的 include 也会被计入。在 include 所在行报告。
@@ -2911,7 +2911,7 @@ The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slo
 '{0}' is included by a virtual path outside /Engine/, /Plugin/ and /ThirdParty/, so the snapshot of pass '{1}' keeps including the live file: an edit of it later reaches the global shaders without a pre-check. Include it by a relative path to have it copied into the snapshot.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1030`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1030`
 <!-- generated:end DSH8321 -->
 
 **原因。** 该 pass 的 `.usf`，或它包含的某个文件，通过 `/Engine/`、`/Plugin/` 和 `/ThirdParty/` 之外的虚拟路径包含了一个文件 —— 例如 `/Project/...` 这样的项目着色器目录。快照只复制通过相对路径包含的内容，因此该 include 仍指向活动文件。其文本是槽位哈希的一部分，而管线的下一次编译会预先检查对它的编辑；在此之前的编辑器启动或 cook 会在那时的文件状态下编译全局着色器，未经检查 —— 而全局着色器编译失败是致命的。
@@ -2931,7 +2931,7 @@ The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slo
 [{0}] pass '{1}' does not compile in its HLSL slot: {2}
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1310`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1318`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1344`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1310`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1318`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1344`
 <!-- generated:end DSH8322 -->
 
 **原因。** 预检查在槽位中针对方括号内的着色器格式编译了该 pass，着色器编译器拒绝了它；消息的其余部分是编译器自己的内容。`.usf` 中或其快照的某个文件中的错误，会在该文件的行列处报告；写在 `.dsp` 中的 HLSL 中的错误，则在其 `.dsp` 行处报告。文件 `hlsl` 块中共享代码的错误会以相同方式使每个调用它的 pass 失败，并且只报告一次，并列出失败的 pass。没有入口到达的代码不会被编译：引擎在着色器编译器读取槽位之前就将其从槽位中丢弃（`r.Shaders.RemoveDeadCode`），因此尚无 pass 调用的辅助函数不会被检查，无论是在 `.dsp` 中还是在 `.usf` 中。其他地方的一个 —— 槽位的 section、槽位着色器、引擎头文件（此时消息会保留其路径）—— 会在该 pass 处报告，并附注绑定名称可能冲突：每个绑定都是在包含该文件之前创建的 `#define`。没有任何内容被写入：资产、注册表和快照都保持原样，该 pass 的先前版本继续运行。
@@ -2953,7 +2953,7 @@ The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slo
 The {0} slot shader cannot be pre-checked: the global shader type {1} is not registered, or its source no longer includes '{2}'. The DreamShaderPass module is out of step with this compiler; nothing was written.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1243`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1354`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1243`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1354`
 <!-- generated:end DSH8323 -->
 
 **原因。** 预检查需要 DreamShaderPass 模块所注册的槽位着色器 —— 即全局着色器类型 `FDreamPassCS` / `FDreamPassPS`，其 `DreamPassCompute.usf` / `DreamPassPixel.usf` 包含注册表 —— 而该类型未在此进程中注册，或其源无法读取，或不再包含注册表文件。DreamShaderPass 模块未加载，或它与编译器来自插件的不同构建。没有写入任何内容。在 Unreal Engine 5.8 以下，同一段代码会提示 HLSL 槽位需要 5.8；编译和 `check -Shaders` 会在此之前停在 DSH8300。
@@ -2973,7 +2973,7 @@ The {0} slot shader cannot be pre-checked: the global shader type {1} is not reg
 The project targets the shader format {0}, which this machine has no shader compiler for, so the HLSL slots were not pre-checked for it; a cook for that platform compiles them unchecked.
 ```
 
-**由以下触发** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1181`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1203`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1181`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1203`
 <!-- generated:end DSH8324 -->
 
 **原因。** 一个预检查会为项目渲染和烘焙所用的每种格式编译发生变更的槽位——包括活动功能级别的格式，以及活动目标平台所针对的每种格式——而本机没有针对此格式的着色器编译器（其平台的 SDK 或着色器格式未安装）。其他格式的槽位已被检查；针对该平台的烘焙会在未检查的情况下编译它们，而一个在那里编译失败的全局着色器会导致烘焙失败。
@@ -2995,7 +2995,7 @@ The project targets the shader format {0}, which this machine has no shader comp
 There is no shader format to pre-check the HLSL slots with: no active feature level and no target platform has a shader compiler on this machine. Nothing was written, because a slot that never compiled must not reach the global shaders.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1187`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1187`
 <!-- generated:end DSH8325 -->
 
 **原因。** 某个槽位必须被预检查，却没有可用来编译它的着色器格式：该进程不渲染任何内容——`-nullrhi`，`dsc.ps1` 会将其传递给除 `check -Shaders` 之外的每个动词——因此没有任何功能级别会提供一种格式，并且没有任何活动目标平台具有本机可编译的格式。一个从未编译过的槽位绝不能到达全局着色器，因此没有写入任何内容。
@@ -3015,7 +3015,7 @@ There is no shader format to pre-check the HLSL slots with: no active feature le
 '{0}' cannot be written or deleted, so nothing of the slot registry was changed: no snapshot written, no slot deleted, no registry file rewritten. The registry and its snapshots are committed files; a file that is read-only because it is not checked out is the usual reason. Check out the whole .dreampass folder and try again.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1426`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1445`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1624`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1426`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1445`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1624`
 <!-- generated:end DSH8326 -->
 
 **原因。** 槽位注册表的一个文件无法被写入或删除——`Slots/`、 `Registry.json`、`RegistryCompute.ush` 或 `RegistryPixel.ush` 下的快照文件——无论是被 `.dsp` 编译还是被 `pass-registry -Gc` / `-Rebuild` 操作。它们是已提交的文件；某个文件因为未被签出而成为只读，是常见原因。一次编译、`-Gc` 以及 `-Rebuild` 的每个步骤，都会在触碰任何文件之前检查它们将要写入或删除的每个文件，因此上面的消息意味着没有任何内容被更改：没有写入快照、没有删除槽位、没有重写注册表文件。较短的消息 `'<file>' could not be written. ...` 是在该检查通过之后写入失败——文件在此期间被锁定或更改——并且可能使该步骤半途而废：一次编译会在注册表文件之前写入其变更的快照，而 `-Gc` 会在注册表文件之前删除其释放的槽位的快照。
@@ -3035,7 +3035,7 @@ There is no shader format to pre-check the HLSL slots with: no active feature le
 {0} slot {1} of pass '{2}' was freed: the pipeline no longer runs that pass in HLSL there.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1502`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1502`
 <!-- generated:end DSH8327 -->
 
 **原因。** 信息性。一次 `.dsp` 编译释放了其管线持有的某个槽位：该通道被移除或重命名，被移到另一张表（一个 `compute` 通道变成了 `fullscreen` 通道，或反之），或不再运行 HLSL（它现在绘制一个 `Material`）。它的条目及其章节已消失，其快照也已消失，除非同一次编译的某个通道再次取得了该槽位。
@@ -3055,7 +3055,7 @@ There is no shader format to pre-check the HLSL slots with: no active feature le
 '{0}' names more than one material under this source root ({1}); write the material's asset path instead.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:591`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:591`
 <!-- generated:end DSH8330 -->
 
 **原因。** 某个通道的 `Material = "<Name>"` 是一个裸名称，而 `.dsp` 的源根目录下有多个源构建了该名称的材质或材质实例——一个 `.dss` 和一个 `.dsi`，或不同文件夹中的两个 `.dss`；该消息会列出它们。
@@ -3075,7 +3075,7 @@ There is no shader format to pre-check the HLSL slots with: no active feature le
 The material '{0}' comes from '{1}', which failed to compile, so this pipeline has no material to check its pass against. {2}
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:504`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:651`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:504`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:651`
 <!-- generated:end DSH8331 -->
 
 **原因。** 某个通道所指定的材质由源根目录下的一个 `.dss`（或一个 `.dsi`）构建，而该源无法编译。两条消息，每种运行各一条：
@@ -3100,7 +3100,7 @@ The material '{0}' comes from '{1}', which failed to compile, so this pipeline h
 '{0}' was missing or older than its source, so '{1}' was compiled first.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:483`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:483`
 <!-- generated:end DSH8332 -->
 
 **原因。** 信息性。某个通道所指定的材质缺失或旧于构建它的源，因此该源在管线之前被编译——这是 `.dsi` 应用于其父项的规则（DSH8264）。只有构建资产的运行才会这样做；`check` 则改为从其源读取该材质的信息。
@@ -3120,7 +3120,7 @@ The material '{0}' comes from '{1}', which failed to compile, so this pipeline h
 '{0}' is built by '{1}', which reads this pipeline's exported buffer through UE.DreamPassBuffer (directly, or through a pipeline that needs this one), and a pipeline and its pass material that need each other can be built in no order. Inside its own pipeline a pass binds the buffer with 'read' -- a fullscreen material reads it as a UserSceneTexture input -- rather than the exported copy; a mesh pass's material cannot read its own pipeline's buffers.
 ```
 
-**引发者** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:614`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:614`
 <!-- generated:end DSH8333 -->
 
 **原因。** 此管线的一个通道绘制了一个通过 `UE.DreamPassBuffer` 读取该管线导出缓冲区的材质——无论是直接读取，还是通过另一个需要此管线的管线读取。该管线没有其材质就无法构建，而该材质没有该管线的资产就无法构建，因此二者无法以任何顺序构建，永远无法引导；`.dsp` 无法编译。当此 `.dsp` 被编译，或在该材质的编译过程中被读取时，会引发此问题，后者会先构建缺失或过期的管线（DSH5320）；随后该材质会报告该管线失败（DSH5319）。从管线一侧来看，同一个循环是该材质的 DSH5325，管线将其报告为 DSH8331。
@@ -3140,7 +3140,7 @@ The material '{0}' comes from '{1}', which failed to compile, so this pipeline h
 The material '{0}' does not resolve to an asset path. {1}
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:584`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:631`
+**触发位置** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:584`、`Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:631`
 <!-- generated:end DSH8334 -->
 
 **原因。** pass 的 `Material` 无法按所写内容使用。要么它被写为路径（`/…`、 `Path(...)` 或 `Class'…'`），而该路径无法解析为资源路径 —— 原因随后给出，并附带其代码 —— 要么它解析到的资源不是材质或材质实例；此时消息会指出其类。
@@ -3160,7 +3160,7 @@ The material '{0}' does not resolve to an asset path. {1}
 The Custom Pass slot registry cannot be read: {0}. Nothing was changed; 'dsc pass-registry -Rebuild' replaces a registry that does not parse.
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:355`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:448`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:355`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:448`
 <!-- generated:end DSH8335 -->
 
 **原因。** `pass-registry -Gc`，或 `-Rebuild` 的最后两步（收集垃圾、重写注册表文件），无法读取 `Registry.json`：它无法被打开，它不是有效的 JSON —— 其中遗留的合并冲突是常见原因 —— 或者某个条目没有槽位编号、管线或 pass。未更改任何内容。`-Rebuild` 在编译任何内容之前会替换不可读的文件，因此从 `-Rebuild` 起，这意味着在其运行期间有另一个进程更改或锁定了该文件。
@@ -3180,7 +3180,7 @@ The Custom Pass slot registry cannot be read: {0}. Nothing was changed; 'dsc pas
 The Custom Pass slot registry cannot be read ({0}) and could not be moved aside to '{1}', so nothing was reset. Another process holding one of the two files open is the usual reason; a read-only one is reported before this.
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:425`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:425`
 <!-- generated:end DSH8336 -->
 
 **原因。** `pass-registry -Rebuild` 发现 `Registry.json` 不可读（消息说明了原因），并且无法将其移到 `Registry.json.unreadable`，因此它没有重置任何内容并停止了。只读的 `Registry.json` 或 `Registry.json.unreadable` 会在移动之前报告为 [`DSH8326`](#dsh8326)；剩下的是一种因其他原因而失败的移动，最常见的是另一个进程打开了这两个文件之一。
@@ -3200,7 +3200,7 @@ The Custom Pass slot registry cannot be read ({0}) and could not be moved aside 
 {0} slot {1} ({2}, pass '{3}') names snapshot files that are not on disk, so it is now reserved and compiles to the empty stub: a registry that includes a missing file fails the global shader compile. Compile '{4}' to give the pass its snapshot back, and commit the Slots folder with the registry.
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:462`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:462`
 <!-- generated:end DSH8337 -->
 
 **原因。** 在 `pass-registry -Rebuild` 结束时，`Registry.json` 仍记录此槽位的快照，且其文件不在 `Slots/` 下：拥有该槽位的 `.dsp` 在此次重建中未编译（DSH9204），因此没有任何内容写入它们。包含缺失文件的注册表文件会导致全局着色器编译失败，因此该槽位被设为保留槽位 —— 它编译为空存根，其 pass 不执行任何操作。
@@ -3220,7 +3220,7 @@ The Custom Pass slot registry cannot be read ({0}) and could not be moved aside 
 HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to pre-check them for.
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:502`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:514`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:533`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:502`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:514`、`Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:533`
 <!-- generated:end DSH8338 -->
 
 **原因。** 对 `.dsp` 运行 `check -Shaders` 时，无法进行到预检查其 HLSL pass 的地步；消息说明了三者中哪一项阻止了它。引擎早于 Unreal Engine 5.8，没有可用于检查的槽位 —— 不过 `check -Shaders` 首先运行的构建在那里会停在 DSH8300。或者该文件在构建后为检查而再次读取时，未能到达其管线，且未说明原因。或者管线的资源路径无法解析（原因在括号中）。
@@ -3240,7 +3240,7 @@ HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runti
 '{0}' has no HLSL pass, so there is no slot to pre-check; its materials are checked by the sources that build them.
 ```
 
-**引发自** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:559`
+**触发位置** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:559`
 <!-- generated:end DSH8339 -->
 
 **原因。** 信息性。`check -Shaders` 在无 HLSL pass 的 `.dsp` 上运行 —— 没有 `compute` pass，也没有带 `Shader =` 的 `fullscreen` pass —— 因此没有可预检查的槽位。其 pass 绘制材质，这些材质的着色器属于构建它们的源。

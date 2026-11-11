@@ -42,7 +42,7 @@ release 压缩包里有什么：
 | `Docs/`、`.skill/` | 英文完整手册；Agent skills 和它的驱动脚本 `dsc.ps1` |
 | `README.md`, `README.zh-CN.md`, `CHANGELOG.md`, `LICENSE` | |
 
-**提示：**
+**注意：**
 
 1.6.0 到 2.1.1 的压缩包都没有带 `Content/`，所以按压缩包安装的编辑器界面只有英文。老版本想要中文界面，从对应 tag 把 `Content/Localization/` 复制进来即可。`Tests/`、`Tools/` 和 `Config/` 不随压缩包发布。
 
