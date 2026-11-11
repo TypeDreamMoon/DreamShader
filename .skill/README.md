@@ -73,7 +73,7 @@ flag surface: [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md); the ski
 
 | | |
 | :-- | :-- |
-| Engine resolution | from the `.uproject`'s `EngineAssociation`, via the registry — no hard-coded path |
+| Engine resolution | from the `.uproject`'s `EngineAssociation`, via the registry, then the Epic Games Launcher's `LauncherInstalled.dat` — no hard-coded path |
 | Project discovery | walks up from the target file (or `-SourceFile`), then the working directory |
 | Whole messages | a compile's report is one multi-line log message — every `Generated` line, then `Warnings:` and the warnings, or every error — and the engine prefixes only its first line. The driver keeps each message whole, and drops the engine's end-of-run summary that repeats them |
 | Asset accounting | snapshots `.uasset` files under project and plugin Content folders, reports observed changes, and uses a commandlet save manifest to distinguish its own new assets from concurrent editor/importer writes. The manifest also includes a `.dsp`'s saved render targets and `check -Shaders`' assets |

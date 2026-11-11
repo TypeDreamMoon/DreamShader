@@ -125,6 +125,20 @@ if ([string]::IsNullOrWhiteSpace($EngineRoot))
     $Association = (Get-Content $TemplateProject.FullName -Raw | ConvertFrom-Json).EngineAssociation
     $Key = "HKLM:\SOFTWARE\EpicGames\Unreal Engine\$Association"
     if (Test-Path $Key) { $EngineRoot = (Get-ItemProperty $Key).InstalledDirectory }
+    if ([string]::IsNullOrWhiteSpace($EngineRoot) -and $env:ProgramData)
+    {
+        # Not every launcher install writes that key; the launcher's own manifest still lists the engine,
+        # under the AppName UE_<version> (plugin artifacts such as FabPlugin_<version> share its location).
+        $Manifest = Join-Path $env:ProgramData 'Epic\UnrealEngineLauncher\LauncherInstalled.dat'
+        try
+        {
+            $Hit = @((Get-Content $Manifest -Raw -ErrorAction Stop | ConvertFrom-Json).InstallationList) |
+                Where-Object { $_.AppName -ceq "UE_$Association" -and (Test-Path -LiteralPath $_.InstallLocation) } |
+                Select-Object -First 1
+            if ($Hit) { $EngineRoot = $Hit.InstallLocation }
+        }
+        catch { }
+    }
     if ([string]::IsNullOrWhiteSpace($EngineRoot)) { Fail "No installed engine registered for '$Association'; pass -EngineRoot." }
 }
 $EngineRoot = Get-FullPath $EngineRoot
