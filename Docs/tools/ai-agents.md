@@ -82,10 +82,8 @@ Agents other than Claude Code do not load skills by themselves. Point them at th
 
 ## The MCP server (optional)
 
-[dream-mcp](https://github.com/TypeDreamMoon/dream-mcp) is a separate MCP server for DreamShader and DreamFX.
-When an editor is open on the project, it sends builds to that editor instead of starting a commandlet, which
-is faster and avoids two processes writing the same packages. It also answers material-expression signatures
-from disk. Install and register it as its README says. Without it, the skills and `dsc.ps1` work on their own.
+[dream-mcp](https://github.com/TypeDreamMoon/dream-mcp) is an optional MCP server for the Dream plugins. What
+it supports is stated in its README. Without it, the skills and `dsc.ps1` work as described on this page.
 
 ## The loop
 
