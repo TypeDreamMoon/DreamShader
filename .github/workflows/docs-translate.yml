@@ -1,0 +1,69 @@
+# Copy to .github/workflows/docs-translate.yml in a plugin.
+#
+# After the manuals change on main, translate what is stale (English into Chinese, and
+# pages listed in chineseOriginal from Chinese into English), check the result, and put
+# it on the dreamdocs/translate branch with one pull request to review and merge.
+#
+# Settings > Secrets and variables > Actions:
+#   secret   DOCS_AI_API_KEY    the translator's key; without it the run only warns
+#   variable DOCS_AI_TYPE       OpenAI (any OpenAI-compatible service), Anthropic or OpenCodeGo
+#   variable DOCS_AI_MODEL      for example deepseek-v4.1-flash (OpenCodeGo) or deepseek-chat (DeepSeek)
+#   variable DOCS_AI_BASE_URL   for OpenAI-compatible services, for example https://api.deepseek.com/v1
+#   optional DOCS_AI_EXTRA_BODY, DOCS_AI_JSON_MODE, DOCS_AI_MAX_SLOTS (default 3000 per run)
+#   optional secret DOCS_BOT_TOKEN: a token that may push and open pull requests; with it the
+#            pull request also runs the plugin's other checks. Without it, allow
+#            Settings > Actions > General > "Allow GitHub Actions to create and approve pull requests".
+name: Translate documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Docs/**
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: docs-translate
+  cancel-in-progress: false
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # The previous English of a changed paragraph comes from history.
+          token: ${{ secrets.DOCS_BOT_TOKEN || github.token }}
+      - name: Read the dreamdocs version this plugin uses
+        id: tool
+        run: python3 -c "import json; print('version=' + json.load(open('Docs/dreamdocs.json'))['tool'])" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v5
+        with:
+          repository: TypeDreamMoon/dreamdocs
+          ref: v${{ steps.tool.outputs.version }}
+          path: .dreamdocs
+          persist-credentials: false
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/dreamdocs-cache
+          key: dreamdocs-cache-${{ github.run_id }}
+          restore-keys: dreamdocs-cache-
+      - name: Translate and open the pull request
+        env:
+          PYTHONPATH: .dreamdocs
+          PYTHONIOENCODING: utf-8
+          DREAMDOCS_CACHE: ${{ runner.temp }}/dreamdocs-cache
+          GH_TOKEN: ${{ secrets.DOCS_BOT_TOKEN || github.token }}
+          DOCS_AI_API_KEY: ${{ secrets.DOCS_AI_API_KEY }}
+          DOCS_AI_TYPE: ${{ vars.DOCS_AI_TYPE }}
+          DOCS_AI_MODEL: ${{ vars.DOCS_AI_MODEL }}
+          DOCS_AI_BASE_URL: ${{ vars.DOCS_AI_BASE_URL }}
+          DOCS_AI_EXTRA_BODY: ${{ vars.DOCS_AI_EXTRA_BODY }}
+          DOCS_AI_JSON_MODE: ${{ vars.DOCS_AI_JSON_MODE }}
+          DOCS_AI_MAX_SLOTS: ${{ vars.DOCS_AI_MAX_SLOTS }}
+        run: python3 -B -m dreamdocs ci translate --plugin . --base "${{ github.event.repository.default_branch }}"
