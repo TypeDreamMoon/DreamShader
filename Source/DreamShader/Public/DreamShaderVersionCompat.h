@@ -76,3 +76,12 @@
 // Materials/MaterialParameters.h and deprecated the MaterialTypes.h that used to declare them.
 // Including the wrong one is a hard error going back and a deprecation warning going forward.
 #define DREAMSHADER_WITH_MATERIAL_PARAMETERS_HEADER DREAMSHADER_UE_VERSION_AT_LEAST(5, 7)
+
+// UE 5.4 turned FHttpRequestHandler (HttpRequestHandler.h) from a TFunction into a TDelegate: a lambda binds with
+// CreateLambda from 5.4 on and converts implicitly before it, and neither spelling compiles on the other engine.
+// Variadic because a lambda's capture list holds commas the preprocessor would split on.
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 4)
+#define DREAMSHADER_HTTP_REQUEST_HANDLER(...) FHttpRequestHandler::CreateLambda(__VA_ARGS__)
+#else
+#define DREAMSHADER_HTTP_REQUEST_HANDLER(...) FHttpRequestHandler(__VA_ARGS__)
+#endif
