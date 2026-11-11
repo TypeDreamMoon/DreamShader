@@ -4,7 +4,7 @@
   "id": "shader",
   "plugin": "DreamShader",
   "title": "DreamShader",
-  "description": "DreamShader turns text into Unreal materials. A .dss source is HLSL with declarations: uniforms become parameters and one export function becomes a material, or material functions. A .dsi builds a material instance, a .dsp a Custom Pass render pipeline (UE 5.8), a .dsh holds shared helpers; .dsm/.dsf are the older 1.x language. Sources live under the project's DShader/ folder and build assets at the same path under /Game. Use this tool to check, compile and preview sources, read their diagnostics, look up the UE.* and Substrate.* nodes a source can call, and turn an existing material back into text. Read the language reference before writing a source.",
+  "description": "DreamShader turns text into Unreal materials. A .dss source is HLSL with declarations. Its uniforms become material parameters, and its export function becomes the material or a material function. A .dsi makes a material instance. A .dsp makes a Custom Pass render pipeline (UE 5.8). A .dsh holds shared helpers. .dsm and .dsf are the older 1.x language. Sources live in the project's DShader/ folder, and each one builds assets at the same path under /Game. Use this tool to check, compile and preview sources, read their errors, look up the nodes a source can call, and turn an existing material back into text. Read the language reference before you write a source.",
   "route": "/dream/shader",
   "host": { "commandlet": "DreamShaderHost" },
   "extensions": [".dss", ".dsi", ".dsp", ".dsh", ".dsm", ".dsf"],
@@ -17,7 +17,7 @@
   "actions": [
     {
       "name": "check",
-      "description": "Parse and validate a source without building anything; writes nothing. The fast first test after every edit.",
+      "description": "Check a source for errors. It builds nothing and writes nothing. Run it after every edit: it is the fastest test.",
       "needs": "engine",
       "writes": false,
       "long": true,
@@ -31,7 +31,7 @@
     },
     {
       "name": "compile",
-      "description": "Build the assets a source declares. Writes assets: in the editor a ThinCustom material stays in memory, in the host it is saved. shaders=true also compiles its shaders and reports HLSL errors at source lines (always saves).",
+      "description": "Build the assets a source makes, such as a material. In the user's editor, a material of the default kind stays in memory until the user saves it. In a host, every asset is saved to disk. With shaders=true it also compiles the shaders and reports their errors at source lines; then it always saves.",
       "needs": "engine",
       "writes": true,
       "long": true,
@@ -60,7 +60,7 @@
     },
     {
       "name": "lookup",
-      "description": "Search the node catalog sources call: UE.* and Substrate.* nodes with their inputs, outputs and properties, and material attributes (m.BaseColor). An exact name gives the full entry; otherwise a list of names containing the text.",
+      "description": "Find a node a source can call: the UE.* and Substrate.* nodes, and material attributes such as m.BaseColor. An exact name returns its inputs, outputs and properties. Part of a name returns the names that contain it.",
       "needs": "engine",
       "writes": false,
       "long": false,
@@ -99,7 +99,7 @@
     },
     {
       "name": "info",
-      "description": "Plugin and engine versions, the source roots, the default backend, and what this engine process can do (editor or host, renders or not).",
+      "description": "Report the plugin and engine versions, the source folders, the default backend, and what this engine process can do: editor or host, renders or not.",
       "needs": "engine",
       "writes": false,
       "long": false,
@@ -107,7 +107,7 @@
     },
     {
       "name": "decompile",
-      "description": "Write an existing material, material function or material instance out as a DreamShader source (.dss, .dsi or .dsp). Writes a source file, never an asset.",
+      "description": "Turn an existing material, material function or material instance into a DreamShader source (.dss, .dsi or .dsp). It writes a source file, never an asset.",
       "needs": "engine",
       "writes": true,
       "long": true,
