@@ -45,6 +45,8 @@ namespace UE::DreamShader::Editor::Private
 		void ClearDiagnostics(const FString& SourceFilePath);
 		/** Every record filed against FilePath, whoever owns it. FilePath is empty in these: the key is the file. */
 		const TArray<FDreamShaderDiagnosticRecord>* FindDiagnostics(const FString& FilePath) const;
+		/** Every file that has records filed against it, normalized: the keys FindDiagnostics answers for. */
+		TArray<FString> GetFilePaths() const;
 		/** What one producer filed for SourceFilePath, each record's FilePath naming the file it is filed against. */
 		const TArray<FDreamShaderDiagnosticRecord>* FindOwnedDiagnostics(
 			const FString& SourceFilePath,

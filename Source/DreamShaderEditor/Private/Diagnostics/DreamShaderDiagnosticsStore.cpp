@@ -151,6 +151,14 @@ namespace UE::DreamShader::Editor::Private
 		return DiagnosticsByFile.Find(NormalizedPath);
 	}
 
+	TArray<FString> FDreamShaderDiagnosticsStore::GetFilePaths() const
+	{
+		TArray<FString> FilePaths;
+		DiagnosticsByFile.GetKeys(FilePaths);
+		FilePaths.Sort();
+		return FilePaths;
+	}
+
 	const TArray<FDreamShaderDiagnosticRecord>* FDreamShaderDiagnosticsStore::FindOwnedDiagnostics(
 		const FString& SourceFilePath,
 		const EDreamShaderDiagnosticsProducer Producer,

@@ -31,6 +31,8 @@ namespace UE::DreamShader::Editor::Private
 		void Startup();
 		void Shutdown();
 		const TArray<FDreamShaderDiagnosticRecord>* GetDiagnosticsForSource(const FString& SourceFilePath) const { return DiagnosticsStore.FindDiagnostics(SourceFilePath); }
+		/** The store itself, read-only: what the DreamMCP endpoint's `diagnostics` lists without a file. */
+		const FDreamShaderDiagnosticsStore& GetDiagnosticsStore() const { return DiagnosticsStore; }
 
 		/**
 		 * One compile through the bridge, synchronously. The diagnostics store, diagnostics.json, any
