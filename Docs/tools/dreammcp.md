@@ -285,9 +285,24 @@ emissive-heavy preview looks like, and `data.toneNote` says so on every result.
 `time` sets the material's Time (both clocks, with and without *Ignore Pause*) in seconds; default `0`, so a
 preview of the same source is the same image every time. `frames` renders that many moments spread evenly
 over `duration` seconds from `time` — frame *i* at `time + duration × i / frames` — side by side in one PNG, each
-`width × height` (default 256 with `frames`, 512 without). `data.animation` is `{ frames, duration,
-maxDifference, changes }`: `maxDifference` is the largest mean per-pixel difference from the first frame (0–255),
-and `changes` is whether it is above 0.5. A strip whose frames are all the same says so in the summary.
+`width × height` (default 256 with `frames`, 512 without).
+
+A strip is never summed up by the mean of all its frames, which can be a colour no frame shows. One that changes
+leads with how: its darkest and brightest frames, by the mean luminance of each, with their colours, and the
+colours of the frames in order —
+`It animates over 8 frames in 1 s: darkest at 0.75 s, #5D4052 (dark purplish grey), brightest at 0.25 s, #BC99AE (pinkish grey); the frames in order are …`.
+A rule of the table above that holds for all the frames together still comes first. A strip that does not change
+is described by its first frame, as one image, and says that nothing animates.
+
+`data.animation` is `{ frames, duration, maxDifference, changes, straightness, undersampled, darkest, brightest }`:
+
+| Field | |
+| :-- | :-- |
+| `maxDifference` | the largest mean per-pixel difference of a frame from the first, 0–255 |
+| `changes` | `maxDifference` above 0.5 |
+| `straightness` | over every three consecutive frames, the difference from the first to the third against the differences through the middle one, summed — 1 for a steady drift, 0 for a jump there and back each frame. A sine sampled 8 times a period scores about 0.8, 4 times 0.5 |
+| `undersampled` | it changes, there are 4 frames or more, neighbouring frames differ by 1/255 or more on average, and `straightness` is under 0.45: it jumps back and forth between frames, so it may change faster than they sample it. The summary says so, and `next` says to shorten `duration` or raise `frames` |
+| `darkest`, `brightest` | `{ index, time, meanColor, meanColorName, luminance }` of those frames |
 
 ## Example
 

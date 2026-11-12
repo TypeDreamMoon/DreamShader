@@ -82,6 +82,42 @@ namespace UE::DreamShader::Editor::MCP
 	/** The mean absolute difference between two frames of the same size, per channel, 0-255. */
 	double MeanFrameDifference(TConstArrayView<FColor> A, TConstArrayView<FColor> B);
 
+	/** What a strip of frames does over its time: AnalysePreviewAnimation fills it, DescribePreviewAnimation says it. */
+	struct FPreviewAnimation
+	{
+		int32 Frames = 0;
+		/** The largest mean per-pixel difference of a frame from the first, 0-255. */
+		double MaxDifference = 0.0;
+		/**
+		 * How straight the frames' path is: over every three consecutive frames, the change from the first to the third
+		 * against the change through the middle one, summed. 1 is a steady drift, 0 a jump there and back each frame. A
+		 * sine sampled 8 times a period scores about 0.8, 4 times 0.5; 8 frames of a 4.7 Hz sine over 1 s score 0.3.
+		 */
+		double Straightness = 1.0;
+		bool bChanges = false;
+		/** It changes, and back and forth from frame to frame: Straightness under UndersampledStraightness, 4 frames or more. */
+		bool bUndersampled = false;
+		/** By the mean luminance of each frame's foreground. */
+		int32 Darkest = 0;
+		int32 Brightest = 0;
+
+		static constexpr double UndersampledStraightness = 0.45;
+	};
+
+	FPreviewAnimation AnalysePreviewAnimation(TConstArrayView<TArray<FColor>> Frames, TConstArrayView<FPreviewStats> PerFrame);
+
+	/**
+	 * The sentence a strip's summary leads with, without its full stop: whether it changes, its darkest and brightest
+	 * frames with their colours, and the colours it passes through in order -- never the mean of all frames, which may
+	 * be a colour no frame shows. A strip that does not change is described by its first frame, as one image.
+	 */
+	FString DescribePreviewAnimation(const FPreviewAnimation& Animation, const FPreviewStats& Overall, TConstArrayView<FPreviewStats> PerFrame,
+		TConstArrayView<double> Times, double Duration, bool bLinear, TArray<FString>& OutNext);
+
+	/** data.animation: frames, duration, maxDifference, changes, straightness, undersampled, darkest, brightest. */
+	TSharedRef<FJsonObject> PreviewAnimationToJson(const FPreviewAnimation& Animation, TConstArrayView<FPreviewStats> PerFrame,
+		TConstArrayView<double> Times, double Duration);
+
 	/**
 	 * The one fact about a preview a model should know first, as a sentence without its full stop, and what to do
 	 * about it in OutNext (nothing when it looks like an ordinary render). bLinear: the image was drawn with

@@ -1285,26 +1285,25 @@ namespace UE::DreamShader::Editor::MCP
 
 				// What the pixels show: each frame alone, and all of them together.
 				FPreviewStats Overall;
+				TArray<FPreviewStats> PerFrame;
+				TArray<double> Times;
 				TArray<TSharedPtr<FJsonValue>> FrameValues;
-				double MaxDifference = 0.0;
 				for (int32 FrameIndex = 0; FrameIndex < FrameCount; ++FrameIndex)
 				{
-					FPreviewStats Stats;
+					FPreviewStats& Stats = PerFrame.AddDefaulted_GetRef();
 					Stats.Add(State->Frames[FrameIndex], State->BackgroundPixels, State->SilhouettePixels);
 					Overall.Add(State->Frames[FrameIndex], State->BackgroundPixels, State->SilhouettePixels);
-					if (FrameIndex > 0)
-					{
-						MaxDifference = FMath::Max(MaxDifference, MeanFrameDifference(State->Frames[FrameIndex], State->Frames[0]));
-					}
+					Times.Add(State->GetFrameTime(FrameIndex));
 					if (FrameCount > 1)
 					{
 						TSharedRef<FJsonObject> FrameJson = MakeShared<FJsonObject>();
 						FrameJson->SetNumberField(TEXT("index"), FrameIndex);
-						FrameJson->SetNumberField(TEXT("time"), FMath::RoundToDouble(State->GetFrameTime(FrameIndex) * 10000.0) / 10000.0);
+						FrameJson->SetNumberField(TEXT("time"), FMath::RoundToDouble(Times.Last() * 10000.0) / 10000.0);
 						FrameJson->SetObjectField(TEXT("stats"), Stats.ToJson());
 						FrameValues.Add(MakeShared<FJsonValueObject>(FrameJson));
 					}
 				}
+				const bool bLinear = State->Tone == TEXT("linear");
 
 				Result.Data = MakeShared<FJsonObject>();
 				Result.Data->SetStringField(TEXT("asset"), State->Preview.AssetPath);
@@ -1316,21 +1315,12 @@ namespace UE::DreamShader::Editor::MCP
 				Result.Data->SetNumberField(TEXT("time"), State->StartTime);
 				Result.Data->SetNumberField(TEXT("shaderErrors"), ShaderErrors.Num());
 				Result.Data->SetObjectField(TEXT("stats"), Overall.ToJson());
-				FString AnimationSentence;
+				FPreviewAnimation Animation;
 				if (FrameCount > 1)
 				{
-					const bool bAnimates = MaxDifference > FPreviewStatsThresholds::SameFrameDifference;
-					TSharedRef<FJsonObject> Animation = MakeShared<FJsonObject>();
-					Animation->SetNumberField(TEXT("frames"), FrameCount);
-					Animation->SetNumberField(TEXT("duration"), State->Duration);
-					Animation->SetNumberField(TEXT("maxDifference"), FMath::RoundToDouble(MaxDifference * 100.0) / 100.0);
-					Animation->SetBoolField(TEXT("changes"), bAnimates);
-					Result.Data->SetObjectField(TEXT("animation"), Animation);
+					Animation = AnalysePreviewAnimation(State->Frames, PerFrame);
+					Result.Data->SetObjectField(TEXT("animation"), PreviewAnimationToJson(Animation, PerFrame, Times, State->Duration));
 					Result.Data->SetArrayField(TEXT("frames"), FrameValues);
-					AnimationSentence = bAnimates
-						? FString::Printf(TEXT(" It animates: the %d frames over %g s differ from the first by up to %.1f/255 per pixel."), // I18N-EXEMPT: wire text
-							FrameCount, State->Duration, MaxDifference)
-						: FString::Printf(TEXT(" The %d frames over %g s are the same: nothing animates."), FrameCount, State->Duration); // I18N-EXEMPT: wire text
 				}
 
 				if (ShaderErrors.Num() > 0)
@@ -1342,12 +1332,11 @@ namespace UE::DreamShader::Editor::MCP
 				}
 				else
 				{
-					const FString Finding = DescribePreview(Overall, State->Tone == TEXT("linear"), Result.Next);
-					if (FrameCount > 1 && MaxDifference <= FPreviewStatsThresholds::SameFrameDifference)
-					{
-						Result.Next.Add(TEXT("If it should move, check that Time (or a Panner) reaches the output, or set duration to one period of it."));
-					}
-					Result.Summary = FString::Printf(TEXT("%s.%s Image: %s (%s, %dx%d%s)."), *Finding, *AnimationSentence, *Rel(ImagePath), // I18N-EXEMPT: wire text
+					// A strip is told by how it changes, never by the mean of its frames: that can be a colour no frame shows.
+					const FString Finding = FrameCount > 1
+						? DescribePreviewAnimation(Animation, Overall, PerFrame, Times, State->Duration, bLinear, Result.Next)
+						: DescribePreview(Overall, bLinear, Result.Next);
+					Result.Summary = FString::Printf(TEXT("%s. Image: %s (%s, %dx%d%s)."), *Finding, *Rel(ImagePath), // I18N-EXEMPT: wire text
 						*State->Preview.Mesh, Width, Height, FrameCount > 1 ? *FString::Printf(TEXT(", %d frames side by side"), FrameCount) : TEXT("")); // I18N-EXEMPT: wire text
 				}
 				GetCheckedDiagnostics().Add(UE::DreamShader::NormalizeSourceFilePath(State->File), Result.Diagnostics);

@@ -269,32 +269,51 @@ namespace UE::DreamShader::Editor::MCP
 	}
 
 	// Wire text for a model: invariant English literals, like every summary and next step of the endpoint.
+	namespace
+	{
+		/** The findings that say something is wrong, in the order they win; false when none holds. */
+		bool DescribeProblem(const FPreviewStats& Stats, bool bLinear, FString& OutFinding, TArray<FString>& OutNext)
+		{
+			if (Stats.MeshPixels * 200 < Stats.Pixels)
+			{
+				OutNext.Add(TEXT("Check yaw, pitch and mesh. A World Position Offset can also move the mesh out of view."));
+				OutFinding = FString::Printf(TEXT("The mesh is not in the picture: it covers %.1f%% of the image"), Stats.GetCoverage() * 100.0); // I18N-EXEMPT: wire text
+				return true;
+			}
+			if (Stats.GetTransparentShare() >= 0.95)
+			{
+				OutNext.Add(TEXT("Check Opacity, OpacityMask and the blend mode. At opacity 0 a Translucent or Masked material draws nothing."));
+				OutFinding = FString::Printf(TEXT("The material is invisible: %d%% of the mesh shows the background through it"), Percent(Stats.GetTransparentShare())); // I18N-EXEMPT: wire text
+				return true;
+			}
+			if (Stats.GetNearBlackShare() >= 0.9)
+			{
+				OutNext.Add(TEXT("An Unlit material shows only EmissiveColor; a lit one needs BaseColor. Check that the export writes the one its shading model uses."));
+				OutFinding = FString::Printf(TEXT("The material renders black: %d%% of what shows is near black"), Percent(Stats.GetNearBlackShare())); // I18N-EXEMPT: wire text
+				return true;
+			}
+			if (Stats.GetNearWhiteShare() >= 0.3)
+			{
+				if (bLinear)
+				{
+					OutNext.Add(TEXT("tone=\"linear\" clips at 1. Lower the value if it should not reach 1."));
+					OutFinding = FString::Printf(TEXT("%d%% of the material is clipped to white: its output is 1 or more there"), Percent(Stats.GetNearWhiteShare())); // I18N-EXEMPT: wire text
+					return true;
+				}
+				OutNext.Add(TEXT("The preview is tone-mapped: bright values are pressed toward white (emissive 1 reads about 208 of 255, 4 about 240). Preview with tone=\"linear\" to read the values, or lower the emissive."));
+				OutFinding = FString::Printf(TEXT("The material is mostly white: %d%% of it is near white"), Percent(Stats.GetNearWhiteShare())); // I18N-EXEMPT: wire text
+				return true;
+			}
+			return false;
+		}
+	}
+
 	FString DescribePreview(const FPreviewStats& Stats, bool bLinear, TArray<FString>& OutNext)
 	{
-		if (Stats.MeshPixels * 200 < Stats.Pixels)
+		FString Problem;
+		if (DescribeProblem(Stats, bLinear, Problem, OutNext))
 		{
-			OutNext.Add(TEXT("Check yaw, pitch and mesh. A World Position Offset can also move the mesh out of view."));
-			return FString::Printf(TEXT("The mesh is not in the picture: it covers %.1f%% of the image"), Stats.GetCoverage() * 100.0); // I18N-EXEMPT: wire text
-		}
-		if (Stats.GetTransparentShare() >= 0.95)
-		{
-			OutNext.Add(TEXT("Check Opacity, OpacityMask and the blend mode. At opacity 0 a Translucent or Masked material draws nothing."));
-			return FString::Printf(TEXT("The material is invisible: %d%% of the mesh shows the background through it"), Percent(Stats.GetTransparentShare())); // I18N-EXEMPT: wire text
-		}
-		if (Stats.GetNearBlackShare() >= 0.9)
-		{
-			OutNext.Add(TEXT("An Unlit material shows only EmissiveColor; a lit one needs BaseColor. Check that the export writes the one its shading model uses."));
-			return FString::Printf(TEXT("The material renders black: %d%% of what shows is near black"), Percent(Stats.GetNearBlackShare())); // I18N-EXEMPT: wire text
-		}
-		if (Stats.GetNearWhiteShare() >= 0.3)
-		{
-			if (bLinear)
-			{
-				OutNext.Add(TEXT("tone=\"linear\" clips at 1. Lower the value if it should not reach 1."));
-				return FString::Printf(TEXT("%d%% of the material is clipped to white: its output is 1 or more there"), Percent(Stats.GetNearWhiteShare())); // I18N-EXEMPT: wire text
-			}
-			OutNext.Add(TEXT("The preview is tone-mapped: bright values are pressed toward white (emissive 1 reads about 208 of 255, 4 about 240). Preview with tone=\"linear\" to read the values, or lower the emissive."));
-			return FString::Printf(TEXT("The material is mostly white: %d%% of it is near white"), Percent(Stats.GetNearWhiteShare())); // I18N-EXEMPT: wire text
+			return Problem;
 		}
 
 		const FLinearColor Mean = Stats.GetMeanColor();
@@ -314,5 +333,157 @@ namespace UE::DreamShader::Editor::MCP
 			Finding += FString::Printf(TEXT("; %d%% of the mesh is see-through"), Percent(Stats.GetTransparentShare())); // I18N-EXEMPT: wire text
 		}
 		return Finding;
+	}
+
+	// ----------------------------------------------------------------------------------------- animation
+
+	FPreviewAnimation AnalysePreviewAnimation(TConstArrayView<TArray<FColor>> Frames, TConstArrayView<FPreviewStats> PerFrame)
+	{
+		FPreviewAnimation Animation;
+		Animation.Frames = Frames.Num();
+		for (int32 Index = 1; Index < Frames.Num(); ++Index)
+		{
+			Animation.MaxDifference = FMath::Max(Animation.MaxDifference, MeanFrameDifference(Frames[Index], Frames[0]));
+		}
+		Animation.bChanges = Animation.MaxDifference > FThresholds::SameFrameDifference;
+
+		TArray<double> Adjacent;
+		for (int32 Index = 0; Index + 1 < Frames.Num(); ++Index)
+		{
+			Adjacent.Add(MeanFrameDifference(Frames[Index], Frames[Index + 1]));
+		}
+		double Direct = 0.0;
+		double Path = 0.0;
+		for (int32 Index = 0; Index + 2 < Frames.Num(); ++Index)
+		{
+			Direct += MeanFrameDifference(Frames[Index], Frames[Index + 2]);
+			Path += Adjacent[Index] + Adjacent[Index + 1];
+		}
+		Animation.Straightness = Path > 0.0 ? Direct / Path : 1.0;
+		double AdjacentMean = 0.0;
+		for (const double Step : Adjacent)
+		{
+			AdjacentMean += Step / double(Adjacent.Num());
+		}
+		// Noise in a strip that barely moves zigzags too; only a change worth seeing is judged.
+		Animation.bUndersampled = Animation.bChanges && Frames.Num() >= 4 && AdjacentMean >= 1.0
+			&& Animation.Straightness < FPreviewAnimation::UndersampledStraightness;
+
+		double Darkest = TNumericLimits<double>::Max();
+		double Brightest = -1.0;
+		for (int32 Index = 0; Index < PerFrame.Num(); ++Index)
+		{
+			if (PerFrame[Index].ForegroundPixels <= 0)
+			{
+				continue;
+			}
+			const double Luma = PerFrame[Index].GetLumaMean();
+			if (Luma < Darkest)
+			{
+				Darkest = Luma;
+				Animation.Darkest = Index;
+			}
+			if (Luma > Brightest)
+			{
+				Brightest = Luma;
+				Animation.Brightest = Index;
+			}
+		}
+		return Animation;
+	}
+
+	namespace
+	{
+		FString NameFrame(const FPreviewStats& Stats)
+		{
+			return Stats.ForegroundPixels > 0 ? NameColor(Stats.GetMeanColor()) : FString(TEXT("nothing visible"));
+		}
+
+		FString DescribeFrame(const FPreviewStats& Stats, double Time)
+		{
+			if (Stats.ForegroundPixels <= 0)
+			{
+				return FString::Printf(TEXT("at %g s, nothing visible"), Time); // I18N-EXEMPT: wire text
+			}
+			const FLinearColor Mean = Stats.GetMeanColor();
+			return FString::Printf(TEXT("at %g s, %s (%s)"), Time, *FormatHexColor(Mean), *NameColor(Mean)); // I18N-EXEMPT: wire text
+		}
+	}
+
+	FString DescribePreviewAnimation(const FPreviewAnimation& Animation, const FPreviewStats& Overall, TConstArrayView<FPreviewStats> PerFrame,
+		TConstArrayView<double> Times, double Duration, bool bLinear, TArray<FString>& OutNext)
+	{
+		if (PerFrame.IsEmpty() || PerFrame.Num() != Times.Num())
+		{
+			return FString();
+		}
+		if (!Animation.bChanges)
+		{
+			const FString First = DescribePreview(PerFrame[0], bLinear, OutNext);
+			OutNext.Add(TEXT("If it should move, check that Time (or a Panner) reaches the output, or set duration to one period of it."));
+			return FString::Printf(TEXT("%s. The %d frames over %g s are the same: nothing animates"), *First, Animation.Frames, Duration); // I18N-EXEMPT: wire text
+		}
+
+		// What holds for every frame together still comes first: an invisible strip is invisible whatever it does.
+		FString Sentence;
+		FString Problem;
+		if (DescribeProblem(Overall, bLinear, Problem, OutNext))
+		{
+			Sentence = Problem + TEXT(". ");
+		}
+
+		TArray<FString> Names;
+		for (const FPreviewStats& Frame : PerFrame)
+		{
+			const FString Name = NameFrame(Frame);
+			if (Names.IsEmpty() || Names.Last() != Name)
+			{
+				Names.Add(Name);
+			}
+		}
+		Sentence += FString::Printf(TEXT("It animates over %d frames in %g s: darkest %s, brightest %s"), Animation.Frames, Duration, // I18N-EXEMPT: wire text
+			*DescribeFrame(PerFrame[Animation.Darkest], Times[Animation.Darkest]), *DescribeFrame(PerFrame[Animation.Brightest], Times[Animation.Brightest]));
+		Sentence += Names.Num() > 1
+			? FString::Printf(TEXT("; the frames in order are %s"), *FString::Join(Names, TEXT(", "))) // I18N-EXEMPT: wire text
+			: FString::Printf(TEXT("; every frame is %s, only its brightness changes"), *Names[0]); // I18N-EXEMPT: wire text
+		if (Animation.bUndersampled)
+		{
+			Sentence += TEXT("; it jumps back and forth between frames, so it may change faster than they sample it");
+			OutNext.Add(FString::Printf(TEXT("The material may change faster than %d frames in %g s can show. Shorten duration, or raise frames, until neighbouring frames look alike."), // I18N-EXEMPT: wire text
+				Animation.Frames, Duration));
+		}
+		return Sentence;
+	}
+
+	TSharedRef<FJsonObject> PreviewAnimationToJson(const FPreviewAnimation& Animation, TConstArrayView<FPreviewStats> PerFrame,
+		TConstArrayView<double> Times, double Duration)
+	{
+		TSharedRef<FJsonObject> Json = MakeShared<FJsonObject>();
+		Json->SetNumberField(TEXT("frames"), Animation.Frames);
+		Json->SetNumberField(TEXT("duration"), Duration);
+		Json->SetNumberField(TEXT("maxDifference"), FMath::RoundToDouble(Animation.MaxDifference * 100.0) / 100.0);
+		Json->SetBoolField(TEXT("changes"), Animation.bChanges);
+		Json->SetNumberField(TEXT("straightness"), Round3(Animation.Straightness));
+		Json->SetBoolField(TEXT("undersampled"), Animation.bUndersampled);
+		const auto Frame = [&PerFrame, &Times](int32 Index)
+		{
+			TSharedRef<FJsonObject> Object = MakeShared<FJsonObject>();
+			Object->SetNumberField(TEXT("index"), Index);
+			if (Times.IsValidIndex(Index))
+			{
+				Object->SetNumberField(TEXT("time"), FMath::RoundToDouble(Times[Index] * 10000.0) / 10000.0);
+			}
+			if (PerFrame.IsValidIndex(Index) && PerFrame[Index].ForegroundPixels > 0)
+			{
+				const FLinearColor Mean = PerFrame[Index].GetMeanColor();
+				Object->SetStringField(TEXT("meanColor"), FormatHexColor(Mean));
+				Object->SetStringField(TEXT("meanColorName"), NameColor(Mean));
+				Object->SetNumberField(TEXT("luminance"), Round3(PerFrame[Index].GetLumaMean()));
+			}
+			return Object;
+		};
+		Json->SetObjectField(TEXT("darkest"), Frame(Animation.Darkest));
+		Json->SetObjectField(TEXT("brightest"), Frame(Animation.Brightest));
+		return Json;
 	}
 }

@@ -796,6 +796,47 @@ bool FDreamShaderMCPSocketTest::RunTest(const FString& Parameters)
 
 // ------------------------------------------------------------------------------------ preview measures
 
+namespace UE::DreamShader::Editor::MCP::Tests
+{
+	/** Frames of one flat grey each, over a mesh that covers every pixel: what the measures see, without a renderer. */
+	struct FSyntheticStrip
+	{
+		static constexpr int32 Pixels = 64;
+		TArray<FColor> Background;
+		TArray<FColor> Silhouette;
+		TArray<TArray<FColor>> Frames;
+		TArray<FPreviewStats> PerFrame;
+		TArray<double> Times;
+		FPreviewStats Overall;
+
+		FSyntheticStrip()
+		{
+			Background.Init(FColor(20, 20, 24, 255), Pixels);
+			Silhouette.Init(FColor(255, 0, 255, 255), Pixels);
+		}
+
+		void Add(const FColor& Color)
+		{
+			Frames.AddDefaulted_GetRef().Init(Color, Pixels);
+			PerFrame.AddDefaulted_GetRef().Add(Frames.Last(), Background, Silhouette);
+			Overall.Add(Frames.Last(), Background, Silhouette);
+			Times.Add(double(Times.Num()) / 8.0);
+		}
+
+		/** Grey 128 +- 100 following a sine of the given frequency, sampled 8 times over 1 s. */
+		static FSyntheticStrip Sine(double Hertz, int32 Count = 8)
+		{
+			FSyntheticStrip Strip;
+			for (int32 Index = 0; Index < Count; ++Index)
+			{
+				const uint8 Value = uint8(FMath::RoundToInt(128.0 + 100.0 * FMath::Sin(2.0 * UE_DOUBLE_PI * Hertz * double(Index) / double(Count))));
+				Strip.Add(FColor(Value, Value, Value, 255));
+			}
+			return Strip;
+		}
+	};
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDreamShaderMCPColourNamesTest,
 	"DreamShader.MCP.Preview.ColourNames",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -825,6 +866,82 @@ bool FDreamShaderMCPColourNamesTest::RunTest(const FString& Parameters)
 		TestEqual(FString::Printf(TEXT("#%s is named"), Case.Hex), NameColor(Encoded), FString(Case.Name));
 	}
 
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDreamShaderMCPPreviewStripsTest,
+	"DreamShader.MCP.Preview.Strips",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderMCPPreviewStripsTest::RunTest(const FString& Parameters)
+{
+	// A sine sampled 8 times a period: it changes, smoothly.
+	{
+		FSyntheticStrip Smooth = FSyntheticStrip::Sine(1.0);
+		const FPreviewAnimation Animation = AnalysePreviewAnimation(Smooth.Frames, Smooth.PerFrame);
+		TestTrue(TEXT("a sine changes"), Animation.bChanges);
+		TestFalse(FString::Printf(TEXT("sampled 8 times a period it is not undersampled (straightness %.2f)"), Animation.Straightness), Animation.bUndersampled);
+		TestEqual(TEXT("its darkest frame is the trough"), Animation.Darkest, 6);
+		TestEqual(TEXT("its brightest frame is the crest"), Animation.Brightest, 2);
+		TArray<FString> Next;
+		const FString Sentence = DescribePreviewAnimation(Animation, Smooth.Overall, Smooth.PerFrame, Smooth.Times, 1.0, false, Next);
+		TestTrue(FString::Printf(TEXT("the strip is told by its darkest and brightest frames (%s)"), *Sentence),
+			Sentence.Contains(TEXT("darkest at 0.75 s")) && Sentence.Contains(TEXT("brightest at 0.25 s")));
+		TestFalse(TEXT("not by a mean colour"), Sentence.Contains(TEXT("Mean colour")));
+	}
+
+	// 4.7 Hz sampled 8 times in 1 s: each frame jumps.
+	{
+		FSyntheticStrip Fast = FSyntheticStrip::Sine(4.7);
+		const FPreviewAnimation Animation = AnalysePreviewAnimation(Fast.Frames, Fast.PerFrame);
+		TestTrue(FString::Printf(TEXT("4.7 Hz over 8 frames a second is undersampled (straightness %.2f)"), Animation.Straightness), Animation.bUndersampled);
+		TArray<FString> Next;
+		const FString Sentence = DescribePreviewAnimation(Animation, Fast.Overall, Fast.PerFrame, Fast.Times, 1.0, false, Next);
+		TestTrue(FString::Printf(TEXT("the summary says it may change faster than the frames (%s)"), *Sentence), Sentence.Contains(TEXT("faster than")));
+		TestTrue(TEXT("and next says what to do"), Next.ContainsByPredicate([](const FString& Line) { return Line.Contains(TEXT("Shorten duration")); }));
+	}
+
+	// A steady ramp moves a lot from frame to frame, in one direction: not undersampled.
+	{
+		FSyntheticStrip Ramp;
+		for (int32 Index = 0; Index < 8; ++Index)
+		{
+			const uint8 Value = uint8(20 + 30 * Index);
+			Ramp.Add(FColor(Value, Value, Value, 255));
+		}
+		const FPreviewAnimation Animation = AnalysePreviewAnimation(Ramp.Frames, Ramp.PerFrame);
+		TestTrue(FString::Printf(TEXT("a ramp is a straight path (%.2f)"), Animation.Straightness), Animation.Straightness > 0.95);
+		TestFalse(TEXT("and not undersampled"), Animation.bUndersampled);
+	}
+
+	// Two colours that alternate: the summary names both, never their mean.
+	{
+		FSyntheticStrip Alternating;
+		for (int32 Index = 0; Index < 4; ++Index)
+		{
+			Alternating.Add(Index % 2 == 0 ? FColor(10, 60, 220, 255) : FColor(240, 200, 20, 255));
+		}
+		const FPreviewAnimation Animation = AnalysePreviewAnimation(Alternating.Frames, Alternating.PerFrame);
+		TArray<FString> Next;
+		const FString Sentence = DescribePreviewAnimation(Animation, Alternating.Overall, Alternating.PerFrame, Alternating.Times, 1.0, false, Next);
+		const FString MeanHex = FormatHexColor(Alternating.Overall.GetMeanColor());
+		TestTrue(FString::Printf(TEXT("both colours are named (%s)"), *Sentence), Sentence.Contains(TEXT("blue")) && Sentence.Contains(TEXT("yellow")));
+		TestFalse(FString::Printf(TEXT("the mean of all frames (%s) is not"), *MeanHex), Sentence.Contains(MeanHex));
+	}
+
+	// A strip that does not change is one image.
+	{
+		FSyntheticStrip Still;
+		for (int32 Index = 0; Index < 4; ++Index)
+		{
+			Still.Add(FColor(180, 134, 119, 255));
+		}
+		const FPreviewAnimation Animation = AnalysePreviewAnimation(Still.Frames, Still.PerFrame);
+		TestFalse(TEXT("a still strip does not change"), Animation.bChanges);
+		TArray<FString> Next;
+		const FString Sentence = DescribePreviewAnimation(Animation, Still.Overall, Still.PerFrame, Still.Times, 1.0, false, Next);
+		TestTrue(FString::Printf(TEXT("it says nothing animates (%s)"), *Sentence), Sentence.Contains(TEXT("nothing animates")) && Sentence.Contains(TEXT("pinkish grey")));
+	}
 	return true;
 }
 
