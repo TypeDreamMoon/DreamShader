@@ -10,6 +10,25 @@ The gate every other DreamShader skill ends with. The driver, `.skill/dsc.ps1`, 
 
 Paths below are relative to the plugin root, `Plugins/DreamShader/`.
 
+## With DreamMCP
+
+If your client has the `dream_shader` tool, a [DreamMCP](../../Docs/tools/dreammcp.md) server is connected: use
+it for these steps instead of the driver. It works in the user's editor when it is open, and otherwise in an engine
+the server keeps running between calls, so a check takes a fraction of a second instead of an engine boot. Every
+call is `{ "action": "<action>", "args": { … } }`, and `help` lists an action's arguments.
+
+| Driver | `dream_shader` |
+| :-- | :-- |
+| `dsc.ps1 check <file>` | `check`, `{ "file": "<file>" }`; `{ "all": true }` for every source |
+| `dsc.ps1 compile <file> -Force -CleanNew` | `compile`, `{ "file": "<file>", "force": true }` |
+| `dsc.ps1 check <file> -Shaders` | `compile`, `{ "file": "<file>", "shaders": true }` |
+| the diagnostics a run prints | in every result; `diagnostics`, `{ "file": "<file>" }` reads them again without a build |
+
+A result starts with one summary line, then one line per diagnostic with its code, file and line. `compile` writes
+as the editor does: in the user's editor a material stays in memory until the user saves it, so there is no
+`-CleanNew` to pass. A refused call says why and what to do next; do that rather than switching to the driver.
+Without the tool, use the driver as below.
+
 ## Three levels
 
 | Verb | Goes as far as | Writes | Use it |

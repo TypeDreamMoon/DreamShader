@@ -16,6 +16,13 @@ This is the front half of a migration; the back half is
 
 Paths below are relative to the plugin root, `Plugins/DreamShader/`.
 
+## With DreamMCP
+
+If your client has the `dream_shader` tool, `decompile`, `{ "asset": "/Game/Materials/M_Steel" }`, does what the
+driver does below: `out` picks the destination, `readable` prefers HLSL operators to exact node calls, and
+`overwrite` replaces a file that exists. It writes the source file, never an asset. Without the tool, run the
+driver as below.
+
 ## Run it
 
 ```bash

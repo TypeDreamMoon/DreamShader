@@ -11,6 +11,13 @@ no message.
 
 Paths below are relative to the plugin root, `Plugins/DreamShader/`.
 
+## With DreamMCP
+
+If your client has the `dream_shader` tool, `diagnostics`, `{ "file": "<file>" }`, returns what the last check or
+compile found, each diagnostic with its code, position and a `doc` link to its page; without `file`, every file
+that has some, errors first. When a message names a `UE.` node, `lookup`, `{ "name": "UE.<Node>" }`, gives its real
+pins. Without the tool, run the driver as below.
+
 ## Do this
 
 **1 — Get the exact message.** A diagnostic is `file(line,col): DSHnnnn: message`:

@@ -11,6 +11,18 @@ the only way to know a file passes is to run it.
 
 Paths below are relative to the plugin root, `Plugins/DreamShader/`.
 
+## With DreamMCP
+
+If your client has the `dream_shader` tool, run the `check` and `compile` steps below through it instead of the
+driver, as [`dream-shader-verify`](../dream-shader-verify/SKILL.md) shows. Two of its actions help while writing:
+
+- `lookup`, `{ "name": "UE.TextureSample" }`: a node's inputs, outputs and properties, from this engine's catalog.
+- `preview`, `{ "file": "<file>" }`: renders the material and says what the picture shows: invisible, black,
+  mostly white, or its colours. `{ "frames": 8 }` shows how it changes over one second. It needs the user's
+  editor or a server that can start a rendering host.
+
+Without the tool, use the driver as below.
+
 ## Do this
 
 **1 — Pick the kind, then read its reference.** Do not write DreamShaderLang from memory.
