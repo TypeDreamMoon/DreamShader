@@ -71,7 +71,12 @@ namespace UE::DreamShader::Editor::MCP
 	/** "#RRGGBB" of a 0-1 sRGB-encoded colour. */
 	FString FormatHexColor(const FLinearColor& Color);
 
-	/** A plain name for a 0-1 sRGB-encoded colour: "orange", "dark blue", "light grey", "white". */
+	/**
+	 * A plain name for a 0-1 sRGB-encoded colour, by its HSV value and saturation before its hue. Saturation under
+	 * 0.12 is a grey ("white", "light grey", "grey", "dark grey", "black"); under 0.4 a grey with a tint, which a hue
+	 * name would overstate ("pinkish grey", "light bluish grey", "dark brownish grey"); above it a hue ("red",
+	 * "orange", "dark blue", "pale green"), with orange and yellow under value 0.5 named "brown".
+	 */
 	FString NameColor(const FLinearColor& Color);
 
 	/** The mean absolute difference between two frames of the same size, per channel, 0-255. */

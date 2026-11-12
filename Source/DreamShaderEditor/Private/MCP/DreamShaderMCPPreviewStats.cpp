@@ -182,33 +182,71 @@ namespace UE::DreamShader::Editor::MCP
 		{
 			return TEXT("black");
 		}
-		if (Saturation < 0.15f)
+		if (Saturation < 0.12f)
 		{
-			if (Value > 0.9f)
+			if (Value > 0.92f)
 			{
 				return TEXT("white");
 			}
-			if (Value > 0.65f)
+			if (Value > 0.7f)
 			{
 				return TEXT("light grey");
 			}
-			return Value < 0.3f ? TEXT("dark grey") : TEXT("grey");
+			return Value < 0.4f ? TEXT("dark grey") : TEXT("grey");
 		}
 
-		const TCHAR* Name = TEXT("red");
-		if (Hue >= 15.0f && Hue < 40.0f) { Name = TEXT("orange"); }
-		else if (Hue >= 40.0f && Hue < 65.0f) { Name = TEXT("yellow"); }
-		else if (Hue >= 65.0f && Hue < 160.0f) { Name = TEXT("green"); }
-		else if (Hue >= 160.0f && Hue < 195.0f) { Name = TEXT("cyan"); }
-		else if (Hue >= 195.0f && Hue < 255.0f) { Name = TEXT("blue"); }
-		else if (Hue >= 255.0f && Hue < 285.0f) { Name = TEXT("purple"); }
-		else if (Hue >= 285.0f && Hue < 335.0f) { Name = TEXT("magenta"); }
+		enum class EHue : uint8 { Red, Orange, Yellow, Green, Cyan, Blue, Purple, Magenta };
+		EHue Family = EHue::Red;
+		if (Hue >= 15.0f && Hue < 40.0f) { Family = EHue::Orange; }
+		else if (Hue >= 40.0f && Hue < 65.0f) { Family = EHue::Yellow; }
+		else if (Hue >= 65.0f && Hue < 160.0f) { Family = EHue::Green; }
+		else if (Hue >= 160.0f && Hue < 195.0f) { Family = EHue::Cyan; }
+		else if (Hue >= 195.0f && Hue < 255.0f) { Family = EHue::Blue; }
+		else if (Hue >= 255.0f && Hue < 285.0f) { Family = EHue::Purple; }
+		else if (Hue >= 285.0f && Hue < 345.0f) { Family = EHue::Magenta; }
 
+		// A muted colour is a grey with a tint: "red" for a dusty pink overstates it.
+		if (Saturation < 0.4f)
+		{
+			const bool bLight = Value > 0.55f;
+			const TCHAR* Tint = TEXT("");
+			switch (Family)
+			{
+			case EHue::Red:     Tint = bLight ? TEXT("pinkish") : TEXT("reddish"); break;
+			case EHue::Orange:  Tint = bLight ? TEXT("warm") : TEXT("brownish"); break;
+			case EHue::Yellow:  Tint = TEXT("yellowish"); break;
+			case EHue::Green:   Tint = TEXT("greenish"); break;
+			case EHue::Cyan:    Tint = TEXT("bluish-green"); break;
+			case EHue::Blue:    Tint = TEXT("bluish"); break;
+			case EHue::Purple:  Tint = TEXT("purplish"); break;
+			case EHue::Magenta: Tint = bLight ? TEXT("pinkish") : TEXT("purplish"); break;
+			}
+			const TCHAR* Lightness = Value > 0.8f ? TEXT("light ") : (Value < 0.4f ? TEXT("dark ") : TEXT(""));
+			return FString::Printf(TEXT("%s%s grey"), Lightness, Tint);
+		}
+
+		// Dark orange and dark yellow are what anyone calls brown.
+		if ((Family == EHue::Orange || Family == EHue::Yellow) && Value < 0.5f)
+		{
+			return Value < 0.3f ? TEXT("dark brown") : TEXT("brown");
+		}
+		const TCHAR* Name = TEXT("red");
+		switch (Family)
+		{
+		case EHue::Red:     Name = TEXT("red"); break;
+		case EHue::Orange:  Name = TEXT("orange"); break;
+		case EHue::Yellow:  Name = TEXT("yellow"); break;
+		case EHue::Green:   Name = TEXT("green"); break;
+		case EHue::Cyan:    Name = TEXT("cyan"); break;
+		case EHue::Blue:    Name = TEXT("blue"); break;
+		case EHue::Purple:  Name = TEXT("purple"); break;
+		case EHue::Magenta: Name = TEXT("magenta"); break;
+		}
 		if (Value < 0.35f)
 		{
 			return FString::Printf(TEXT("dark %s"), Name);
 		}
-		if (Saturation < 0.4f && Value > 0.75f)
+		if (Saturation < 0.5f && Value > 0.8f)
 		{
 			return FString::Printf(TEXT("pale %s"), Name);
 		}

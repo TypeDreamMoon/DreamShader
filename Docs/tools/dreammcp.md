@@ -242,10 +242,15 @@ drawn asks for its shaders when it is, and draws as the engine's default materia
 | `coverage` | share of the image the mesh covers, 0–1 |
 | `transparent` | share of the mesh that is transparent, 0–1 |
 | `foreground` | share of the image that is foreground, 0–1 |
-| `meanColor`, `meanColorName` | the foreground's mean, `#RRGGBB`, and a plain name for it (`orange`, `dark blue`, `light grey`) |
+| `meanColor`, `meanColorName` | the foreground's mean, `#RRGGBB`, and a plain name for it (`orange`, `pinkish grey`, `brown`; see below) |
 | `luminance` | `{ min, max, mean, stdDev }` of the foreground, 0–1 |
 | `nearWhite`, `nearBlack` | shares of the foreground, 0–1 |
 | `flat` | the foreground is one colour |
+
+Colour names go by HSV value and saturation before hue: saturation under 0.12 is a grey (`white`, `light grey`,
+`grey`, `dark grey`, `black`); under 0.4 a grey with a tint, which a hue name would overstate (`pinkish grey`,
+`light bluish grey`, `warm grey`); above it a hue (`red`, `orange`, `dark blue`, `pale green`), with
+orange and yellow under value 0.5 called `brown`.
 
 The first rule that holds gives the summary's fact:
 

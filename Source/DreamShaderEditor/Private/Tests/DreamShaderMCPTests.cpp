@@ -14,6 +14,7 @@
 
 #include "MCP/DreamShaderMCPActions.h"
 #include "MCP/DreamShaderMCPEndpoint.h"
+#include "MCP/DreamShaderMCPPreviewStats.h"
 #include "MCP/DreamShaderMCPResult.h"
 
 #include "AssetCompilingManager.h"
@@ -790,6 +791,40 @@ bool FDreamShaderMCPSocketTest::RunTest(const FString& Parameters)
 	const FString DiscoveryPath = Endpoint.GetDiscoveryFilePath();
 	Endpoint.Stop();
 	TestFalse(TEXT("stopping deletes the discovery file"), IFileManager::Get().FileExists(*DiscoveryPath));
+	return true;
+}
+
+// ------------------------------------------------------------------------------------ preview measures
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDreamShaderMCPColourNamesTest,
+	"DreamShader.MCP.Preview.ColourNames",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderMCPColourNamesTest::RunTest(const FString& Parameters)
+{
+	// Colour names: a muted colour is a tinted grey, not a hue it barely has.
+	const struct { const TCHAR* Hex; const TCHAR* Name; } Names[] = {
+		{ TEXT("FF0000"), TEXT("red") },
+		{ TEXT("BD8738"), TEXT("orange") },
+		{ TEXT("0241A3"), TEXT("blue") },
+		{ TEXT("6B4A2A"), TEXT("brown") },
+		{ TEXT("B48677"), TEXT("pinkish grey") },
+		{ TEXT("A37B82"), TEXT("pinkish grey") },
+		{ TEXT("A97F6D"), TEXT("warm grey") },
+		{ TEXT("7E6493"), TEXT("purplish grey") },
+		{ TEXT("5D4052"), TEXT("dark purplish grey") },
+		{ TEXT("808080"), TEXT("grey") },
+		{ TEXT("C8C8C8"), TEXT("light grey") },
+		{ TEXT("F0F0F0"), TEXT("white") },
+		{ TEXT("101010"), TEXT("black") },
+	};
+	for (const auto& Case : Names)
+	{
+		const FColor Color = FColor::FromHex(Case.Hex);
+		const FLinearColor Encoded(Color.R / 255.0f, Color.G / 255.0f, Color.B / 255.0f, 1.0f);
+		TestEqual(FString::Printf(TEXT("#%s is named"), Case.Hex), NameColor(Encoded), FString(Case.Name));
+	}
+
 	return true;
 }
 
