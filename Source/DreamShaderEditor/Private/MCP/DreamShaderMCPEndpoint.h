@@ -41,6 +41,7 @@
 
 #include <atomic>
 
+#include "MCP/DreamShaderMCPBusyEndpoints.h"
 #include "MCP/DreamShaderMCPResult.h"
 
 class IHttpRouter;
@@ -277,10 +278,10 @@ namespace UE::DreamShader::Editor::MCP
 
 		/**
 		 * Steps the running job -- starting the next queued one when none runs -- for up to StepBudgetSeconds of this
-		 * frame, and less when a step only waited. Game thread only.
+		 * frame, and less when a step only waited; then brings this endpoint's part in DreamMCP.BusyEndpoints up to date.
+		 * Game thread only.
 		 */
 		void TickJobs();
-
 
 		/** A job queued or running. */
 		bool IsBusy() const;
@@ -373,5 +374,9 @@ namespace UE::DreamShader::Editor::MCP
 		TArray<TSharedPtr<FJob>> Jobs;
 		int32 JobCounter = 0;
 		FTSTicker::FDelegateHandle TickerHandle;
+
+		/** This endpoint's part in DreamMCP.BusyEndpoints: held while a job is queued or running. */
+		FBusyEndpointShare BusyShare;
+		void StepJobs();
 	};
 }

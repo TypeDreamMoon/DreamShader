@@ -89,6 +89,11 @@ namespace UE::DreamShader::Editor::MCP
 		FString Reason;
 		/** One line for the model: what happened. */
 		FString Summary;
+		/**
+		 * Optional: preformatted lines for the model, which a server prints as they are, after the summary. For content
+		 * too long for one line that a model reads rather than parses -- `lookup`'s entry. Not written when empty.
+		 */
+		FString Text;
 		TArray<FDiagnostic> Diagnostics;
 		TArray<FWrite> Writes;
 		TArray<FArtifact> Artifacts;

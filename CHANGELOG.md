@@ -17,7 +17,8 @@
   an agent that cannot see it — how much of the mesh shows or is see-through, the mean colour, the brightness, the
   near-white and near-black shares — and its summary leads with the finding that matters, such as "invisible" or
   "mostly white"; it renders at a given `time`, as a strip of `frames` to show an animation, and with
-  `tone: "linear"` to read a material's output values past the tone mapper. The user's editor serves it
+  `tone: "linear"` to read a material's output values past the tone mapper. An exact `lookup` also answers with
+  the entry as plain lines in the result's `text`, so the summary stays one line. The user's editor serves it
   while it is open; without one, the server starts a host that serves it: the editor with `-DreamMCPHost
   -RenderOffscreen` (no window, no bridge, no settings written) when it needs pictures, the new
   `-run=DreamShaderHost` commandlet when it does not. *Project Settings > DreamShader > Enable DreamMCP Endpoint*
@@ -41,6 +42,12 @@
   next time it compiles.
 
 ### Fixed
+
+- **Two Dream plugins in one DreamMCP host no longer cap each other's jobs.** A host caps its frame rate at 15
+  while idle and lifts the cap while a job runs; each plugin decided from its own endpoint alone, so when one went
+  idle it capped the other's running job, which then stepped 15 times a second. Every Dream plugin's endpoint now
+  counts itself in the shared console variable `DreamMCP.BusyEndpoints` while it has a job, and a host caps the
+  frame rate only while that count is 0.
 
 - **`dsc.ps1` finds an engine the Epic Games Launcher installed.** A project whose `EngineAssociation` is a version
   (`"5.8"`) failed at once with `EngineAssociation '5.8' is not registered` unless `-Engine` was passed: the driver

@@ -666,9 +666,96 @@ namespace UE::DreamShader::Editor::MCP
 
 		// -------------------------------------------------------------------------------------------- lookup
 
+		/**
+		 * One catalog entry as lines a model reads: the call, then each input, output and property with its type, and
+		 * what a property accepts. The same facts as data.expressions, without the JSON.
+		 */
+		FString DescribeCatalogExpression(const UE::DreamShader::IR::FCatalogExpression& Expression);
+		FString DescribeCatalogAttribute(const UE::DreamShader::IR::FCatalogMaterialAttribute& Attribute);
+
 		FString QualifiedName(const UE::DreamShader::IR::FCatalogExpression& Expression)
 		{
 			return Expression.Namespace + TEXT(".") + Expression.ShortName;
+		}
+
+		// Wire text for a model, like every summary: invariant English, built from the catalog's own names.
+		FString DescribeCatalogExpression(const UE::DreamShader::IR::FCatalogExpression& Expression)
+		{
+			using namespace UE::DreamShader::IR;
+			const auto Also = [](const TArray<FString>& Aliases)
+			{
+				return Aliases.IsEmpty() ? FString() : FString::Printf(TEXT(" (also %s)"), *FString::Join(Aliases, TEXT(", "))); // I18N-EXEMPT: wire text
+			};
+
+			TArray<FString> Lines;
+			Lines.Add(FString::Printf(TEXT("%s -- %s%s"), *QualifiedName(Expression), *Expression.ClassName, *Also(Expression.Aliases))); // I18N-EXEMPT: wire text
+			if (Expression.bIsAbstract)
+			{
+				Lines.Add(TEXT("Abstract: a source cannot create this node."));
+			}
+			if (Expression.bIsCustomOutput)
+			{
+				Lines.Add(TEXT("A custom output: call it as a statement; it has no value."));
+			}
+			if (Expression.bIsParameter)
+			{
+				Lines.Add(TEXT("A parameter node."));
+			}
+			Lines.Add(Expression.PositionalParameters.IsEmpty()
+				? FString::Printf(TEXT("Call: %s(Name = value, ...), named arguments only."), *QualifiedName(Expression)) // I18N-EXEMPT: wire text
+				: FString::Printf(TEXT("Call: named arguments, or positional in this order: %s."), *FString::Join(Expression.PositionalParameters, TEXT(", ")))); // I18N-EXEMPT: wire text
+			if (Expression.bHasInstanceDependentPins)
+			{
+				Lines.Add(TEXT("Which pins a node shows depends on its properties; every pin is listed here by the name that always works."));
+			}
+
+			Lines.Add(Expression.Inputs.IsEmpty() ? FString(TEXT("Inputs: none")) : FString(TEXT("Inputs:")));
+			for (const FCatalogPin& Pin : Expression.Inputs)
+			{
+				FString Line = FString::Printf(TEXT("  %s  %s"), *Pin.Name, LexToString(Pin.Type)); // I18N-EXEMPT: wire text
+				if (Pin.bRequired)
+				{
+					Line += TEXT(", required");
+				}
+				if (!Pin.ConstPropertyName.IsEmpty())
+				{
+					Line += FString::Printf(TEXT(", or the literal %s"), *Pin.ConstPropertyName); // I18N-EXEMPT: wire text
+				}
+				Lines.Add(Line + Also(Pin.Aliases));
+			}
+
+			Lines.Add(Expression.Outputs.IsEmpty() ? FString(TEXT("Outputs: none")) : FString(TEXT("Outputs:")));
+			for (int32 Index = 0; Index < Expression.Outputs.Num(); ++Index)
+			{
+				const FCatalogPin& Pin = Expression.Outputs[Index];
+				Lines.Add(FString::Printf(TEXT("  %s  %s%s"), Pin.Name.IsEmpty() ? TEXT("(the node's value)") : *Pin.Name, LexToString(Pin.Type), // I18N-EXEMPT: wire text
+					Index == 0 && Expression.Outputs.Num() > 1 ? TEXT(", the default") : TEXT(""))); // I18N-EXEMPT: wire text
+			}
+
+			if (!Expression.Properties.IsEmpty())
+			{
+				Lines.Add(TEXT("Properties:"));
+			}
+			for (const FCatalogProperty& Property : Expression.Properties)
+			{
+				FString Line = FString::Printf(TEXT("  %s  %s"), *Property.Name, LexToString(Property.Type)); // I18N-EXEMPT: wire text
+				if (!Property.EnumValues.IsEmpty())
+				{
+					Line += FString::Printf(TEXT(": %s"), *FString::Join(Property.EnumValues, TEXT(" | "))); // I18N-EXEMPT: wire text
+				}
+				if (!Property.DefaultText.IsEmpty())
+				{
+					Line += FString::Printf(TEXT("; default %s"), *Property.DefaultText); // I18N-EXEMPT: wire text
+				}
+				Lines.Add(Line + Also(Property.Aliases));
+			}
+			return FString::Join(Lines, TEXT("\n"));
+		}
+
+		FString DescribeCatalogAttribute(const UE::DreamShader::IR::FCatalogMaterialAttribute& Attribute)
+		{
+			return FString::Printf(TEXT("m.%s -- %s, the material's %s%s"), *Attribute.Name, *Attribute.ValueType.ToString(), *Attribute.PropertyName, // I18N-EXEMPT: wire text
+				Attribute.Aliases.IsEmpty() ? TEXT("") : *FString::Printf(TEXT(" (also %s)"), *FString::Join(Attribute.Aliases, TEXT(", ")))); // I18N-EXEMPT: wire text
 		}
 
 		FResult RunLookup(const FActionCall& Call)
@@ -827,6 +914,17 @@ namespace UE::DreamShader::Editor::MCP
 					? FString::Printf(TEXT("%s: %d input(s), %d output(s), %d propert(ies)."), *QualifiedName(Matches.Expressions[0]), // I18N-EXEMPT: wire text
 						Matches.Expressions[0].Inputs.Num(), Matches.Expressions[0].Outputs.Num(), Matches.Expressions[0].Properties.Num())
 					: FString::Printf(TEXT("m.%s is a material attribute."), *Matches.MaterialAttributes[0].Name); // I18N-EXEMPT: wire text
+				// The entry itself, as lines to read: the summary stays one line, and data keeps the JSON for a program.
+				TArray<FString> Entries;
+				for (const FCatalogExpression& Expression : Matches.Expressions)
+				{
+					Entries.Add(DescribeCatalogExpression(Expression));
+				}
+				for (const FCatalogMaterialAttribute& Attribute : Matches.MaterialAttributes)
+				{
+					Entries.Add(DescribeCatalogAttribute(Attribute));
+				}
+				Result.Text = FString::Join(Entries, TEXT("\n\n"));
 			}
 			else
 			{

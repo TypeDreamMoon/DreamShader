@@ -76,7 +76,8 @@ The render host is an editor nobody sees, and it behaves like one:
 | Dialogs | `-unattended` answers them; one that still held the startup trips `-DreamMCPStartupTimeout` |
 | The editor's own parts | no bridge (no startup sweep, no file watcher, no preview WebSocket, no claim on the bridge's ownership), no browser tab, no menus |
 | Settings | writes no config file (the config system's file operations are off), does not auto-save, and records the project it opened beside its discovery file rather than in the user's `ProjectEditorRecords.json` (UE 5.6+) |
-| Idle | level viewports are not realtime, and the frame rate is capped at 15 while no job runs (an unattended editor is not throttled by the engine) |
+| Idle | level viewports are not realtime, and the frame rate is capped at 15 (`t.MaxFPS`) while no DreamMCP endpoint in the process runs a job (an unattended editor is not throttled by the engine) |
+| Shared busy count | `DreamMCP.BusyEndpoints`, an integer console variable every Dream plugin's endpoint shares: the first to start registers it, the others find it. An endpoint adds one when a job is queued and takes it back when its jobs are done or it stops. A host lifts the frame cap while the count is above 0, so one plugin going idle never caps another plugin's running job in the same process |
 
 ## Discovery file
 
@@ -186,6 +187,7 @@ The last 64 finished jobs stay readable; a job does not survive the process.
 | Field | |
 | :-- | :-- |
 | `outcome` | `ok`; `source-error` — the source is wrong, the diagnostics say where; `refused` — not the source's fault, `reason` says what; `engine-error` — something inside failed |
+| `text` | optional: preformatted lines a server prints as they are, after `summary`, for content a model reads rather than parses. An exact `lookup` puts the entry here — the call, each input, output and property with its type, enum values and defaults — and keeps `summary` to one line; `data` still has the same entry as JSON. Absent when empty |
 | `diagnostics[]` | `code`, `severity`, `file`, `line`, `column`, `message`; `length`, `hint` (the record's detail), `stage` and `doc` when known. Errors come first, then warnings, then infos, each kind in the order found |
 | `writes[]` | `{ asset, state }`: the package, and `created`, `saved` (it existed) or `memory` (an Ephemeral product) — read from the engine's own save events |
 | `artifacts[]` | `{ kind, path, title }`: an `image` under `Saved/DreamMCP/artifacts/`, a decompiled `source` |
