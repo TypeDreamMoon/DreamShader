@@ -72,9 +72,25 @@ namespace UE::DreamShader::Editor::MCP
 		}
 		Root->SetStringField(TEXT("summary"), Summary);
 
-		TArray<TSharedPtr<FJsonValue>> DiagnosticValues;
+		// Errors first, then warnings, then infos, each kind in the order it was found: what a summary leads with is what
+		// the list leads with, and an info never sits above the error it is read next to.
+		TArray<const FDiagnostic*> Ordered;
 		for (const FDiagnostic& Diagnostic : Diagnostics)
 		{
+			Ordered.Add(&Diagnostic);
+		}
+		const auto Rank = [](const FDiagnostic& Diagnostic)
+		{
+			if (Diagnostic.Severity.Equals(TEXT("error"), ESearchCase::IgnoreCase)) { return 0; }
+			if (Diagnostic.Severity.Equals(TEXT("warning"), ESearchCase::IgnoreCase)) { return 1; }
+			return 2;
+		};
+		Ordered.StableSort([&Rank](const FDiagnostic& A, const FDiagnostic& B) { return Rank(A) < Rank(B); });
+
+		TArray<TSharedPtr<FJsonValue>> DiagnosticValues;
+		for (const FDiagnostic* DiagnosticPtr : Ordered)
+		{
+			const FDiagnostic& Diagnostic = *DiagnosticPtr;
 			TSharedRef<FJsonObject> Object = MakeShared<FJsonObject>();
 			if (!Diagnostic.Code.IsEmpty())
 			{

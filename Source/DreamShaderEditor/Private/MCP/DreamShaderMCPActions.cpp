@@ -499,9 +499,8 @@ namespace UE::DreamShader::Editor::MCP
 				int32 Warnings = 0;
 				int32 Infos = 0;
 			};
-			TArray<TSharedPtr<FJsonValue>> FileSummaries;
 			TArray<FFileCounts> Counts;
-			const auto AddFile = [&Result, &FileSummaries, &Counts](const FString& File, const TArray<FDiagnostic>& Diagnostics)
+			const auto AddFile = [&Result, &Counts](const FString& File, const TArray<FDiagnostic>& Diagnostics)
 			{
 				Result.Diagnostics.Append(Diagnostics);
 				FFileCounts& Count = Counts.AddDefaulted_GetRef();
@@ -509,12 +508,30 @@ namespace UE::DreamShader::Editor::MCP
 				Count.Errors = CountSeverity(Diagnostics, TEXT("error"));
 				Count.Warnings = CountSeverity(Diagnostics, TEXT("warning"));
 				Count.Infos = CountSeverity(Diagnostics, TEXT("info"));
-				TSharedRef<FJsonObject> Summary = MakeShared<FJsonObject>();
-				Summary->SetStringField(TEXT("file"), Count.File);
-				Summary->SetNumberField(TEXT("errors"), Count.Errors);
-				Summary->SetNumberField(TEXT("warnings"), Count.Warnings);
-				Summary->SetNumberField(TEXT("infos"), Count.Infos);
-				FileSummaries.Add(MakeShared<FJsonValueObject>(Summary));
+			};
+			// The files with errors first, then warnings, then infos: the order the summary names them in, and the order
+			// the result's diagnostics come in (errors first; FResult::ToJson).
+			const auto ByWhatTheyHave = [](const FFileCounts& A, const FFileCounts& B)
+			{
+				if (A.Errors != B.Errors) { return A.Errors > B.Errors; }
+				if (A.Warnings != B.Warnings) { return A.Warnings > B.Warnings; }
+				return A.Infos > B.Infos;
+			};
+			const auto FilesJson = [&Counts, &ByWhatTheyHave]()
+			{
+				TArray<FFileCounts> Sorted = Counts;
+				Sorted.StableSort(ByWhatTheyHave);
+				TArray<TSharedPtr<FJsonValue>> Files;
+				for (const FFileCounts& Count : Sorted)
+				{
+					TSharedRef<FJsonObject> Summary = MakeShared<FJsonObject>();
+					Summary->SetStringField(TEXT("file"), Count.File);
+					Summary->SetNumberField(TEXT("errors"), Count.Errors);
+					Summary->SetNumberField(TEXT("warnings"), Count.Warnings);
+					Summary->SetNumberField(TEXT("infos"), Count.Infos);
+					Files.Add(MakeShared<FJsonValueObject>(Summary));
+				}
+				return Files;
 			};
 			// "2 errors, 1 warning": what a file has, in words.
 			const auto DescribeCounts = [](const FFileCounts& Count)
@@ -566,7 +583,7 @@ namespace UE::DreamShader::Editor::MCP
 				{
 					Result.Summary = FString::Printf(TEXT("No diagnostics are known for %s in this process yet."), *Rel(File)); // I18N-EXEMPT: wire text
 					Result.Next.Add(TEXT("Run check on it."));
-					Result.Data->SetArrayField(TEXT("files"), FileSummaries);
+					Result.Data->SetArrayField(TEXT("files"), FilesJson());
 					return Result;
 				}
 				AddFile(File, Diagnostics);
@@ -610,12 +627,7 @@ namespace UE::DreamShader::Editor::MCP
 				{
 					return Count.Errors + Count.Warnings + Count.Infos > 0;
 				});
-				WithFindings.StableSort([](const FFileCounts& A, const FFileCounts& B)
-				{
-					if (A.Errors != B.Errors) { return A.Errors > B.Errors; }
-					if (A.Warnings != B.Warnings) { return A.Warnings > B.Warnings; }
-					return A.Infos > B.Infos;
-				});
+				WithFindings.StableSort(ByWhatTheyHave);
 				constexpr int32 MaxNamed = 10;
 				TArray<FString> Named;
 				for (int32 Index = 0; Index < FMath::Min(WithFindings.Num(), MaxNamed); ++Index)
@@ -645,7 +657,7 @@ namespace UE::DreamShader::Editor::MCP
 					Result.Next.Add(TEXT("This process only knows the files checked or compiled in it; check with all=true covers every source."));
 				}
 			}
-			Result.Data->SetArrayField(TEXT("files"), FileSummaries);
+			Result.Data->SetArrayField(TEXT("files"), FilesJson());
 			return Result;
 		}
 

@@ -540,6 +540,25 @@ bool FDreamShaderMCPCompileTest::RunTest(const FString& Parameters)
 	const int32 GoodAt = AllSummary.Find(TEXT("M_McpCompileOk.dss"));
 	TestTrue(TEXT("a file with errors comes before one without"), GoodAt == INDEX_NONE || AllSummary.Find(TEXT("M_McpCompileBad.dss")) < GoodAt);
 	TestEqual(TEXT("with errors among them, a source error"), Field(All, TEXT("outcome")), FString(TEXT("source-error")));
+	const TArray<TSharedPtr<FJsonValue>> AllDiagnostics = ArrayField(All, TEXT("diagnostics"));
+	if (TestTrue(TEXT("the list carries them"), AllDiagnostics.Num() > 0))
+	{
+		TestEqual(TEXT("the list leads with an error, as the summary does"), Field(AllDiagnostics[0]->AsObject(), TEXT("severity")), FString(TEXT("error")));
+		bool bSeenOther = false;
+		bool bErrorAfterOther = false;
+		for (const TSharedPtr<FJsonValue>& Value : AllDiagnostics)
+		{
+			const bool bError = Field(Value->AsObject(), TEXT("severity")) == TEXT("error");
+			bErrorAfterOther |= bError && bSeenOther;
+			bSeenOther |= !bError;
+		}
+		TestFalse(TEXT("no error comes after a warning or an info"), bErrorAfterOther);
+	}
+	const TArray<TSharedPtr<FJsonValue>> AllFiles = ArrayField(ObjectField(All, TEXT("data")), TEXT("files"));
+	if (TestTrue(TEXT("data.files lists them"), AllFiles.Num() > 0))
+	{
+		TestTrue(TEXT("data.files leads with the file that has errors"), Field(AllFiles[0]->AsObject(), TEXT("file")).EndsWith(TEXT("M_McpCompileBad.dss")));
+	}
 
 	// With only clean files known (infos at most), the same call is ok: an info is not an error. The endpoints share
 	// what was checked; forget the broken file first.
