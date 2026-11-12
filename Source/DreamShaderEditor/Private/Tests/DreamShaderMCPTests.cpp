@@ -19,6 +19,7 @@
 
 #include "AssetCompilingManager.h"
 #include "Containers/Ticker.h"
+#include "HAL/IConsoleManager.h"
 #include "HAL/PlatformProcess.h"
 #include "HttpServerModule.h"
 #include "IPAddress.h"
@@ -814,6 +815,70 @@ bool FDreamShaderMCPSocketTest::RunTest(const FString& Parameters)
 	const FString DiscoveryPath = Endpoint.GetDiscoveryFilePath();
 	Endpoint.Stop();
 	TestFalse(TEXT("stopping deletes the discovery file"), IFileManager::Get().FileExists(*DiscoveryPath));
+	return true;
+}
+
+// ----------------------------------------------------------------------------------- shared frame cap
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDreamShaderMCPSharedFrameCapTest,
+	"DreamShader.MCP.Host.SharedFrameCap",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderMCPSharedFrameCapTest::RunTest(const FString& Parameters)
+{
+	IConsoleVariable* const MaxFps = IConsoleManager::Get().FindConsoleVariable(TEXT("t.MaxFPS"));
+	IConsoleVariable* const Busy = FindOrRegisterBusyEndpoints();
+	if (!TestNotNull(TEXT("t.MaxFPS exists"), MaxFps) || !TestNotNull(TEXT("DreamMCP.BusyEndpoints exists"), Busy))
+	{
+		return false;
+	}
+	const float OriginalMaxFps = MaxFps->GetFloat();
+	const int32 Before = Busy->GetInt();
+	ON_SCOPE_EXIT
+	{
+		Busy->Set(Before, ECVF_SetByCode);
+		MaxFps->Set(OriginalMaxFps, ECVF_SetByCode);
+	};
+	TestTrue(TEXT("a second plugin finds the same variable instead of registering one"), FindOrRegisterBusyEndpoints() == Busy);
+
+	// Another Dream plugin in this process, seen only through the shared variable: its job lifts the cap, its idle
+	// puts the cap back.
+	Busy->Set(Before + 1, ECVF_SetByCode);
+	TestEqual(TEXT("another plugin's running job lifts the cap"), ApplyHostFrameCap(), 0);
+	TestEqual(TEXT("t.MaxFPS follows: 0"), MaxFps->GetFloat(), 0.0f);
+	Busy->Set(Before, ECVF_SetByCode);
+	if (Before == 0)
+	{
+		TestEqual(TEXT("every endpoint idle: capped"), ApplyHostFrameCap(), 15);
+		TestEqual(TEXT("t.MaxFPS follows: 15"), MaxFps->GetFloat(), 15.0f);
+	}
+
+	// This plugin's endpoint counts its own job, and going idle does not cap the other plugin's.
+	{
+		FTestEndpoint Test(*this, EEndpointMode::Host);
+		Busy->Set(Before + 1, ECVF_SetByCode);
+		const FHttpReply Accepted = Send(Test.Endpoint, TEXT("POST"), TEXT("/call"),
+			CallBody(TEXT("check"), TEXT("{\"file\":\"DShader/DoesNotExist.dss\"}"), TEXT("busy-1")));
+		TestEqual(TEXT("a long action is a job"), Accepted.Status, 202);
+		TestEqual(TEXT("a queued job adds this endpoint's one"), Busy->GetInt(), Before + 2);
+		for (int32 Tick = 0; Tick < 100 && Test.Endpoint.IsBusy(); ++Tick)
+		{
+			Test.Endpoint.TickJobs();
+		}
+		TestFalse(TEXT("the job finished"), Test.Endpoint.IsBusy());
+		TestEqual(TEXT("finished, it takes its one back"), Busy->GetInt(), Before + 1);
+		TestEqual(TEXT("and the other plugin's running job still lifts the cap"), ApplyHostFrameCap(), 0);
+		Busy->Set(Before, ECVF_SetByCode);
+	}
+
+	// An endpoint that stops with a job queued takes its one back.
+	{
+		FTestEndpoint Test(*this, EEndpointMode::Host);
+		Send(Test.Endpoint, TEXT("POST"), TEXT("/call"), CallBody(TEXT("check"), TEXT("{\"file\":\"DShader/DoesNotExist.dss\"}"), TEXT("busy-2")));
+		TestEqual(TEXT("queued: counted"), Busy->GetInt(), Before + 1);
+		Test.Endpoint.Stop();
+		TestEqual(TEXT("stopped: taken back"), Busy->GetInt(), Before);
+	}
 	return true;
 }
 

@@ -57,7 +57,6 @@ namespace UE::DreamShader::Editor::MCP
 			double NextParentCheck = 0.0;
 			double ShutdownRequestedAt = 0.0;
 			bool bExitRequested = false;
-			int32 LastFrameCap = -1;
 		};
 		FHostLifetime GHost;
 
@@ -135,8 +134,9 @@ namespace UE::DreamShader::Editor::MCP
 		 * The host's own housekeeping, on the core ticker, in both forms of host:
 		 *   * POST /shutdown: exit a quarter of a second later, so the answer leaves the socket first;
 		 *   * the parent process gone: exit -- a server that died must not leave an engine behind;
-		 *   * in the windowless editor: no realtime viewport, and a frame cap while idle (an unattended editor is never
-		 *     throttled by the engine itself, see UEditorEngine::ShouldThrottleCPUUsage).
+		 *   * in the windowless editor: no realtime viewport, and a frame cap while every DreamMCP endpoint in the process
+		 *     is idle (an unattended editor is never throttled by the engine itself, see
+		 *     UEditorEngine::ShouldThrottleCPUUsage).
 		 */
 		bool TickHost(float)
 		{
@@ -187,16 +187,11 @@ namespace UE::DreamShader::Editor::MCP
 					}
 				}
 
-				// Fifteen frames a second while idle; no cap while a job runs, since a job steps once per frame.
-				const int32 FrameCap = GEndpoint->IsBusy() ? 0 : 15;
-				if (FrameCap != GHost.LastFrameCap)
-				{
-					if (IConsoleVariable* MaxFps = IConsoleManager::Get().FindConsoleVariable(TEXT("t.MaxFPS")))
-					{
-						MaxFps->Set(static_cast<float>(FrameCap), ECVF_SetByCode);
-					}
-					GHost.LastFrameCap = FrameCap;
-				}
+				// No cap while any DreamMCP endpoint in this process runs a job -- this plugin's or another Dream plugin's,
+				// which all count themselves in DreamMCP.BusyEndpoints -- since a job steps once per frame; fifteen frames a
+				// second while every one is idle. Asked of the shared count, never of this endpoint alone: a plugin going
+				// idle must not cap another's running job.
+				ApplyHostFrameCap();
 			}
 			return true;
 		}

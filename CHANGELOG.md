@@ -42,6 +42,12 @@
 
 ### Fixed
 
+- **Two Dream plugins in one DreamMCP host no longer cap each other's jobs.** A host caps its frame rate at 15
+  while idle and lifts the cap while a job runs; each plugin decided from its own endpoint alone, so when one went
+  idle it capped the other's running job, which then stepped 15 times a second. Every Dream plugin's endpoint now
+  counts itself in the shared console variable `DreamMCP.BusyEndpoints` while it has a job, and a host caps the
+  frame rate only while that count is 0.
+
 - **`dsc.ps1` finds an engine the Epic Games Launcher installed.** A project whose `EngineAssociation` is a version
   (`"5.8"`) failed at once with `EngineAssociation '5.8' is not registered` unless `-Engine` was passed: the driver
   looked only in the registry, and the launcher writes its `Unreal Engine\<version>` key on some installs only. The

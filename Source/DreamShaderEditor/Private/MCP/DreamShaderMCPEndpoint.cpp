@@ -480,6 +480,8 @@ namespace UE::DreamShader::Editor::MCP
 		StartedAtSeconds = FPlatformTime::Seconds();
 		NextPublishAttempt = 0.0;
 		SelfHelloAttempts = 0;
+		// The process's busy count, shared with every other Dream plugin's endpoint: there from the first one that starts.
+		FindOrRegisterBusyEndpoints();
 
 		if (Options.bListen)
 		{
@@ -527,6 +529,8 @@ namespace UE::DreamShader::Editor::MCP
 		SelfHello.Reset();
 		Self.Reset();
 		Jobs.Reset();
+		// Its part in the process's busy count goes with its jobs.
+		BusyShare.Set(false);
 		bStarted = false;
 	}
 
@@ -1165,6 +1169,8 @@ namespace UE::DreamShader::Editor::MCP
 		Job->Context.JobId = Job->JobId;
 		Job->QueuedAt = FPlatformTime::Seconds();
 		Jobs.Add(Job);
+		// Busy from the moment a job waits, not from its first step: a host lifts its frame cap for it at once.
+		BusyShare.Set(IsBusy());
 
 		TSharedRef<FJsonObject> Body = MakeShared<FJsonObject>();
 		Body->SetStringField(TEXT("id"), CallId);
@@ -1281,7 +1287,13 @@ namespace UE::DreamShader::Editor::MCP
 	void FEndpoint::TickJobs()
 	{
 		check(IsInGameThread());
+		StepJobs();
+		// A job that finished, or one that started, changes what this endpoint adds to the process's busy count.
+		BusyShare.Set(IsBusy());
+	}
 
+	void FEndpoint::StepJobs()
+	{
 		TSharedPtr<FJob> Running;
 		for (const TSharedPtr<FJob>& Job : Jobs)
 		{
