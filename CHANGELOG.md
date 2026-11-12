@@ -676,7 +676,7 @@
   compile request (which all three product kinds carried), the `IsAsset()` lie that hides a generated
   instance (which only ThinCustom has), and a "storage decides" rule that could overrule the request
   after the fact. A user reading `DSH8115` could not tell which one was being talked about, and
-  neither, on a bad day, could the code -- the accident where `dream_build` reached only memory while
+  neither, on a bad day, could the code -- the accident where a build through the old MCP server reached only memory while
   a stale file on disk won came out of exactly that confusion.
 
   There is now one concept with one name.
