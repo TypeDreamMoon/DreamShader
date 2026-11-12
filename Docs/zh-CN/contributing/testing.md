@@ -77,6 +77,9 @@
 | `DreamShader.Lang2.Corpus.Pipeline.*` · `DreamShader.Lang2.CorpusIR.Pipeline.*` | `Tests/Corpus/Lang/Pipeline` 和 `Tests/Corpus/IR/Pipeline` 的 `.dsp` 夹具 | 快速；无资源 I/O |
 | `DreamShader.Compiler2.Pipeline.*` | `.dsp` 到 `UDreamPassPipeline`：字段、渲染目标、依赖关系、往返；插槽注册表及其预检查 | 慢速；编辑器；`Registry` 和 `RegistryPrecheck` 需要真实 RHI，并首先备份 `<DShader>/.dreampass` |
 | `DreamShader.Pass.Logic.*` | 无渲染的 Custom Pass 运行时：写法、参数混合、插槽打包、资源的检查、哪些管线适用于某个视图、源文件 | 快速 |
+| `DreamShader.MCP.{Protocol,Actions,Jobs}.*` *（2.2.0 之后）* | 在没有 socket 的情况下驱动 [DreamMCP endpoint](../tools/dreammcp.md)：hello、tokens 与 `Origin`、每一次拒绝、每个 action 的成功与源错误、job 轮询与取消 | 慢；编辑器；写入 `/Game/DreamShaderTests/MCP` 资产 |
+| `DreamShader.MCP.Socket.Loopback` *（2.2.0 之后）* | 真实的监听器：基于 TCP 的 HTTP、发现文件、在每个非环回地址上被拒绝 | 快；从 `47950` 绑定端口 |
+| `DreamShader.MCP.Render.Preview` *（2.2.0 之后）* | 该 endpoint 的 `preview`，渲染并写为 PNG | `NonNullRHI`：在下方 RHI 门禁中运行 |
 | `DreamShader.Pass.Render.*` · `DreamShader.Pass.Lifecycle.*` | Custom Pass 通道渲染到场景捕获并逐像素读回；帧中途的编辑、移除和世界销毁 | `NonNullRHI`：在 `-nullrhi` 下跳过，在下面的 RHI 门中运行 |
 
 源码中记录的划分：快速的 `DreamShader.Lang.*` 和 `DreamShader.Lang2.*` 层作为拉取请求的门禁，慢速的 `DreamShader.Compiler*` 和 `DreamShader.Gen.*` 层每晚运行。整个套件无头运行大约需要一分半钟。

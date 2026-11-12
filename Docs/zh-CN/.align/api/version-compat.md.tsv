@@ -1,4 +1,4 @@
-#dreamdocs-align 1	source=Docs/api/version-compat.md	rev=dce3a7afae92	model=deepseek-flash	page=da76d590ce2f
+#dreamdocs-align 1	source=Docs/api/version-compat.md	rev=0c4e9e065042	model=deepseek-v4.1-flash	page=2492fcc20fcb
 h1	a24e6c53ad53	a24e6c53	m
 q	c9ddd84a370c	9b9d7b66	m
 p	ac81a7346c97	36f4200b	m
@@ -6,7 +6,7 @@ p	68685c2fba4d	4a9178f6	m
 row2	e070228b259f	e070228b	s
 row2	29ee36d34e26	c562525e	m
 row2	3aeee9382197	ff4651f9	m
-row2	8d3e57c96480	f76e4e8b	m
+row2	7efa4a424294	7754c7e1	m
 row2	50643ebe5146	1bff72e7	m
 row2	3b415eb77af9	5c6bfcc4	m
 h2	aec06b0a14e4	e77b7314	m
@@ -25,6 +25,7 @@ row4	f33b15b628d8	9dbb0f88	m
 row4	9693af1701b6	243105d0	m
 row4	cf6bd4330b4f	c810e9eb	m
 row4	f66cf063bbd2	a0941372	m
+row4	34ce62492d26	13431b09	m
 row4	fb7811e854d0	1f24f9eb	m
 p	ad5b503408d3	73c42099	m
 q	4728cdbefc98	e0b137b1	m
@@ -58,6 +59,8 @@ row3	e7607c588e29	e8d16f1c	m
 row3	49d524e6f3af	85ac0c1c	m
 row3	20e9cd3e2efb	6238d049	m
 row3	2259c535cf8e	9afa9713	m
+row3	193ef4510135	af3ba5c7	m
+row3	6122bda9bab9	ffb8a5a6	m
 h3	ce42803f6c3e	5b6ad134	m
 p	565d2d13dbd3	9e7a0a79	m
 row3	cb6531186f9a	bd1db6de	m
@@ -113,9 +116,11 @@ row3	a1bccb86a39b	c2556e33	m
 row3	daf967c9c0e4	91f49f8c	m
 row3	d051ea534624	ddb0b058	m
 row3	ef78e87832d0	209ea8af	m
+row3	f5bef0fada6e	d248c4b3	m
 h3	18da9afc09ee	14401c2d	m
 row3	566844138943	47c4f7f0	m
 row3	2bf7fd488fd5	96b95746	m
+row3	b05340978f63	aaf1dc4d	m
 row3	2c86a782f5f2	5c1b67ef	m
 h3	adbdb85a7a25	c82c82bf	m
 p	7c01acf01241	22881212	m

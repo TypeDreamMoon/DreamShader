@@ -82,7 +82,27 @@ Claude Code 以外的智能体不会自行加载技能。请将它们指向所�
 
 ## MCP 服务器（可选）
 
-[dream-mcp](https://github.com/TypeDreamMoon/dream-mcp) 是 Dream 插件的可选 MCP 服务器。它支持哪些功能已在其 README 中说明。不使用它时，技能和 `dsc.ps1` 按本页所述方式工作。
+[dream-mcp](https://github.com/TypeDreamMoon/dream-mcp) 是 Dream 插件的 MCP 服务器。连接到它后，智能体会得到一个 `dream_shader` 工具，其操作正是插件自身的 [DreamMCP 端点](dreammcp.md)：
+
+| 操作 | 作用 |
+| :-- | :-- |
+| `check` | 检查一个源或所有源，不写入任何内容 |
+| `compile` | 构建某个源的资产；使用 `shaders: true` 时还会编译其着色器 |
+| `diagnostics` | 上次检查或编译发现的内容，不进行构建 |
+| `lookup` | `UE.*` 或 `Substrate.*` 节点的输入、输出和属性 |
+| `preview` | 将材质渲染为 PNG 并说明其显示的内容；使用 `frames` 时还会说明其随时间的变化 |
+| `decompile` | 将现有的材质、函数或实例写出为源 |
+
+调用在哪里运行：
+
+- **编辑器已打开该项目。** 由编辑器提供服务，与保存源时相同：Content Browser 和 VSCode 扩展都能看到结果，材质会留在内存中，直到用户保存它。
+- **没有打开编辑器。** 服务器会在后台为该项目启动一个无窗口的引擎，并在后续调用中重复使用它，因此只有第一次调用需要等待引擎启动。它会在空闲时、编辑器打开时或服务器退出时停止。
+
+每个回答都具有相同的结构：一个结果、一行摘要、带有代码、行号和指向其页面链接的诊断信息、写入的资产，以及下一步该做什么。智能体从不读取日志。
+
+要安装服务器并将其注册到你的智能体，请按照 [dream-mcp README](https://github.com/TypeDreamMoon/dream-mcp#readme) 操作。插件端随 DreamShader 一起提供：Project Settings › DreamShader 下的 *Enable DreamMCP Endpoint* 可开启或关闭该端点（[project settings](../settings/project.md)），而 `-NoDreamMCP` 可在单次运行中关闭它。
+
+不使用服务器时，技能和 `dsc.ps1` 按本页所述方式工作。发现 `dream_shader` 工具的技能会用该工具完成相同的步骤，而不是使用 driver。
 
 <a id="the-loop"></a>
 

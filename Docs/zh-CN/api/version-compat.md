@@ -12,7 +12,7 @@
 | :-- | :-- |
 | 模块 | `DreamShader`（Runtime），由 `DreamShader` 与 `DreamShaderEditor` 包含。`DreamShaderLang` 无法包含它——它仅依赖 `Core`，且没有可供判断的引擎版本 |
 | 包含 | `#include "DreamShaderVersionCompat.h"` |
-| 内容 | 13 个宏。**无类型、无函数、无命名空间。** |
+| 内容 | 14 个宏。**无类型、无函数、无命名空间。** |
 | 依赖 | `Misc/CoreDelegates.h`（用于 `DREAMSHADER_POST_ENGINE_INIT_DELEGATE`）、`Runtime/Launch/Resources/Version.h` |
 | 已验证引擎 | UE `5.3` – `5.8`（Win64） |
 
@@ -70,6 +70,7 @@
 | `DREAMSHADER_MATERIAL_AGGREGATE_HANDLES_SUBSTRATE` | **UE ≥ 5.8** | 否 —— 无条件 `#define` | `MaterialValueTypeToMaterialAggregateAttributeType` 是否有针对 `MCT_Substrate` 的分支。低于 5.8 时它会 `checkf(false)`，因此清单导出器和内置目录的反射都不会为 `UMaterialExpressionAggregate` 发起该调用。 |
 | `DREAMSHADER_WITH_SCALAR_PARAMETER_CONTROL_TYPE` | **UE ≥ 5.7** | 否 —— 无条件 `#define` | `UMaterialExpressionScalarParameter` 是否具有 `ControlType`、`Enumeration` 和 `EnumerationIndex`。 |
 | `DREAMSHADER_WITH_MATERIAL_PARAMETERS_HEADER` | **UE ≥ 5.7** | 否 —— 无条件 `#define` | 哪个头文件声明了 `FMaterialParameterInfo`：5.7 起为 `Materials/MaterialParameters.h`，之前为 `MaterialTypes.h`。 |
+| `DREAMSHADER_HTTP_REQUEST_HANDLER(...)` *（2.2.0 之后）* | UE ≥ 5.4 上为 `FHttpRequestHandler::CreateLambda(...)`，5.3 上为 `FHttpRequestHandler(...)` | 否——由 `#if` 选择 | 5.4 将 `FHttpRequestHandler` 从 `TFunction` 变为 `TDelegate`；[DreamMCP endpoint](../tools/dreammcp.md) 通过这一种写法绑定其路由。可变参数，因为 lambda 的捕获列表中含有逗号 |
 | `DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS` *(自 2.0.0 起)* | 当引擎的 `EMaterialParameterType` 具有 `ParameterCollection` 枚举值时 `1`，否则为 `0` | **是** —— 由 `#ifndef` 保护（回退到 UE ≥ 5.8），且 `DreamShader.Build.cs` 根据该探测将其设为 `PublicDefinition` | 材质实例是否可以覆盖参数集合。询问声明该枚举的头文件，因为 `case` 标签无法询问该类型。 |
 
 六个受 `#ifndef` 保护的宏可由构建目标预先定义——例如在 5.4+ 引擎上通过定义 `DREAMSHADER_WITH_SUBSTRATE_BUILTINS=0` 来排除 Substrate 路径，或在测试时强制某个版本分支。`DreamShader.Build.cs` 正是利用这一点，根据其头文件探测来设置 `DREAMSHADER_WITH_MOON_ENGINE` 和 `DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS`。该插件仅有的其他定义是 `DREAMSHADER_WITH_CUSTOM_PASS`（`DreamShaderPass.Build.cs` 的一个 `PublicDefinitions` 条目，本头文件并未定义它，见[下文](#dreamshader_with_custom_pass)），以及 `MOON_ENGINE=1`（当引擎的 `SceneTypes.h` 声明 `MP_MoonEncodedAttribute0` 时由 `DreamShaderEditor.Build.cs` 添加的一个 `PrivateDefinitions` 条目，且没有任何源文件读取它）。
@@ -141,6 +142,8 @@ PublicDefinitions.Add("DREAMSHADER_WITH_CUSTOM_PASS=" + (bWithCustomPass ? "1" :
 | 生成的 Custom 节点 | 在 IR 发射器创建的每个 Custom 节点上设置 `UMaterialExpressionCustom::ShowCode = false`，因此 HLSL 正文在材质编辑器中保持折叠 | 该属性不存在；不设置，生成的 Custom 节点会显示其代码 |
 | 重建前重置材质，以及生成资产的摘要 | `bHasPixelAnimation` 与其他材质标志一起被清除，并记录在摘要中 | 跳过 |
 | 反编译器材质标志导出 | `bHasPixelAnimation` 被包含在发出的 `Settings` 标志列表中 | 排除 |
+| DreamMCP 路由处理程序 *（2.2.0 之后）* | `FHttpRequestHandler::CreateLambda`，通过 `DREAMSHADER_HTTP_REQUEST_HANDLER` | lambda 自身会转换为 `TFunction` |
+| DreamMCP `preview`，等待材质的着色器 *（2.2.0 之后）* | `UMaterialInterface::IsCompiling()`，向材质及其基础材质询问 | 向此平台的材质资源询问其编译是否已完成 |
 
 <a id="ue--54--dreamshader_with_substrate_builtins"></a>
 
@@ -233,6 +236,7 @@ Substrate 门控是一个单独的宏，因此可以独立覆盖，但其默认�
 | 布局阶段中的节点预览高度 | `Expression->ShouldShowPreview()` | `!bHidePreviewWindow && !bCollapsed`，即 5.7 所组合出的两个标志 |
 | 反编译器标量参数元数据 | `ControlType`、`Enumeration` 和 `EnumerationIndex` 已导出 | 未导出——这些属性不存在。携带它们的源仍可解析；但没有可写入它们的地方 |
 | `FMaterialParameterInfo` 包含 | `Materials/MaterialParameters.h` | `MaterialTypes.h`，5.7 仅将其保留为弃用存根 |
+| DreamMCP `preview`，它从中读取着色器错误的材质资源 *（2.2.0 之后）* | 取自 `GMaxRHIShaderPlatform` | 取自 `GMaxRHIFeatureLevel` |
 
 <a id="ue--58"></a>
 
@@ -241,6 +245,7 @@ Substrate 门控是一个单独的宏，因此可以独立覆盖，但其默认�
 | 功能 | 在 UE ≥ 5.8 上 | 在 UE 5.3 – 5.7 上 |
 | :-- | :-- | :-- |
 | 内置目录的材质属性 *（自 2.0.0 起）* | `FMaterialAttributeDefinitionMap::GetAttributeNameToIDList` | 该列表是私有的，因此通过公共的 `GetID` / `GetProperty` / `GetAttributeName` 遍历 `EMaterialProperty` 来访问这些属性。两种方式得到相同的属性；只是它们在导出目录中的顺序不同 |
+| DreamMCP `preview`，它等待的预览网格体 *（2.2.0 之后）* | 包含着色球（`UThumbnailManager::EditorShaderBall`） | 着色球不存在；仅有其他网格体 |
 | 应用设置时写入的默认体积云用法 | `UMaterial::SetUsageByFlag(MATUSAGE_VolumetricCloud, …)` | 直接使用 `bUsedWithVolumetricCloud` 字段。值相同；每种拼写都是在对应引擎上编译且不产生弃用警告的那一种 |
 
 <a id="ue--58--dreamshader_with_custom_pass"></a>
