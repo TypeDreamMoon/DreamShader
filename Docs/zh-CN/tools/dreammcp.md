@@ -70,7 +70,8 @@ headless:  UnrealEditor-Cmd.exe <Project>.uproject -run=DreamShaderHost -nullrhi
 | 对话框 | 由 `-unattended` 应答；仍卡住启动流程的对话框会触发 `-DreamMCPStartupTimeout` |
 | 编辑器自身的部分 | 无桥接（无启动扫描、无文件监视器、无预览 WebSocket、不主张桥接的所有权）、无浏览器标签页、无菜单 |
 | 设置 | 不写配置文件（配置系统的文件操作已关闭），不自动保存，并将它打开的项目记录在其发现文件旁，而不是记录在用户的 `ProjectEditorRecords.json` 中（UE 5.6+） |
-| 空闲 | 关卡视口不是实时的，且在没有任务运行时帧率上限为 15（无人值守的编辑器不会被引擎限速） |
+| 空闲 | 关卡视口不是实时的，且在进程中没有 DreamMCP 端点运行任务时，帧率上限为 15（`t.MaxFPS`）（无人值守的编辑器不会被引擎限速） |
+| 共享忙碌计数 | `DreamMCP.BusyEndpoints`，一个由每个 Dream 插件的端点共享的整数控制台变量：最先启动的端点注册它，其他端点则找到它。端点在有任务排队时将其加一，并在其任务完成或停止时将其减回。当计数大于 0 时，宿主会解除帧率上限，因此一个插件空闲时，绝不会限制同一进程中另一个插件正在运行的任务 |
 
 <a id="discovery-file"></a>
 
@@ -175,6 +176,7 @@ DreamMCP: port 47800 answers on 192.168.1.20:47800, not only on 127.0.0.1; it is
 | 字段 | |
 | :-- | :-- |
 | `outcome` | `ok`；`source-error`——源本身有错，诊断信息会指出位置；`refused`——不是源的问题，`reason` 会说明原因；`engine-error`——内部某处失败了 |
+| `text` | 可选：服务器按原样打印的预格式化行，位于 `summary` 之后，用于供模型阅读而非解析的内容。精确的 `lookup` 会把条目放在这里——调用、每个输入、输出和属性及其类型、枚举值和默认值——并将 `summary` 保持为一行；`data` 仍以 JSON 形式提供相同的条目。为空时不存在 |
 | `diagnostics[]` | `code`、`severity`、`file`、`line`、`column`、`message`；`length`、`hint`（记录中的详细信息）、`stage` 和 `doc`（若已知）。先是错误，然后是警告，最后是信息，每类按发现的顺序排列 |
 | `writes[]` | `{ asset, state }`：包，以及 `created`、`saved`（它已存在）或 `memory`（一个 Ephemeral 产品）——读取自引擎自身的保存事件 |
 | `artifacts[]` | `{ kind, path, title }`：`Saved/DreamMCP/artifacts/` 下的一个 `image`，一个反编译的 `source` |
