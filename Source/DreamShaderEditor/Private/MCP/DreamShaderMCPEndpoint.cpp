@@ -5,6 +5,7 @@
 #include "DreamShaderModule.h"
 #include "DreamShaderVersionCompat.h"
 
+#include "Async/Async.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformProcess.h"
 #include "HttpPath.h"
@@ -22,6 +23,7 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Guid.h"
 #include "Misc/Paths.h"
+#include "Misc/ScopeExit.h"
 #include "SocketSubsystem.h"
 #include "Sockets.h"
 
@@ -475,6 +477,9 @@ namespace UE::DreamShader::Editor::MCP
 
 		Self = MakeShared<FEndpoint*, ESPMode::ThreadSafe>(this);
 		StartedAtIso = FDateTime::UtcNow().ToIso8601();
+		StartedAtSeconds = FPlatformTime::Seconds();
+		NextPublishAttempt = 0.0;
+		SelfHelloAttempts = 0;
 
 		if (Options.bListen)
 		{
@@ -490,23 +495,6 @@ namespace UE::DreamShader::Editor::MCP
 			Port = Options.Port;
 		}
 
-		if (Options.bPublishDiscovery)
-		{
-			FString PublishError;
-			if (!PublishDiscovery(PublishError))
-			{
-				if (Options.Mode == EEndpointMode::Host)
-				{
-					OutError = PublishError;
-					UnbindRoutes();
-					Self.Reset();
-					return false;
-				}
-				// An editor waits its turn: the other one may close, and the ticker tries again.
-				UE_LOG(LogDreamShader, Warning, TEXT("DreamMCP: not published yet: %s. Trying again every few seconds."), *PublishError);
-			}
-		}
-
 		if (Options.bRegisterTicker)
 		{
 			TickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateRaw(this, &FEndpoint::HandleTicker), 0.0f);
@@ -514,6 +502,9 @@ namespace UE::DreamShader::Editor::MCP
 
 		bStarted = true;
 		bShutdownRequested = false;
+
+		// The discovery file waits for UpdateDiscovery: published now, it would name an endpoint that cannot answer until
+		// the main loop runs -- seconds, in an editor still building its UI.
 		return true;
 	}
 
@@ -526,6 +517,14 @@ namespace UE::DreamShader::Editor::MCP
 		}
 		UnbindRoutes();
 		RetractDiscovery();
+		// A hello still being asked ends at its timeout; it touches nothing of the endpoint's, but it runs this module's
+		// code, so it finishes before the module can go.
+		if (SelfHelloTask.IsValid())
+		{
+			SelfHelloTask.Wait();
+			SelfHelloTask = TFuture<void>();
+		}
+		SelfHello.Reset();
 		Self.Reset();
 		Jobs.Reset();
 		bStarted = false;
@@ -534,21 +533,167 @@ namespace UE::DreamShader::Editor::MCP
 	bool FEndpoint::HandleTicker(float)
 	{
 		TickJobs();
+		UpdateDiscovery();
+		return true;
+	}
 
-		if (Options.bPublishDiscovery && !bPublishedDiscovery && bStarted)
+	// --------------------------------------------------------------------------- publishing once it answers
+
+	namespace
+	{
+		/**
+		 * GET <Route>/hello on 127.0.0.1:Port with the token, as a server would ask it; true on a 200 before the timeout.
+		 * Runs on a worker thread: the answer needs the game thread to tick the HTTP server.
+		 */
+		bool AskOwnHello(const int32 Port, const FString& Route, const FString& Token, const double TimeoutSeconds)
 		{
-			const double Now = FPlatformTime::Seconds();
-			if (Now >= NextPublishAttempt)
+			ISocketSubsystem* const Sockets = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM);
+			if (!Sockets)
 			{
-				NextPublishAttempt = Now + 5.0;
-				FString PublishError;
-				if (PublishDiscovery(PublishError))
+				return false;
+			}
+			TSharedRef<FInternetAddr> Address = Sockets->CreateInternetAddr();
+			bool bValid = false;
+			Address->SetIp(TEXT("127.0.0.1"), bValid);
+			Address->SetPort(Port);
+			FSocket* const Socket = Sockets->CreateSocket(NAME_Stream, TEXT("DreamMCPSelfHello"), Address->GetProtocolType());
+			if (!Socket)
+			{
+				return false;
+			}
+			ON_SCOPE_EXIT
+			{
+				Socket->Close();
+				Sockets->DestroySocket(Socket);
+			};
+			if (!bValid || !Socket->Connect(*Address))
+			{
+				return false;
+			}
+
+			const FString Request = FString::Printf(TEXT("GET %s/hello HTTP/1.1\r\nHost: 127.0.0.1:%d\r\nX-Dream-Token: %s\r\nConnection: close\r\n\r\n"), // I18N-EXEMPT: HTTP
+				*Route, Port, *Token);
+			const FTCHARToUTF8 Utf8(*Request);
+			int32 Sent = 0;
+			if (!Socket->Send(reinterpret_cast<const uint8*>(Utf8.Get()), Utf8.Length(), Sent) || Sent != Utf8.Length())
+			{
+				return false;
+			}
+
+			// The whole response, so the server finishes writing it: the head, then Content-Length bytes of body.
+			TArray<uint8> Received;
+			const double Deadline = FPlatformTime::Seconds() + TimeoutSeconds;
+			while (FPlatformTime::Seconds() < Deadline)
+			{
+				if (!Socket->Wait(ESocketWaitConditions::WaitForRead, FTimespan::FromMilliseconds(50)))
 				{
-					UE_LOG(LogDreamShader, Display, TEXT("DreamMCP: published %s."), *GetDiscoveryFilePath());
+					continue;
+				}
+				uint8 Buffer[1024];
+				int32 Read = 0;
+				if (!Socket->Recv(Buffer, sizeof(Buffer), Read) || Read <= 0)
+				{
+					break;
+				}
+				Received.Append(Buffer, Read);
+
+				// The head is ASCII: found in the bytes, read as text.
+				int32 HeadBytes = INDEX_NONE;
+				for (int32 Index = 0; Index + 3 < Received.Num(); ++Index)
+				{
+					if (Received[Index] == '\r' && Received[Index + 1] == '\n' && Received[Index + 2] == '\r' && Received[Index + 3] == '\n')
+					{
+						HeadBytes = Index + 4;
+						break;
+					}
+				}
+				if (HeadBytes == INDEX_NONE)
+				{
+					continue;
+				}
+				const FUTF8ToTCHAR HeadDecoded(reinterpret_cast<const ANSICHAR*>(Received.GetData()), HeadBytes);
+				const FString Head(HeadDecoded.Length(), HeadDecoded.Get());
+				const bool bOk = Head.StartsWith(TEXT("HTTP/1.1 200")) || Head.StartsWith(TEXT("HTTP/1.0 200"));
+				int32 ContentLength = 0;
+				const int32 LengthAt = Head.Find(TEXT("\r\ncontent-length:"), ESearchCase::IgnoreCase);
+				if (LengthAt != INDEX_NONE)
+				{
+					ContentLength = FCString::Atoi(*Head.Mid(LengthAt + 17, 12).TrimStart());
+				}
+				if (Received.Num() >= HeadBytes + ContentLength)
+				{
+					return bOk;
 				}
 			}
+			return false;
 		}
-		return true;
+	}
+
+	void FEndpoint::UpdateDiscovery()
+	{
+		if (!bStarted || !Options.bPublishDiscovery || bPublishedDiscovery)
+		{
+			return;
+		}
+		const double Now = FPlatformTime::Seconds();
+
+		if (Options.bListen && Router.IsValid())
+		{
+			if (!SelfHello.IsValid())
+			{
+				if (Now < NextPublishAttempt)
+				{
+					return;
+				}
+				SelfHello = MakeShared<FSelfHello, ESPMode::ThreadSafe>();
+				++SelfHelloAttempts;
+				TSharedPtr<FSelfHello, ESPMode::ThreadSafe> Asking = SelfHello;
+				const int32 AskPort = Port;
+				const FString AskRoute = Manifest.Route;
+				const FString AskToken = Options.Token;
+				SelfHelloTask = Async(EAsyncExecution::ThreadPool, [Asking, AskPort, AskRoute, AskToken]()
+				{
+					Asking->State.store(AskOwnHello(AskPort, AskRoute, AskToken, 1.5) ? 1 : 2);
+				});
+				return;
+			}
+
+			const int32 State = SelfHello->State.load();
+			if (State == 0)
+			{
+				return;
+			}
+			SelfHello.Reset();
+			SelfHelloTask = TFuture<void>();
+			if (State != 1)
+			{
+				UE_LOG(LogDreamShader, Verbose, TEXT("DreamMCP: hello %d to its own endpoint went unanswered; asking again."), SelfHelloAttempts);
+				NextPublishAttempt = Now + 0.5;
+				return;
+			}
+		}
+		else if (Now < NextPublishAttempt)
+		{
+			return;
+		}
+
+		FString PublishError;
+		if (PublishDiscovery(PublishError))
+		{
+			UE_LOG(LogDreamShader, Display, TEXT("DreamMCP: answering on 127.0.0.1:%d %.1f s after the endpoint started (hello %d); published %s."),
+				Port, Now - StartedAtSeconds, SelfHelloAttempts, *GetDiscoveryFilePath());
+			return;
+		}
+		// The file is the only way a server finds the endpoint: a host without it is lost, an editor may try again.
+		NextPublishAttempt = Now + 5.0;
+		if (Options.Mode == EEndpointMode::Host)
+		{
+			UE_LOG(LogDreamShader, Error, TEXT("DreamMCP: not published: %s. Trying again in 5 s."), *PublishError);
+		}
+		else
+		{
+			UE_LOG(LogDreamShader, Warning, TEXT("DreamMCP: not published yet: %s. Trying again in 5 s."), *PublishError);
+		}
 	}
 
 	// ----------------------------------------------------------------------------------------- listening

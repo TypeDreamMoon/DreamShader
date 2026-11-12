@@ -734,7 +734,19 @@ bool FDreamShaderMCPSocketTest::RunTest(const FString& Parameters)
 	const int32 Port = Endpoint.GetPort();
 	TestTrue(TEXT("it listens"), Endpoint.IsListening());
 
-	// The discovery file: what a server reads to find it.
+	// The discovery file: what a server reads to find it. Not before the endpoint has answered a hello of its own over
+	// the socket -- which takes the HTTP server ticking, as the main loop does once it runs.
+	TestFalse(TEXT("no discovery file before it has answered"), IFileManager::Get().FileExists(*Endpoint.GetDiscoveryFilePath()));
+	Endpoint.UpdateDiscovery();
+	TestFalse(TEXT("nor while its own hello waits for the HTTP server to tick"), Endpoint.IsDiscoveryPublished());
+	const double PublishDeadline = FPlatformTime::Seconds() + 10.0;
+	while (!Endpoint.IsDiscoveryPublished() && FPlatformTime::Seconds() < PublishDeadline)
+	{
+		static_cast<FTSTickerObjectBase&>(FHttpServerModule::Get()).Tick(0.01f);
+		Endpoint.UpdateDiscovery();
+		FPlatformProcess::Sleep(0.005f);
+	}
+	TestTrue(TEXT("published once its own hello is answered"), Endpoint.IsDiscoveryPublished());
 	FString DiscoveryText;
 	TestTrue(TEXT("the discovery file is written"), FFileHelper::LoadFileToString(DiscoveryText, *Endpoint.GetDiscoveryFilePath()));
 	TestEqual(TEXT("as <id>.json"), FPaths::GetCleanFilename(Endpoint.GetDiscoveryFilePath()), FString(TEXT("shader.json")));

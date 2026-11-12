@@ -16,7 +16,7 @@ editor when it is open and in a host process the server starts when it is not.
 | Port | `47800`, or `-DreamMCPPort=<n>`; a port that cannot be bound is skipped for the next, up to 16 |
 | Bind address | `127.0.0.1` only — proven at startup, see [Loopback only](#loopback-only) |
 | Authentication | the `X-Dream-Token` header on every request; the token is `DREAM_MCP_TOKEN` from the environment, else `-DreamMCPToken=<t>`, else random |
-| Discovery | `<Project>/Saved/DreamMCP/shader.json`, deleted when the endpoint stops |
+| Discovery | `<Project>/Saved/DreamMCP/shader.json`, written once the endpoint has answered a hello of its own, deleted when it stops |
 | Hosts | the editor with `-DreamMCPHost -RenderOffscreen` (renders); `-run=DreamShaderHost -nullrhi -DreamMCPHost` (does not) |
 | Module dependencies | `HTTPServer`, `Sockets` |
 | Disabled by | `-NoDreamMCP`; in the user's editor also `-NoDreamShaderEditorBridge` and *Enable DreamMCP Endpoint* off |
@@ -91,6 +91,7 @@ written:
 
 | Rule | |
 | :-- | :-- |
+| When | only once the endpoint answers. Listening starts with the module, but nothing answers until the engine's main loop ticks the HTTP server — in an editor, seconds later, while it builds its UI. So the endpoint first asks its own `GET /dream/shader/hello`, with the token, over the socket from a worker thread, and writes the file on the first tick after a `200`; an unanswered hello is asked again half a second later. A file that exists names an endpoint that has answered |
 | Starting | writes the file over whatever is there: the newest process for the project is the one to talk to. An editor opened while a host runs replaces the host's file, and the server moves to the editor once the host's current job is done |
 | Stopping | deletes the file only while it still names this process, so a host that exits after an editor took over leaves the editor's file alone |
 

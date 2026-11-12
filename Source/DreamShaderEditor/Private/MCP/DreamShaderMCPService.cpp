@@ -334,7 +334,7 @@ namespace UE::DreamShader::Editor::MCP
 				return;
 			}
 			GStartupError.Reset();
-			UE_LOG(LogDreamShader, Display, TEXT("DreamMCP: %s endpoint listening on http://127.0.0.1:%d%s (render: %s); discovery %s."),
+			UE_LOG(LogDreamShader, Display, TEXT("DreamMCP: %s endpoint listening on http://127.0.0.1:%d%s (render: %s); %s follows once it answers its own hello."),
 				LexEndpointMode(GMode), GEndpoint->GetPort(), *GEndpoint->GetManifest().Route,
 				Options.bCanRender ? TEXT("yes") : TEXT("no"), *GEndpoint->GetDiscoveryFilePath());
 

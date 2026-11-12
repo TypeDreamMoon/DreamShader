@@ -31,12 +31,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Async/Future.h"
 #include "Containers/Ticker.h"
 #include "Dom/JsonObject.h"
 #include "HttpRouteHandle.h"
 #include "Templates/Function.h"
 #include "Templates/SharedPointer.h"
 #include "Templates/UniquePtr.h"
+
+#include <atomic>
 
 #include "MCP/DreamShaderMCPResult.h"
 
@@ -216,7 +219,10 @@ namespace UE::DreamShader::Editor::MCP
 
 		/** False: no socket at all, for the tests that drive Handle() directly. */
 		bool bListen = true;
-		/** Writes <DiscoveryDirectory>/<id>.json once listening, and deletes it on Stop. */
+		/**
+		 * Writes <DiscoveryDirectory>/<id>.json once the endpoint has answered a hello of its own over the socket (see
+		 * UpdateDiscovery), and deletes it on Stop. Without a listener there is nothing to ask, and it is written at Start.
+		 */
 		bool bPublishDiscovery = true;
 		/** Steps the jobs from the core ticker. False: the owner calls TickJobs(). */
 		bool bRegisterTicker = true;
@@ -244,8 +250,21 @@ namespace UE::DreamShader::Editor::MCP
 		/** Before Start. An action the manifest names but nobody registered is left out of hello and answers 404. */
 		void RegisterAction(const FString& Name, FActionHandler Handler);
 
-		/** Loads the manifest, listens, proves the bind is loopback-only and publishes the discovery file. */
+		/**
+		 * Loads the manifest, listens and proves the bind is loopback-only. The discovery file comes later, from
+		 * UpdateDiscovery: a server that reads it must find an endpoint that answers.
+		 */
 		bool Start(const FEndpointOptions& InOptions, FString& OutError);
+
+		/**
+		 * Publishes the discovery file once the endpoint answers: asks its own /hello over the socket from a worker
+		 * thread, and writes the file on the first tick after a 200. Until the engine's main loop runs, nothing ticks the
+		 * HTTP server and the hello goes unanswered, so the file never names an endpoint that cannot answer yet -- an
+		 * editor builds for seconds after its modules start. A hello that fails is asked again half a second later.
+		 * The ticker calls it; an endpoint without one (bRegisterTicker false) has its owner call it. Game thread only.
+		 */
+		void UpdateDiscovery();
+		bool IsDiscoveryPublished() const { return bPublishedDiscovery; }
 
 		/** Unbinds the routes, deletes the discovery file if it is still this process's, drops every job. */
 		void Stop();
@@ -335,6 +354,16 @@ namespace UE::DreamShader::Editor::MCP
 		bool bPublishedDiscovery = false;
 		double NextPublishAttempt = 0.0;
 		FString StartedAtIso;
+		double StartedAtSeconds = 0.0;
+
+		/** The hello UpdateDiscovery asks of its own endpoint: 0 asking, 1 answered 200, 2 not answered. */
+		struct FSelfHello
+		{
+			std::atomic<int32> State{ 0 };
+		};
+		TSharedPtr<FSelfHello, ESPMode::ThreadSafe> SelfHello;
+		TFuture<void> SelfHelloTask;
+		int32 SelfHelloAttempts = 0;
 
 		TSharedPtr<IHttpRouter> Router;
 		TArray<FHttpRouteHandle> RouteHandles;
