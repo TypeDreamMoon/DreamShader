@@ -82,8 +82,35 @@ Agents other than Claude Code do not load skills by themselves. Point them at th
 
 ## The MCP server (optional)
 
-[dream-mcp](https://github.com/TypeDreamMoon/dream-mcp) is an optional MCP server for the Dream plugins. What
-it supports is stated in its README. Without it, the skills and `dsc.ps1` work as described on this page.
+[dream-mcp](https://github.com/TypeDreamMoon/dream-mcp) is an MCP server for the Dream plugins. Connected to it,
+an agent gets a `dream_shader` tool whose actions are the plugin's own [DreamMCP endpoint](dreammcp.md):
+
+| Action | Does |
+| :-- | :-- |
+| `check` | checks one source or every source, and writes nothing |
+| `compile` | builds a source's assets; with `shaders: true` it also compiles their shaders |
+| `diagnostics` | what the last check or compile found, without building |
+| `lookup` | a `UE.*` or `Substrate.*` node's inputs, outputs and properties |
+| `preview` | renders a material to a PNG and says what it shows; with `frames`, how it changes over time |
+| `decompile` | writes an existing material, function or instance out as source |
+
+Where a call runs:
+
+- **The editor is open on the project.** The editor serves it, as a source save would: the Content Browser and
+  the VSCode extension see the result, and a material stays in memory until the user saves it.
+- **No editor is open.** The server starts an engine for the project in the background, with no window, and reuses
+  it for later calls, so only the first call waits for an engine to start. It stops when idle, when the editor
+  opens, or when the server exits.
+
+Every answer has the same shape: an outcome, a one-line summary, the diagnostics with their code, line and a link
+to their page, the assets written, and what to do next. The agent never reads a log.
+
+To install the server and register it with your agent, follow the [dream-mcp README](https://github.com/TypeDreamMoon/dream-mcp#readme).
+The plugin side ships with DreamShader: *Enable DreamMCP Endpoint* under Project Settings › DreamShader turns the
+endpoint on or off ([project settings](../settings/project.md)), and `-NoDreamMCP` turns it off for one run.
+
+Without the server, the skills and `dsc.ps1` work as described on this page. A skill that finds the `dream_shader`
+tool uses it for the same steps instead of the driver.
 
 ## The loop
 
