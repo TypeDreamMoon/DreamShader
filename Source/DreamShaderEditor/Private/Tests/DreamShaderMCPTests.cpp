@@ -497,8 +497,10 @@ bool FDreamShaderMCPCompileTest::RunTest(const FString& Parameters)
 	if (TestEqual(TEXT("one product"), Products.Num(), 1))
 	{
 		TestTrue(TEXT("the product is the material"), Field(Products[0]->AsObject(), TEXT("asset")).EndsWith(TEXT("M_McpCompileOk.M_McpCompileOk")));
+		TestFalse(TEXT("the product says what the caller should know of it"), Field(Products[0]->AsObject(), TEXT("note")).IsEmpty());
 		Good.TrackObjectPath(Field(Products[0]->AsObject(), TEXT("asset")));
 	}
+	TestFalse(TEXT("a compile result speaks plainly: no backend name"), SerializeJson(Built.ToSharedRef()).Contains(TEXT("ThinCustom")));
 
 	const TSharedPtr<FJsonObject> Again = ResultOf(RunToEnd(*this, Test.Endpoint, CallBody(TEXT("compile"), GoodArgs, TEXT("c-2"))));
 	TestEqual(TEXT("an unchanged source compiles again"), Field(Again, TEXT("outcome")), FString(TEXT("ok")));
@@ -610,6 +612,8 @@ bool FDreamShaderMCPLookupInfoTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("info names the mode"), Field(Data, TEXT("mode")), FString(TEXT("host")));
 	TestTrue(TEXT("info lists the source roots"), ArrayField(Data, TEXT("roots")).Num() > 0);
 	TestFalse(TEXT("no absolute path in info"), SerializeJson(Info.ToSharedRef()).Contains(FPaths::ConvertRelativePathToFull(FPaths::ProjectDir())));
+	TestFalse(TEXT("info says how materials are built"), Field(Data, TEXT("materials")).IsEmpty());
+	TestFalse(TEXT("in plain words, not the backend's name"), SerializeJson(Info.ToSharedRef()).Contains(TEXT("ThinCustom")));
 	return true;
 }
 

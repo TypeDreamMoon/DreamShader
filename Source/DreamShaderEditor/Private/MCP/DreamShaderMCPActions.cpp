@@ -192,7 +192,10 @@ namespace UE::DreamShader::Editor::MCP
 				TSharedRef<FJsonObject> Object = MakeShared<FJsonObject>();
 				Object->SetStringField(TEXT("asset"), Product.ObjectPath);
 				Object->SetStringField(TEXT("kind"), UE::DreamShader::IR::LexToString(Product.Kind));
-				Object->SetStringField(TEXT("backend"), UE::DreamShader::IR::LexToString(Product.Backend));
+				// Not the backend's name, which a model copies into its report without knowing what it means: what it means.
+				Object->SetStringField(TEXT("note"), Product.Backend == UE::DreamShader::IR::EIRBackend::ThinCustom
+					? TEXT("Change the source, not the asset. In the user's editor this asset stays in memory until the user saves it.")
+					: TEXT("Change the source, not the asset: the user can open it in the editor, and an edit made there stops the next build."));
 				const bool bOnDisk = FPackageName::DoesPackageExist(Product.PackageName);
 				Object->SetBoolField(TEXT("onDisk"), bOnDisk);
 				Products.Add(MakeShared<FJsonValueObject>(Object));
@@ -1379,7 +1382,9 @@ namespace UE::DreamShader::Editor::MCP
 			Result.Data->SetStringField(TEXT("sourceDirectory"), Rel(UE::DreamShader::GetSourceShaderDirectory()));
 
 			const UDreamShaderSettings* const Settings = GetDefault<UDreamShaderSettings>();
-			Result.Data->SetStringField(TEXT("defaultBackend"), Settings && Settings->DefaultBackend == EDreamShaderDefaultBackend::Graph ? TEXT("Graph") : TEXT("ThinCustom"));
+			Result.Data->SetStringField(TEXT("materials"), Settings && Settings->DefaultBackend == EDreamShaderDefaultBackend::Graph
+				? TEXT("A material is built as a node graph the user can open in the Material Editor, and saved.")
+				: TEXT("A material is built as a light instance over a hidden base material. In the user's editor it stays in memory until the user saves it."));
 			Result.Data->SetBoolField(TEXT("autoCompileOnSave"), Settings && Settings->bAutoCompileOnSave);
 
 			TArray<TSharedPtr<FJsonValue>> Roots;

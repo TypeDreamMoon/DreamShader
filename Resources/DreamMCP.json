@@ -99,7 +99,7 @@
     },
     {
       "name": "info",
-      "description": "Report the plugin and engine versions, the source folders, the default backend, and what this engine process can do: editor or host, renders or not.",
+      "description": "Report the plugin and engine versions, the source folders, how materials are built, and what this engine process can do: editor or host, renders or not.",
       "needs": "engine",
       "writes": false,
       "long": false,

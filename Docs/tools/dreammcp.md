@@ -199,11 +199,11 @@ Every sentence is invariant English whatever the editor's language — compiler 
 | Action | Long | Writes | Arguments | Does |
 | :-- | :-- | :-- | :-- | :-- |
 | `check` | yes | no | `file`, or `all: true` | the pipeline to IR validation, as `dsc check`; nothing is built |
-| `compile` | yes | assets | `file`; `force`, `shaders` | builds the source's assets; `shaders: true` takes `check -Shaders`'s route and maps HLSL errors to source lines (always saves) |
+| `compile` | yes | assets | `file`; `force`, `shaders` | builds the source's assets; `shaders: true` takes `check -Shaders`'s route and maps HLSL errors to source lines (always saves). `data.products[]` is `{ asset, kind, onDisk, note }`, `note` saying in one sentence what the caller should know of it — that it stays in memory in the user's editor until saved, or that an edit made to it in the editor stops the next build |
 | `diagnostics` | no | no | `file` (optional) | what this process already holds: the editor's diagnostics store, else the last check or compile through the endpoint. Without `file`, the summary names each file with its counts, the files with errors first (ten at most, then "N more"); `data.files[]` has `errors`, `warnings`, `infos` for each. Only an error makes the outcome `source-error` |
 | `lookup` | no | no | `name`; `limit` (1–200, default 20) | the [builtin node catalog](../builtins/ue-expression.md): an exact name, alias or `m.` attribute gives the entry as `export-catalog` writes it; anything else the names that contain the text |
 | `preview` | yes | maybe | `file`; `mesh`, `width`, `height`, `yaw`, `pitch`, `force`, `time`, `frames`, `duration`, `tone` | compiles the material as the [preview](preview.md) does, waits for its shaders a tick at a time, renders a PNG to `Saved/DreamMCP/artifacts/<job>.png` and [measures it](#what-preview-measures); a shader error is a `source-error` with the image of the default material |
-| `info` | no | no | — | plugin and engine versions, the source roots, the default backend, `mode`, `render`, whether Custom Pass and Substrate are compiled in |
+| `info` | no | no | — | plugin and engine versions, the source roots, `materials` (one sentence on how a material is built under the project's default backend, and what that means for the caller), `mode`, `render`, whether Custom Pass and Substrate are compiled in |
 | `decompile` | yes | a source file | `asset`; `out`, `readable`, `overwrite` | the [decompiler](decompiler.md), written as the commandlet writes it; refuses `file-exists` unless `overwrite` |
 
 The refusal reasons the actions use: `file-not-found`, `not-a-source` (a `.dsh`, or not a DreamShader file),
