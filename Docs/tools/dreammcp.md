@@ -187,6 +187,7 @@ The last 64 finished jobs stay readable; a job does not survive the process.
 | Field | |
 | :-- | :-- |
 | `outcome` | `ok`; `source-error` — the source is wrong, the diagnostics say where; `refused` — not the source's fault, `reason` says what; `engine-error` — something inside failed |
+| `text` | optional: preformatted lines a server prints as they are, after `summary`, for content a model reads rather than parses. An exact `lookup` puts the entry here — the call, each input, output and property with its type, enum values and defaults — and keeps `summary` to one line; `data` still has the same entry as JSON. Absent when empty |
 | `diagnostics[]` | `code`, `severity`, `file`, `line`, `column`, `message`; `length`, `hint` (the record's detail), `stage` and `doc` when known. Errors come first, then warnings, then infos, each kind in the order found |
 | `writes[]` | `{ asset, state }`: the package, and `created`, `saved` (it existed) or `memory` (an Ephemeral product) — read from the engine's own save events |
 | `artifacts[]` | `{ kind, path, title }`: an `image` under `Saved/DreamMCP/artifacts/`, a decompiled `source` |

@@ -592,15 +592,21 @@ bool FDreamShaderMCPLookupInfoTest::RunTest(const FString& Parameters)
 	{
 		TestEqual(TEXT("the full entry"), Field(Entries[0]->AsObject(), TEXT("className")), FString(TEXT("MaterialExpressionTextureCoordinate")));
 	}
+	const FString ExactText = Field(Exact, TEXT("text"));
+	TestTrue(FString::Printf(TEXT("the entry comes as lines to read too (%s)"), *ExactText.Left(200)),
+		ExactText.StartsWith(TEXT("UE.TextureCoordinate")) && ExactText.Contains(TEXT("Outputs:")) && ExactText.Contains(TEXT("\n")));
+	TestFalse(TEXT("while the summary stays one line"), Field(Exact, TEXT("summary")).Contains(TEXT("\n")));
 
 	const TSharedPtr<FJsonObject> Search = Lookup(TEXT("{\"name\":\"texture\",\"limit\":5}"));
 	double Total = 0.0;
 	ObjectField(Search, TEXT("data"))->TryGetNumberField(TEXT("total"), Total);
 	TestTrue(TEXT("a part of a name finds several"), Total > 1.0);
 	TestTrue(TEXT("no more than the limit listed"), ArrayField(ObjectField(Search, TEXT("data")), TEXT("expressions")).Num() <= 5);
+	TestFalse(TEXT("a list of names needs no text"), Search->HasField(TEXT("text")));
 
 	const TSharedPtr<FJsonObject> Attribute = Lookup(TEXT("{\"name\":\"m.BaseColor\"}"));
 	TestEqual(TEXT("a material attribute"), ArrayField(ObjectField(Attribute, TEXT("data")), TEXT("attributes")).Num(), 1);
+	TestTrue(TEXT("its text names it"), Field(Attribute, TEXT("text")).StartsWith(TEXT("m.BaseColor")));
 
 	const TSharedPtr<FJsonObject> Nothing = Lookup(TEXT("{\"name\":\"Zzqxvw\"}"));
 	TestEqual(TEXT("nothing found is still ok"), Field(Nothing, TEXT("outcome")), FString(TEXT("ok")));

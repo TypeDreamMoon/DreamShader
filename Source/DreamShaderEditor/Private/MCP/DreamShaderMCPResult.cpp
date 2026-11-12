@@ -71,6 +71,10 @@ namespace UE::DreamShader::Editor::MCP
 			Root->SetStringField(TEXT("reason"), Reason);
 		}
 		Root->SetStringField(TEXT("summary"), Summary);
+		if (!Text.IsEmpty())
+		{
+			Root->SetStringField(TEXT("text"), Text);
+		}
 
 		// Errors first, then warnings, then infos, each kind in the order it was found: what a summary leads with is what
 		// the list leads with, and an info never sits above the error it is read next to.
