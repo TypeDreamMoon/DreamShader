@@ -784,6 +784,7 @@ PNG 名称是 `<sanitized source stem>-<crc32 of the project-relative path, 8 he
 | 启动时临时生成 | 不运行 |
 | 材质内容浏览器 | 不注册标签页和菜单项 |
 | 工具菜单、工具栏、上下文菜单 | 不注册 |
+| [DreamMCP 端点](dreammcp.md) *(2.2.0 之后)* | 未启动——自动化运行既不监听也不发布发现文件 |
 | Cook 钩子 | 不受影响——它安装在另一条代码路径上 |
 
 在 commandlet 进程中，无论是否带该开关，桥接也永远不会创建；请参阅 [Commandlet](commandlet.md)。对于在普通编辑器进程中运行的自动化任务（例如 `-ExecCmds="Automation RunTests …"`），如果必须没有文件监视器、生成 pass 或监听套接字，请使用该开关。

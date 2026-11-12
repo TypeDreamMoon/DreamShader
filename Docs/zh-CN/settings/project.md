@@ -50,6 +50,7 @@
 | Decompiler | Export Decompiled Layout | `bExportDecompiledLayout` | `bool` | `true` | 开启时，反编译出的源码保留节点位置：旧式 `.dsm` 带 `Layout = { … }` 段，2.0 反编译器写出的 `.dss` 带 `#pragma layout` 行 *（自 2.0.0 起）*。 |
 | Editor | Open In New Window | `bOpenInNewWindow` | `bool` | `true` | 关闭时，VSCode 启动命令会加上 `--reuse-window`。 |
 | Editor | **Material Instance Subfolder** | `InstanceSubfolder` | `FString` | `Instances` | 相对父材质所在文件夹的子目录，材质内容浏览器在这里创建新实例。留空则与父材质同级创建。资产名为 `MI_<ParentName>`，并做唯一化处理。 |
+| 编辑器 | **Enable DreamMCP Endpoint** *(2.2.0 之后)* | `bEnableDreamMCPEndpoint` | `bool` | `true` | 开启后，编辑器仅在 `127.0.0.1` 上提供 [DreamMCP endpoint](../tools/dreammcp.md)，且需要令牌。关闭后编辑器完全不监听；`-NoDreamMCP` 对单个会话做同样的事。该设置仅在编辑器启动时读取一次。由 DreamMCP 服务器启动的宿主（`-DreamMCPHost`）不受影响。 |
 | Editor | **Sync Source References On Asset Rename** *（自 1.9.0 起）* | `bSyncSourceReferencesOnAssetRename` | `bool` | `true` | 开启时，重命名或移动资产会改写引用它的 `.dsm` / `.dsf` / `.dsh` 文件，写之前先把每个文件备份成 `<file>.bak`。只改项目源码 —— 插件根从不触碰。见[资产重命名同步](../tools/asset-rename-sync.md)。实时读取，所以关掉后下一次重命名就生效。 |
 
 **加粗**的行带有显式 `DisplayName`；其余显示的是 Unreal 从属性标识符推导出的名字，布尔属性会去掉开头的 `b`。

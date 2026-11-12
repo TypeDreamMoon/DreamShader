@@ -1,4 +1,4 @@
-#dreamdocs-align 1	source=Docs/tools/bridge.md	rev=dce3a7afae92	model=deepseek-flash	page=8d90edda29e8
+#dreamdocs-align 1	source=Docs/tools/bridge.md	rev=0c4e9e065042	model=deepseek-v4.1-flash	page=afca14832216
 h1	bdbf01dc3d22	f4948a91	m
 q	72000422b619	5932351a	m
 p	243d7b960080	dedf9e7a	m
@@ -409,6 +409,7 @@ row2	95de6fa0b543	8b7a8806	m
 row2	36f5bbaeb31f	a1b16a57	m
 row2	5f951f6826ad	6d15cd5a	m
 row2	4dc91ecd22a8	0e504109	m
+row2	cd6dc2517bce	0d9c4418	m
 row2	a27f4e585f86	7175a931	m
 p	b4f417329d8c	4a18fdb5	m
 h2	9877f70e43cf	29074c4c	m
