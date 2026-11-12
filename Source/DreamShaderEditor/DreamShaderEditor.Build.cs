@@ -35,6 +35,8 @@ public class DreamShaderEditor : ModuleRules
 				// definition of that module) says whether the renderer half exists.
 				"DreamShaderPass",
 				"Engine",
+				// MCP/: the DreamMCP endpoint's routes, and the socket probe that proves it listens on 127.0.0.1 only.
+				"HTTPServer",
 				"InputCore",
 				"Json",
 				"MaterialEditor",
@@ -47,6 +49,7 @@ public class DreamShaderEditor : ModuleRules
 				"Settings",
 				"Slate",
 				"SlateCore",
+				"Sockets",
 				"SQLiteCore",
 				// Tools/DreamShaderShaderCheck.cpp includes Interfaces/ITargetPlatform.h and
 				// Interfaces/ITargetPlatformManagerModule.h. UnrealEd lists TargetPlatform in its

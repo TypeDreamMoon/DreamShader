@@ -1,8 +1,12 @@
 # DreamShaderLang 2.0 — the subset an author needs
 
-Condensed from [`Docs/language-v2/`](../../Docs/language-v2/index.md) and checked against the compiler. When
-this page and `Docs/` disagree, `Docs/` wins. Custom Pass pipelines (`.dsp`) have their own page,
+Condensed from [the 2.0 language manual](https://shader.toolchain.64hz.cn/en/docs/language-v2/) and checked against the compiler. When
+this page and the manual disagree, the manual wins. Custom Pass pipelines (`.dsp`) have their own page,
 [`dsp.md`](dsp.md); reading or maintaining 1.x sources (`.dsm` / `.dsf`) is [`legacy.md`](legacy.md).
+
+This page stands on its own: what an author needs is here, and an agent that cannot open the links
+loses nothing it needs. The links lead to the online manual for depth. A `UE.` node's pins come from
+DreamMCP's `lookup` action; every diagnostic carries a `doc` link of its own.
 
 A `.dss` is **HLSL with declarations**: parameters are `uniform`s, metadata rides on `///` doc lines and
 `#pragma` lines, and one `export` function is the asset.
@@ -22,7 +26,7 @@ A `.dss` is **HLSL with declarations**: parameters are `uniform`s, metadata ride
 after the `export` function. `DShader/UI/M_Panel.dss` with `export void M_Panel(…)` builds `/Game/UI/M_Panel`. A
 file under a plugin's `DShader/` builds under the plugin's mount point. `/// @name Other` renames the asset;
 `/// @name /Game/Some/Path/M_X` puts it at that exact path. Details:
-[`Docs/generation/asset-paths.md`](../../Docs/generation/asset-paths.md).
+[Asset paths](https://shader.toolchain.64hz.cn/en/docs/generation/asset-paths/).
 
 ## 2. A material
 
@@ -99,9 +103,16 @@ Keys are `UMaterial` property names, resolved by reflection: `Domain`, `BlendMod
 | Key | Values | |
 | :-- | :-- | :-- |
 | `Backend` | `ThinCustom` (the project default), `Graph` | `ThinCustom` builds the node graph on a hidden base material behind a `UDreamShaderMaterialInstance`, Ephemeral in the editor; `Graph` builds a plain `UMaterial` an artist can open. `Instance` is an old alias (`DSH7204`) |
-| `Substrate` | `Legacy`, `Bridge`, `Native` | how Substrate values are built — [`Docs/language-v2/substrate.md`](../../Docs/language-v2/substrate.md) |
+| `Substrate` | `Legacy`, `Bridge`, `Native` | how Substrate values are built — [Substrate](https://shader.toolchain.64hz.cn/en/docs/language-v2/substrate/) |
 
-Enum strings: [`Docs/settings/material-enums.md`](../../Docs/settings/material-enums.md).
+Enum strings. Case, spaces, `_` and `-` do not count, so `Default Lit` is `DefaultLit`; an alias is in
+parentheses. A project can add spellings of its own (Project Settings › DreamShader, the `…Mappings` maps).
+
+| Key | Values |
+| :-- | :-- |
+| `Domain` | `Surface`, `DeferredDecal` (`Decal`), `LightFunction`, `Volume`, `PostProcess`, `UI` (`UserInterface`), `RuntimeVirtualTexture` (`VirtualTexture`) |
+| `BlendMode` | `Opaque`, `Masked` (`Cutout`), `Translucent` (`Transparent`), `Additive`, `Modulate`, `AlphaComposite` (`Premultiplied`, `PremultipliedAlpha`), `AlphaHoldout`, `TranslucentColoredTransmittance` (Substrate) |
+| `ShadingModel` | `Unlit`, `DefaultLit` (`Lit`), `Subsurface`, `PreintegratedSkin`, `ClearCoat`, `SubsurfaceProfile`, `TwoSidedFoliage`, `Hair`, `Cloth`, `Eye`, `SingleLayerWater`, `ThinTranslucent`, `Substrate` (`Strata`; UE 5.4 and later, `DSH7128` before). `FromMaterialExpression` is `DSH7129` |
 
 ## 5. Graph code
 
@@ -111,8 +122,8 @@ trip count** (unrolled, 64 at most — `DSH4360`), `return`, `?:`, swizzles, cas
 | | |
 | :-- | :-- |
 | Types | `float half double int uint bool`, `float2`..`float4` (and the other vectors), `Texture2D TextureCube Texture2DArray Texture3D VolumeTexture`, `SamplerState`, `material`, `Substrate` |
-| Math | HLSL's intrinsics — `abs saturate lerp clamp min max pow sqrt rsqrt exp log sin cos tan atan2 frac floor ceil round sign step smoothstep dot cross length distance normalize reflect refract ddx ddy fwidth` and more. Named arguments select a pin where the node has named pins: `lerp(A, B, Alpha = t)` |
-| Engine nodes | `UE.<Node>(Pin = value, …)` — **named arguments**; positional is `DSH5220` except for a few (`TexCoord`, `Constant*`, `Transform*`, `Panner`, `Mask`, `Time`). A node with several outputs used as a value names one: `UE.ScreenPosition().ViewportUV` (`DSH5201`). The catalogue: [`Docs/builtins/ue.md`](../../Docs/builtins/ue.md) |
+| Math | HLSL's intrinsics — `abs saturate lerp clamp min max pow sqrt rsqrt exp log sin cos tan atan2 frac floor ceil round sign step smoothstep dot cross length distance normalize reflect refract ddx ddy fwidth` and more. Named arguments select a pin where the node has named pins: `lerp(A, B, Alpha = t)`. **`sin`, `cos` and `tan` take cycles, not radians**: they are UE's Sine, Cosine and Tangent nodes with their default Period of 1, so `sin(0.25)` is 1 and `sin(t)` repeats once a second. Write `sin(x / 6.2831853)` for radians, or `UE.Sine(Input = x, Period = p)`. Inside a `/// @custom` body they take radians, as in HLSL |
+| Engine nodes | `UE.<Node>(Pin = value, …)` — **named arguments**; positional is `DSH5220` except for a few (`TexCoord`, `Constant*`, `Transform*`, `Panner`, `Mask`, `Time`). A node with several outputs used as a value names one: `UE.ScreenPosition().ViewportUV` (`DSH5201`). A node's pins: DreamMCP `lookup`, or [UE.* nodes](https://shader.toolchain.64hz.cn/en/docs/builtins/ue-nodes/) |
 | Textures | `Albedo.Sample(UV)`, `Albedo.Sample(S, UV)`, `Albedo.SampleLevel(UV, Mip)` — positional arguments |
 | Conversions | a scalar widens to any vector; a vector never narrows silently — write the swizzle (`v.rgb`) (`DSH4226`) |
 
@@ -145,7 +156,7 @@ uniform Texture2D Noise;
 `Parent` is a bare name — the product of a `.dss` / `.dsi` under the same source root, built first when
 missing or stale — or an object path. Each override is declared as the parent declares it (`DSH7258` unknown
 name, `DSH7264` a case-only match, `DSH7259` another type); metadata belongs to the parent. Only global
-parameters — a layer's are `DSH7268`. Full rules: [`Docs/language-v2/instances.md`](../../Docs/language-v2/instances.md).
+parameters — a layer's are `DSH7268`. Full rules: [Instances](https://shader.toolchain.64hz.cn/en/docs/language-v2/instances/).
 
 ## 8. Traps
 
@@ -164,11 +175,11 @@ parameters — a layer's are `DSH7268`. Full rules: [`Docs/language-v2/instances
 | a `material` parameter on a `/// @custom` function | `DSH6252` — the Custom node has no attributes input |
 | a required pin of a `UE.` node left open | `DSH5219`, a warning: the material compile decides |
 
-Every code has its page: [`Docs/diagnostics/README.md`](../../Docs/diagnostics/README.md).
+Every code has its page, which the diagnostic's `doc` links to: [Diagnostics](https://shader.toolchain.64hz.cn/en/docs/diagnostics/).
 
 ## See also
 
-- [`Docs/language-v2/index.md`](../../Docs/language-v2/index.md) — the whole 2.0 language
-- [`Docs/language-v2/substrate.md`](../../Docs/language-v2/substrate.md) — Substrate values and their sugar
-- [`Docs/builtins/ue.md`](../../Docs/builtins/ue.md) — every `UE.*` node
+- [The 2.0 language](https://shader.toolchain.64hz.cn/en/docs/language-v2/) — the whole manual
+- [Substrate](https://shader.toolchain.64hz.cn/en/docs/language-v2/substrate/) — Substrate values and their sugar
+- [UE.* nodes](https://shader.toolchain.64hz.cn/en/docs/builtins/ue-nodes/) — every `UE.*` node
 - [`dsp.md`](dsp.md) — Custom Pass pipelines · [`legacy.md`](legacy.md) — the 1.x language

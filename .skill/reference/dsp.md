@@ -1,9 +1,12 @@
 # Custom Pass pipelines — the subset an author needs
 
-Condensed from [`Docs/language-v2/passes.md`](../../Docs/language-v2/passes.md),
-[`Docs/runtime/hlsl.md`](../../Docs/runtime/hlsl.md) and
-[`Docs/builtins/dream-pass.md`](../../Docs/builtins/dream-pass.md). When this page and `Docs/` disagree,
-`Docs/` wins.
+Condensed from [Passes](https://shader.toolchain.64hz.cn/en/docs/language-v2/passes/), [HLSL passes](https://shader.toolchain.64hz.cn/en/docs/custom-pass/hlsl/) and
+[Custom Pass material nodes](https://shader.toolchain.64hz.cn/en/docs/builtins/dream-pass/). When this page and the manual disagree, the
+manual wins.
+
+This page stands on its own: what an author needs is here, and an agent that cannot open the links
+loses nothing it needs. The links lead to the online manual for depth. A `UE.` node's pins come from
+DreamMCP's `lookup` action; every diagnostic carries a `doc` link of its own.
 
 A `.dsp` adds render passes to Unreal without touching the engine: a mask of selected objects, a blur, a
 screen-space effect, a compute shader writing a data texture. It is **not** a material — the passes it runs
@@ -105,7 +108,7 @@ constants — nothing else.
 Stencil) · `BeforePostProcess` (the default) · `PostProcess.BeforeDOF` / `AfterDOF` /
 `TranslucencyAfterDOF` / `ReplaceTonemapper` / `AfterMotionBlur` / `AfterTonemap` / `AfterFXAA` ·
 `EndOfView` (LDR, before the UI). The full table of what each point can read is in
-[`Docs/language-v2/passes.md`](../../Docs/language-v2/passes.md#injection-points).
+[Passes › Injection points](https://shader.toolchain.64hz.cn/en/docs/language-v2/passes/#injection-points).
 
 `mesh` `Filter`: `Stencil(v)`, `Stencil(v, mask)`, `Layer(A | B)` (the project's pass layers, given to actors by
 `UDreamPassLayerComponent`), `List(Name)`, combined with `|` and `&`.
@@ -183,7 +186,7 @@ check those too.
 
 ## See also
 
-- [`Docs/language-v2/passes.md`](../../Docs/language-v2/passes.md) — every key and value
-- [`Docs/runtime/index.md`](../../Docs/runtime/index.md) — activation, views, debugging (`DreamPass.Dump`), limits
-- [`Docs/runtime/hlsl.md`](../../Docs/runtime/hlsl.md) — slots, snapshots and the pre-check
-- [`Docs/examples/custom-pass.md`](../../Docs/examples/custom-pass.md) — seven complete pipelines with their `.dss`
+- [Passes](https://shader.toolchain.64hz.cn/en/docs/language-v2/passes/) — every key and value
+- [Custom Pass runtime](https://shader.toolchain.64hz.cn/en/docs/custom-pass/) — activation, views, debugging (`DreamPass.Dump`), limits
+- [HLSL passes](https://shader.toolchain.64hz.cn/en/docs/custom-pass/hlsl/) — slots, snapshots and the pre-check
+- [Custom Pass examples](https://shader.toolchain.64hz.cn/en/docs/examples/custom-pass/) — seven complete pipelines with their `.dss`

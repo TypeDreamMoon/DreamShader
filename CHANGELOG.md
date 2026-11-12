@@ -8,6 +8,25 @@
   it is an installed or a source build, the OS, the UI language and the PowerShell version, one `key : value` line
   each. It starts no engine, prints no path, and writes `unknown` for what it cannot find, so it also runs from a
   zip download without git. Paste its output into the issue form.
+- **An AI agent can drive DreamShader through a DreamMCP server.** The plugin ships a capability manifest,
+  `Resources/DreamMCP.json`, and serves its actions over HTTP on `127.0.0.1` only, behind a token: `check`,
+  `compile` (optionally with the shaders), `diagnostics`, `lookup` of the `UE.*` / `Substrate.*` node catalog,
+  `preview` to a PNG, `info` and `decompile`. Every answer has one shape — an outcome, a reason code, diagnostics
+  with their codes, lines and documentation links, the assets written — so a server never reads a log line, and
+  long actions run as jobs a client polls or cancels while the editor keeps answering. A preview is measured for
+  an agent that cannot see it — how much of the mesh shows or is see-through, the mean colour, the brightness, the
+  near-white and near-black shares — and its summary leads with the finding that matters, such as "invisible" or
+  "mostly white"; it renders at a given `time`, as a strip of `frames` to show an animation, and with
+  `tone: "linear"` to read a material's output values past the tone mapper. The user's editor serves it
+  while it is open; without one, the server starts a host that serves it: the editor with `-DreamMCPHost
+  -RenderOffscreen` (no window, no bridge, no settings written) when it needs pictures, the new
+  `-run=DreamShaderHost` commandlet when it does not. *Project Settings > DreamShader > Enable DreamMCP Endpoint*
+  and `-NoDreamMCP` turn it off; `-NoDreamShaderEditorBridge` keeps it off too. See
+  [DreamMCP endpoint](Docs/tools/dreammcp.md).
+- **The language references stand alone.** `.skill/reference/dss.md`, `dsp.md` and `legacy.md`, the pages the
+  skills and a DreamMCP server hand an agent, linked into `Docs/`, which an agent reading a copy of the page cannot
+  open. What an author needs is now on the page, and its links go to the online manual. `dss.md` gained the enum
+  spellings `#pragma material` accepts and the warning that `sin`, `cos` and `tan` take cycles, not radians.
 
 ### Changed
 
@@ -29,6 +48,12 @@
   driver now also reads the launcher's own list, `%ProgramData%\Epic\UnrealEngineLauncher\LauncherInstalled.dat`, for
   the entry named `UE_<version>`. `dsc.ps1 info` resolves the engine the same way, and so do the test host, the test
   runner and the Custom Pass demo script under `Tools/`.
+
+- **Previews came out pale.** The preview renders into a render target that was an sRGB texture, so the
+  hardware encoded the tone mapper's already gamma-encoded output a second time: an Unlit emissive of 0.5 showed as
+  218 of 255 instead of 178, and colours lost their saturation. The target is now a plain texture that keeps the
+  display gamma of 2.2, so a preview stores the tone mapper's output as it is. This changes what the VSCode
+  extension's preview shows, not how it talks to the editor.
 
 - **An HLSL pass at `BeginView` crashed the editor on an engine that adds scene textures of its own.** The scene
   textures there are placeholders the runtime fills in itself, by name; a renderer fork whose
@@ -651,7 +676,7 @@
   compile request (which all three product kinds carried), the `IsAsset()` lie that hides a generated
   instance (which only ThinCustom has), and a "storage decides" rule that could overrule the request
   after the fact. A user reading `DSH8115` could not tell which one was being talked about, and
-  neither, on a bad day, could the code -- the accident where `dream_build` reached only memory while
+  neither, on a bad day, could the code -- the accident where a build through the old MCP server reached only memory while
   a stale file on disk won came out of exactly that confusion.
 
   There is now one concept with one name.

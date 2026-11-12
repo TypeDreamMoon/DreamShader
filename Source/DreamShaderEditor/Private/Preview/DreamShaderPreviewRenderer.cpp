@@ -267,7 +267,14 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 		NewRenderTarget->ClearColor = FLinearColor(0.025f, 0.025f, 0.03f, 1.0f);
-		NewRenderTarget->InitCustomFormat(PreviewWidth, PreviewHeight, PF_B8G8R8A8, false);
+		// A plain UNorm target that still reports a display gamma of 2.2. The tone mapper writes gamma-encoded values
+		// for a target whose display gamma is 2.2 (FTonemapperOutputDeviceParameters::InverseGamma). An sRGB texture
+		// -- what bForceLinearGamma = false makes of an override format (UTextureRenderTarget2D::IsSRGB) -- has the
+		// hardware encode them a second time on write, which is how every preview came out pale: emissive 0.5 read
+		// 222/255 through the gamma-only path, where 2.2 gives 186. TargetGamma wins over bForceLinearGamma in
+		// GetDisplayGamma, so the tone mapper still encodes, and the texture stores what it writes.
+		NewRenderTarget->TargetGamma = 2.2f;
+		NewRenderTarget->InitCustomFormat(PreviewWidth, PreviewHeight, PF_B8G8R8A8, /*bInForceLinearGamma*/ true);
 		NewRenderTarget->UpdateResourceImmediate(true);
 
 		RenderTarget = TStrongObjectPtr<UTextureRenderTarget2D>(NewRenderTarget);
@@ -312,17 +319,33 @@ namespace UE::DreamShader::Editor::Private
 			PreviewWorld->SendAllEndOfFrameUpdates();
 		}
 
-		FCanvas Canvas(RenderTargetResource, nullptr, FGameTime::GetTimeSinceAppStart(), GMaxRHIFeatureLevel);
+		// Both clocks a material can read (Time with and without "ignore pause") come from this one value.
+		const FGameTime FrameTime = FrameOptions.TimeSeconds.IsSet()
+			? FGameTime::CreateUndilated(FrameOptions.TimeSeconds.GetValue(), 1.0f / 30.0f)
+			: FGameTime::GetTimeSinceAppStart();
+
+		FCanvas Canvas(RenderTargetResource, nullptr, FrameTime, GMaxRHIFeatureLevel);
 		Canvas.Clear(RenderTarget->ClearColor);
 
 		FSceneViewFamilyContext ViewFamily(FSceneViewFamily::ConstructionValues(
 			RenderTargetResource,
 			ThumbnailScene->GetScene(),
 			FEngineShowFlags(ESFIM_Game))
-			.SetTime(FGameTime::GetTimeSinceAppStart()));
+			.SetTime(FrameTime));
 		ViewFamily.EngineShowFlags.MotionBlur = 0;
 		ViewFamily.EngineShowFlags.AntiAliasing = 0;
 		ViewFamily.EngineShowFlags.SetSeparateTranslucency(ThumbnailScene->ShouldSetSeparateTranslucency(Material));
+		if (FrameOptions.bFixedExposure)
+		{
+			// The eye-adaptation parameters take this before the project's exposure settings: white point 1, exposure 1.
+			ViewFamily.ExposureSettings.bFixed = true;
+			ViewFamily.ExposureSettings.FixedEV100 = 0.0f;
+		}
+		if (!FrameOptions.bToneMap)
+		{
+			ViewFamily.EngineShowFlags.SetTonemapper(false);
+			ViewFamily.EngineShowFlags.SetBloom(false);
+		}
 
 		FSceneView* View = ThumbnailScene->CreateView(&ViewFamily, 0, 0, CachedWidth, CachedHeight);
 		if (!View)

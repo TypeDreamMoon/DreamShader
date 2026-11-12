@@ -13,7 +13,7 @@ Defined in header `DreamShaderVersionCompat.h`.
 | :-- | :-- |
 | Module | `DreamShader` (Runtime), included by `DreamShader` and `DreamShaderEditor`. `DreamShaderLang` cannot include it — it depends on `Core` alone and has no engine version to gate on |
 | Include | `#include "DreamShaderVersionCompat.h"` |
-| Contents | 13 macros. **No types, no functions, no namespace.** |
+| Contents | 14 macros. **No types, no functions, no namespace.** |
 | Dependencies | `Misc/CoreDelegates.h` (for `DREAMSHADER_POST_ENGINE_INIT_DELEGATE`), `Runtime/Launch/Resources/Version.h` |
 | Verified engines | UE `5.3` – `5.8` (Win64) |
 
@@ -68,6 +68,7 @@ The version arithmetic every other macro is built on. The feature gates that use
 | `DREAMSHADER_MATERIAL_AGGREGATE_HANDLES_SUBSTRATE` | **UE ≥ 5.8** | no — unconditional `#define` | Whether `MaterialValueTypeToMaterialAggregateAttributeType` has a case for `MCT_Substrate`. Below 5.8 it `checkf(false)`s, so neither the manifest exporter nor the builtin catalog's reflection makes the call for `UMaterialExpressionAggregate` at all. |
 | `DREAMSHADER_WITH_SCALAR_PARAMETER_CONTROL_TYPE` | **UE ≥ 5.7** | no — unconditional `#define` | Whether `UMaterialExpressionScalarParameter` has `ControlType`, `Enumeration` and `EnumerationIndex`. |
 | `DREAMSHADER_WITH_MATERIAL_PARAMETERS_HEADER` | **UE ≥ 5.7** | no — unconditional `#define` | Which header declares `FMaterialParameterInfo`: `Materials/MaterialParameters.h` from 5.7, `MaterialTypes.h` before it. |
+| `DREAMSHADER_HTTP_REQUEST_HANDLER(...)` *(after 2.2.0)* | `FHttpRequestHandler::CreateLambda(...)` on UE ≥ 5.4, `FHttpRequestHandler(...)` on 5.3 | no — selected by `#if` | 5.4 turned `FHttpRequestHandler` from a `TFunction` into a `TDelegate`; the [DreamMCP endpoint](../tools/dreammcp.md) binds its routes through this one spelling. Variadic, because a lambda's capture list holds commas |
 | `DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS` *(since 2.0.0)* | `1` when the engine's `EMaterialParameterType` has a `ParameterCollection` enumerator, `0` otherwise | **yes** — `#ifndef` guarded (falls back to UE ≥ 5.8), and `DreamShader.Build.cs` sets it as a `PublicDefinition` from that probe | Whether a material instance can override a parameter collection. Asked of the header that declares the enum, because a `case` label cannot ask the type. |
 
 The six `#ifndef`-guarded ones may be pre-defined by a build target — for example to compile the
@@ -162,6 +163,8 @@ version gates that remain in C++ are the ones below.
 | Generated Custom nodes | `UMaterialExpressionCustom::ShowCode = false` on every Custom node the IR emitter creates, so the HLSL body stays collapsed in the material editor | the property does not exist; not set, and generated Custom nodes show their code |
 | Material reset before a rebuild, and the generated-asset digest | `bHasPixelAnimation` is cleared along with the other material flags, and recorded in the digest | skipped |
 | Decompiler material-flag export | `bHasPixelAnimation` is included in the emitted `Settings` flag list | excluded |
+| DreamMCP route handlers *(after 2.2.0)* | `FHttpRequestHandler::CreateLambda`, through `DREAMSHADER_HTTP_REQUEST_HANDLER` | the lambda converts to the `TFunction` itself |
+| DreamMCP `preview`, waiting for the material's shaders *(after 2.2.0)* | `UMaterialInterface::IsCompiling()`, asked of the material and of its base | the material resource of this platform is asked whether its compile has finished |
 
 ### UE ≥ 5.4 — `DREAMSHADER_WITH_SUBSTRATE_BUILTINS`
 
@@ -252,12 +255,14 @@ or, *(since 2.0.1)*, whether the engine has the node's header at all (`__has_inc
 | Node preview height in the layout pass | `Expression->ShouldShowPreview()` | `!bHidePreviewWindow && !bCollapsed`, the two flags 5.7 composed it from |
 | Decompiler scalar-parameter metadata | `ControlType`, `Enumeration` and `EnumerationIndex` are exported | not exported — the properties do not exist. A source that carries them still parses; there is nothing to write them to |
 | `FMaterialParameterInfo` include | `Materials/MaterialParameters.h` | `MaterialTypes.h`, which 5.7 keeps only as a deprecation stub |
+| DreamMCP `preview`, the material resource it reads shader errors from *(after 2.2.0)* | taken for `GMaxRHIShaderPlatform` | taken for `GMaxRHIFeatureLevel` |
 
 ### UE ≥ 5.8
 
 | Feature | On UE ≥ 5.8 | On UE 5.3 – 5.7 |
 | :-- | :-- | :-- |
 | The builtin catalog's material attributes *(since 2.0.0)* | `FMaterialAttributeDefinitionMap::GetAttributeNameToIDList` | that list is private, so the attributes are reached by walking `EMaterialProperty` through the public `GetID` / `GetProperty` / `GetAttributeName`. The same attributes either way; only their order in the exported catalog differs |
+| DreamMCP `preview`, the preview meshes it waits for *(after 2.2.0)* | includes the shader ball (`UThumbnailManager::EditorShaderBall`) | the shader ball does not exist; the other meshes only |
 | Default volumetric-cloud usage written when settings are applied | `UMaterial::SetUsageByFlag(MATUSAGE_VolumetricCloud, …)` | the `bUsedWithVolumetricCloud` field directly. The same value; each spelling is the one that compiles without a deprecation warning on its engines |
 
 ### UE ≥ 5.8 — `DREAMSHADER_WITH_CUSTOM_PASS`

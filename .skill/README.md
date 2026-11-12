@@ -14,6 +14,7 @@ for one task, and each reference page condenses a language to what an author nee
 | Engines | Unreal Engine `5.3` – `5.8`, Win64; Custom Pass (`.dsp`) needs `5.8` |
 | Plugin | DreamShader `2.1.0`, compiled — the commandlet lives in the `DreamShaderEditor` module |
 | Shell | PowerShell 7 (`pwsh`); every script says `#Requires -Version 7.0` |
+| With DreamMCP | when the client has the `dream_shader` tool, the skills check, compile, read diagnostics, look nodes up, preview and decompile through it instead of the driver: see [DreamMCP endpoint](../Docs/tools/dreammcp.md) |
 
 ## Skills
 

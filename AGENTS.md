@@ -30,6 +30,11 @@ Paths in this section are relative to the game project root. The plugin is at `P
 5. Read the diagnostics. Every message has a code `DSHnnnn`; look it up in
    `Plugins/DreamShader/Docs/diagnostics/README.md`. Fix, and repeat until both commands print `dsc: OK (exit 0)`.
 
+If you have the `dream_shader` tool, a DreamMCP server is connected. Prefer it to `dsc.ps1` for steps 2 to 5:
+`check`, `compile`, `diagnostics`, `lookup` and `preview` answer in the user's editor or a background engine,
+without starting an engine per call. Call `help` for each action's arguments. Without the tool, use the commands
+above. See `Plugins/DreamShader/Docs/tools/dreammcp.md`.
+
 ### Skills
 
 The plugin ships six skills. Each `SKILL.md` is plain Markdown, so any agent can read it and run the same commands.

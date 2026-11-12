@@ -882,6 +882,7 @@ source therefore always maps to the same file name, and each render overwrites i
 | Startup Ephemeral generation | does not run |
 | Material Content Browser | tab and menu entries are not registered |
 | Tools menu, toolbar, context menus | not registered |
+| [DreamMCP endpoint](dreammcp.md) *(after 2.2.0)* | not started — an automation run neither listens nor publishes a discovery file |
 | Cook hook | unaffected — it is installed on a different code path |
 
 The bridge is also never created in a commandlet process, with or without the switch; see

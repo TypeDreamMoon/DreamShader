@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "protocol": 1,
+  "id": "shader",
+  "plugin": "DreamShader",
+  "title": "DreamShader",
+  "description": "DreamShader turns text into Unreal materials. A .dss source is HLSL with declarations. Its uniforms become material parameters, and its export function becomes the material or a material function. A .dsi makes a material instance. A .dsp makes a Custom Pass render pipeline (UE 5.8). A .dsh holds shared helpers. .dsm and .dsf are the older 1.x language. Sources live in the project's DShader/ folder, and each one builds assets at the same path under /Game. Use this tool to check, compile and preview sources, read their errors, look up the nodes a source can call, and turn an existing material back into text. Read the language reference before you write a source.",
+  "route": "/dream/shader",
+  "host": { "commandlet": "DreamShaderHost" },
+  "extensions": [".dss", ".dsi", ".dsp", ".dsh", ".dsm", ".dsf"],
+  "sourceRoots": ["DShader"],
+  "reference": [
+    { "title": "DreamShaderLang 2.0: .dss, .dsi and .dsh sources", "path": ".skill/reference/dss.md" },
+    { "title": "Custom Pass pipelines: .dsp sources", "path": ".skill/reference/dsp.md" },
+    { "title": "The 1.x language: .dsm and .dsf sources", "path": ".skill/reference/legacy.md" }
+  ],
+  "actions": [
+    {
+      "name": "check",
+      "description": "Check a source for errors. It builds nothing and writes nothing. Run it after every edit: it is the fastest test.",
+      "needs": "engine",
+      "writes": false,
+      "long": true,
+      "args": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string", "description": "Source path relative to the project root, e.g. DShader/UI/M_Panel.dss" },
+          "all": { "type": "boolean", "description": "Check every source of the project instead of one file" }
+        }
+      }
+    },
+    {
+      "name": "compile",
+      "description": "Build the assets a source makes, such as a material. In the user's editor, a material of the default kind stays in memory until the user saves it. In a host, every asset is saved to disk. With shaders=true it also compiles the shaders and reports their errors at source lines; then it always saves.",
+      "needs": "engine",
+      "writes": true,
+      "long": true,
+      "args": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string", "description": "Source path relative to the project root" },
+          "force": { "type": "boolean", "description": "Rebuild even when the source has not changed" },
+          "shaders": { "type": "boolean", "description": "Also compile the shaders and report their errors" }
+        },
+        "required": ["file"]
+      }
+    },
+    {
+      "name": "diagnostics",
+      "description": "List the errors and warnings from the last check or compile. It compiles nothing. Without file, it lists every file that has some, with a count for each.",
+      "needs": "engine",
+      "writes": false,
+      "long": false,
+      "args": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string", "description": "Source path relative to the project root" }
+        }
+      }
+    },
+    {
+      "name": "lookup",
+      "description": "Find a node a source can call: the UE.* and Substrate.* nodes, and material attributes such as m.BaseColor. An exact name returns its inputs, outputs and properties. Part of a name returns the names that contain it.",
+      "needs": "engine",
+      "writes": false,
+      "long": false,
+      "args": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "A node or attribute name, or part of one: UE.TextureSample, Lerp, BaseColor" },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 200, "description": "Most matches to list; default 20" }
+        },
+        "required": ["name"]
+      }
+    },
+    {
+      "name": "preview",
+      "description": "Render a material source to a PNG and measure the picture. It compiles the source first, as compile does in the editor. The result says what the image shows: how much of the mesh is visible or see-through, the mean colour, the brightness, and how much is near white or near black. With frames, it renders several moments side by side, to show an animation.",
+      "needs": "render",
+      "writes": true,
+      "long": true,
+      "args": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string", "description": "A .dss, .dsi or .dsm path relative to the project root" },
+          "mesh": { "type": "string", "enum": ["sphere", "plane", "cube", "cylinder", "shaderball"], "description": "Preview mesh; default sphere. UI materials always draw on a plane" },
+          "width": { "type": "integer", "minimum": 64, "maximum": 2048, "description": "Width of one frame in pixels; default 512, or 256 with frames" },
+          "height": { "type": "integer", "minimum": 64, "maximum": 2048, "description": "Height in pixels; default 512, or 256 with frames" },
+          "yaw": { "type": "number", "description": "Camera orbit yaw in degrees; default -157.5" },
+          "pitch": { "type": "number", "description": "Camera orbit pitch in degrees; default -11.25" },
+          "force": { "type": "boolean", "description": "Recompile even when the source has not changed" },
+          "time": { "type": "number", "description": "The material's Time in seconds, for the first frame; default 0" },
+          "frames": { "type": "integer", "minimum": 1, "maximum": 16, "description": "How many frames to render side by side, spread evenly over duration; default 1. The strip is at most 8192 pixels wide" },
+          "duration": { "type": "number", "minimum": 0.01, "maximum": 3600, "description": "Seconds the frames cover, starting at time; default 1. One period of the animation shows all of it" },
+          "tone": { "type": "string", "enum": ["editor", "fixed", "linear"], "description": "How colour reaches the image. editor (default): the project's exposure and the filmic tone curve, as the editor shows it; bright colours drift toward white. fixed: the same at exposure 1. linear: exposure 1 and no tone curve, so a pixel shows the output value, clipped at 1" }
+        },
+        "required": ["file"]
+      }
+    },
+    {
+      "name": "info",
+      "description": "Report the plugin and engine versions, the source folders, how materials are built, and what this engine process can do: editor or host, renders or not.",
+      "needs": "engine",
+      "writes": false,
+      "long": false,
+      "args": { "type": "object", "properties": {} }
+    },
+    {
+      "name": "decompile",
+      "description": "Turn an existing material, material function or material instance into a DreamShader source (.dss, .dsi or .dsp). It writes a source file, never an asset.",
+      "needs": "engine",
+      "writes": true,
+      "long": true,
+      "args": {
+        "type": "object",
+        "properties": {
+          "asset": { "type": "string", "description": "Object or package path, e.g. /Game/Materials/M_Rock" },
+          "out": { "type": "string", "description": "Destination relative to the project root; default under DShader/Decompiled/" },
+          "readable": { "type": "boolean", "description": "Prefer HLSL operators over exact node calls (a rebuild may then use other node classes)" },
+          "overwrite": { "type": "boolean", "description": "Replace the destination when it exists" }
+        },
+        "required": ["asset"]
+      }
+    }
+  ]
+}

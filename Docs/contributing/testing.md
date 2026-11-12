@@ -75,6 +75,9 @@ fixtures that belong to other layers, which is why the runnable count is not "si
 | `DreamShader.Lang2.Corpus.Pipeline.*` · `DreamShader.Lang2.CorpusIR.Pipeline.*` | The `.dsp` fixtures of `Tests/Corpus/Lang/Pipeline` and `Tests/Corpus/IR/Pipeline` | fast; no asset I/O |
 | `DreamShader.Compiler2.Pipeline.*` | `.dsp` to a `UDreamPassPipeline`: fields, render targets, dependencies, round trip; the slot registry and its pre-check | slow; editor; `Registry` and `RegistryPrecheck` need a real RHI and back up `<DShader>/.dreampass` first |
 | `DreamShader.Pass.Logic.*` | The Custom Pass runtime without rendering: spellings, parameter blending, slot packing, the asset's checks, which pipelines apply to a view, sources | fast |
+| `DreamShader.MCP.{Protocol,Actions,Jobs}.*` *(after 2.2.0)* | The [DreamMCP endpoint](../tools/dreammcp.md) driven without a socket: hello, tokens and `Origin`, every refusal, each action's success and source error, job polling and cancelling | slow; editor; writes `/Game/DreamShaderTests/MCP` assets |
+| `DreamShader.MCP.Socket.Loopback` *(after 2.2.0)* | A real listener: HTTP over TCP, the discovery file, refused on every non-loopback address | fast; binds a port from `47950` |
+| `DreamShader.MCP.Render.Preview` *(after 2.2.0)* | The endpoint's `preview`, rendered and written as a PNG | `NonNullRHI`: run in the RHI gate below |
 | `DreamShader.Pass.Render.*` · `DreamShader.Pass.Lifecycle.*` | Custom Pass passes rendered into a scene capture and read back pixel by pixel; edits, removals and world teardown mid-frame | `NonNullRHI`: skipped under `-nullrhi`, run in the RHI gate below |
 
 The split the source records: the fast `DreamShader.Lang.*` and `DreamShader.Lang2.*` layers gate
