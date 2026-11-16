@@ -77,26 +77,36 @@ DreamPassGlobalPipeline {
 DreamPassGlobalPipeline:Priority {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Priority
     src   "Where its parameter overrides sit among every other activation of the same pipeline: higher wins."
+    text  "它的参数覆盖在同一管线的所有激活中的位置：数值高者胜。"
+    state machine
 }
 
 DreamPassSettings {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings
     src   "Project Settings ▸ DreamPlugin ▸ DreamShader Custom Pass."
+    text  "项目设置 ▸ DreamPlugin ▸ DreamShader Custom Pass。"
+    state machine
 }
 
 DreamPassSettings:bEnabled {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:bEnabled
     src   "Off: no pipeline runs anywhere, whatever activates it. r.DreamPass.Enable turns it off for a session."
+    text  "关闭：任何地方都不运行管线，无论谁激活它。r.DreamPass.Enable 可对当次会话关闭它。"
+    state machine
 }
 
 DreamPassSettings:GlobalPipelines {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:GlobalPipelines
     src   "Pipelines that apply to every view of every world."
+    text  "对所有世界的所有视图都生效的管线。"
+    state machine
 }
 
 DreamPassSettings:LayerNames {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:LayerNames
     src   "The pass layers, at most 32: a UDreamPassLayerComponent gives primitives some of them, and a mesh pass's\n`Filter = Layer(Name)` selects the primitives that have one. The order is the bit order; renaming one is safe,\nmoving one re-targets every compiled pipeline that names it until those are compiled again."
+    text  "Pass 图层，最多 32 个：UDreamPassLayerComponent 给图元分配其中一些，网格 Pass 的 `Filter = Layer(Name)` 选中拥有该图层的图元。顺序即位序；重命名某个图层是安全的，移动某个图层会让引用它的每个已编译管线重新指向，直到它们重新编译。"
+    state machine
 }
 
 namespace UObjectCategory

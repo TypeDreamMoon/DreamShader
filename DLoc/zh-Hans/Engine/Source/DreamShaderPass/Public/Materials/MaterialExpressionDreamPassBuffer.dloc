@@ -42,6 +42,8 @@ namespace UObjectToolTips
 MaterialExpressionDreamPassBuffer {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer
     src   "Reads a buffer a DreamShader Custom Pass pipeline exports (`Export = true` in its `.dsp`): the render target the\npipeline copies the buffer into after its last writer, sampled as a float4. Without Coordinates it reads at the\nviewport UV, where a buffer of the view's size lines up with the screen. In a vertex shader (World Position Offset)\nit reads mip 0.\n\nWhat a material sees is the latest picture of the buffer: this frame's when the pipeline wrote it earlier in the\nframe than the material renders, the previous frame's otherwise.\n`UE.DreamPassBuffer(Pipeline = ..., Buffer = \"...\", Coordinates = ...)` in a `.dss`."
+    text  "读取 DreamShader Custom Pass 管线导出的缓冲（在其 `.dsp` 中 `Export = true`）：管线在最后一个写入者之后把该缓冲复制进去的渲染目标，以 float4 采样。不指定 Coordinates 时按视口 UV 读取，此时与视图同尺寸的缓冲正好对齐屏幕。在顶点着色器（World Position Offset）中读取时取 mip 0。\n\n材质看到的是该缓冲最新的画面：若管线在本帧早于该材质渲染写出，则是本帧的；否则是上一帧的。\n在 `.dss` 里写 `UE.DreamPassBuffer(Pipeline = ..., Buffer = \"...\", Coordinates = ...)`。"
+    state machine
 }
 
 MaterialExpressionDreamPassBuffer:Buffer {
@@ -54,16 +56,22 @@ MaterialExpressionDreamPassBuffer:Buffer {
 MaterialExpressionDreamPassBuffer:Coordinates {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Coordinates
     src   "Where to read, in the render target's UV. Defaults to the viewport UV."
+    text  "读取位置，以渲染目标的 UV 表示。默认是视口 UV。"
+    state machine
 }
 
 MaterialExpressionDreamPassBuffer:Pipeline {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Pipeline
     src   "The pipeline that exports the buffer. A hard reference: loading the material loads the pipeline and its render targets,\nso the one it samples always resolves; the material lists that render target among its textures, which cooks it too."
+    text  "导出该缓冲的管线。硬引用：加载材质就会加载该管线及其渲染目标，因此它采样的对象总能解析；材质会把该渲染目标列为自己的纹理之一，因而也会被烘焙。"
+    state machine
 }
 
 MaterialExpressionDreamPassBuffer:SamplerSource {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:SamplerSource
     src   "Where the sampler comes from. From Texture Asset, the default as on a Texture Sample node, uses the render target's own\naddress and filter settings, the ones Blueprints, UMG and Niagara read it with. A shared sampler (Wrap or Clamp) does\nnot use up one of the material's sampler slots."
+    text  "采样器的来源。默认的 From Texture Asset（与 Texture Sample 节点相同）使用渲染目标自己的寻址与过滤设置，也就是蓝图、UMG 与 Niagara 读取它时用的设置。共享采样器（Wrap 或 Clamp）不会占用材质的一个采样器槽位。"
+    state machine
 }
 
 namespace UObjectCategory

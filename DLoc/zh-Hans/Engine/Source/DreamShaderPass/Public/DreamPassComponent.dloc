@@ -194,36 +194,50 @@ namespace UObjectToolTips
 DreamPassComponent {
     at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent
     src   "Runs a Custom Pass pipeline from any actor: in every view of its world, or only in the views of the players whose view\ntarget the actor is -- a pawn's own effect, seen by whoever plays or spectates it. Its overrides blend with every other\nactivation of the same pipeline in ascending Priority, each by its weight (UDreamPassSubsystem::ResolveView).\n\nA source of the world's UDreamPassSubsystem while it is registered -- in editor worlds too -- and asked about every view\non the game thread each frame. Nothing is cached: a property set from a Blueprint takes effect on the next frame."
+    text  "从任意 Actor 运行一段 Custom Pass 管线：世界的所有视图，或仅 view target 属于该 Actor 的玩家视图——即 Pawn 自己的效果，只有玩它或旁观它的人能看到。它的覆盖值与其他激活同一管线的来源按 Priority 升序依次混合，各自按权重参与（UDreamPassSubsystem::ResolveView）。\n\n注册期间它是世界 UDreamPassSubsystem 的一个来源——编辑器世界也是如此——并在每帧游戏线程上被询问每个视图。不做任何缓存：从蓝图设置的属性下一帧就生效。"
+    state machine
 }
 
 DreamPassComponent:bEnabled {
     at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:bEnabled
     src   "Off: the component applies nowhere."
+    text  "关闭：该组件在任何地方都不生效。"
+    state machine
 }
 
 DreamPassComponent:Overrides {
     at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Overrides
     src   "The parameter values the component runs the pipeline with. One left out keeps what lower priorities give it."
+    text  "组件运行该管线时使用的参数值。省略的参数沿用较低优先级给它的值。"
+    state machine
 }
 
 DreamPassComponent:Pipeline {
     at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Pipeline
     src   "The pipeline the component runs. None: the component does nothing."
+    text  "组件运行的管线。None：组件什么都不做。"
+    state machine
 }
 
 DreamPassComponent:PlayerIndex {
     at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:PlayerIndex
     src   "Only that local player's views, numbered as FSceneView::PlayerIndex numbers them (the controller id).\n-1: any view, editor viewports included."
+    text  "只有该本地玩家的视图，编号与 FSceneView::PlayerIndex 一致（控制器 id）。\n-1：任意视图，含编辑器视口。"
+    state machine
 }
 
 DreamPassComponent:Priority {
     at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Priority
     src   "Where the component's overrides sit among every other activation of the same pipeline: higher wins."
+    text  "该组件的覆盖值在同一管线的所有激活中的位置：数值高者胜。"
+    state machine
 }
 
 DreamPassComponent:Scope {
     at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Scope
     src   "Every view of the world, or only the views whose view target is the owner."
+    text  "世界的所有视图，或仅 view target 属于所有者的视图。"
+    state machine
 }
 
 DreamPassComponent:SetColorParameter {
@@ -243,6 +257,8 @@ DreamPassComponent:SetFloatParameter {
 DreamPassComponent:SetParameter {
     at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetParameter
     src   "Sets, or adds, one parameter override. False when the pipeline has no such parameter, or not of the value's type."
+    text  "设置或添加一个参数覆盖。管线没有该参数、或参数类型不符时返回 false。"
+    state machine
 }
 
 DreamPassComponent:SetWeight {
@@ -255,21 +271,29 @@ DreamPassComponent:SetWeight {
 DreamPassComponent:Weight {
     at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Weight
     src   "0: no effect, 1: full effect. The strength the overrides blend in with, and the pipeline's weight in the view unless\nanother source gives it more."
+    text  "0：无影响；1：完全生效。覆盖值以此强度混入，也是管线在该视图中的权重——除非\n另有来源给出更大的值。"
+    state machine
 }
 
 EDreamPassComponentScope {
     at    Source/DreamShaderPass/Public/DreamPassComponent.h#EDreamPassComponentScope
     src   "Which views a UDreamPassComponent runs its pipeline in."
+    text  "UDreamPassComponent 在哪些视图里运行其管线。"
+    state machine
 }
 
 EDreamPassComponentScope.ViewTarget {
     at    Source/DreamShaderPass/Public/DreamPassComponent.h#EDreamPassComponentScope:ViewTarget
     src   "Only the views whose view target is the owner: the player looking through it, and anyone spectating it."
+    text  "只有 view target 属于所有者的视图：正在透过它看的玩家，以及旁观它的任何人。"
+    state machine
 }
 
 EDreamPassComponentScope.World {
     at    Source/DreamShaderPass/Public/DreamPassComponent.h#EDreamPassComponentScope:World
     src   "Every view of the world, wherever the owner is."
+    text  "世界的所有视图，无论所有者在哪里。"
+    state machine
 }
 
 namespace UObjectCategory

@@ -199,11 +199,15 @@ namespace UObjectToolTips
 DreamShaderSettings:bEnableDreamMCPEndpoint {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bEnableDreamMCPEndpoint
     src   "When enabled, the editor serves DreamShader to a DreamMCP server (an MCP server that lets an AI agent check, compile and preview sources) over HTTP on 127.0.0.1 only, behind a token written to Saved/DreamMCP/shader.json. Disable it to keep the editor from listening at all; -NoDreamMCP on the command line does the same for one session. Takes effect the next time the editor starts. The DreamShaderHost commandlet a DreamMCP server starts when no editor is open is not affected."
+    text  "启用后，编辑器通过 HTTP 只在 127.0.0.1 上把 DreamShader 提供给 DreamMCP 服务器（一个让 AI 代理检查、编译并预览源码的 MCP 服务器），令牌写在 Saved/DreamMCP/shader.json。关闭它可让编辑器完全不监听；命令行加 -NoDreamMCP 只对当次会话生效。下次编辑器启动时生效。没有编辑器打开时由 DreamMCP 服务器启动的 DreamShaderHost 命令台不受影响。"
+    state machine
 }
 
 DreamShaderSettings:bScanPluginSourceDirectories {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bScanPluginSourceDirectories
     src   "When enabled, every enabled plugin that ships a DShader folder contributes its own source root, so a plugin can carry the .dsm/.dsf/.dsh files that build its materials. Plugin roots are discovered and compiled but never rewritten by the editor -- only the project's own source directory is writable. Imports never cross roots: a file resolves its imports against its own root and that root's Packages folder."
+    text  "启用后，每个附带 DShader 文件夹的已启用插件都会贡献自己的源根，插件因此可以携带构建其材质的 .dsm/.dsf/.dsh 文件。插件源根会被发现并编译，但编辑器从不会重写它们——只有项目自身的源目录可写。导入永不跨源根：文件只在自己的源根及其 Packages 文件夹内解析导入。"
+    state machine
 }
 
 DreamShaderSettings:bShowEphemeralMaterials {
@@ -216,26 +220,36 @@ DreamShaderSettings:bShowEphemeralMaterials {
 DreamShaderSettings:bSyncSourceReferencesOnAssetRename {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bSyncSourceReferencesOnAssetRename
     src   "When enabled, renaming or moving an asset in the editor rewrites the .dsm/.dsf/.dsh files that reference it, so a source keeps naming the asset rather than the path it used to have. Only files under the project source directory are rewritten -- plugin source roots are never touched -- and each file is copied to a .bak next to it before it is written. Batched renames such as Fix Up Redirectors are coalesced into a single pass. Deleting an asset is not covered: a deletion has no new path to write, and the compile error it produces is the correct outcome. Turn this off if you would rather the plugin never edited your source files on its own."
+    text  "启用后，在编辑器里重命名或移动资产会重写引用它的 .dsm/.dsf/.dsh 文件，使源码始终指向该资产，而不是它原来的路径。只有项目源目录下的文件会被重写——插件源根永不触碰——且每个文件在写入前都会复制一份 .bak。修复重定向器等批量重命名会合并成一次处理。删除资产不在覆盖范围内：删除没有新路径可写，它产生的编译错误就是正确结果。如果你希望插件永远不要自行改动源文件，请关闭它。"
+    state machine
 }
 
 DreamShaderSettings:DefaultBackend {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:DefaultBackend
     src   "How DreamShader materializes a source file that does not specify Settings = { Backend = \"...\" }. ThinCustom (the default) builds the material graph on a hidden per-material base and emits a lightweight, Ephemeral material instance of it -- full feature surface, no visible per-material asset. Graph builds a visible UMaterial node graph. Instance is a deprecated alias for ThinCustom."
+    text  "DreamShader 如何物化未自行指定 Settings = { Backend = \"...\" } 的源文件。ThinCustom（默认）在一个隐藏的每材质基材质上构建材质图表，并生成它的轻量、临时（Ephemeral）材质实例——特性完整，不产生可见的每材质资产。Graph 构建可见的 UMaterial 节点图表。Instance 是 ThinCustom 的已弃用别名。"
+    state machine
 }
 
 DreamShaderSettings:GraphLayoutStyle {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:GraphLayoutStyle
     src   "How the nodes of a generated graph are placed. Blocks, the default, boxes the graph by region and run of statements, in source order, and lets no wire leave a box: a value another box reads travels through a named reroute, and a constant is repeated where it is read. Source Bands puts one horizontal band per source statement, top to bottom in source order, so the graph reads like the file; Layered draws the whole graph as one layered drawing; those two insert no reroute nodes. These three are computed on the compiler's IR, before any node exists, and are deterministic. Classic is the 1.x layout, which works on the finished graph. Node positions are not part of a generated asset's digest: changing this never makes an asset look hand-edited, and it takes effect the next time a source is rebuilt. `dsc dump-layout` draws the three IR styles of a source as SVG without building anything."
+    text  "生成图表中节点的排布方式。默认的 Blocks 按区域与语句段把图表装进方框，保持源码顺序，且不允许连线离开方框：另一个方框读取的值通过具名绕行节点传递，常量在读取处重复。Source Bands 为每条源语句放一条水平带，按源码顺序自上而下，图表因此读起来像文件；Layered 把整张图表画成一幅分层图；后两者不插入绕行节点。这三种都基于编译器的 IR 计算，早于任何节点存在，且是确定性的。Classic 是 1.x 的布局，作用在已完成的图表上。节点位置不属于生成资产的摘要：改它永远不会让资产看起来被手改过，并会在下次重建源文件时生效。`dsc dump-layout` 能把源码的三种 IR 风格画成 SVG 而不构建任何东西。"
+    state machine
 }
 
 DreamShaderSettings:InstanceSubfolder {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:InstanceSubfolder
     src   "Subfolder, relative to the parent material's folder, where the Material Content Browser creates new material instances. Leave empty to create them alongside the parent."
+    text  "材质内容浏览器创建新材质实例的子文件夹，相对于父材质所在文件夹。留空则在父材质旁边创建。"
+    state machine
 }
 
 DreamShaderSettings:PreprocessorDefines {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:PreprocessorDefines
     src   "Preprocessor defines every .dsm/.dsf/.dsh source compiles with -- what its #if / #elif conditions read. The name answers defined(); a value that parses as an integer compares as a number, anything else as a string; an empty value still counts as defined; a name absent from this table evaluates to 0, as in C. Conditions are evaluated at GENERATION time and the losing branch is cut before the parser sees it, so a condition can select a Domain, a ShadingModel or a whole Outputs block -- none of which a StaticSwitch can reach, because they describe what the material IS rather than what it computes. Editing this table rebuilds only the generated assets whose sources actually read a name that changed. Names are case-sensitive and must match [A-Za-z_][A-Za-z0-9_]*. The DS_ prefix is reserved for the read-only builtins; an entry using it is dropped with a log warning rather than failing the compile, since a settings mistake has no source line to report against."
+    text  "每个 .dsm/.dsf/.dsh 源文件编译时使用的预处理器定义——其 #if / #elif 条件读取这些定义。名字对应 defined()；能解析为整数的值按数字比较，其余按字符串；空值仍算已定义；表中没有的名字求值为 0，与 C 相同。条件在生成期求值，落败分支在解析器看到它之前就被剪掉，因此条件可以选择 Domain、ShadingModel 或整个 Outputs 块——这些 StaticSwitch 都做不到，因为它们描述材质"是什么"，而不是"算出什么"。编辑此表只会重建那些确实读取了改动名字的生成资产。名字区分大小写，须匹配 [A-Za-z_][A-Za-z0-9_]*。DS_ 前缀保留给只读内建；使用它的条目会被丢弃并记一条日志警告，而不是让编译失败——因为设置错误没有源码行可报。"
+    state machine
 }
 
 EDreamShaderDefaultBackend {
@@ -269,26 +283,36 @@ EDreamShaderDefaultBackend.ThinCustom {
 EDreamShaderGraphLayoutStyle {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle
     src   "How the nodes of a generated graph are placed. Positions are not part of a generated asset's digest, so switching never makes an asset look hand-edited."
+    text  "生成图表中节点的排布方式。位置不属于生成资产的摘要，所以切换它永远不会让资产看起来被手改过。"
+    state machine
 }
 
 EDreamShaderGraphLayoutStyle.Blocks {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:Blocks
     src   "One box per `#pragma region` or run of statements, packed in source order like words on a page; no wire leaves a box -- a value another box reads travels through a named reroute, and a constant is repeated. Computed on the IR."
+    text  "每个 `#pragma region` 或每段语句一个方框，像书页上的字一样按源码顺序排布；连线不离开方框——另一个方框读取的值通过具名绕行节点传递，常量则重复。基于 IR 计算。"
+    state machine
 }
 
 EDreamShaderGraphLayoutStyle.Classic {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:Classic
     src   "The 1.x layout: blocks recovered from the material's outputs, named reroutes between blocks."
+    text  "1.x 布局：从材质的输出反推方块，方块之间用具名绕行节点连接。"
+    state machine
 }
 
 EDreamShaderGraphLayoutStyle.Layered {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:Layered
     src   "One layered drawing of the whole graph. Computed on the IR, inserts no reroute."
+    text  "把整张图表画成一幅分层图。基于 IR 计算，不插入绕行节点。"
+    state machine
 }
 
 EDreamShaderGraphLayoutStyle.SourceBands {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:SourceBands
     src   "One horizontal band per source statement, in source order; a `#pragma region` is a box around consecutive bands. Computed on the IR, inserts no reroute."
+    text  "每条源语句一条水平带，按源码顺序；`#pragma region` 是包住连续若干条带的方框。基于 IR 计算，不插入绕行节点。"
+    state machine
 }
 
 namespace UObjectCategory

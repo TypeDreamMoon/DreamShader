@@ -70,34 +70,48 @@ namespace UObjectToolTips
 DreamPassLayerComponent {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent
     src   "Gives the primitives of its actor pass layers, which a mesh pass selects with `Filter = Layer(Name)`.\n\nThe layers are the names of Project Settings > DreamShader Custom Pass > Layer Names. Every primitive component of\nthe actor receives them, or -- with All Primitives off -- only those that carry Component Tag. The layers are added\nto whatever else gives a primitive layers, and taken away again when this component is unregistered, so two layer\ncomponents can share an actor; they should not share a layer.\n\nThe primitives are gathered when the component registers and when Refresh is called: one added to the actor later\ngets its layers from a Refresh."
+    text  "给它所属 Actor 的图元分配 Pass 图层，网格 Pass 可用 `Filter = Layer(Name)` 选择。\n\n图层名来自 项目设置 > DreamShader Custom Pass > Layer Names。Actor 的每个图元组件都会收到，或者——关闭 All Primitives 时——只有带 Component Tag 的收到。图层会加在其他任何给图元分层的来源之上，并在此组件注销时移除，因此两个图层组件可以共享一个 Actor；它们不应共享同一图层。\n\n图元在组件注册时以及调用 Refresh 时收集：之后加到 Actor 上的图元要靠一次 Refresh 才会拿到图层。"
+    state machine
 }
 
 DreamPassLayerComponent:bAllPrimitives {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:bAllPrimitives
     src   "Every primitive component of the actor. Off: only those with Component Tag."
+    text  "Actor 的每个图元组件。关闭：只有带 Component Tag 的。"
+    state machine
 }
 
 DreamPassLayerComponent:ComponentTag {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:ComponentTag
     src   "With All Primitives off, the component tag a primitive needs to receive the layers. None selects no primitive."
+    text  "关闭 All Primitives 时，图元需要什么组件标签才能收到图层。None 表示不选中任何图元。"
+    state machine
 }
 
 DreamPassLayerComponent:GetLayerNameOptions {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:GetLayerNameOptions
     src   "The details panel's choices for Layers."
+    text  "细节面板里 Layers 的选项。"
+    state machine
 }
 
 DreamPassLayerComponent:Layers {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:Layers
     src   "The pass layers the primitives are in: names from the project settings' Layer Names."
+    text  "图元所在的 Pass 图层：来自项目设置 Layer Names 的名字。"
+    state machine
 }
 
 DreamPassLayerComponent:Refresh {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:Refresh
     src   "Gathers the actor's primitives again and gives them the layers: after a primitive was added or a tag changed."
+    text  "重新收集 Actor 的图元并给它们分配图层：在新增图元或标签变更之后调用。"
+    state machine
 }
 
 DreamPassLayerComponent:SetLayers {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:SetLayers
     src   "Replaces the layers and applies them at once."
+    text  "替换图层并立即应用。"
+    state machine
 }

@@ -119,16 +119,22 @@ namespace UObjectToolTips
 DreamPassVolume {
     at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume
     src   "Runs a Custom Pass pipeline in the views inside it, the way a post-process volume applies its settings: BlendWeight\ninside, fading to 0 over BlendRadius outside, everywhere when unbound. However many volumes and other sources ask for\none pipeline, it runs once per view; their overrides blend in ascending Priority, each by its weight there\n(UDreamPassSubsystem::ResolveView).\n\nA source of the world's UDreamPassSubsystem while its components are registered -- in editor worlds too, so an editor\nviewport inside the volume shows the pipeline -- and asked about every view on the game thread each frame. Nothing is\ncached: an edit, a move or a Blueprint call takes effect on the next frame. The shape is the brush's: a volume spawned\nat runtime has none, and applies only when unbound."
+    text  "在体积内的视图中运行 Custom Pass 管线，方式与后处理体积应用其设置相同：内部为 BlendWeight，在 BlendRadius 范围内向外淡出到 0，未绑定时处处生效。无论多少体积和其他来源请求同一条管线，它每个视图只运行一次；它们的覆盖按 Priority 升序混合，各自按该视图中的权重参与（UDreamPassSubsystem::ResolveView）。\n\n其组件注册期间它是世界 UDreamPassSubsystem 的一个来源——编辑器世界也是如此，因此在体积内的编辑器视口也能看到该管线——并在每帧游戏线程上被询问每个视图。不做任何缓存：编辑、移动或蓝图调用都在下一帧生效。形状与画刷一致：运行时生成的体积没有形状，只有未绑定时才生效。"
+    state machine
 }
 
 DreamPassVolume:bEnabled {
     at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:bEnabled
     src   "Off: the volume applies nowhere. In the editor, hiding the volume also takes it out of the editor viewports."
+    text  "关闭：该体积在任何地方都不生效。在编辑器里隐藏该体积也会把它从编辑器视口中移除。"
+    state machine
 }
 
 DreamPassVolume:BlendRadius {
     at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:BlendRadius
     src   "How far outside the volume, in cm, its weight fades from BlendWeight to 0. Below 1, the edge is hard."
+    text  "在体积外多远（cm）其权重从 BlendWeight 淡出到 0。小于 1 时边缘是硬的。"
+    state machine
 }
 
 DreamPassVolume:BlendWeight {
@@ -148,16 +154,22 @@ DreamPassVolume:bUnbound {
 DreamPassVolume:Overrides {
     at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:Overrides
     src   "The parameter values the volume runs the pipeline with. A parameter left out keeps what lower priorities give it."
+    text  "体积运行该管线时使用的参数值。省略的参数沿用较低优先级给它的值。"
+    state machine
 }
 
 DreamPassVolume:Pipeline {
     at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:Pipeline
     src   "The pipeline the volume runs. None: the volume does nothing."
+    text  "体积运行的管线。None：体积什么都不做。"
+    state machine
 }
 
 DreamPassVolume:Priority {
     at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:Priority
     src   "Where the volume's overrides sit among every other activation of the same pipeline: higher wins."
+    text  "该体积的覆盖在同一管线的所有激活中的位置：数值高者胜。"
+    state machine
 }
 
 DreamPassVolume:SetBlendWeight {
@@ -170,4 +182,6 @@ DreamPassVolume:SetBlendWeight {
 DreamPassVolume:SetParameter {
     at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:SetParameter
     src   "Sets, or adds, one parameter override. False when the pipeline has no such parameter, or not of the value's type."
+    text  "设置或添加一个参数覆盖。管线没有该参数、或参数类型不符时返回 false。"
+    state machine
 }

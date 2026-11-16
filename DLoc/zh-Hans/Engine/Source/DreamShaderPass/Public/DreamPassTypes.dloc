@@ -1393,26 +1393,36 @@ DreamPassBufferBinding:Buffer {
 DreamPassBufferBinding:Slot {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferBinding:Slot
     src   "What the pass calls it: a UserSceneTexture name in a fullscreen material, an HLSL name in a `.usf`,\nOutput0..3 in a mesh pass. Empty in a fullscreen material pass's one write."
+    text  "Pass 对它的称呼：全屏材质里是 UserSceneTexture 名，`.usf` 里是 HLSL 名，网格 Pass 里是 Output0..3。全屏材质 Pass 的那一次写入为空。"
+    state machine
 }
 
 DreamPassBufferDesc {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc
     src   "One named texture of a pipeline (`buffer` in a `.dsp`)."
+    text  "管线的一张具名纹理（`.dsp` 里的 `buffer`）。"
+    state machine
 }
 
 DreamPassBufferDesc:bClear {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:bClear
     src   "Cleared to ClearValue when the frame first writes or reads it. False is `Clear = None`: a read before every write is an error."
+    text  "当本帧首次写入或读取它时清空为 ClearValue。False 即 `Clear = None`：每次写入之前就读取视为错误。"
+    state machine
 }
 
 DreamPassBufferDesc:bExport {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:bExport
     src   "Copied into ExportTarget after its last writer, for ordinary materials, Blueprints, UMG and Niagara to read."
+    text  "在最后一个写入者之后复制进 ExportTarget，供普通材质、蓝图、UMG 与 Niagara 读取。"
+    state machine
 }
 
 DreamPassBufferDesc:bHistory {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:bHistory
     src   "Kept from one frame to the next, per view; `<Name>.Previous` reads last frame's."
+    text  "逐视图跨帧保留；`<Name>.Previous` 读取上一帧的内容。"
+    state machine
 }
 
 DreamPassBufferDesc:Description {
@@ -1425,16 +1435,22 @@ DreamPassBufferDesc:Description {
 DreamPassBufferDesc:Mips {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:Mips
     src   "Only mip 0 is writable by passes; mip chains are not supported yet. Other counts fail pipeline validation."
+    text  "Pass 只能写 mip 0；尚不支持 mip 链。其他数量会让管线校验失败。"
+    state machine
 }
 
 DreamPassBufferDesc:Scale {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:Scale
     src   "Relative to Resolution. Ignored for Fixed."
+    text  "相对于 Resolution。Fixed 时忽略。"
+    state machine
 }
 
 DreamPassComputeSettings:HlslSource {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:HlslSource
     src   "Where the pass's code is."
+    text  "Pass 的代码位于何处。"
+    state machine
 }
 
 DreamPassComputeSettings:InlineHlsl {
@@ -1454,11 +1470,15 @@ DreamPassComputeSettings:InlineHlslLine {
 DreamPassComputeSettings:ShaderPath {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:ShaderPath
     src   "The `.usf` as the `.dsp` names it: relative to the `.dsp`'s folder, or a virtual shader path. What runs is the slot's snapshot."
+    text  "按其 `.dsp` 中的写法给出的 `.usf`：相对 `.dsp` 所在目录，或一个虚拟着色器路径。真正执行的是槽位的快照。"
+    state machine
 }
 
 DreamPassComputeSettings:Slot {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:Slot
     src   "The FDreamPassCS slot the compiler gave this shader."
+    text  "编译器分配给这个着色器的 FDreamPassCS 槽位。"
+    state machine
 }
 
 DreamPassComputeSettings:ThreadGroupSize {
@@ -1471,6 +1491,8 @@ DreamPassComputeSettings:ThreadGroupSize {
 DreamPassDesc {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc
     src   "One pass of a pipeline (`pass` in a `.dsp`). Only the settings of its Kind are read."
+    text  "管线的一个 Pass（`.dsp` 里的 `pass`）。只读取其 Kind 对应的设置。"
+    state machine
 }
 
 DreamPassDesc:Description {
@@ -1490,6 +1512,8 @@ DreamPassDesc:EnabledParameter {
 DreamPassFilterClause {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterClause
     src   "Terms that must all hold (`a & b`)."
+    text  "必须同时成立的若干项（`a & b`）。"
+    state machine
 }
 
 DreamPassFilterTerm:LayerMask {
@@ -1502,6 +1526,8 @@ DreamPassFilterTerm:LayerMask {
 DreamPassFilterTerm:LayerNames {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterTerm:LayerNames
     src   "The layer names LayerMask was made from, kept so the decompiler can write them back as they were spelled."
+    text  "生成 LayerMask 时使用的图层名，保留它们是为了让反编译器按原样写回。"
+    state machine
 }
 
 DreamPassFullscreenSettings:HlslSource {
@@ -1528,11 +1554,15 @@ DreamPassFullscreenSettings:InlineHlslLine {
 DreamPassFullscreenSettings:Material {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:Material
     src   "The Post Process material a material pass draws (`Material =`). Null for an HLSL pass."
+    text  "材质 Pass 绘制的后处理材质（`Material =`）。HLSL Pass 为 null。"
+    state machine
 }
 
 DreamPassFullscreenSettings:PixelSlot {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:PixelSlot
     src   "The FDreamPassPS slot the compiler gave an HLSL pass, whatever its output count: a `.usf` always runs in a pixel\nshader slot, never through a material. INDEX_NONE for a material pass."
+    text  "编译器分配给 HLSL Pass 的 FDreamPassPS 槽位，与其输出数量无关：`.usf` 总是运行在像素着色器槽位里，从不经过材质。材质 Pass 为 INDEX_NONE。"
+    state machine
 }
 
 DreamPassFullscreenSettings:ShaderPath {
@@ -1552,16 +1582,22 @@ DreamPassMeshFilter {
 DreamPassMeshSettings:AssignedStencilValue {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:AssignedStencilValue
     src   "The stencil value AssignStencil gives the Nanite members of the filter's layers and lists."
+    text  "AssignStencil 给过滤器图层与列表中 Nanite 成员设置的模板值。"
+    state machine
 }
 
 DreamPassMeshSettings:DepthBuffer {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:DepthBuffer
     src   "The Depth32 buffer of `Depth = Own(Name)`."
+    text  "`Depth = Own(Name)` 对应的 Depth32 缓冲。"
+    state machine
 }
 
 DreamPassMeshSettings:NaniteValue {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:NaniteValue
     src   "What StencilMask writes where a Nanite primitive is."
+    text  "StencilMask 在 Nanite 图元处写入什么。"
+    state machine
 }
 
 DreamPassMeshSettings:OverrideMaterial {
@@ -1574,6 +1610,8 @@ DreamPassMeshSettings:OverrideMaterial {
 DreamPassMeshSettings:Usage {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:Usage
     src   "EDreamPassMeshUsageFlags."
+    text  "EDreamPassMeshUsageFlags。"
+    state machine
 }
 
 DreamPassParamBinding {
@@ -1593,6 +1631,8 @@ DreamPassParamBinding:Target {
 DreamPassParameterDesc {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc
     src   "One parameter a pipeline declares (`uniform` in a `.dsp`)."
+    text  "管线声明的一个参数（`.dsp` 里的 `uniform`）。"
+    state machine
 }
 
 DreamPassParameterDesc:Description {
@@ -1633,16 +1673,22 @@ DreamPassParameterValue {
 DreamPassParameterValue:Vector {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterValue:Vector
     src   "Float to Float4: the components in use; the rest are 0."
+    text  "Float 到 Float4：只用到的分量，其余为 0。"
+    state machine
 }
 
 EDreamPassBufferFormat.Depth32 {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:Depth32
     src   "Depth only: the own depth of a mesh pass (`Depth = Own(Name)`)."
+    text  "仅深度：网格 Pass 自身的深度（`Depth = Own(Name)`）。"
+    state machine
 }
 
 EDreamPassBufferResolution {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferResolution
     src   "What a buffer's size is relative to."
+    text  "缓冲尺寸所相对的基准。"
+    state machine
 }
 
 EDreamPassBufferResolution.Fixed {
@@ -1655,11 +1701,15 @@ EDreamPassBufferResolution.Fixed {
 EDreamPassBufferResolution.Output {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferResolution:Output
     src   "The view rect after temporal upscaling: what the post-process chain from SSRInput on, and EndOfView, draw at."
+    text  "时域升采样之后的视图矩形：从 SSRInput 起的后处理链以及 EndOfView 都在这个尺寸上绘制。"
+    state machine
 }
 
 EDreamPassBufferResolution.Render {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferResolution:Render
     src   "The view rect the renderer draws at, before temporal upscaling."
+    text  "渲染器绘制的视图矩形，时域升采样之前。"
+    state machine
 }
 
 EDreamPassCullMode.Auto {
@@ -1672,56 +1722,78 @@ EDreamPassCullMode.Auto {
 EDreamPassDepthMode.None {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDepthMode:None
     src   "No depth test."
+    text  "不做深度测试。"
+    state machine
 }
 
 EDreamPassDepthMode.Own {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDepthMode:Own
     src   "Tested and written against a Depth32 buffer of the pipeline, cleared on its first write."
+    text  "以管线自己的 Depth32 缓冲做测试与写入，首次写入时清空。"
+    state machine
 }
 
 EDreamPassDepthMode.TestScene {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDepthMode:TestScene
     src   "Tested against the scene depth, read only."
+    text  "以场景深度做测试，只读。"
+    state machine
 }
 
 EDreamPassDispatchMode.Buffer {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDispatchMode:Buffer
     src   "One thread per texel of DispatchBuffer, times DispatchScale."
+    text  "DispatchBuffer 每个纹素一个线程，再乘以 DispatchScale。"
+    state machine
 }
 
 EDreamPassDispatchMode.Fixed {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDispatchMode:Fixed
     src   "DispatchSize threads."
+    text  "DispatchSize 个线程。"
+    state machine
 }
 
 EDreamPassFilterKind.Layer {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassFilterKind:Layer
     src   "Primitives whose pass layer mask (UDreamPassLayerComponent) shares a bit with LayerMask."
+    text  "Pass 图层掩码（UDreamPassLayerComponent）与 LayerMask 有共同位的图元。"
+    state machine
 }
 
 EDreamPassFilterKind.List {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassFilterKind:List
     src   "Primitives registered under ListName (UDreamPassSubsystem::AddToList)."
+    text  "以 ListName 注册的图元（UDreamPassSubsystem::AddToList）。"
+    state machine
 }
 
 EDreamPassFilterKind.Stencil {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassFilterKind:Stencil
     src   "Primitives that render CustomDepth with a stencil value matching Value under Mask."
+    text  "以 CustomDepth 渲染、且模板值在 Mask 下匹配 Value 的图元。"
+    state machine
 }
 
 EDreamPassHlslSource {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassHlslSource
     src   "Where an HLSL pass's code comes from in its `.dsp`. What runs is always the slot's snapshot (the compiler's)."
+    text  "HLSL Pass 的代码在其 `.dsp` 中的来源。真正执行的永远是槽位的快照（编译器的那份）。"
+    state machine
 }
 
 EDreamPassHlslSource.Block {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassHlslSource:Block
     src   "The pass's own `hlsl { }` holding declarations; Entry is one of its functions."
+    text  "Pass 自己的 `hlsl { }`，其中是声明；Entry 是它的一个函数。"
+    state machine
 }
 
 EDreamPassHlslSource.Body {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassHlslSource:Body
     src   "The pass's own `hlsl { }` holding the statements of the entry; the compiler writes the function around them."
+    text  "Pass 自己的 `hlsl { }`，其中是入口的语句；编译器在其外围包上函数。"
+    state machine
 }
 
 EDreamPassHlslSource.File {
@@ -1741,41 +1813,57 @@ EDreamPassHlslSource.Shared {
 EDreamPassInjection {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection
     src   "Where in the frame a pass runs. Every pass picks its own; a pipeline only supplies the default. The spelling\na `.dsp` uses for each is LexToString below (`PostProcess.AfterTonemap`), and DreamShaderLang keeps the same\ntable for the binder -- DreamShader.Pass.Logic.InjectionNames checks the two agree."
+    text  "Pass 在帧中的运行位置。每个 Pass 各自选择；管线只提供默认值。`.dsp` 为每个位置使用的写法见下方 LexToString（`PostProcess.AfterTonemap`），DreamShaderLang 为绑定器保留同一张表——DreamShader.Pass.Logic.InjectionNames 会检查两者一致。"
+    state machine
 }
 
 EDreamPassInjection.AfterBasePass {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:AfterBasePass
     src   "PostRenderBasePassDeferred_RenderThread: the GBuffer is written, nothing is lit yet."
+    text  "GBuffer 已写入，尚未开始光照。"
+    state machine
 }
 
 EDreamPassInjection.AfterOpaque {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:AfterOpaque
     src   "The renderer's post-opaque delegate: lighting, fog and sky are done, translucency is not."
+    text  "渲染器的 post-opaque 委托：光照、雾与天空已完成，半透明尚未处理。"
+    state machine
 }
 
 EDreamPassInjection.BeforeBasePass {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:BeforeBasePass
     src   "PreRenderBasePass_RenderThread: the depth prepass is done, the base pass has not started."
+    text  "深度预通道已完成，Base Pass 尚未开始。"
+    state machine
 }
 
 EDreamPassInjection.BeforePostProcess {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:BeforePostProcess
     src   "PrePostProcessPass_RenderThread: everything but the post-process chain, for every view at once."
+    text  "除后处理链之外的一切，一次性处理所有视图。"
+    state machine
 }
 
 EDreamPassInjection.BeginView {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:BeginView
     src   "PreRenderView_RenderThread: before visibility, no scene texture exists yet. Compute and utility passes."
+    text  "可见性之前，还没有场景纹理。用于计算与工具类 Pass。"
+    state machine
 }
 
 EDreamPassInjection.EndOfView {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:EndOfView
     src   "PostRenderView_RenderThread: the view family texture, LDR, output resolution, before the UI."
+    text  "视图族纹理，LDR，输出分辨率，在 UI 之前。"
+    state machine
 }
 
 EDreamPassInjection.PostProcessReplaceTonemapper {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:PostProcessReplaceTonemapper
     src   "Replaces the tonemapper. Only one delegate of every extension runs here, so one pipeline at most."
+    text  "替换色调映射器。此处每个扩展只运行一个委托，所以最多一条管线。"
+    state machine
 }
 
 EDreamPassKind.Clear {
@@ -1795,6 +1883,8 @@ EDreamPassKind.Compute {
 EDreamPassKind.Copy {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassKind:Copy
     src   "One texture copied, or drawn scaled, into another."
+    text  "把一张纹理复制或缩放绘制到另一张。"
+    state machine
 }
 
 EDreamPassKind.Fullscreen {
@@ -1807,31 +1897,43 @@ EDreamPassKind.Fullscreen {
 EDreamPassKind.Mesh {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassKind:Mesh
     src   "Selected primitives drawn again, with an override material or their own."
+    text  "把选中的图元再画一遍，用覆盖材质或它们自己的材质。"
+    state machine
 }
 
 EDreamPassMeshMode.Override {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshMode:Override
     src   "Every selected primitive is drawn with the pass's material."
+    text  "每个选中图元都用该 Pass 的材质绘制。"
+    state machine
 }
 
 EDreamPassMeshMode.Own {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshMode:Own
     src   "Every selected primitive is drawn with its own material; one without UE.DreamPassOutput is skipped."
+    text  "每个选中图元都用自己的材质绘制；没有 UE.DreamPassOutput 的会被跳过。"
+    state machine
 }
 
 EDreamPassMeshMode.OwnOrOverride {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshMode:OwnOrOverride
     src   "Its own material when that has UE.DreamPassOutput, the pass's material otherwise."
+    text  "自身材质带 UE.DreamPassOutput 时用它，否则用该 Pass 的材质。"
+    state machine
 }
 
 EDreamPassMeshUsageFlags {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshUsageFlags
     src   "The vertex factories a mesh pass expects to draw, which its override material needs usage flags for."
+    text  "网格 Pass 预期绘制的顶点工厂；其覆盖材质需要相应的 usage 标志。"
+    state machine
 }
 
 EDreamPassNanitePolicy.AssignStencil {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassNanitePolicy:AssignStencil
     src   "Nanite primitives of a layer or list get CustomDepth and AssignedStencilValue, then StencilMask. Collides with stencil the project uses itself."
+    text  "图层或列表中的 Nanite 图元会得到 CustomDepth 与 AssignedStencilValue，然后是 StencilMask。会与项目自用的模板值冲突。"
+    state machine
 }
 
 EDreamPassNanitePolicy.Skip {
@@ -1844,6 +1946,8 @@ EDreamPassNanitePolicy.Skip {
 EDreamPassNanitePolicy.StencilMask {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassNanitePolicy:StencilMask
     src   "No mesh is drawn; a fullscreen pass writes NaniteValue where CustomStencil matches the pass's stencil filter."
+    text  "不绘制网格；全屏 Pass 在 CustomStencil 匹配其模板过滤器处写入 NaniteValue。"
+    state machine
 }
 
 EDreamPassParamSource.Constant {
@@ -1863,46 +1967,64 @@ EDreamPassParamSource.Parameter {
 EDreamPassParamSource.Weight {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParamSource:Weight
     src   "The pipeline's total weight in this view, times Multiplier, plus Offset."
+    text  "管线在此视图中的总权重，乘以 Multiplier，再加 Offset。"
+    state machine
 }
 
 EDreamPassRequirementFlags {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassRequirementFlags
     src   "What a view must offer for a pipeline to run in it at all. A mask of these is the pipeline's `Requires`."
+    text  "视图必须提供什么，管线才会在其中运行。这些的掩码就是管线的 `Requires`。"
+    state machine
 }
 
 EDreamPassRequirementFlags.CustomStencil {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassRequirementFlags:CustomStencil
     src   "r.CustomDepth is 3, so CustomStencil holds values."
+    text  "r.CustomDepth 为 3，因此 CustomStencil 保存着数值。"
+    state machine
 }
 
 EDreamPassRequirementFlags.PostProcess {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassRequirementFlags:PostProcess
     src   "The view runs the post-process chain (its PostProcess.* points exist)."
+    text  "该视图运行后处理链（其 PostProcess.* 注入点存在）。"
+    state machine
 }
 
 EDreamPassRequirementFlags.SceneResolve {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassRequirementFlags:SceneResolve
     src   "The view resolves the scene (BeforePostProcess exists)."
+    text  "该视图会解析场景（存在 BeforePostProcess）。"
+    state machine
 }
 
 EDreamPassViewFlags {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags
     src   "Which views a pipeline runs in. A mask of these is the pipeline's `Views`."
+    text  "管线在哪些视图中运行。这些的掩码就是管线的 `Views`。"
+    state machine
 }
 
 EDreamPassViewFlags.Editor {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:Editor
     src   "Editor perspective and orthographic viewports. Never hit-proxy views."
+    text  "编辑器透视与正交视口。永不包含命中代理视图。"
+    state machine
 }
 
 EDreamPassViewFlags.Game {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:Game
     src   "Game viewports, PIE included."
+    text  "游戏视口，含 PIE。"
+    state machine
 }
 
 EDreamPassViewFlags.SceneCapture {
     at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:SceneCapture
     src   "Scene captures, 2D and cube, whatever their capture source; `Requires = SceneResolve` leaves out those that do not resolve the scene."
+    text  "场景捕获（2D 与立方体），无论其捕获来源；`Requires = SceneResolve` 会排除不解析场景的那些。"
+    state machine
 }
 
 namespace UObjectCategory

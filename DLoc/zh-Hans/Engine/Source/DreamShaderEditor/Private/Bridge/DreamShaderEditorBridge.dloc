@@ -159,6 +159,8 @@ DreamToolsComboTooltip {
 RecompileAllConfirm {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
     src   "Recompile every DreamShader .dsm and .dsf source file?\n\nThis rebuilds all generated materials and can take a while on a large tree."
+    text  "要重新编译所有 DreamShader 的 .dsm 与 .dsf 源文件吗？\n\n这会重建全部生成的材质，在大型工程上可能要花一些时间。"
+    state machine
 }
 
 DreamShaderRecompileLabel {

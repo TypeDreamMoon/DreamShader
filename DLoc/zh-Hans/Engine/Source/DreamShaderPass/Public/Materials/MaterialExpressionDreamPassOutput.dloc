@@ -42,24 +42,34 @@ namespace UObjectToolTips
 MaterialExpressionDreamPassOutput {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassOutput.h#MaterialExpressionDreamPassOutput
     src   "The values a DreamShader Custom Pass mesh pass writes for this material: a pass's `write Output<i> = <buffer>;`\nwrites pin Output<i> into that buffer. Each pin takes a float1 to float4 and writes a float4; an open pin writes 0.\nA mesh pass that draws objects with their own material skips a material without this node.\n\nAt most one per material, in the material's own graph: the engine compiles no custom output inside a material function.\n`UE.DreamPassOutput(Output0 = ..., Output1 = ...);` in a `.dss`."
+    text  "DreamShader Custom Pass 网格 Pass 为该材质写入的值：Pass 的 `write Output<i> = <buffer>;` 会把引脚 Output<i> 写入该缓冲。每个引脚接受 float1 到 float4，并写出 float4；未连接的引脚写 0。以各自材质绘制对象的网格 Pass 会跳过没有此节点的材质。\n\n每个材质最多一个，且必须在材质自己的图表里：引擎不会在材质函数内编译自定义输出。\n在 `.dss` 里写 `UE.DreamPassOutput(Output0 = ..., Output1 = ...);`。"
+    state machine
 }
 
 MaterialExpressionDreamPassOutput:Output0 {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassOutput.h#MaterialExpressionDreamPassOutput:Output0
     src   "Written by a mesh pass's `write Output0 = <buffer>;`. A float1 is replicated, a float2 or float3 padded with zeros."
+    text  "由网格 Pass 的 `write Output0 = <buffer>;` 写入。float1 会被复制到各分量，float2 或 float3 补零。"
+    state machine
 }
 
 MaterialExpressionDreamPassOutput:Output1 {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassOutput.h#MaterialExpressionDreamPassOutput:Output1
     src   "Written by a mesh pass's `write Output1 = <buffer>;`. A float1 is replicated, a float2 or float3 padded with zeros."
+    text  "由网格 Pass 的 `write Output1 = <buffer>;` 写入。float1 会被复制到各分量，float2 或 float3 补零。"
+    state machine
 }
 
 MaterialExpressionDreamPassOutput:Output2 {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassOutput.h#MaterialExpressionDreamPassOutput:Output2
     src   "Written by a mesh pass's `write Output2 = <buffer>;`. A float1 is replicated, a float2 or float3 padded with zeros."
+    text  "由网格 Pass 的 `write Output2 = <buffer>;` 写入。float1 会被复制到各分量，float2 或 float3 补零。"
+    state machine
 }
 
 MaterialExpressionDreamPassOutput:Output3 {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassOutput.h#MaterialExpressionDreamPassOutput:Output3
     src   "Written by a mesh pass's `write Output3 = <buffer>;`. A float1 is replicated, a float2 or float3 padded with zeros."
+    text  "由网格 Pass 的 `write Output3 = <buffer>;` 写入。float1 会被复制到各分量，float2 或 float3 补零。"
+    state machine
 }

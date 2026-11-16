@@ -178,29 +178,41 @@ namespace UObjectToolTips
 DreamShaderBrowserUserSettings {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings
     src   "Per-user, per-project state of the Material Content Browser: which mode it was in, how the three\npanes were split, which filters were on, what was selected. Saved so the tab reopens the way it\nwas closed rather than reset to defaults every session. Nothing in here is project content."
+    text  "材质内容浏览器的每用户、每项目状态：它当时处于哪个模式、三个面板怎么分、开了哪些过滤、选中了什么。保存下来是为了让标签页按关闭时的样子重新打开，而不是每个会话都重置为默认。这里没有任何项目内容。"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:bHidePipelines {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bHidePipelines
     src   "The quick filter that drops every `.dsp` from the list."
+    text  "把每个 `.dsp` 从列表中剔除的快速过滤。"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:LastSelectedKey {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:LastSelectedKey
     src   "The entry key (source path or object path) selected when the tab was last used."
+    text  "上次使用该标签页时选中的条目键（源路径或对象路径）。"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:NavigationScope {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:NavigationScope
     src   "Navigation tree node that scopes the list: a source directory, or a content path."
+    text  "限定列表范围的导航树节点：一个源目录，或一个内容路径。"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:PreviewMesh {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:PreviewMesh
     src   "Preview primitive for the inspector: sphere, plane, cube, cylinder, shaderball."
+    text  "检查器的预览图元：球体、平面、立方体、圆柱、着色球。"
+    state machine
 }
 
 EDreamShaderBrowserViewMode.Assets {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserViewMode:Assets
     src   "the source tree (.dss/.dsi/.dsp and the 1.x kinds), with compile status"
+    text  "源树（.dss/.dsi/.dsp 以及 1.x 的各类），带编译状态。"
+    state machine
 }
