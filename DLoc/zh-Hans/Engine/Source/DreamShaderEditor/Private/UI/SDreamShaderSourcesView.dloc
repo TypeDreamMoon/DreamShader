@@ -2,10 +2,24 @@ dloc 1
 culture zh-Hans
 namespace DreamShaderMaterialBrowser
 
-ColumnAsset {
+FunctionUsedBy {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
-    src   "Asset"
-    text  "资产"
+    src   "function · used by {0} material(s)"
+    text  "函数 · 被 {0} 个材质使用"
+    state machine
+}
+
+PipelineState {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
+    src   "pass pipeline · {0}"
+    text  "Pass 管线 · {0}"
+    state machine
+}
+
+PipelineBadgeTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
+    src   "A Custom Pass pipeline source (.dsp)."
+    text  "Custom Pass 管线源文件（.dsp）。"
     state machine
 }
 
@@ -30,30 +44,9 @@ ColumnState {
     state machine
 }
 
-FunctionUsedBy {
+ColumnAsset {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
-    src   "function · used by {0} material(s)"
-    text  "函数 · 被 {0} 个材质使用"
-    state machine
-}
-
-PipelineBadgeTip {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
-    src   "A Custom Pass pipeline source (.dsp)."
-    text  "Custom Pass 管线源文件（.dsp）。"
-    state machine
-}
-
-PipelineState {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
-    src   "pass pipeline · {0}"
-    text  "Pass 管线 · {0}"
-    state machine
-}
-
-RootProject {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
-    src   "Project"
-    text  "项目"
+    src   "Asset"
+    text  "资产"
     state machine
 }

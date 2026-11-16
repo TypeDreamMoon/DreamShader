@@ -2,6 +2,20 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.Tools
 
+UnknownShaderPlatform {
+    at    Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp
+    src   "'{0}' is not a shader platform this engine knows. Write SM6, SM5, ES3_1, or a shader format name such as PCD3D_SM6."
+    text  "'{0}' 不是此引擎认识的着色器平台。请写 SM6、SM5、ES3_1，或 PCD3D_SM6 之类的着色器格式名。"
+    state machine
+}
+
+UnknownQualityLevel {
+    at    Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp
+    src   "'{0}' is not a material quality level. Write Low, Medium, High or Epic."
+    text  "'{0}' 不是材质质量级别。请写 Low、Medium、High 或 Epic。"
+    state machine
+}
+
 NoMaterialToCheck {
     at    Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp
     src   "'{0}' produced no material, so there are no shaders to compile; a function library is checked by the material that calls it."
@@ -27,19 +41,5 @@ ShaderErrorsUnreadable {
     at    Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp
     src   "Shader errors cannot be read in this configuration: '-nullrhi' switches the rendering shader maps off, and no cook target platform matched the requested platforms. Re-run without '-nullrhi', or pass a '-Platform=' an active target platform supports."
     text  "在当前配置下读不到着色器错误：'-nullrhi' 关掉了渲染用的 shader map，而且没有任何烘焙目标平台与所请求的平台匹配。请去掉 '-nullrhi' 重新运行，或者传入一个当前目标平台支持的 '-Platform='。"
-    state machine
-}
-
-UnknownQualityLevel {
-    at    Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp
-    src   "'{0}' is not a material quality level. Write Low, Medium, High or Epic."
-    text  "'{0}' 不是材质质量级别。请写 Low、Medium、High 或 Epic。"
-    state machine
-}
-
-UnknownShaderPlatform {
-    at    Source/DreamShaderEditor/Private/Tools/DreamShaderShaderCheck.cpp
-    src   "'{0}' is not a shader platform this engine knows. Write SM6, SM5, ES3_1, or a shader format name such as PCD3D_SM6."
-    text  "'{0}' 不是此引擎认识的着色器平台。请写 SM6、SM5、ES3_1，或 PCD3D_SM6 之类的着色器格式名。"
     state machine
 }

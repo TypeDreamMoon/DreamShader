@@ -2,10 +2,80 @@ dloc 1
 culture zh-Hans
 namespace DreamShaderMaterialBrowser
 
+FactoryCompilerUnavailable {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "The DreamShader compiler module is not available, so the instance was not compiled."
+    text  "DreamShader 编译器模块不可用，因此没有编译该实例。"
+    state machine
+}
+
+NoParent {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "No parent material was provided."
+    text  "未提供父材质。"
+    state machine
+}
+
 BadName {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
     src   "Provide a name and a destination folder."
     text  "请提供名称和目标文件夹。"
+    state machine
+}
+
+FactoryAssetExists {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "An asset already exists at {0}."
+    text  "{0} 已存在资产。"
+    state machine
+}
+
+FactoryCreatePackageFailed {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "Failed to create package {0}."
+    text  "创建包 {0} 失败。"
+    state machine
+}
+
+NewObjectFailed {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "Failed to create the material instance object."
+    text  "创建材质实例对象失败。"
+    state machine
+}
+
+SelectFirst {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "Select a material to create an instance of."
+    text  "请选择要创建实例的材质。"
+    state machine
+}
+
+CreateInstanceTitle {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "Create material instance"
+    text  "创建材质实例"
+    state machine
+}
+
+ParentLabel {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "Parent"
+    text  "父级"
+    state machine
+}
+
+NameLabel {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "Name"
+    text  "名称"
+    state machine
+}
+
+PathLabel {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "Folder"
+    text  "文件夹"
     state machine
 }
 
@@ -23,6 +93,20 @@ BrowseTip {
     state machine
 }
 
+PickFolderTitle {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "Choose a destination folder"
+    text  "选择目标文件夹"
+    state machine
+}
+
+OpenAfter {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "Open the instance after creating"
+    text  "创建后打开实例"
+    state machine
+}
+
 Cancel {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
     src   "Cancel"
@@ -37,45 +121,10 @@ Create {
     state machine
 }
 
-CreateInstanceSourceTitle {
+ParentGone {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Create material instance (.dsi)"
-    text  "创建材质实例 (.dsi)"
-    state machine
-}
-
-CreateInstanceTitle {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Create material instance"
-    text  "创建材质实例"
-    state machine
-}
-
-FactoryAssetExists {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "An asset already exists at {0}."
-    text  "{0} 已存在资产。"
-    state machine
-}
-
-FactoryCompilerUnavailable {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "The DreamShader compiler module is not available, so the instance was not compiled."
-    text  "DreamShader 编译器模块不可用，因此没有编译该实例。"
-    state machine
-}
-
-FactoryCreatePackageFailed {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Failed to create package {0}."
-    text  "创建包 {0} 失败。"
-    state machine
-}
-
-FactoryInstanceSourceNoAsset {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "'{0}' compiled, but no material instance was found at the asset path it builds."
-    text  "'{0}' 已编译，但在它构建的资产路径上没有找到材质实例。"
+    src   "The parent material is no longer available."
+    text  "父材质已不可用。"
     state machine
 }
 
@@ -86,59 +135,17 @@ InstanceCreated {
     state machine
 }
 
-InstanceSourceBrowse {
+FactoryInstanceSourceNoAsset {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Browse..."
-    text  "浏览..."
+    src   "'{0}' compiled, but no material instance was found at the asset path it builds."
+    text  "'{0}' 已编译，但在它构建的资产路径上没有找到材质实例。"
     state machine
 }
 
-InstanceSourceCompileFailed {
+CreateInstanceSourceTitle {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Created {0}, but it did not compile: {1}"
-    text  "已创建 {0}，但它没有编译通过：{1}"
-    state machine
-}
-
-InstanceSourceCreate {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Create .dsi"
-    text  "创建 .dsi"
-    state machine
-}
-
-InstanceSourceCreated {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Created {0}"
-    text  "已创建 {0}"
-    state machine
-}
-
-InstanceSourceFolderLabel {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Source folder"
-    text  "源文件夹"
-    state machine
-}
-
-InstanceSourceHint {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "A .dsi source is written into the folder and compiled now. Its asset lands at the folder's /Game path, and every value you tune there can be adopted back into the file."
-    text  ".dsi 源文件会写进该文件夹并立即编译。它的资产落在该文件夹对应的 /Game 路径下，你在那里调整的每个值都可以采纳回这个文件。"
-    state machine
-}
-
-InstanceSourceNameLabel {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Name"
-    text  "名称"
-    state machine
-}
-
-InstanceSourceOpenAfter {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Open the instance after creating"
-    text  "创建后打开实例"
+    src   "Create material instance (.dsi)"
+    text  "创建材质实例 (.dsi)"
     state machine
 }
 
@@ -149,10 +156,45 @@ InstanceSourceParentLabel {
     state machine
 }
 
+InstanceSourceNameLabel {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "Name"
+    text  "名称"
+    state machine
+}
+
+InstanceSourceFolderLabel {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "Source folder"
+    text  "源文件夹"
+    state machine
+}
+
+InstanceSourceBrowse {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "Browse..."
+    text  "浏览..."
+    state machine
+}
+
 InstanceSourcePickFolder {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
     src   "Choose a source folder"
     text  "选择源文件夹"
+    state machine
+}
+
+InstanceSourceOpenAfter {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "Open the instance after creating"
+    text  "创建后打开实例"
+    state machine
+}
+
+InstanceSourceHint {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
+    src   "A .dsi source is written into the folder and compiled now. Its asset lands at the folder's /Game path, and every value you tune there can be adopted back into the file."
+    text  ".dsi 源文件会写进该文件夹并立即编译。它的资产落在该文件夹对应的 /Game 路径下，你在那里调整的每个值都可以采纳回这个文件。"
     state machine
 }
 
@@ -170,65 +212,23 @@ InstanceSourceUnmanagedTip {
     state machine
 }
 
-NameLabel {
+InstanceSourceCreate {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Name"
-    text  "名称"
+    src   "Create .dsi"
+    text  "创建 .dsi"
     state machine
 }
 
-NewObjectFailed {
+InstanceSourceCreated {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Failed to create the material instance object."
-    text  "创建材质实例对象失败。"
+    src   "Created {0}"
+    text  "已创建 {0}"
     state machine
 }
 
-NoParent {
+InstanceSourceCompileFailed {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "No parent material was provided."
-    text  "未提供父材质。"
-    state machine
-}
-
-OpenAfter {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Open the instance after creating"
-    text  "创建后打开实例"
-    state machine
-}
-
-ParentGone {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "The parent material is no longer available."
-    text  "父材质已不可用。"
-    state machine
-}
-
-ParentLabel {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Parent"
-    text  "父级"
-    state machine
-}
-
-PathLabel {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Folder"
-    text  "文件夹"
-    state machine
-}
-
-PickFolderTitle {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Choose a destination folder"
-    text  "选择目标文件夹"
-    state machine
-}
-
-SelectFirst {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderInstanceFactory.cpp
-    src   "Select a material to create an instance of."
-    text  "请选择要创建实例的材质。"
+    src   "Created {0}, but it did not compile: {1}"
+    text  "已创建 {0}，但它没有编译通过：{1}"
     state machine
 }

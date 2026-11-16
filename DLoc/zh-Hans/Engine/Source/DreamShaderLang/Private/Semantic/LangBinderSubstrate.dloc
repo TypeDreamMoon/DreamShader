@@ -2,10 +2,129 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.Binder.Substrate
 
+SubstrateNodeNeedsEngine {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "{0} needs the node 'Substrate.{1}', which Unreal Engine has from {2} on; this engine does not have it."
+    text  "{0} 需要节点 'Substrate.{1}'，它是 Unreal Engine 从 {2} 起才有的；当前引擎没有它。"
+    state machine
+}
+
+SubstrateNodeMissing {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "{0} needs the node 'Substrate.{1}', and this engine has no such node; Substrate nodes exist from Unreal Engine 5.4 on."
+    text  "{0} 需要节点 'Substrate.{1}'，而当前引擎没有这个节点；Substrate 节点从 Unreal Engine 5.4 起才有。"
+    state machine
+}
+
+SugarPinOf {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "The '{0}' side of {1}"
+    text  "{1} 的 '{0}' 一侧"
+    state machine
+}
+
+SugarAdd {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "'+' over two Substrate values"
+    text  "两个 Substrate 值之间的 '+'"
+    state machine
+}
+
+SugarWeight {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "'*' over a Substrate value and a number"
+    text  "Substrate 值与数值之间的 '*'"
+    state machine
+}
+
+SubstrateOperator {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "Substrate values support only '+' (Substrate.Add) and '* scalar' (Substrate.Weight); use lerp() for mixing and Substrate.Layer() for layering."
+    text  "Substrate 值只支持 '+'（Substrate.Add）和「乘以标量」（Substrate.Weight）；混合请用 lerp()，分层请用 Substrate.Layer()。"
+    state machine
+}
+
+SubstrateLerpMixed {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "'lerp' mixes two Substrate values or two numbers, and these are {0} and {1}."
+    text  "'lerp' 混合的是两个 Substrate 值或两个数值，而这里是 {0} 和 {1}。"
+    state machine
+}
+
+SugarLerp {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "'lerp' over two Substrate values"
+    text  "两个 Substrate 值之间的 'lerp'"
+    state machine
+}
+
+LegacyBuilderRequiredPin {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "'{0}' is used with the required '{1}' pin of '{2}.{3}' unconnected, which 1.x allowed and the engine reports when the material compiles."
+    text  "使用 '{0}' 时，'{2}.{3}' 的必需引脚 '{1}' 尚未连接；1.x 允许这样写，引擎会在材质编译时报错。"
+    state machine
+}
+
+BuilderRequiredPin {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "'{0}' is used with the required '{1}' pin of '{2}.{3}' unconnected; unless the node reads a default for it, the engine reports it when the material compiles."
+    text  "使用 '{0}' 时，'{2}.{3}' 的必需引脚 '{1}' 尚未连接；除非该节点会为它读取默认值，否则引擎会在材质编译时报错。"
+    state machine
+}
+
+BuilderThicknessAlone {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "'{0}.Thickness' is how deep 'Transmittance' is measured, and '{0}' was given no 'Transmittance' before this use."
+    text  "'{0}.Thickness' 表示 'Transmittance' 是在多深处度量的，而在这次使用之前 '{0}' 没有得到 'Transmittance'。"
+    state machine
+}
+
+BuilderRequires {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "'{0}.{1}' is measured against '{2}', and '{0}' was given no '{2}' before this use."
+    text  "'{0}.{1}' 是相对于 '{2}' 来度量的，而在这次使用之前 '{0}' 没有得到 '{2}'。"
+    state machine
+}
+
+BuilderReassigned {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "'{0}' has been assigned a whole Substrate value since it was declared, and that value has no members; build a new value, or write the members before the assignment."
+    text  "'{0}' 在声明之后已经被整体赋过一个 Substrate 值，而那个值没有成员；请另建一个新值，或者把成员写在那次赋值之前。"
+    state machine
+}
+
 BuilderNoSuchPin {
     at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
     src   "'{0}' builds a '{1}.{2}', which has no pin called '{3}'."
     text  "'{0}' 构建的是 '{1}.{2}'，它没有名为 '{3}' 的引脚。"
+    state machine
+}
+
+BuilderSealed {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "The Substrate value '{0}' is sealed: it has been used already, and its node is what it was then. Write its members before using it."
+    text  "Substrate 值 '{0}' 已经封印：它已经被使用过，节点就是当时的样子。请在使用之前写完它的成员。"
+    state machine
+}
+
+BuilderWriteInBranch {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "A member of the Substrate value '{0}' cannot be written inside an 'if': that would be one node in two versions. Build two values and choose between them."
+    text  "不能在 'if' 里写 Substrate 值 '{0}' 的成员：那样同一个节点就会有两个版本。请构建两个值，再在两者之间选择。"
+    state machine
+}
+
+BuilderReadWriteUnset {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "'{0}.{1}' has not been given a value, so there is nothing for this operator to start from; assign it first."
+    text  "'{0}.{1}' 还没有被赋过值，这个运算符没有可以起算的值；请先给它赋值。"
+    state machine
+}
+
+BuilderVirtualConflict {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "'{0}.{1}': '{2}' and '{3}' parameterize the same pins; give one of them."
+    text  "'{0}.{1}'：'{2}' 与 '{3}' 参数化的是同一组引脚；请只给其中一个。"
     state machine
 }
 
@@ -23,122 +142,10 @@ BuilderReadUnset {
     state machine
 }
 
-BuilderReadWriteUnset {
+VirtualTwice {
     at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "'{0}.{1}' has not been given a value, so there is nothing for this operator to start from; assign it first."
-    text  "'{0}.{1}' 还没有被赋过值，这个运算符没有可以起算的值；请先给它赋值。"
-    state machine
-}
-
-BuilderReassigned {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "'{0}' has been assigned a whole Substrate value since it was declared, and that value has no members; build a new value, or write the members before the assignment."
-    text  "'{0}' 在声明之后已经被整体赋过一个 Substrate 值，而那个值没有成员；请另建一个新值，或者把成员写在那次赋值之前。"
-    state machine
-}
-
-BuilderRequiredPin {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "'{0}' is used with the required '{1}' pin of '{2}.{3}' unconnected; unless the node reads a default for it, the engine reports it when the material compiles."
-    text  "使用 '{0}' 时，'{2}.{3}' 的必需引脚 '{1}' 尚未连接；除非该节点会为它读取默认值，否则引擎会在材质编译时报错。"
-    state machine
-}
-
-BuilderRequires {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "'{0}.{1}' is measured against '{2}', and '{0}' was given no '{2}' before this use."
-    text  "'{0}.{1}' 是相对于 '{2}' 来度量的，而在这次使用之前 '{0}' 没有得到 '{2}'。"
-    state machine
-}
-
-BuilderSealed {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "The Substrate value '{0}' is sealed: it has been used already, and its node is what it was then. Write its members before using it."
-    text  "Substrate 值 '{0}' 已经封印：它已经被使用过，节点就是当时的样子。请在使用之前写完它的成员。"
-    state machine
-}
-
-BuilderThicknessAlone {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "'{0}.Thickness' is how deep 'Transmittance' is measured, and '{0}' was given no 'Transmittance' before this use."
-    text  "'{0}.Thickness' 表示 'Transmittance' 是在多深处度量的，而在这次使用之前 '{0}' 没有得到 'Transmittance'。"
-    state machine
-}
-
-BuilderVirtualConflict {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "'{0}.{1}': '{2}' and '{3}' parameterize the same pins; give one of them."
-    text  "'{0}.{1}'：'{2}' 与 '{3}' 参数化的是同一组引脚；请只给其中一个。"
-    state machine
-}
-
-BuilderWriteInBranch {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "A member of the Substrate value '{0}' cannot be written inside an 'if': that would be one node in two versions. Build two values and choose between them."
-    text  "不能在 'if' 里写 Substrate 值 '{0}' 的成员：那样同一个节点就会有两个版本。请构建两个值，再在两者之间选择。"
-    state machine
-}
-
-LegacyBuilderRequiredPin {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "'{0}' is used with the required '{1}' pin of '{2}.{3}' unconnected, which 1.x allowed and the engine reports when the material compiles."
-    text  "使用 '{0}' 时，'{2}.{3}' 的必需引脚 '{1}' 尚未连接；1.x 允许这样写，引擎会在材质编译时报错。"
-    state machine
-}
-
-SubstrateLerpMixed {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "'lerp' mixes two Substrate values or two numbers, and these are {0} and {1}."
-    text  "'lerp' 混合的是两个 Substrate 值或两个数值，而这里是 {0} 和 {1}。"
-    state machine
-}
-
-SubstrateNodeMissing {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "{0} needs the node 'Substrate.{1}', and this engine has no such node; Substrate nodes exist from Unreal Engine 5.4 on."
-    text  "{0} 需要节点 'Substrate.{1}'，而当前引擎没有这个节点；Substrate 节点从 Unreal Engine 5.4 起才有。"
-    state machine
-}
-
-SubstrateNodeNeedsEngine {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "{0} needs the node 'Substrate.{1}', which Unreal Engine has from {2} on; this engine does not have it."
-    text  "{0} 需要节点 'Substrate.{1}'，它是 Unreal Engine 从 {2} 起才有的；当前引擎没有它。"
-    state machine
-}
-
-SubstrateOperator {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "Substrate values support only '+' (Substrate.Add) and '* scalar' (Substrate.Weight); use lerp() for mixing and Substrate.Layer() for layering."
-    text  "Substrate 值只支持 '+'（Substrate.Add）和「乘以标量」（Substrate.Weight）；混合请用 lerp()，分层请用 Substrate.Layer()。"
-    state machine
-}
-
-SugarAdd {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "'+' over two Substrate values"
-    text  "两个 Substrate 值之间的 '+'"
-    state machine
-}
-
-SugarLerp {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "'lerp' over two Substrate values"
-    text  "两个 Substrate 值之间的 'lerp'"
-    state machine
-}
-
-SugarPinOf {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "The '{0}' side of {1}"
-    text  "{1} 的 '{0}' 一侧"
-    state machine
-}
-
-SugarWeight {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "'*' over a Substrate value and a number"
-    text  "Substrate 值与数值之间的 '*'"
+    src   "'{0}' is given twice in this call."
+    text  "'{0}' 在这次调用里给了两次。"
     state machine
 }
 
@@ -146,6 +153,13 @@ VirtualArgumentOf {
     at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
     src   "The '{0}' argument of '{1}.{2}'"
     text  "'{1}.{2}' 的 '{0}' 实参"
+    state machine
+}
+
+VirtualThicknessAlone {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
+    src   "'{0}.{1}': 'Thickness' is how deep 'Transmittance' is measured, and this call gives no 'Transmittance'."
+    text  "'{0}.{1}'：'Thickness' 表示 'Transmittance' 是在多深处度量的，而这次调用没有给 'Transmittance'。"
     state machine
 }
 
@@ -160,19 +174,5 @@ VirtualRequires {
     at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
     src   "'{0}.{1}': '{2}' is measured against '{3}', and this call gives no '{3}'."
     text  "'{0}.{1}'：'{2}' 是相对于 '{3}' 来度量的，而这次调用没有给 '{3}'。"
-    state machine
-}
-
-VirtualThicknessAlone {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "'{0}.{1}': 'Thickness' is how deep 'Transmittance' is measured, and this call gives no 'Transmittance'."
-    text  "'{0}.{1}'：'Thickness' 表示 'Transmittance' 是在多深处度量的，而这次调用没有给 'Transmittance'。"
-    state machine
-}
-
-VirtualTwice {
-    at    Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp
-    src   "'{0}' is given twice in this call."
-    text  "'{0}' 在这次调用里给了两次。"
     state machine
 }

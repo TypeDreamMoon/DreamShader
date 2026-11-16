@@ -2,20 +2,6 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.Lang.Expressions
 
-ArgumentsRightParen {
-    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
-    src   "')' to close an argument list"
-    text  "用于闭合实参列表的 ')'"
-    state machine
-}
-
-CastRightParen {
-    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
-    src   "')' to close a cast"
-    text  "用于闭合类型转换的 ')'"
-    state machine
-}
-
 ExpectedColonInConditional {
     at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
     src   "Expected ':' to complete the conditional operator, found {0}."
@@ -23,17 +9,10 @@ ExpectedColonInConditional {
     state machine
 }
 
-ExpectedExpression {
+CastRightParen {
     at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
-    src   "Expected an expression, found {0}."
-    text  "期望一个表达式,但遇到了 {0}。"
-    state machine
-}
-
-ExpectedInitializerList {
-    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
-    src   "Expected an initializer list, found {0}."
-    text  "期望一个初始化列表,但遇到了 {0}。"
+    src   "')' to close a cast"
+    text  "用于闭合类型转换的 ')'"
     state machine
 }
 
@@ -51,17 +30,10 @@ IndexRightBracket {
     state machine
 }
 
-InitializerListNotAnExpression {
+WhileParsingExpression {
     at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
-    src   "An initializer list is only allowed as a variable initializer, not as a general expression."
-    text  "初始化列表只能用作变量的初始值，不能当作一般表达式。"
-    state machine
-}
-
-InitializerListRightBrace {
-    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
-    src   "'}' to close an initializer list"
-    text  "用于闭合初始化列表的 '}'"
+    src   "an expression"
+    text  "表达式"
     state machine
 }
 
@@ -72,10 +44,17 @@ ParenRightParen {
     state machine
 }
 
-PositionalAfterNamedArgument {
+InitializerListNotAnExpression {
     at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
-    src   "A positional argument cannot follow a named argument; give this argument a name too."
-    text  "位置实参不能跟在具名实参之后；请给这个实参也写上名字。"
+    src   "An initializer list is only allowed as a variable initializer, not as a general expression."
+    text  "初始化列表只能用作变量的初始值，不能当作一般表达式。"
+    state machine
+}
+
+ExpectedExpression {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "Expected an expression, found {0}."
+    text  "期望一个表达式,但遇到了 {0}。"
     state machine
 }
 
@@ -86,10 +65,24 @@ WhileParsingArgumentList {
     state machine
 }
 
-WhileParsingExpression {
+PositionalAfterNamedArgument {
     at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
-    src   "an expression"
-    text  "表达式"
+    src   "A positional argument cannot follow a named argument; give this argument a name too."
+    text  "位置实参不能跟在具名实参之后；请给这个实参也写上名字。"
+    state machine
+}
+
+ArgumentsRightParen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "')' to close an argument list"
+    text  "用于闭合实参列表的 ')'"
+    state machine
+}
+
+ExpectedInitializerList {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "Expected an initializer list, found {0}."
+    text  "期望一个初始化列表,但遇到了 {0}。"
     state machine
 }
 
@@ -97,5 +90,12 @@ WhileParsingInitializerList {
     at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
     src   "an initializer list"
     text  "初始化列表"
+    state machine
+}
+
+InitializerListRightBrace {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "'}' to close an initializer list"
+    text  "用于闭合初始化列表的 '}'"
     state machine
 }

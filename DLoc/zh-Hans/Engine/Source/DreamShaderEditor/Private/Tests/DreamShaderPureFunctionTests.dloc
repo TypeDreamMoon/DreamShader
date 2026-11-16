@@ -2,17 +2,10 @@ dloc 1
 culture zh-Hans
 namespace DreamShaderTests
 
-WireUtils.Float {
+WireUtils.Plain {
     at    Source/DreamShaderEditor/Private/Tests/DreamShaderPureFunctionTests.cpp
-    src   "value {0}"
-    text  "值 {0}"
-    state machine
-}
-
-WireUtils.Inner {
-    at    Source/DreamShaderEditor/Private/Tests/DreamShaderPureFunctionTests.cpp
-    src   "inner {0}"
-    text  "内部 {0}"
+    src   "Generation aborted."
+    text  "生成已中止。"
     state machine
 }
 
@@ -23,6 +16,13 @@ WireUtils.Ordered {
     state machine
 }
 
+WireUtils.Inner {
+    at    Source/DreamShaderEditor/Private/Tests/DreamShaderPureFunctionTests.cpp
+    src   "inner {0}"
+    text  "内部 {0}"
+    state machine
+}
+
 WireUtils.Outer {
     at    Source/DreamShaderEditor/Private/Tests/DreamShaderPureFunctionTests.cpp
     src   "outer [{0}] end"
@@ -30,9 +30,9 @@ WireUtils.Outer {
     state machine
 }
 
-WireUtils.Plain {
+WireUtils.Float {
     at    Source/DreamShaderEditor/Private/Tests/DreamShaderPureFunctionTests.cpp
-    src   "Generation aborted."
-    text  "生成已中止。"
+    src   "value {0}"
+    text  "值 {0}"
     state machine
 }

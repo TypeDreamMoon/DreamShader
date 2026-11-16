@@ -2,6 +2,13 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.ProductIndex
 
+ParentReferenceUnresolved {
+    at    Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp
+    src   "The parent '{0}' does not resolve to an asset path. {1}"
+    text  "父材质 '{0}' 无法解析为资产路径。{1}"
+    state machine
+}
+
 ParentIsSelf {
     at    Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp
     src   "'{0}' names this instance itself as its parent; an instance needs a different material to instance."
@@ -13,13 +20,6 @@ ParentMissing {
     at    Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp
     src   "The parent '{0}' names no material: nothing exists at '{1}', and no DreamShader source under the source roots builds it."
     text  "父材质 '{0}' 指向的不是任何材质：'{1}' 处什么都没有，源根下也没有 DreamShader 源文件构建它。"
-    state machine
-}
-
-ParentNameAmbiguous {
-    at    Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp
-    src   "'{0}' names more than one product under '{1}' ({2}); write the parent's asset path instead."
-    text  "'{0}' 在 '{1}' 下对应不止一个产物（{2}）；请改写父材质的资产路径。"
     state machine
 }
 
@@ -37,9 +37,9 @@ ParentNameNotFound {
     state machine
 }
 
-ParentReferenceUnresolved {
+ParentNameAmbiguous {
     at    Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp
-    src   "The parent '{0}' does not resolve to an asset path. {1}"
-    text  "父材质 '{0}' 无法解析为资产路径。{1}"
+    src   "'{0}' names more than one product under '{1}' ({2}); write the parent's asset path instead."
+    text  "'{0}' 在 '{1}' 下对应不止一个产物（{2}）；请改写父材质的资产路径。"
     state machine
 }

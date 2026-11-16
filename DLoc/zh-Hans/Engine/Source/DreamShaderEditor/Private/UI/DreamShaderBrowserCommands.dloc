@@ -8,3 +8,175 @@ CommandContext {
     text  "材质内容浏览器"
     state machine
 }
+
+namespace UICommands.DreamShaderMaterialBrowser
+
+Refresh {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Refresh"
+}
+
+Refresh_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Rescan the source roots and recompute every status."
+}
+
+CompileSelected {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Compile"
+}
+
+CompileSelected_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Force-recompile the selected sources (in memory)."
+}
+
+CompileStale {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Compile stale"
+}
+
+CompileStale_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Recompile every source whose generated asset is stale or missing."
+}
+
+CompileAll {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Compile all"
+}
+
+CompileAll_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Force-recompile every compilable source -- .dss, .dsi, .dsp, .dsm and .dsf (in memory)."
+}
+
+OpenMaterial {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Open material"
+}
+
+OpenMaterial_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Open the generated material in its asset editor, or a pass pipeline in its details panel."
+}
+
+OpenSource {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Open source"
+}
+
+OpenSource_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Open the source file in your preferred text editor, at the first error when there is one."
+}
+
+CreateInstance {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Create instance"
+}
+
+CreateInstance_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Write a .dsi material instance source of this material and compile it; for a material DreamShader did not generate, create an ordinary material instance."
+}
+
+Materialize {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Materialize"
+}
+
+Materialize_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Write this memory-only material (and its base) to disk."
+}
+
+RevealInContentBrowser {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Reveal in Content Browser"
+}
+
+RevealInContentBrowser_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Select the generated asset in the main Content Browser."
+}
+
+CopySourcePath {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Copy source path"
+}
+
+CopySourcePath_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Copy the absolute source file path to the clipboard."
+}
+
+CopyAssetPath {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Copy asset path"
+}
+
+CopyAssetPath_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Copy the generated asset's object path to the clipboard."
+}
+
+RevertToSource {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Revert to Source"
+}
+
+RevertToSource_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Rebuild this asset from its DreamShader source, discarding every hand edit in it. The source file is not modified."
+}
+
+AdoptIntoSource {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Adopt Into Source"
+}
+
+AdoptIntoSource_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it."
+}
+
+DetachFromDreamShader {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Detach From DreamShader"
+}
+
+DetachFromDreamShader_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it."
+}
+
+ExportSource {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Export .dss"
+}
+
+ExportSource_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Decompile this hand-authored asset into a 2.0 DreamShader source file: a .dss for a material or a material function, a .dsi for a material instance."
+}
+
+FocusSearch {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Search"
+}
+
+FocusSearch_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Focus the search box."
+}
+
+ToggleTileView {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Tiles"
+}
+
+ToggleTileView_ToolTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Show the sources as thumbnail tiles instead of a list."
+}

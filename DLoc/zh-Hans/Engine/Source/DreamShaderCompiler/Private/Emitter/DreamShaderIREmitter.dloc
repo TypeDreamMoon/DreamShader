@@ -2,59 +2,10 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.Emitter
 
-AssetDiverged {
+EmitCancelled {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "'{0}' no longer holds what DreamShader generated into it, so it was not rebuilt. {1}"
-    text  "'{0}' 中的内容已不再是 DreamShader 生成进去的内容，因此没有重建。{1}"
-    state machine
-}
-
-AssetOpenInEditor {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "'{0}' is open in an asset editor, so it was not rebuilt. {1}"
-    text  "'{0}' 正在资产编辑器中打开，因此没有重建。{1}"
-    state machine
-}
-
-BadProductIndex {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "Product index {0} does not exist in this module, which has {1}."
-    text  "产物索引 {0} 在此模块中不存在，该模块共有 {1} 个产物。"
-    state machine
-}
-
-CreateFunctionFailed {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "The material function for '{0}' could not be created or reused. {1}"
-    text  "无法为 '{0}' 创建或复用材质函数。{1}"
-    state machine
-}
-
-CreateInstanceFailed {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "The ThinCustom instance for '{0}' could not be created or reused. {1}"
-    text  "无法为 '{0}' 创建或复用 ThinCustom 实例。{1}"
-    state machine
-}
-
-CreateMaterialFailed {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "The material for '{0}' could not be created or reused. {1}"
-    text  "无法为 '{0}' 创建或复用材质。{1}"
-    state machine
-}
-
-CreateMaterialInstanceFailed {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "The material instance for '{0}' could not be created or reused. {1}"
-    text  "无法为 '{0}' 创建或复用材质实例。{1}"
-    state machine
-}
-
-CreateThinBaseFailed {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "The hidden base material for '{0}' could not be created. {1}"
-    text  "无法为 '{0}' 创建隐藏的基础材质。{1}"
+    src   "Building '{0}' was cancelled; the asset is as it was before this compile."
+    text  "'{0}' 的构建已取消；资产保持这次编译之前的状态。"
     state machine
 }
 
@@ -65,80 +16,24 @@ DeferredToWriteOwner {
     state machine
 }
 
-DestinationFailed {
+SourceHashCurrent {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "'{0}' does not resolve to a valid asset path. {1}"
-    text  "'{0}' 无法解析为有效的资产路径。{1}"
+    src   "'{0}' was left alone: its source hash is unchanged since it was last built."
+    text  "'{0}' 未作改动：自上次构建以来，它的源码哈希没有变化。"
     state machine
 }
 
-EmitCancelled {
+AssetOpenInEditor {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "Building '{0}' was cancelled; the asset is as it was before this compile."
-    text  "'{0}' 的构建已取消；资产保持这次编译之前的状态。"
+    src   "'{0}' is open in an asset editor, so it was not rebuilt. {1}"
+    text  "'{0}' 正在资产编辑器中打开，因此没有重建。{1}"
     state machine
 }
 
-InstanceParentCycle {
+AssetDiverged {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "'{0}' cannot parent to '{1}': that parent already descends from this instance."
-    text  "'{0}' 不能以 '{1}' 为父：这个父材质本身就派生自此实例。"
-    state machine
-}
-
-InstanceParentDoesNotLoad {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "The parent '{0}' of '{1}' does not load; compile the source that builds it, or correct the Parent key."
-    text  "'{1}' 的父材质 '{0}' 无法加载；请编译构建它的源文件，或修正 Parent 键。"
-    state machine
-}
-
-InstanceParentDrift {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "The parent asset '{0}' has no parameter {1} of the kind this instance overrides; the asset is older than its source. Compile the parent source first."
-    text  "父资产 '{0}' 没有此实例所覆盖的那种参数 {1}；该资产比它的源文件旧。请先编译父材质的源文件。"
-    state machine
-}
-
-InstanceParentDropped {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "The engine dropped '{0}' as the parent of '{1}' while applying the static overrides; that parent does not allow them."
-    text  "应用静态覆盖时，引擎撤掉了 '{1}' 的父材质 '{0}'；这个父材质不允许静态覆盖。"
-    state machine
-}
-
-InstanceParentMaterializeFailed {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "The parent '{0}' of '{1}' exists only in memory and could not be saved first. {2}"
-    text  "'{1}' 的父材质 '{0}' 只存在于内存中，无法先行保存。{2}"
-    state machine
-}
-
-InstanceParentMaterialized {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "'{0}' was memory-only, so it was saved to disk first: '{1}' parents to it."
-    text  "'{0}' 原本只存在于内存中，因此先把它保存到了磁盘：'{1}' 以它为父。"
-    state machine
-}
-
-InstanceParentMemoryOnlyForeign {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "The parent '{0}' exists only in memory and no DreamShader source builds it, so '{1}' cannot be saved against it; save the parent first."
-    text  "父材质 '{0}' 只存在于内存中，而且没有 DreamShader 源文件构建它，所以 '{1}' 无法基于它保存；请先保存父材质。"
-    state machine
-}
-
-InstanceValueNotApplied {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "The override of '{0}' could not be applied: {1}"
-    text  "无法应用对 '{0}' 的覆盖：{1}"
-    state machine
-}
-
-NoCatalog {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "The emitter needs the builtin catalog the front end was bound against, but the emit context carries none."
-    text  "发射器需要前端绑定时所用的内建目录，但发射上下文里没有带。"
+    src   "'{0}' no longer holds what DreamShader generated into it, so it was not rebuilt. {1}"
+    text  "'{0}' 中的内容已不再是 DreamShader 生成进去的内容，因此没有重建。{1}"
     state machine
 }
 
@@ -146,6 +41,55 @@ RollbackNotArmed {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
     src   "'{0}' could not be snapshotted before rebuilding it, so a failed rebuild will not be rolled back."
     text  "重建前无法为 '{0}' 创建快照，因此重建失败时不会回滚。"
+    state machine
+}
+
+SettingsRefused {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "A material setting on '{0}' was refused. {1}"
+    text  "'{0}' 上的一项材质设置被拒绝。{1}"
+    state machine
+}
+
+CreateMaterialFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "The material for '{0}' could not be created or reused. {1}"
+    text  "无法为 '{0}' 创建或复用材质。{1}"
+    state machine
+}
+
+SaveMaterialFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "'{0}' was built but could not be saved. {1}"
+    text  "'{0}' 已构建，但无法保存。{1}"
+    state machine
+}
+
+CreateInstanceFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "The ThinCustom instance for '{0}' could not be created or reused. {1}"
+    text  "无法为 '{0}' 创建或复用 ThinCustom 实例。{1}"
+    state machine
+}
+
+CreateThinBaseFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "The hidden base material for '{0}' could not be created. {1}"
+    text  "无法为 '{0}' 创建隐藏的基础材质。{1}"
+    state machine
+}
+
+SaveInstanceFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "'{0}' was built but could not be saved. {1}"
+    text  "'{0}' 已构建，但无法保存。{1}"
+    state machine
+}
+
+CreateFunctionFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "The material function for '{0}' could not be created or reused. {1}"
+    text  "无法为 '{0}' 创建或复用材质函数。{1}"
     state machine
 }
 
@@ -163,17 +107,66 @@ SaveFunctionFailed {
     state machine
 }
 
-SaveInstanceFailed {
+CreateMaterialInstanceFailed {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "'{0}' was built but could not be saved. {1}"
-    text  "'{0}' 已构建，但无法保存。{1}"
+    src   "The material instance for '{0}' could not be created or reused. {1}"
+    text  "无法为 '{0}' 创建或复用材质实例。{1}"
     state machine
 }
 
-SaveMaterialFailed {
+InstanceParentDoesNotLoad {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "'{0}' was built but could not be saved. {1}"
-    text  "'{0}' 已构建，但无法保存。{1}"
+    src   "The parent '{0}' of '{1}' does not load; compile the source that builds it, or correct the Parent key."
+    text  "'{1}' 的父材质 '{0}' 无法加载；请编译构建它的源文件，或修正 Parent 键。"
+    state machine
+}
+
+InstanceParentMemoryOnlyForeign {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "The parent '{0}' exists only in memory and no DreamShader source builds it, so '{1}' cannot be saved against it; save the parent first."
+    text  "父材质 '{0}' 只存在于内存中，而且没有 DreamShader 源文件构建它，所以 '{1}' 无法基于它保存；请先保存父材质。"
+    state machine
+}
+
+InstanceParentMaterializeFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "The parent '{0}' of '{1}' exists only in memory and could not be saved first. {2}"
+    text  "'{1}' 的父材质 '{0}' 只存在于内存中，无法先行保存。{2}"
+    state machine
+}
+
+InstanceParentMaterialized {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "'{0}' was memory-only, so it was saved to disk first: '{1}' parents to it."
+    text  "'{0}' 原本只存在于内存中，因此先把它保存到了磁盘：'{1}' 以它为父。"
+    state machine
+}
+
+InstanceParentCycle {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "'{0}' cannot parent to '{1}': that parent already descends from this instance."
+    text  "'{0}' 不能以 '{1}' 为父：这个父材质本身就派生自此实例。"
+    state machine
+}
+
+InstanceParentDrift {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "The parent asset '{0}' has no parameter {1} of the kind this instance overrides; the asset is older than its source. Compile the parent source first."
+    text  "父资产 '{0}' 没有此实例所覆盖的那种参数 {1}；该资产比它的源文件旧。请先编译父材质的源文件。"
+    state machine
+}
+
+InstanceValueNotApplied {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "The override of '{0}' could not be applied: {1}"
+    text  "无法应用对 '{0}' 的覆盖：{1}"
+    state machine
+}
+
+InstanceParentDropped {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "The engine dropped '{0}' as the parent of '{1}' while applying the static overrides; that parent does not allow them."
+    text  "应用静态覆盖时，引擎撤掉了 '{1}' 的父材质 '{0}'；这个父材质不允许静态覆盖。"
     state machine
 }
 
@@ -184,17 +177,24 @@ SaveMaterialInstanceFailed {
     state machine
 }
 
-SettingsRefused {
+BadProductIndex {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "A material setting on '{0}' was refused. {1}"
-    text  "'{0}' 上的一项材质设置被拒绝。{1}"
+    src   "Product index {0} does not exist in this module, which has {1}."
+    text  "产物索引 {0} 在此模块中不存在，该模块共有 {1} 个产物。"
     state machine
 }
 
-SourceHashCurrent {
+NoCatalog {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
-    src   "'{0}' was left alone: its source hash is unchanged since it was last built."
-    text  "'{0}' 未作改动：自上次构建以来，它的源码哈希没有变化。"
+    src   "The emitter needs the builtin catalog the front end was bound against, but the emit context carries none."
+    text  "发射器需要前端绑定时所用的内建目录，但发射上下文里没有带。"
+    state machine
+}
+
+DestinationFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp
+    src   "'{0}' does not resolve to a valid asset path. {1}"
+    text  "'{0}' 无法解析为有效的资产路径。{1}"
     state machine
 }
 

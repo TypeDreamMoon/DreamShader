@@ -2,10 +2,10 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.Decompiler.Instance
 
-AtlasOverride {
+InstanceWithoutParent {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp
-    src   "'{0}' is a curve atlas row, and '{1}' picks its curve; a '.dsi' can state the row's number and nothing else, so the rebuilt instance loses the curve."
-    text  "'{0}' 是曲线图集的一行，由 '{1}' 选定它的曲线；'.dsi' 只能写出行号，别的写不了，所以重建后的实例会丢失这条曲线。"
+    src   "'{0}' has no parent material, and a '.dsi' is nothing but overrides of one."
+    text  "'{0}' 没有父材质，而 '.dsi' 不过是对某个父材质的一组覆盖。"
     state machine
 }
 
@@ -16,17 +16,10 @@ BoolParameterHoldsNumber {
     state machine
 }
 
-InstanceWithoutParent {
+AtlasOverride {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp
-    src   "'{0}' has no parent material, and a '.dsi' is nothing but overrides of one."
-    text  "'{0}' 没有父材质，而 '.dsi' 不过是对某个父材质的一组覆盖。"
-    state machine
-}
-
-LayerOverridesSkipped {
-    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp
-    src   "'{0}' overrides {1} parameter(s) of its material layers or blends, which a '.dsi' cannot address; they are left out."
-    text  "'{0}' 覆盖了其材质层或混合的 {1} 个参数，而 '.dsi' 无法指向它们；这些覆盖被略去。"
+    src   "'{0}' is a curve atlas row, and '{1}' picks its curve; a '.dsi' can state the row's number and nothing else, so the rebuilt instance loses the curve."
+    text  "'{0}' 是曲线图集的一行，由 '{1}' 选定它的曲线；'.dsi' 只能写出行号，别的写不了，所以重建后的实例会丢失这条曲线。"
     state machine
 }
 
@@ -34,6 +27,13 @@ OverrideNameSanitized {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp
     src   "The parameter '{0}' is not a name a variable can have; it is written under another with '/// @name {0}'."
     text  "参数 '{0}' 不是变量可以使用的名字；它以另一个名字写出，并带上 '/// @name {0}'。"
+    state machine
+}
+
+LayerOverridesSkipped {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp
+    src   "'{0}' overrides {1} parameter(s) of its material layers or blends, which a '.dsi' cannot address; they are left out."
+    text  "'{0}' 覆盖了其材质层或混合的 {1} 个参数，而 '.dsi' 无法指向它们；这些覆盖被略去。"
     state machine
 }
 

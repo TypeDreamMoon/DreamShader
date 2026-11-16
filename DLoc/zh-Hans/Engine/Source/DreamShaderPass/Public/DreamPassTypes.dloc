@@ -1,0 +1,1547 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamPassBufferBinding {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferBinding
+    src   "Dream Pass Buffer Binding"
+}
+
+DreamPassBufferBinding:bPrevious {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferBinding:bPrevious
+    src   "Previous"
+}
+
+DreamPassBufferBinding:Buffer {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferBinding:Buffer
+    src   "Buffer"
+}
+
+DreamPassBufferBinding:Slot {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferBinding:Slot
+    src   "Slot"
+}
+
+DreamPassBufferDesc {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc
+    src   "Dream Pass Buffer Desc"
+}
+
+DreamPassBufferDesc:bClear {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:bClear
+    src   "Clear"
+}
+
+DreamPassBufferDesc:bExport {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:bExport
+    src   "Export"
+}
+
+DreamPassBufferDesc:bHistory {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:bHistory
+    src   "History"
+}
+
+DreamPassBufferDesc:ClearValue {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:ClearValue
+    src   "Clear Value"
+}
+
+DreamPassBufferDesc:Description {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:Description
+    src   "Description"
+}
+
+DreamPassBufferDesc:FixedSize {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:FixedSize
+    src   "Fixed Size"
+}
+
+DreamPassBufferDesc:Format {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:Format
+    src   "Format"
+}
+
+DreamPassBufferDesc:Mips {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:Mips
+    src   "Mips"
+}
+
+DreamPassBufferDesc:Name {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:Name
+    src   "Name"
+}
+
+DreamPassBufferDesc:Resolution {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:Resolution
+    src   "Resolution"
+}
+
+DreamPassBufferDesc:Scale {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:Scale
+    src   "Scale"
+}
+
+DreamPassClearSettings {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassClearSettings
+    src   "Dream Pass Clear Settings"
+}
+
+DreamPassClearSettings:Value {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassClearSettings:Value
+    src   "Value"
+}
+
+DreamPassComputeSettings {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings
+    src   "Dream Pass Compute Settings"
+}
+
+DreamPassComputeSettings:DispatchBuffer {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:DispatchBuffer
+    src   "Dispatch Buffer"
+}
+
+DreamPassComputeSettings:DispatchMode {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:DispatchMode
+    src   "Dispatch Mode"
+}
+
+DreamPassComputeSettings:DispatchScale {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:DispatchScale
+    src   "Dispatch Scale"
+}
+
+DreamPassComputeSettings:DispatchSize {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:DispatchSize
+    src   "Dispatch Size"
+}
+
+DreamPassComputeSettings:Entry {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:Entry
+    src   "Entry"
+}
+
+DreamPassComputeSettings:HlslSource {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:HlslSource
+    src   "Hlsl Source"
+}
+
+DreamPassComputeSettings:InlineHlsl {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:InlineHlsl
+    src   "Inline Hlsl"
+}
+
+DreamPassComputeSettings:InlineHlslLine {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:InlineHlslLine
+    src   "Inline Hlsl Line"
+}
+
+DreamPassComputeSettings:ShaderPath {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:ShaderPath
+    src   "Shader Path"
+}
+
+DreamPassComputeSettings:Slot {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:Slot
+    src   "Slot"
+}
+
+DreamPassComputeSettings:ThreadGroupSize {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:ThreadGroupSize
+    src   "Thread Group Size"
+}
+
+DreamPassDesc {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc
+    src   "Dream Pass Desc"
+}
+
+DreamPassDesc:Clear {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:Clear
+    src   "Clear"
+}
+
+DreamPassDesc:Compute {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:Compute
+    src   "Compute"
+}
+
+DreamPassDesc:Description {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:Description
+    src   "Description"
+}
+
+DreamPassDesc:EnabledParameter {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:EnabledParameter
+    src   "Enabled Parameter"
+}
+
+DreamPassDesc:Fullscreen {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:Fullscreen
+    src   "Fullscreen"
+}
+
+DreamPassDesc:Injection {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:Injection
+    src   "Injection"
+}
+
+DreamPassDesc:Kind {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:Kind
+    src   "Kind"
+}
+
+DreamPassDesc:Mesh {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:Mesh
+    src   "Mesh"
+}
+
+DreamPassDesc:Name {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:Name
+    src   "Name"
+}
+
+DreamPassDesc:Params {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:Params
+    src   "Params"
+}
+
+DreamPassDesc:Reads {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:Reads
+    src   "Reads"
+}
+
+DreamPassDesc:Writes {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:Writes
+    src   "Writes"
+}
+
+DreamPassFilterClause {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterClause
+    src   "Dream Pass Filter Clause"
+}
+
+DreamPassFilterClause:AllOf {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterClause:AllOf
+    src   "All Of"
+}
+
+DreamPassFilterTerm {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterTerm
+    src   "Dream Pass Filter Term"
+}
+
+DreamPassFilterTerm:Kind {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterTerm:Kind
+    src   "Kind"
+}
+
+DreamPassFilterTerm:LayerMask {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterTerm:LayerMask
+    src   "Layer Mask"
+}
+
+DreamPassFilterTerm:LayerNames {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterTerm:LayerNames
+    src   "Layer Names"
+}
+
+DreamPassFilterTerm:ListName {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterTerm:ListName
+    src   "List Name"
+}
+
+DreamPassFilterTerm:StencilMask {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterTerm:StencilMask
+    src   "Stencil Mask"
+}
+
+DreamPassFilterTerm:StencilValue {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterTerm:StencilValue
+    src   "Stencil Value"
+}
+
+DreamPassFullscreenSettings {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings
+    src   "Dream Pass Fullscreen Settings"
+}
+
+DreamPassFullscreenSettings:Entry {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:Entry
+    src   "Entry"
+}
+
+DreamPassFullscreenSettings:HlslSource {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:HlslSource
+    src   "Hlsl Source"
+}
+
+DreamPassFullscreenSettings:InlineHlsl {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:InlineHlsl
+    src   "Inline Hlsl"
+}
+
+DreamPassFullscreenSettings:InlineHlslLine {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:InlineHlslLine
+    src   "Inline Hlsl Line"
+}
+
+DreamPassFullscreenSettings:Material {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:Material
+    src   "Material"
+}
+
+DreamPassFullscreenSettings:PixelSlot {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:PixelSlot
+    src   "Pixel Slot"
+}
+
+DreamPassFullscreenSettings:ShaderPath {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:ShaderPath
+    src   "Shader Path"
+}
+
+DreamPassMeshFilter {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshFilter
+    src   "Dream Pass Mesh Filter"
+}
+
+DreamPassMeshFilter:AnyOf {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshFilter:AnyOf
+    src   "Any Of"
+}
+
+DreamPassMeshSettings {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings
+    src   "Dream Pass Mesh Settings"
+}
+
+DreamPassMeshSettings:AssignedStencilValue {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:AssignedStencilValue
+    src   "Assigned Stencil Value"
+}
+
+DreamPassMeshSettings:Blend {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:Blend
+    src   "Blend"
+}
+
+DreamPassMeshSettings:Cull {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:Cull
+    src   "Cull"
+}
+
+DreamPassMeshSettings:Depth {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:Depth
+    src   "Depth"
+}
+
+DreamPassMeshSettings:DepthBuffer {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:DepthBuffer
+    src   "Depth Buffer"
+}
+
+DreamPassMeshSettings:Filter {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:Filter
+    src   "Filter"
+}
+
+DreamPassMeshSettings:Mode {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:Mode
+    src   "Mode"
+}
+
+DreamPassMeshSettings:Nanite {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:Nanite
+    src   "Nanite"
+}
+
+DreamPassMeshSettings:NaniteValue {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:NaniteValue
+    src   "Nanite Value"
+}
+
+DreamPassMeshSettings:OverrideMaterial {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:OverrideMaterial
+    src   "Override Material"
+}
+
+DreamPassMeshSettings:Usage {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:Usage
+    src   "Usage"
+}
+
+DreamPassParamBinding {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParamBinding
+    src   "Dream Pass Param Binding"
+}
+
+DreamPassParamBinding:Constant {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParamBinding:Constant
+    src   "Constant"
+}
+
+DreamPassParamBinding:Multiplier {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParamBinding:Multiplier
+    src   "Multiplier"
+}
+
+DreamPassParamBinding:Offset {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParamBinding:Offset
+    src   "Offset"
+}
+
+DreamPassParamBinding:Parameter {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParamBinding:Parameter
+    src   "Parameter"
+}
+
+DreamPassParamBinding:Source {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParamBinding:Source
+    src   "Source"
+}
+
+DreamPassParamBinding:Target {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParamBinding:Target
+    src   "Target"
+}
+
+DreamPassParameterDesc {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc
+    src   "Dream Pass Parameter Desc"
+}
+
+DreamPassParameterDesc:bHasSlider {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc:bHasSlider
+    src   "Has Slider"
+}
+
+DreamPassParameterDesc:Default {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc:Default
+    src   "Default"
+}
+
+DreamPassParameterDesc:Description {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc:Description
+    src   "Description"
+}
+
+DreamPassParameterDesc:Group {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc:Group
+    src   "Group"
+}
+
+DreamPassParameterDesc:Name {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc:Name
+    src   "Name"
+}
+
+DreamPassParameterDesc:SliderMax {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc:SliderMax
+    src   "Slider Max"
+}
+
+DreamPassParameterDesc:SliderMin {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc:SliderMin
+    src   "Slider Min"
+}
+
+DreamPassParameterDesc:SortPriority {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc:SortPriority
+    src   "Sort Priority"
+}
+
+DreamPassParameterOverride {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterOverride
+    src   "Dream Pass Parameter Override"
+}
+
+DreamPassParameterOverride:Name {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterOverride:Name
+    src   "Name"
+}
+
+DreamPassParameterOverride:Value {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterOverride:Value
+    src   "Value"
+}
+
+DreamPassParameterValue {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterValue
+    src   "Dream Pass Parameter Value"
+}
+
+DreamPassParameterValue:Bool {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterValue:Bool
+    src   "Bool"
+}
+
+DreamPassParameterValue:Int {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterValue:Int
+    src   "Int"
+}
+
+DreamPassParameterValue:Texture {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterValue:Texture
+    src   "Texture"
+}
+
+DreamPassParameterValue:Type {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterValue:Type
+    src   "Type"
+}
+
+DreamPassParameterValue:Vector {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterValue:Vector
+    src   "Vector"
+}
+
+EDreamPassBlendMode.Add {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBlendMode:Add
+    src   "Add"
+}
+
+EDreamPassBlendMode.AlphaBlend {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBlendMode:AlphaBlend
+    src   "Alpha Blend"
+}
+
+EDreamPassBlendMode.EDreamPassBlendMode_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBlendMode:EDreamPassBlendMode_MAX
+    src   "EDream Pass Blend Mode MAX"
+}
+
+EDreamPassBlendMode.Max {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBlendMode:Max
+    src   "Max"
+}
+
+EDreamPassBlendMode.Min {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBlendMode:Min
+    src   "Min"
+}
+
+EDreamPassBlendMode.Replace {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBlendMode:Replace
+    src   "Replace"
+}
+
+EDreamPassBufferFormat.Depth32 {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:Depth32
+    src   "Depth 32"
+}
+
+EDreamPassBufferFormat.EDreamPassBufferFormat_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:EDreamPassBufferFormat_MAX
+    src   "EDream Pass Buffer Format MAX"
+}
+
+EDreamPassBufferFormat.R16F {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:R16F
+    src   "R16F"
+}
+
+EDreamPassBufferFormat.R32F {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:R32F
+    src   "R32F"
+}
+
+EDreamPassBufferFormat.R32U {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:R32U
+    src   "R32U"
+}
+
+EDreamPassBufferFormat.R8 {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:R8
+    src   "R8"
+}
+
+EDreamPassBufferFormat.RG16F {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:RG16F
+    src   "RG16F"
+}
+
+EDreamPassBufferFormat.RG32F {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:RG32F
+    src   "RG32F"
+}
+
+EDreamPassBufferFormat.RG32U {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:RG32U
+    src   "RG32U"
+}
+
+EDreamPassBufferFormat.RG8 {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:RG8
+    src   "RG8"
+}
+
+EDreamPassBufferFormat.RGBA16F {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:RGBA16F
+    src   "RGBA16F"
+}
+
+EDreamPassBufferFormat.RGBA32F {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:RGBA32F
+    src   "RGBA32F"
+}
+
+EDreamPassBufferFormat.RGBA8 {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:RGBA8
+    src   "RGBA8"
+}
+
+EDreamPassBufferResolution.EDreamPassBufferResolution_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferResolution:EDreamPassBufferResolution_MAX
+    src   "EDream Pass Buffer Resolution MAX"
+}
+
+EDreamPassBufferResolution.Fixed {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferResolution:Fixed
+    src   "Fixed"
+}
+
+EDreamPassBufferResolution.Output {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferResolution:Output
+    src   "Output"
+}
+
+EDreamPassBufferResolution.Render {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferResolution:Render
+    src   "Render"
+}
+
+EDreamPassCullMode.Auto {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassCullMode:Auto
+    src   "Auto"
+}
+
+EDreamPassCullMode.Back {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassCullMode:Back
+    src   "Back"
+}
+
+EDreamPassCullMode.EDreamPassCullMode_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassCullMode:EDreamPassCullMode_MAX
+    src   "EDream Pass Cull Mode MAX"
+}
+
+EDreamPassCullMode.Front {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassCullMode:Front
+    src   "Front"
+}
+
+EDreamPassCullMode.None {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassCullMode:None
+    src   "None"
+}
+
+EDreamPassDepthMode.EDreamPassDepthMode_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDepthMode:EDreamPassDepthMode_MAX
+    src   "EDream Pass Depth Mode MAX"
+}
+
+EDreamPassDepthMode.None {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDepthMode:None
+    src   "None"
+}
+
+EDreamPassDepthMode.Own {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDepthMode:Own
+    src   "Own"
+}
+
+EDreamPassDepthMode.TestScene {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDepthMode:TestScene
+    src   "Test Scene"
+}
+
+EDreamPassDispatchMode.Buffer {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDispatchMode:Buffer
+    src   "Buffer"
+}
+
+EDreamPassDispatchMode.EDreamPassDispatchMode_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDispatchMode:EDreamPassDispatchMode_MAX
+    src   "EDream Pass Dispatch Mode MAX"
+}
+
+EDreamPassDispatchMode.Fixed {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDispatchMode:Fixed
+    src   "Fixed"
+}
+
+EDreamPassFilterKind.EDreamPassFilterKind_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassFilterKind:EDreamPassFilterKind_MAX
+    src   "EDream Pass Filter Kind MAX"
+}
+
+EDreamPassFilterKind.Layer {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassFilterKind:Layer
+    src   "Layer"
+}
+
+EDreamPassFilterKind.List {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassFilterKind:List
+    src   "List"
+}
+
+EDreamPassFilterKind.Stencil {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassFilterKind:Stencil
+    src   "Stencil"
+}
+
+EDreamPassHlslSource.Block {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassHlslSource:Block
+    src   "Block"
+}
+
+EDreamPassHlslSource.Body {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassHlslSource:Body
+    src   "Body"
+}
+
+EDreamPassHlslSource.EDreamPassHlslSource_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassHlslSource:EDreamPassHlslSource_MAX
+    src   "EDream Pass Hlsl Source MAX"
+}
+
+EDreamPassHlslSource.File {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassHlslSource:File
+    src   "File"
+}
+
+EDreamPassHlslSource.Shared {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassHlslSource:Shared
+    src   "Shared"
+}
+
+EDreamPassInjection.AfterBasePass {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:AfterBasePass
+    src   "After Base Pass"
+}
+
+EDreamPassInjection.AfterOpaque {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:AfterOpaque
+    src   "After Opaque"
+}
+
+EDreamPassInjection.BeforeBasePass {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:BeforeBasePass
+    src   "Before Base Pass"
+}
+
+EDreamPassInjection.BeforePostProcess {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:BeforePostProcess
+    src   "Before Post Process"
+}
+
+EDreamPassInjection.BeginView {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:BeginView
+    src   "Begin View"
+}
+
+EDreamPassInjection.Count {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:Count
+    src   "Count"
+}
+
+EDreamPassInjection.EDreamPassInjection_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:EDreamPassInjection_MAX
+    src   "EDream Pass Injection MAX"
+}
+
+EDreamPassInjection.EndOfView {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:EndOfView
+    src   "End Of View"
+}
+
+EDreamPassInjection.PostProcessAfterDOF {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:PostProcessAfterDOF
+    src   "PostProcess.AfterDOF"
+}
+
+EDreamPassInjection.PostProcessAfterFXAA {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:PostProcessAfterFXAA
+    src   "PostProcess.AfterFXAA"
+}
+
+EDreamPassInjection.PostProcessAfterMotionBlur {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:PostProcessAfterMotionBlur
+    src   "PostProcess.AfterMotionBlur"
+}
+
+EDreamPassInjection.PostProcessAfterTonemap {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:PostProcessAfterTonemap
+    src   "PostProcess.AfterTonemap"
+}
+
+EDreamPassInjection.PostProcessBeforeDOF {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:PostProcessBeforeDOF
+    src   "PostProcess.BeforeDOF"
+}
+
+EDreamPassInjection.PostProcessReplaceTonemapper {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:PostProcessReplaceTonemapper
+    src   "PostProcess.ReplaceTonemapper"
+}
+
+EDreamPassInjection.PostProcessTranslucencyAfterDOF {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:PostProcessTranslucencyAfterDOF
+    src   "PostProcess.TranslucencyAfterDOF"
+}
+
+EDreamPassKind.Clear {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassKind:Clear
+    src   "Clear"
+}
+
+EDreamPassKind.Compute {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassKind:Compute
+    src   "Compute"
+}
+
+EDreamPassKind.Copy {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassKind:Copy
+    src   "Copy"
+}
+
+EDreamPassKind.EDreamPassKind_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassKind:EDreamPassKind_MAX
+    src   "EDream Pass Kind MAX"
+}
+
+EDreamPassKind.Fullscreen {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassKind:Fullscreen
+    src   "Fullscreen"
+}
+
+EDreamPassKind.Mesh {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassKind:Mesh
+    src   "Mesh"
+}
+
+EDreamPassMeshMode.EDreamPassMeshMode_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshMode:EDreamPassMeshMode_MAX
+    src   "EDream Pass Mesh Mode MAX"
+}
+
+EDreamPassMeshMode.Override {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshMode:Override
+    src   "Override"
+}
+
+EDreamPassMeshMode.Own {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshMode:Own
+    src   "Own"
+}
+
+EDreamPassMeshMode.OwnOrOverride {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshMode:OwnOrOverride
+    src   "Own or Override"
+}
+
+EDreamPassMeshUsageFlags.EDreamPassMeshUsageFlags_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshUsageFlags:EDreamPassMeshUsageFlags_MAX
+    src   "EDream Pass Mesh Usage Flags MAX"
+}
+
+EDreamPassMeshUsageFlags.GeometryCache {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshUsageFlags:GeometryCache
+    src   "Geometry Cache"
+}
+
+EDreamPassMeshUsageFlags.InstancedStaticMeshes {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshUsageFlags:InstancedStaticMeshes
+    src   "Instanced Static Meshes"
+}
+
+EDreamPassMeshUsageFlags.Landscape {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshUsageFlags:Landscape
+    src   "Landscape"
+}
+
+EDreamPassMeshUsageFlags.None {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshUsageFlags:None
+    src   "None"
+}
+
+EDreamPassMeshUsageFlags.SkeletalMesh {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshUsageFlags:SkeletalMesh
+    src   "Skeletal Mesh"
+}
+
+EDreamPassMeshUsageFlags.SplineMesh {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshUsageFlags:SplineMesh
+    src   "Spline Mesh"
+}
+
+EDreamPassMeshUsageFlags.StaticMesh {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshUsageFlags:StaticMesh
+    src   "Static Mesh"
+}
+
+EDreamPassNanitePolicy.AssignStencil {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassNanitePolicy:AssignStencil
+    src   "Assign Stencil"
+}
+
+EDreamPassNanitePolicy.EDreamPassNanitePolicy_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassNanitePolicy:EDreamPassNanitePolicy_MAX
+    src   "EDream Pass Nanite Policy MAX"
+}
+
+EDreamPassNanitePolicy.Skip {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassNanitePolicy:Skip
+    src   "Skip"
+}
+
+EDreamPassNanitePolicy.StencilMask {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassNanitePolicy:StencilMask
+    src   "Stencil Mask"
+}
+
+EDreamPassParameterType.Bool {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParameterType:Bool
+    src   "Bool"
+}
+
+EDreamPassParameterType.EDreamPassParameterType_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParameterType:EDreamPassParameterType_MAX
+    src   "EDream Pass Parameter Type MAX"
+}
+
+EDreamPassParameterType.Float {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParameterType:Float
+    src   "Float"
+}
+
+EDreamPassParameterType.Float2 {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParameterType:Float2
+    src   "Float 2"
+}
+
+EDreamPassParameterType.Float3 {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParameterType:Float3
+    src   "Float 3"
+}
+
+EDreamPassParameterType.Float4 {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParameterType:Float4
+    src   "Float 4"
+}
+
+EDreamPassParameterType.Int {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParameterType:Int
+    src   "Int"
+}
+
+EDreamPassParameterType.Texture {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParameterType:Texture
+    src   "Texture"
+}
+
+EDreamPassParamSource.Constant {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParamSource:Constant
+    src   "Constant"
+}
+
+EDreamPassParamSource.EDreamPassParamSource_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParamSource:EDreamPassParamSource_MAX
+    src   "EDream Pass Param Source MAX"
+}
+
+EDreamPassParamSource.Parameter {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParamSource:Parameter
+    src   "Parameter"
+}
+
+EDreamPassParamSource.Weight {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParamSource:Weight
+    src   "Weight"
+}
+
+EDreamPassRequirementFlags.CustomStencil {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassRequirementFlags:CustomStencil
+    src   "Custom Stencil"
+}
+
+EDreamPassRequirementFlags.EDreamPassRequirementFlags_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassRequirementFlags:EDreamPassRequirementFlags_MAX
+    src   "EDream Pass Requirement Flags MAX"
+}
+
+EDreamPassRequirementFlags.None {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassRequirementFlags:None
+    src   "None"
+}
+
+EDreamPassRequirementFlags.PostProcess {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassRequirementFlags:PostProcess
+    src   "Post Process"
+}
+
+EDreamPassRequirementFlags.SceneResolve {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassRequirementFlags:SceneResolve
+    src   "Scene Resolve"
+}
+
+EDreamPassViewFlags.Editor {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:Editor
+    src   "Editor"
+}
+
+EDreamPassViewFlags.EDreamPassViewFlags_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:EDreamPassViewFlags_MAX
+    src   "EDream Pass View Flags MAX"
+}
+
+EDreamPassViewFlags.Game {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:Game
+    src   "Game"
+}
+
+EDreamPassViewFlags.None {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:None
+    src   "None"
+}
+
+EDreamPassViewFlags.PlanarReflection {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:PlanarReflection
+    src   "Planar Reflection"
+}
+
+EDreamPassViewFlags.ReflectionCapture {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:ReflectionCapture
+    src   "Reflection Capture"
+}
+
+EDreamPassViewFlags.SceneCapture {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:SceneCapture
+    src   "Scene Capture"
+}
+
+EDreamPassViewFlags.Thumbnail {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:Thumbnail
+    src   "Thumbnail"
+}
+
+namespace UObjectToolTips
+
+DreamPassBufferBinding {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferBinding
+    src   "`read X = B;` / `write Y = B;`: the name a pass knows a texture by, and the buffer it is."
+}
+
+DreamPassBufferBinding:bPrevious {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferBinding:bPrevious
+    src   "`B.Previous`: last frame's contents of a History buffer. Reads only."
+}
+
+DreamPassBufferBinding:Buffer {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferBinding:Buffer
+    src   "A declared buffer, or a built-in one (SceneColor, SceneDepth, CustomDepth, CustomStencil, GBufferA..F, Velocity, Translucency)."
+}
+
+DreamPassBufferBinding:Slot {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferBinding:Slot
+    src   "What the pass calls it: a UserSceneTexture name in a fullscreen material, an HLSL name in a `.usf`,\nOutput0..3 in a mesh pass. Empty in a fullscreen material pass's one write."
+}
+
+DreamPassBufferDesc {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc
+    src   "One named texture of a pipeline (`buffer` in a `.dsp`)."
+}
+
+DreamPassBufferDesc:bClear {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:bClear
+    src   "Cleared to ClearValue when the frame first writes or reads it. False is `Clear = None`: a read before every write is an error."
+}
+
+DreamPassBufferDesc:bExport {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:bExport
+    src   "Copied into ExportTarget after its last writer, for ordinary materials, Blueprints, UMG and Niagara to read."
+}
+
+DreamPassBufferDesc:bHistory {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:bHistory
+    src   "Kept from one frame to the next, per view; `<Name>.Previous` reads last frame's."
+}
+
+DreamPassBufferDesc:Description {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:Description
+    src   "`/// @desc`."
+}
+
+DreamPassBufferDesc:Mips {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:Mips
+    src   "Only mip 0 is writable by passes; mip chains are not supported yet. Other counts fail pipeline validation."
+}
+
+DreamPassBufferDesc:Scale {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:Scale
+    src   "Relative to Resolution. Ignored for Fixed."
+}
+
+DreamPassComputeSettings:HlslSource {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:HlslSource
+    src   "Where the pass's code is."
+}
+
+DreamPassComputeSettings:InlineHlsl {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:InlineHlsl
+    src   "Block and Body: the text between the braces of the pass's `hlsl { }`, verbatim. Kept for the way back to text."
+}
+
+DreamPassComputeSettings:InlineHlslLine {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:InlineHlslLine
+    src   "Block and Body: the line of that `{` in the `.dsp`."
+}
+
+DreamPassComputeSettings:ShaderPath {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:ShaderPath
+    src   "The `.usf` as the `.dsp` names it: relative to the `.dsp`'s folder, or a virtual shader path. What runs is the slot's snapshot."
+}
+
+DreamPassComputeSettings:Slot {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:Slot
+    src   "The FDreamPassCS slot the compiler gave this shader."
+}
+
+DreamPassComputeSettings:ThreadGroupSize {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:ThreadGroupSize
+    src   "`[numthreads(x, y, z)]`, read from the source or written as `Threads = uint3(...)`."
+}
+
+DreamPassDesc {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc
+    src   "One pass of a pipeline (`pass` in a `.dsp`). Only the settings of its Kind are read."
+}
+
+DreamPassDesc:Description {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:Description
+    src   "`/// @desc`."
+}
+
+DreamPassDesc:EnabledParameter {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:EnabledParameter
+    src   "A Bool parameter; the pass is skipped in a view where it is false. None: always on."
+}
+
+DreamPassFilterClause {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterClause
+    src   "Terms that must all hold (`a & b`)."
+}
+
+DreamPassFilterTerm:LayerMask {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterTerm:LayerMask
+    src   "Bits are the project settings' layer table: bit i is LayerNames[i]."
+}
+
+DreamPassFilterTerm:LayerNames {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterTerm:LayerNames
+    src   "The layer names LayerMask was made from, kept so the decompiler can write them back as they were spelled."
+}
+
+DreamPassFullscreenSettings:HlslSource {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:HlslSource
+    src   "An HLSL pass: where its code is. Meaningless for a material pass."
+}
+
+DreamPassFullscreenSettings:InlineHlsl {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:InlineHlsl
+    src   "Block and Body: the text between the braces of the pass's `hlsl { }`, verbatim. Kept for the way back to text."
+}
+
+DreamPassFullscreenSettings:InlineHlslLine {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:InlineHlslLine
+    src   "Block and Body: the line of that `{` in the `.dsp`."
+}
+
+DreamPassFullscreenSettings:Material {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:Material
+    src   "The Post Process material a material pass draws (`Material =`). Null for an HLSL pass."
+}
+
+DreamPassFullscreenSettings:PixelSlot {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:PixelSlot
+    src   "The FDreamPassPS slot the compiler gave an HLSL pass, whatever its output count: a `.usf` always runs in a pixel\nshader slot, never through a material. INDEX_NONE for a material pass."
+}
+
+DreamPassFullscreenSettings:ShaderPath {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:ShaderPath
+    src   "An HLSL pass's `.usf` as its `.dsp` names it: relative to the `.dsp`'s folder, or a virtual shader path. Kept for the\nway back to text and for the editor; what runs is the slot's snapshot of the file. Empty for a material pass."
+}
+
+DreamPassMeshFilter {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshFilter
+    src   "A mesh pass's selection, in disjunctive normal form: any clause (`|`), each an `&` of terms."
+}
+
+DreamPassMeshSettings:AssignedStencilValue {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:AssignedStencilValue
+    src   "The stencil value AssignStencil gives the Nanite members of the filter's layers and lists."
+}
+
+DreamPassMeshSettings:DepthBuffer {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:DepthBuffer
+    src   "The Depth32 buffer of `Depth = Own(Name)`."
+}
+
+DreamPassMeshSettings:NaniteValue {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:NaniteValue
+    src   "What StencilMask writes where a Nanite primitive is."
+}
+
+DreamPassMeshSettings:OverrideMaterial {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:OverrideMaterial
+    src   "A Surface material with UE.DreamPassOutput. Required by Override and OwnOrOverride."
+}
+
+DreamPassMeshSettings:Usage {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:Usage
+    src   "EDreamPassMeshUsageFlags."
+}
+
+DreamPassParamBinding {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParamBinding
+    src   "`param P = E;`: one input of a pass, and where its value comes from each frame."
+}
+
+DreamPassParamBinding:Target {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParamBinding:Target
+    src   "A material parameter name, or an HLSL parameter name."
+}
+
+DreamPassParameterDesc {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc
+    src   "One parameter a pipeline declares (`uniform` in a `.dsp`)."
+}
+
+DreamPassParameterDesc:Description {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc:Description
+    src   "`/// @desc`."
+}
+
+DreamPassParameterDesc:Group {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc:Group
+    src   "`/// @group`, with `|` between nesting levels."
+}
+
+DreamPassParameterDesc:SortPriority {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterDesc:SortPriority
+    src   "`/// @sort`."
+}
+
+DreamPassParameterOverride {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterOverride
+    src   "A parameter an activation (the project settings, a volume, a component, an API call) sets for its pipeline."
+}
+
+DreamPassParameterValue {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterValue
+    src   "A pipeline parameter's value, its default, or the value an activation overrides it with."
+}
+
+DreamPassParameterValue:Vector {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterValue:Vector
+    src   "Float to Float4: the components in use; the rest are 0."
+}
+
+EDreamPassBufferFormat.Depth32 {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferFormat:Depth32
+    src   "Depth only: the own depth of a mesh pass (`Depth = Own(Name)`)."
+}
+
+EDreamPassBufferResolution {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferResolution
+    src   "What a buffer's size is relative to."
+}
+
+EDreamPassBufferResolution.Fixed {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferResolution:Fixed
+    src   "`Size = int2(w, h)`, independent of the view."
+}
+
+EDreamPassBufferResolution.Output {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferResolution:Output
+    src   "The view rect after temporal upscaling: what the post-process chain from SSRInput on, and EndOfView, draw at."
+}
+
+EDreamPassBufferResolution.Render {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassBufferResolution:Render
+    src   "The view rect the renderer draws at, before temporal upscaling."
+}
+
+EDreamPassCullMode.Auto {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassCullMode:Auto
+    src   "As the primitive's own material and the primitive say, also when the pass draws an override material."
+}
+
+EDreamPassDepthMode.None {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDepthMode:None
+    src   "No depth test."
+}
+
+EDreamPassDepthMode.Own {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDepthMode:Own
+    src   "Tested and written against a Depth32 buffer of the pipeline, cleared on its first write."
+}
+
+EDreamPassDepthMode.TestScene {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDepthMode:TestScene
+    src   "Tested against the scene depth, read only."
+}
+
+EDreamPassDispatchMode.Buffer {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDispatchMode:Buffer
+    src   "One thread per texel of DispatchBuffer, times DispatchScale."
+}
+
+EDreamPassDispatchMode.Fixed {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassDispatchMode:Fixed
+    src   "DispatchSize threads."
+}
+
+EDreamPassFilterKind.Layer {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassFilterKind:Layer
+    src   "Primitives whose pass layer mask (UDreamPassLayerComponent) shares a bit with LayerMask."
+}
+
+EDreamPassFilterKind.List {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassFilterKind:List
+    src   "Primitives registered under ListName (UDreamPassSubsystem::AddToList)."
+}
+
+EDreamPassFilterKind.Stencil {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassFilterKind:Stencil
+    src   "Primitives that render CustomDepth with a stencil value matching Value under Mask."
+}
+
+EDreamPassHlslSource {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassHlslSource
+    src   "Where an HLSL pass's code comes from in its `.dsp`. What runs is always the slot's snapshot (the compiler's)."
+}
+
+EDreamPassHlslSource.Block {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassHlslSource:Block
+    src   "The pass's own `hlsl { }` holding declarations; Entry is one of its functions."
+}
+
+EDreamPassHlslSource.Body {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassHlslSource:Body
+    src   "The pass's own `hlsl { }` holding the statements of the entry; the compiler writes the function around them."
+}
+
+EDreamPassHlslSource.File {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassHlslSource:File
+    src   "A shader file the `.dsp` names: `Shader = \"...\"` (ShaderPath)."
+}
+
+EDreamPassHlslSource.Shared {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassHlslSource:Shared
+    src   "`Entry = X;` alone: X is a function of the `.dsp`'s file-level `hlsl { }` (UDreamPassPipeline::SharedHlsl)."
+}
+
+EDreamPassInjection {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection
+    src   "Where in the frame a pass runs. Every pass picks its own; a pipeline only supplies the default. The spelling\na `.dsp` uses for each is LexToString below (`PostProcess.AfterTonemap`), and DreamShaderLang keeps the same\ntable for the binder -- DreamShader.Pass.Logic.InjectionNames checks the two agree."
+}
+
+EDreamPassInjection.AfterBasePass {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:AfterBasePass
+    src   "PostRenderBasePassDeferred_RenderThread: the GBuffer is written, nothing is lit yet."
+}
+
+EDreamPassInjection.AfterOpaque {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:AfterOpaque
+    src   "The renderer's post-opaque delegate: lighting, fog and sky are done, translucency is not."
+}
+
+EDreamPassInjection.BeforeBasePass {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:BeforeBasePass
+    src   "PreRenderBasePass_RenderThread: the depth prepass is done, the base pass has not started."
+}
+
+EDreamPassInjection.BeforePostProcess {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:BeforePostProcess
+    src   "PrePostProcessPass_RenderThread: everything but the post-process chain, for every view at once."
+}
+
+EDreamPassInjection.BeginView {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:BeginView
+    src   "PreRenderView_RenderThread: before visibility, no scene texture exists yet. Compute and utility passes."
+}
+
+EDreamPassInjection.EndOfView {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:EndOfView
+    src   "PostRenderView_RenderThread: the view family texture, LDR, output resolution, before the UI."
+}
+
+EDreamPassInjection.PostProcessReplaceTonemapper {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassInjection:PostProcessReplaceTonemapper
+    src   "Replaces the tonemapper. Only one delegate of every extension runs here, so one pipeline at most."
+}
+
+EDreamPassKind.Clear {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassKind:Clear
+    src   "A buffer cleared to a value."
+}
+
+EDreamPassKind.Compute {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassKind:Compute
+    src   "A `.usf` compute shader through one of the global shader slots."
+}
+
+EDreamPassKind.Copy {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassKind:Copy
+    src   "One texture copied, or drawn scaled, into another."
+}
+
+EDreamPassKind.Fullscreen {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassKind:Fullscreen
+    src   "A Post Process material, or a `.usf` pixel shader, drawn over the view."
+}
+
+EDreamPassKind.Mesh {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassKind:Mesh
+    src   "Selected primitives drawn again, with an override material or their own."
+}
+
+EDreamPassMeshMode.Override {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshMode:Override
+    src   "Every selected primitive is drawn with the pass's material."
+}
+
+EDreamPassMeshMode.Own {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshMode:Own
+    src   "Every selected primitive is drawn with its own material; one without UE.DreamPassOutput is skipped."
+}
+
+EDreamPassMeshMode.OwnOrOverride {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshMode:OwnOrOverride
+    src   "Its own material when that has UE.DreamPassOutput, the pass's material otherwise."
+}
+
+EDreamPassMeshUsageFlags {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassMeshUsageFlags
+    src   "The vertex factories a mesh pass expects to draw, which its override material needs usage flags for."
+}
+
+EDreamPassNanitePolicy.AssignStencil {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassNanitePolicy:AssignStencil
+    src   "Nanite primitives of a layer or list get CustomDepth and AssignedStencilValue, then StencilMask. Collides with stencil the project uses itself."
+}
+
+EDreamPassNanitePolicy.Skip {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassNanitePolicy:Skip
+    src   "A Nanite primitive is skipped; a warning says so once per pass."
+}
+
+EDreamPassNanitePolicy.StencilMask {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassNanitePolicy:StencilMask
+    src   "No mesh is drawn; a fullscreen pass writes NaniteValue where CustomStencil matches the pass's stencil filter."
+}
+
+EDreamPassParamSource.Constant {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParamSource:Constant
+    src   "A value folded when the `.dsp` compiled."
+}
+
+EDreamPassParamSource.Parameter {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParamSource:Parameter
+    src   "A pipeline parameter, times Multiplier, plus Offset."
+}
+
+EDreamPassParamSource.Weight {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassParamSource:Weight
+    src   "The pipeline's total weight in this view, times Multiplier, plus Offset."
+}
+
+EDreamPassRequirementFlags {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassRequirementFlags
+    src   "What a view must offer for a pipeline to run in it at all. A mask of these is the pipeline's `Requires`."
+}
+
+EDreamPassRequirementFlags.CustomStencil {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassRequirementFlags:CustomStencil
+    src   "r.CustomDepth is 3, so CustomStencil holds values."
+}
+
+EDreamPassRequirementFlags.PostProcess {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassRequirementFlags:PostProcess
+    src   "The view runs the post-process chain (its PostProcess.* points exist)."
+}
+
+EDreamPassRequirementFlags.SceneResolve {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassRequirementFlags:SceneResolve
+    src   "The view resolves the scene (BeforePostProcess exists)."
+}
+
+EDreamPassViewFlags {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags
+    src   "Which views a pipeline runs in. A mask of these is the pipeline's `Views`."
+}
+
+EDreamPassViewFlags.Editor {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:Editor
+    src   "Editor perspective and orthographic viewports. Never hit-proxy views."
+}
+
+EDreamPassViewFlags.Game {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:Game
+    src   "Game viewports, PIE included."
+}
+
+EDreamPassViewFlags.SceneCapture {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#EDreamPassViewFlags:SceneCapture
+    src   "Scene captures, 2D and cube, whatever their capture source; `Requires = SceneResolve` leaves out those that do not resolve the scene."
+}
+
+namespace UObjectCategory
+
+Binding {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferBinding:Slot
+    src   "Binding"
+}
+
+Buffer {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassBufferDesc:Name
+    src   "Buffer"
+}
+
+Clear {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassClearSettings:Value
+    src   "Clear"
+}
+
+Compute {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassComputeSettings:ShaderPath
+    src   "Compute"
+}
+
+Pass {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassDesc:Name
+    src   "Pass"
+}
+
+Filter {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFilterTerm:Kind
+    src   "Filter"
+}
+
+Fullscreen {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassFullscreenSettings:Material
+    src   "Fullscreen"
+}
+
+Mesh {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassMeshSettings:Filter
+    src   "Mesh"
+}
+
+Parameter {
+    at    Source/DreamShaderPass/Public/DreamPassTypes.h#DreamPassParameterOverride:Name
+    src   "Parameter"
+}

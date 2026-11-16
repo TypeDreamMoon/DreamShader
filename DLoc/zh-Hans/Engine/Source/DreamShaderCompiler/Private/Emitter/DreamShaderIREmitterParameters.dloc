@@ -2,38 +2,17 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.Emitter
 
-BadSamplerType {
+StaticBoolParamFailed {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp
-    src   "'{0}' is not a sampler type; write one of the EMaterialSamplerType names, such as Color, Normal or LinearColor."
-    text  "'{0}' 不是采样器类型；请写 EMaterialSamplerType 中的某个名称，例如 Color、Normal 或 LinearColor。"
+    src   "Failed to create a StaticBoolParameter node."
+    text  "无法创建 StaticBoolParameter 节点。"
     state machine
 }
 
-NoOrganizationField {
+VectorParamFailed {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp
-    src   "'{0}' exposes no '{1}' field, so that value was not written."
-    text  "'{0}' 没有公开 '{1}' 字段，因此没有写入该值。"
-    state machine
-}
-
-NoParameterNameProperty {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp
-    src   "'{0}' exposes no ParameterName, so the name '{1}' was not written."
-    text  "'{0}' 没有公开 ParameterName，因此没有写入名称 '{1}'。"
-    state machine
-}
-
-OrganizationFieldFailed {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp
-    src   "'{0}' could not take '{1}' for its '{2}' field. {3}"
-    text  "'{0}' 的 '{2}' 字段无法接受 '{1}'。{3}"
-    state machine
-}
-
-ParameterNameFailed {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp
-    src   "'{0}' could not take '{1}' as its parameter name. {2}"
-    text  "'{0}' 无法使用 '{1}' 作为参数名。{2}"
+    src   "Failed to create a VectorParameter node."
+    text  "无法创建 VectorParameter 节点。"
     state machine
 }
 
@@ -44,17 +23,10 @@ ScalarParamFailed {
     state machine
 }
 
-StaticBoolParamFailed {
+TextureParamFailed {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp
-    src   "Failed to create a StaticBoolParameter node."
-    text  "无法创建 StaticBoolParameter 节点。"
-    state machine
-}
-
-TextureDefaultMissing {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp
-    src   "The default texture for parameter '{0}' could not be loaded from '{1}'."
-    text  "无法从 '{1}' 加载参数 '{0}' 的默认纹理。"
+    src   "Failed to create a TextureObjectParameter node."
+    text  "无法创建 TextureObjectParameter 节点。"
     state machine
 }
 
@@ -65,16 +37,44 @@ TextureDefaultReferenceUnresolved {
     state machine
 }
 
-TextureParamFailed {
+TextureDefaultMissing {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp
-    src   "Failed to create a TextureObjectParameter node."
-    text  "无法创建 TextureObjectParameter 节点。"
+    src   "The default texture for parameter '{0}' could not be loaded from '{1}'."
+    text  "无法从 '{1}' 加载参数 '{0}' 的默认纹理。"
     state machine
 }
 
-VectorParamFailed {
+BadSamplerType {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp
-    src   "Failed to create a VectorParameter node."
-    text  "无法创建 VectorParameter 节点。"
+    src   "'{0}' is not a sampler type; write one of the EMaterialSamplerType names, such as Color, Normal or LinearColor."
+    text  "'{0}' 不是采样器类型；请写 EMaterialSamplerType 中的某个名称，例如 Color、Normal 或 LinearColor。"
+    state machine
+}
+
+ParameterNameFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp
+    src   "'{0}' could not take '{1}' as its parameter name. {2}"
+    text  "'{0}' 无法使用 '{1}' 作为参数名。{2}"
+    state machine
+}
+
+NoParameterNameProperty {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp
+    src   "'{0}' exposes no ParameterName, so the name '{1}' was not written."
+    text  "'{0}' 没有公开 ParameterName，因此没有写入名称 '{1}'。"
+    state machine
+}
+
+NoOrganizationField {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp
+    src   "'{0}' exposes no '{1}' field, so that value was not written."
+    text  "'{0}' 没有公开 '{1}' 字段，因此没有写入该值。"
+    state machine
+}
+
+OrganizationFieldFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp
+    src   "'{0}' could not take '{1}' for its '{2}' field. {3}"
+    text  "'{0}' 的 '{2}' 字段无法接受 '{1}'。{3}"
     state machine
 }

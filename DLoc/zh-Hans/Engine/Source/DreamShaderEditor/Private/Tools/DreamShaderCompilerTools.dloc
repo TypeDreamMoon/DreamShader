@@ -2,10 +2,31 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.Tools
 
+NotALang2SourceForVerb {
+    at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
+    src   "'{0}' is not a compilable DreamShader source (.dss, .dsi, .dsp, .dsm or .dsf), so '{1}' has nothing to do with it; a .dsh header is checked through a source that includes it."
+    text  "'{0}' 不是可编译的 DreamShader 源文件（.dss、.dsi、.dsp、.dsm 或 .dsf），因此 '{1}' 对它无事可做；.dsh 头文件要通过包含它的源文件来检查。"
+    state machine
+}
+
+VerbCheck {
+    at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
+    src   "check"
+    text  "check"
+    state machine
+}
+
 DiagnosticsOutFailed {
     at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
     src   "The diagnostics JSON could not be written: {0}."
     text  "无法写入诊断 JSON：{0}。"
+    state machine
+}
+
+VerbDumpIR {
+    at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
+    src   "dump-ir"
+    text  "dump-ir"
     state machine
 }
 
@@ -23,6 +44,13 @@ DumpLayoutBadStyle {
     state machine
 }
 
+VerbDumpLayout {
+    at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
+    src   "dump-layout"
+    text  "dump-layout"
+    state machine
+}
+
 DumpLayoutWriteFailed {
     at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
     src   "The layout dump could not be written: {0}."
@@ -30,24 +58,17 @@ DumpLayoutWriteFailed {
     state machine
 }
 
-ExportCatalogEmpty {
+VerbIndex {
     at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
-    src   "The builtin catalog came back empty, so '{0}' describes no expression at all. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded."
-    text  "得到的内置目录为空，因此 '{0}' 中没有描述任何表达式。反射没有找到任何 UMaterialExpression 类，这通常意味着 Engine 模块没有加载。"
+    src   "index"
+    text  "index"
     state machine
 }
 
-ExportCatalogWriteFailed {
+IndexWriteFailed {
     at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
-    src   "The builtin catalog manifest could not be written: {0}."
-    text  "无法写入内置目录清单：{0}。"
-    state machine
-}
-
-FormatCheckWouldChange {
-    at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
-    src   "'{0}' is not in the formatter's layout; 'dsc fmt' would rewrite it."
-    text  "'{0}' 不符合格式化器的排版；'dsc fmt' 会改写它。"
+    src   "The symbol index could not be written: {0}."
+    text  "无法写入符号索引：{0}。"
     state machine
 }
 
@@ -58,6 +79,13 @@ FormatReadFailed {
     state machine
 }
 
+FormatCheckWouldChange {
+    at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
+    src   "'{0}' is not in the formatter's layout; 'dsc fmt' would rewrite it."
+    text  "'{0}' 不符合格式化器的排版；'dsc fmt' 会改写它。"
+    state machine
+}
+
 FormatWriteFailed {
     at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
     src   "The formatted text of '{0}' could not be written: {1}. A file that is read-only -- checked in, not checked out -- is the usual reason."
@@ -65,10 +93,17 @@ FormatWriteFailed {
     state machine
 }
 
-IndexWriteFailed {
+ListGeneratedUnknownFormat {
     at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
-    src   "The symbol index could not be written: {0}."
-    text  "无法写入符号索引：{0}。"
+    src   "'-As={0}' is no list format; the four are Packages, Files, GitIgnore and Json."
+    text  "'-As={0}' 不是列表格式；四种格式是 Packages、Files、GitIgnore 和 Json。"
+    state machine
+}
+
+VerbListGenerated {
+    at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
+    src   "list-generated"
+    text  "list-generated"
     state machine
 }
 
@@ -86,13 +121,6 @@ ListGeneratedOutsideProject {
     state machine
 }
 
-ListGeneratedUnknownFormat {
-    at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
-    src   "'-As={0}' is no list format; the four are Packages, Files, GitIgnore and Json."
-    text  "'-As={0}' 不是列表格式；四种格式是 Packages、Files、GitIgnore 和 Json。"
-    state machine
-}
-
 ListGeneratedWriteFailed {
     at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
     src   "The list of generated assets could not be written: {0}."
@@ -100,44 +128,16 @@ ListGeneratedWriteFailed {
     state machine
 }
 
-NotALang2SourceForVerb {
+ExportCatalogWriteFailed {
     at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
-    src   "'{0}' is not a compilable DreamShader source (.dss, .dsi, .dsp, .dsm or .dsf), so '{1}' has nothing to do with it; a .dsh header is checked through a source that includes it."
-    text  "'{0}' 不是可编译的 DreamShader 源文件（.dss、.dsi、.dsp、.dsm 或 .dsf），因此 '{1}' 对它无事可做；.dsh 头文件要通过包含它的源文件来检查。"
+    src   "The builtin catalog manifest could not be written: {0}."
+    text  "无法写入内置目录清单：{0}。"
     state machine
 }
 
-VerbCheck {
+ExportCatalogEmpty {
     at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
-    src   "check"
-    text  "check"
-    state machine
-}
-
-VerbDumpIR {
-    at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
-    src   "dump-ir"
-    text  "dump-ir"
-    state machine
-}
-
-VerbDumpLayout {
-    at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
-    src   "dump-layout"
-    text  "dump-layout"
-    state machine
-}
-
-VerbIndex {
-    at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
-    src   "index"
-    text  "index"
-    state machine
-}
-
-VerbListGenerated {
-    at    Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp
-    src   "list-generated"
-    text  "list-generated"
+    src   "The builtin catalog came back empty, so '{0}' describes no expression at all. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded."
+    text  "得到的内置目录为空，因此 '{0}' 中没有描述任何表达式。反射没有找到任何 UMaterialExpression 类，这通常意味着 Engine 模块没有加载。"
     state machine
 }

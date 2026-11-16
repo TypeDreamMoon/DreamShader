@@ -2,185 +2,38 @@ dloc 1
 culture zh-Hans
 namespace DreamShaderEditorBridge
 
-DreamShaderAdoptLabel {
+DreamShaderEphemeralShadowed {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Adopt Into Source"
-    text  "采纳到源文件"
+    src   "{0} previously generated asset(s) are still saved on disk and shadow the Ephemeral materials. Run Tools > DreamShader > Make Ephemeral to remove them."
+    text  "磁盘上仍保存着 {0} 个先前生成的资产，它们会遮蔽临时态材质。请运行 Tools > DreamShader > Make Ephemeral 将其删除。"
     state machine
 }
 
-DreamShaderAdoptTooltip {
+DreamShaderDivergenceTitle {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it."
-    text  "用此资产的当前内容重写 DreamShader 源文件,让你的手改成为事实来源。旧的源文件会在旁边备份一份。"
+    src   "'{0}' was edited by hand, so it was not rebuilt."
+    text  "'{0}' 被手改过,所以没有重建。"
     state machine
 }
 
-DreamShaderAdoptTweaksLabel {
+DreamShaderDivergenceSubText {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Adopt Tweaks as Source Defaults"
-    text  "把微调采纳为源文件默认值"
+    src   "Rebuilding it from {0} would destroy those edits. Decide which copy is right."
+    text  "从 {0} 重建会毁掉这些改动。请决定哪一份才是对的。"
     state machine
 }
 
-DreamShaderAdoptTweaksTooltip {
+DreamShaderDivergenceRevert {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Write this instance's parameter overrides into the .dss as the defaults of its uniforms, then clear them from the instance. The source is backed up first."
-    text  "把此实例的参数覆盖写进 .dss，作为其 uniform 的默认值，然后从实例上清除这些覆盖。源文件会先备份。"
+    src   "Revert to Source"
+    text  "还原到源文件"
     state machine
 }
 
-DreamShaderAdoptTweaksUnavailableTooltip {
+DreamShaderDivergenceRevertTip {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Only a .dss source under a writable root takes tweaks as uniform defaults; use Extract Tweaks to .dsi instead."
-    text  "只有位于可写根下的 .dss 源文件才能把微调接收为 uniform 默认值；请改用“把微调提取为 .dsi”。"
-    state machine
-}
-
-DreamShaderCleanGeneratedShadersLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Clean Generated Shaders"
-    text  "清理生成的着色器"
-    state machine
-}
-
-DreamShaderCleanGeneratedShadersTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile."
-    text  "删除 Intermediate/DreamShader/GeneratedShaders 并排队执行完整 DreamShader 重编译。"
-    state machine
-}
-
-DreamShaderCopyVirtualFunctionCallLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "CopyVirtualFunctionCall"
-    text  "复制 VirtualFunction 调用"
-    state machine
-}
-
-DreamShaderCopyVirtualFunctionCallNoAsset {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader could not find the selected Material Function."
-    text  "DreamShader 找不到所选材质函数。"
-    state machine
-}
-
-DreamShaderCopyVirtualFunctionCallTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Copy a DreamShader Graph call example for this VirtualFunction."
-    text  "为此 VirtualFunction 复制一个 DreamShader Graph 调用示例。"
-    state machine
-}
-
-DreamShaderCopyVirtualFunctionLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "CopyVirtualFunction"
-    text  "复制 VirtualFunction"
-    state machine
-}
-
-DreamShaderCopyVirtualFunctionNoAsset {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader could not find the selected Material Function."
-    text  "DreamShader 找不到所选材质函数。"
-    state machine
-}
-
-DreamShaderCopyVirtualFunctionPrototypeLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Copy extern Prototype (2.0)"
-    text  "复制 extern 原型 (2.0)"
-    state machine
-}
-
-DreamShaderCopyVirtualFunctionPrototypeTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Copy the 2.0 extern prototype of this Material Function, with its /// @asset line, for a .dss or a .dsh."
-    text  "复制此材质函数的 2.0 extern 原型及其 /// @asset 行，用于 .dss 或 .dsh。"
-    state machine
-}
-
-DreamShaderCopyVirtualFunctionReferenceLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Copy Virtual Function Reference"
-    text  "复制 VirtualFunction 引用"
-    state machine
-}
-
-DreamShaderCopyVirtualFunctionReferenceNoAsset {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader could not find the selected Material Function."
-    text  "DreamShader 找不到所选材质函数。"
-    state machine
-}
-
-DreamShaderCopyVirtualFunctionReferenceTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Copy a DreamShader Graph call that references this existing VirtualFunction."
-    text  "复制引用此现有 VirtualFunction 的 DreamShader Graph 调用。"
-    state machine
-}
-
-DreamShaderCopyVirtualFunctionTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Copy a complete DreamShader VirtualFunction declaration for this Material Function."
-    text  "为此材质函数复制完整的 DreamShader VirtualFunction 声明。"
-    state machine
-}
-
-DreamShaderCreateVirtualFunctionLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "CreateVirtualFunction"
-    text  "创建 VirtualFunction"
-    state machine
-}
-
-DreamShaderCreateVirtualFunctionNoAsset {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader could not find the selected Material Function."
-    text  "DreamShader 找不到所选材质函数。"
-    state machine
-}
-
-DreamShaderCreateVirtualFunctionPrototypeLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Create extern Prototype (2.0)"
-    text  "创建 extern 原型 (2.0)"
-    state machine
-}
-
-DreamShaderCreateVirtualFunctionPrototypeTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Create a .dsh file holding the 2.0 extern prototype of this Material Function, for .dss sources to #include."
-    text  "创建一个 .dsh 文件，其中包含此材质函数的 2.0 extern 原型，供 .dss 源文件 #include。"
-    state machine
-}
-
-DreamShaderCreateVirtualFunctionTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Create a .dsh file containing the VirtualFunction declaration."
-    text  "创建包含 VirtualFunction 声明的 .dsh 文件。"
-    state machine
-}
-
-DreamShaderDecompileActionsSection {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Decompiler"
-    text  "反编译器"
-    state machine
-}
-
-DreamShaderDetachLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Detach From DreamShader"
-    text  "脱离 DreamShader"
-    state machine
-}
-
-DreamShaderDetachTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it. It becomes an ordinary hand-authored asset."
-    text  "让此资产保持原样,并让 DreamShader 永远不再重建它。它会变成普通的手工资产。"
+    src   "Discard the hand edits and rebuild this asset from its DreamShader source. The source file is not modified."
+    text  "丢弃手改,从 DreamShader 源文件重建这个资产。源文件不会被修改。"
     state machine
 }
 
@@ -212,6 +65,20 @@ DreamShaderDivergenceDetachTip {
     state machine
 }
 
+DreamShaderDivergenceShowEphemeral {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Show Ephemeral Materials"
+    text  "显示临时态材质"
+    state machine
+}
+
+DreamShaderDivergenceShowEphemeralTip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "This asset is Ephemeral -- it has no file on disk -- and is currently hidden. Show Ephemeral DreamShader materials in the Content Browser so you can find and inspect it."
+    text  "该资产处于临时态——磁盘上没有文件——且当前被隐藏。在 Content Browser 中显示临时态 DreamShader 材质，以便找到并检查它。"
+    state machine
+}
+
 DreamShaderDivergenceDismiss {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
     src   "Dismiss"
@@ -223,6 +90,20 @@ DreamShaderDivergenceDismissTip {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
     src   "Leave the asset alone for now. The refusal stays in the log, in the diagnostics, and in the Material Content Browser."
     text  "暂时不动这个资产。这次拒绝仍会留在日志、诊断和 Material Content Browser 里。"
+    state machine
+}
+
+DreamShaderDivergenceSummary {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "{0} generated assets were edited by hand and were not rebuilt."
+    text  "{0} 个生成资产被手改过,没有重建。"
+    state machine
+}
+
+DreamShaderDivergenceSummarySubText {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Too many to answer one toast at a time. The Material Content Browser lists them with the same three actions on each."
+    text  "数量太多，没法逐个用通知回答。Material Content Browser 里列出了它们，每一项都有同样的三个操作。"
     state machine
 }
 
@@ -240,48 +121,6 @@ DreamShaderDivergenceOpenBrowserTip {
     state machine
 }
 
-DreamShaderDivergenceRevert {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Revert to Source"
-    text  "还原到源文件"
-    state machine
-}
-
-DreamShaderDivergenceRevertTip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Discard the hand edits and rebuild this asset from its DreamShader source. The source file is not modified."
-    text  "丢弃手改,从 DreamShader 源文件重建这个资产。源文件不会被修改。"
-    state machine
-}
-
-DreamShaderDivergenceShowEphemeral {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Show Ephemeral Materials"
-    text  "显示临时态材质"
-    state machine
-}
-
-DreamShaderDivergenceShowEphemeralTip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "This asset is Ephemeral -- it has no file on disk -- and is currently hidden. Show Ephemeral DreamShader materials in the Content Browser so you can find and inspect it."
-    text  "该资产处于临时态——磁盘上没有文件——且当前被隐藏。在 Content Browser 中显示临时态 DreamShader 材质，以便找到并检查它。"
-    state machine
-}
-
-DreamShaderDivergenceSubText {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Rebuilding it from {0} would destroy those edits. Decide which copy is right."
-    text  "从 {0} 重建会毁掉这些改动。请决定哪一份才是对的。"
-    state machine
-}
-
-DreamShaderDivergenceSummary {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "{0} generated assets were edited by hand and were not rebuilt."
-    text  "{0} 个生成资产被手改过,没有重建。"
-    state machine
-}
-
 DreamShaderDivergenceSummaryDismiss {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
     src   "Dismiss"
@@ -296,199 +135,57 @@ DreamShaderDivergenceSummaryDismissTip {
     state machine
 }
 
-DreamShaderDivergenceSummarySubText {
+MaterialCompileErrorHeader {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Too many to answer one toast at a time. The Material Content Browser lists them with the same three actions on each."
-    text  "数量太多，没法逐个用通知回答。Material Content Browser 里列出了它们，每一项都有同样的三个操作。"
+    src   "[{0} / {1}] {2}"
+    text  "[{0} / {1}] {2}"
     state machine
 }
 
-DreamShaderDivergenceTitle {
+DreamToolsComboLabel {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "'{0}' was edited by hand, so it was not rebuilt."
-    text  "'{0}' 被手改过,所以没有重建。"
+    src   "Dream"
+    text  "Dream"
     state machine
 }
 
-DreamShaderEphemeralMaterialsHidden {
+DreamToolsComboTooltip {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Hidden {0} Ephemeral material(s) from the Content Browser and asset pickers."
-    text  "已从 Content Browser 与资产选择器中隐藏 {0} 个临时态材质。"
+    src   "Dream-family language tools: open a source workspace in VSCode, or rebuild a whole source tree (DreamShader / DreamFX / DreamUI)."
+    text  "Dream 系列语言工具：在 VSCode 中打开源码工作区，或者重建整棵源码树（DreamShader / DreamFX / DreamUI）。"
     state machine
 }
 
-DreamShaderEphemeralMaterialsShown {
+RecompileAllConfirm {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Showing {0} Ephemeral material(s) in the Content Browser and asset pickers."
-    text  "已在 Content Browser 与资产选择器中显示 {0} 个临时态材质。"
+    src   "Recompile every DreamShader .dsm and .dsf source file?\n\nThis rebuilds all generated materials and can take a while on a large tree."
+}
+
+DreamShaderRecompileLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Recompile DSM"
+    text  "重新编译 DSM"
     state machine
 }
 
-DreamShaderEphemeralShadowed {
+DreamShaderRecompileTooltip {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "{0} previously generated asset(s) are still saved on disk and shadow the Ephemeral materials. Run Tools > DreamShader > Make Ephemeral to remove them."
-    text  "磁盘上仍保存着 {0} 个先前生成的资产，它们会遮蔽临时态材质。请运行 Tools > DreamShader > Make Ephemeral 将其删除。"
+    src   "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. Asks first."
+    text  "重新编译所有 DreamShader .dsm 和 .dsf 源文件并刷新诊断。执行前会先询问。"
     state machine
 }
 
-DreamShaderExportFailed {
+DreamShaderCleanGeneratedShadersLabel {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader failed to export '{0}': {1}"
-    text  "DreamShader 导出 '{0}' 失败：{1}"
+    src   "Clean Generated Shaders"
+    text  "清理生成的着色器"
     state machine
 }
 
-DreamShaderExportFunctionDssLabel {
+DreamShaderCleanGeneratedShadersTooltip {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Export .dss"
-    text  "导出 .dss"
-    state machine
-}
-
-DreamShaderExportFunctionDssTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Decompile this Material Function graph into a 2.0 DreamShader .dss source file."
-    text  "把此材质函数的图反编译为 2.0 的 DreamShader .dss 源文件。"
-    state machine
-}
-
-DreamShaderExportFunctionLegacyLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Export Legacy .dsf"
-    text  "导出旧版 .dsf"
-    state machine
-}
-
-DreamShaderExportFunctionLegacyTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Decompile this Material Function graph into a 1.x .dsf source file, with the 1.x decompiler that is kept through 2.0.x."
-    text  "用在 2.0.x 期间保留的 1.x 反编译器，把此材质函数的图反编译为 1.x 的 .dsf 源文件。"
-    state machine
-}
-
-DreamShaderExportFunctionNoAsset {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader could not find the selected Material Function."
-    text  "DreamShader 找不到所选材质函数。"
-    state machine
-}
-
-DreamShaderExportInstanceNoAsset {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader could not find the selected material instance."
-    text  "DreamShader 找不到所选的材质实例。"
-    state machine
-}
-
-DreamShaderExportMaterialDssLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Export .dss"
-    text  "导出 .dss"
-    state machine
-}
-
-DreamShaderExportMaterialDssTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Decompile this Material graph into a 2.0 DreamShader .dss source file."
-    text  "把此材质的图反编译为 2.0 的 DreamShader .dss 源文件。"
-    state machine
-}
-
-DreamShaderExportMaterialInstanceDsiLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Export .dsi"
-    text  "导出 .dsi"
-    state machine
-}
-
-DreamShaderExportMaterialInstanceDsiTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Decompile this material instance into a .dsi source file: its parent, its instance settings and every parameter that differs from the parent."
-    text  "把此材质实例反编译为 .dsi 源文件：它的父材质、实例设置，以及每个与父材质不同的参数。"
-    state machine
-}
-
-DreamShaderExportMaterialLegacyLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Export Legacy .dsm"
-    text  "导出旧版 .dsm"
-    state machine
-}
-
-DreamShaderExportMaterialLegacyTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Decompile this Material graph into a 1.x .dsm source file, with the 1.x decompiler that is kept through 2.0.x."
-    text  "用在 2.0.x 期间保留的 1.x 反编译器，把此材质的图反编译为 1.x 的 .dsm 源文件。"
-    state machine
-}
-
-DreamShaderExportMaterialNoAsset {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader could not find the selected Material."
-    text  "DreamShader 找不到所选材质。"
-    state machine
-}
-
-DreamShaderExported {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Exported '{0}'."
-    text  "已导出 '{0}'。"
-    state machine
-}
-
-DreamShaderExportedNotOpened {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Exported '{0}' but could not open it."
-    text  "已导出 '{0}'，但无法打开它。"
-    state machine
-}
-
-DreamShaderExtractTweaksLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Extract Tweaks to .dsi"
-    text  "把微调提取为 .dsi"
-    state machine
-}
-
-DreamShaderExtractTweaksTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Write this instance's parameter overrides into a new .dsi whose parent is this material, compile it, and clear the overrides from this instance."
-    text  "把此实例的参数覆盖写进一个以此材质为父的新 .dsi，编译它，然后从此实例上清除这些覆盖。"
-    state machine
-}
-
-DreamShaderFunctionDecompileActionsSection {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Decompiler"
-    text  "反编译器"
-    state machine
-}
-
-DreamShaderFunctionProvenanceActionsSection {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Generated Asset"
-    text  "生成的资产"
-    state machine
-}
-
-DreamShaderInstanceConstantDecompileActionsSection {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Decompiler"
-    text  "反编译器"
-    state machine
-}
-
-DreamShaderInstanceConstantProvenanceActionsSection {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Generated Asset"
-    text  "生成的资产"
-    state machine
-}
-
-DreamShaderInstanceProvenanceActionsSection {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Generated Asset"
-    text  "生成的资产"
+    src   "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile."
+    text  "删除 Intermediate/DreamShader/GeneratedShaders 并排队执行完整 DreamShader 重编译。"
     state machine
 }
 
@@ -499,24 +196,73 @@ DreamShaderMakeEphemeralLabel {
     state machine
 }
 
-DreamShaderMakeEphemeralNoneFound {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "No Materialized DreamShader ThinCustom products found."
-    text  "未找到已物化的 DreamShader ThinCustom 产物。"
-    state machine
-}
-
-DreamShaderMakeEphemeralResult {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Made {0} of {1} Materialized product(s) Ephemeral."
-    text  "已将 {0} 个（共 {1} 个）已物化产物转为临时态。"
-    state machine
-}
-
 DreamShaderMakeEphemeralTooltip {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
     src   "Delete the packages of Materialized ThinCustom products so they go back to being Ephemeral. Shows a confirmation with the full list; source files are untouched and the products are rebuilt in memory. Graph materials and material functions are not listed -- they have no Ephemeral state."
     text  "删除已物化 ThinCustom 产物的包文件，让它们回到临时态。会显示完整列表供确认；源文件不受影响，产物随后在内存中重建。Graph 材质与材质函数不在列表中——它们没有临时态。"
+    state machine
+}
+
+DreamShaderToggleShowEphemeralMaterialsLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Show Ephemeral Materials"
+    text  "显示临时态材质"
+    state machine
+}
+
+DreamShaderToggleShowEphemeralMaterialsTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Show Ephemeral ThinCustom/Instance-backend DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. Graph-backend materials are plain UMaterials with no Ephemeral state, so this toggle does not affect them. While shown, an explicit Save on one would materialize it to disk (the shadow warning and Make Ephemeral cover recovery)."
+    text  "在 Content Browser 与资产选择器中显示临时态的 ThinCustom/Instance 后端 DreamShader 材质——选择材质实例父级或从细节面板引用它时需要。Graph 后端材质是普通 UMaterial，没有临时态，不受此开关影响。显示期间对其执行显式 Save 会将其物化到磁盘（遮蔽警告与 Make Ephemeral 负责补救）。"
+    state machine
+}
+
+DreamShaderOpenWorkspaceLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Open Dream Shader Workspace (VSCode)"
+    text  "打开 Dream Shader 工作区 (VSCode)"
+    state machine
+}
+
+DreamShaderOpenWorkspaceTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable."
+    text  "在 VSCode 中打开配置的 DreamShader 源码工作区;若无 VSCode 则使用记事本。"
+    state machine
+}
+
+DreamShaderSharedSectionLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "DreamShader"
+    text  "DreamShader"
+    state machine
+}
+
+DreamShaderOpenWorkspaceSharedLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "DreamShader Workspace"
+    text  "DreamShader 工作区"
+    state machine
+}
+
+DreamShaderOpenWorkspaceToolbarTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable."
+    text  "在 VSCode 中打开配置的 DreamShader 源码工作区;若无 VSCode 则使用记事本。"
+    state machine
+}
+
+DreamShaderRecompileSharedLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Recompile DSM"
+    text  "重新编译 DSM"
+    state machine
+}
+
+DreamShaderRecompileSharedTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. Asks first."
+    text  "重新编译所有 DreamShader .dsm 和 .dsf 源文件并刷新诊断。执行前会先询问。"
     state machine
 }
 
@@ -548,20 +294,6 @@ DreamShaderMaterialFunctionActionsTooltip {
     state machine
 }
 
-DreamShaderMaterialFunctionToolbarMenuLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader"
-    text  "DreamShader"
-    state machine
-}
-
-DreamShaderMaterialFunctionToolbarMenuTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader actions for this Material Function."
-    text  "此材质函数的 DreamShader 操作。"
-    state machine
-}
-
 DreamShaderMaterialInstanceActionsLabel {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
     src   "DreamShader"
@@ -573,6 +305,13 @@ DreamShaderMaterialInstanceActionsTooltip {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
     src   "DreamShader actions for this generated material."
     text  "针对此生成材质的 DreamShader 操作。"
+    state machine
+}
+
+DreamShaderInstanceProvenanceActionsSection {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Generated Asset"
+    text  "生成的资产"
     state machine
 }
 
@@ -590,6 +329,34 @@ DreamShaderMaterialInstanceConstantActionsTooltip {
     state machine
 }
 
+DreamShaderInstanceConstantProvenanceActionsSection {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Generated Asset"
+    text  "生成的资产"
+    state machine
+}
+
+DreamShaderInstanceConstantDecompileActionsSection {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Decompiler"
+    text  "反编译器"
+    state machine
+}
+
+DreamShaderExportMaterialInstanceDsiLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Export .dsi"
+    text  "导出 .dsi"
+    state machine
+}
+
+DreamShaderExportMaterialInstanceDsiTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Decompile this material instance into a .dsi source file: its parent, its instance settings and every parameter that differs from the parent."
+    text  "把此材质实例反编译为 .dsi 源文件：它的父材质、实例设置，以及每个与父材质不同的参数。"
+    state machine
+}
+
 DreamShaderMaterialToolbarMenuLabel {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
     src   "DreamShader"
@@ -604,87 +371,17 @@ DreamShaderMaterialToolbarMenuTooltip {
     state machine
 }
 
-DreamShaderOpenVirtualFunctionLabel {
+DreamShaderMaterialFunctionToolbarMenuLabel {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "OpenVirtualFunction"
-    text  "打开 VirtualFunction"
+    src   "DreamShader"
+    text  "DreamShader"
     state machine
 }
 
-DreamShaderOpenVirtualFunctionNoAsset {
+DreamShaderMaterialFunctionToolbarMenuTooltip {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader could not find the selected Material Function."
-    text  "DreamShader 找不到所选材质函数。"
-    state machine
-}
-
-DreamShaderOpenVirtualFunctionTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Open the existing DreamShader VirtualFunction definition in VSCode."
-    text  "在 VSCode 中打开现有的 DreamShader VirtualFunction 定义。"
-    state machine
-}
-
-DreamShaderOpenWorkspaceLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Open Dream Shader Workspace (VSCode)"
-    text  "打开 Dream Shader 工作区 (VSCode)"
-    state machine
-}
-
-DreamShaderOpenWorkspaceSharedLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader Workspace"
-    text  "DreamShader 工作区"
-    state machine
-}
-
-DreamShaderOpenWorkspaceToolbarTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable."
-    text  "在 VSCode 中打开配置的 DreamShader 源码工作区;若无 VSCode 则使用记事本。"
-    state machine
-}
-
-DreamShaderOpenWorkspaceTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable."
-    text  "在 VSCode 中打开配置的 DreamShader 源码工作区;若无 VSCode 则使用记事本。"
-    state machine
-}
-
-DreamShaderProvenanceActionsSection {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Generated Asset"
-    text  "生成的资产"
-    state machine
-}
-
-DreamShaderRecompileLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Recompile DSM"
-    text  "重新编译 DSM"
-    state machine
-}
-
-DreamShaderRecompileSharedLabel {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Recompile DSM"
-    text  "重新编译 DSM"
-    state machine
-}
-
-DreamShaderRecompileSharedTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. Asks first."
-    text  "重新编译所有 DreamShader .dsm 和 .dsf 源文件并刷新诊断。执行前会先询问。"
-    state machine
-}
-
-DreamShaderRecompileTooltip {
-    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. Asks first."
-    text  "重新编译所有 DreamShader .dsm 和 .dsf 源文件并刷新诊断。执行前会先询问。"
+    src   "DreamShader actions for this Material Function."
+    text  "此材质函数的 DreamShader 操作。"
     state machine
 }
 
@@ -709,24 +406,150 @@ DreamShaderRevertTooltip {
     state machine
 }
 
-DreamShaderSharedSectionLabel {
+DreamShaderAdoptLabel {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader"
-    text  "DreamShader"
+    src   "Adopt Into Source"
+    text  "采纳到源文件"
     state machine
 }
 
-DreamShaderToggleShowEphemeralMaterialsLabel {
+DreamShaderAdoptTooltip {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Show Ephemeral Materials"
-    text  "显示临时态材质"
+    src   "Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it."
+    text  "用此资产的当前内容重写 DreamShader 源文件,让你的手改成为事实来源。旧的源文件会在旁边备份一份。"
     state machine
 }
 
-DreamShaderToggleShowEphemeralMaterialsTooltip {
+DreamShaderDetachLabel {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Show Ephemeral ThinCustom/Instance-backend DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. Graph-backend materials are plain UMaterials with no Ephemeral state, so this toggle does not affect them. While shown, an explicit Save on one would materialize it to disk (the shadow warning and Make Ephemeral cover recovery)."
-    text  "在 Content Browser 与资产选择器中显示临时态的 ThinCustom/Instance 后端 DreamShader 材质——选择材质实例父级或从细节面板引用它时需要。Graph 后端材质是普通 UMaterial，没有临时态，不受此开关影响。显示期间对其执行显式 Save 会将其物化到磁盘（遮蔽警告与 Make Ephemeral 负责补救）。"
+    src   "Detach From DreamShader"
+    text  "脱离 DreamShader"
+    state machine
+}
+
+DreamShaderDetachTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it. It becomes an ordinary hand-authored asset."
+    text  "让此资产保持原样,并让 DreamShader 永远不再重建它。它会变成普通的手工资产。"
+    state machine
+}
+
+DreamShaderAdoptTweaksLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Adopt Tweaks as Source Defaults"
+    text  "把微调采纳为源文件默认值"
+    state machine
+}
+
+DreamShaderAdoptTweaksTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Write this instance's parameter overrides into the .dss as the defaults of its uniforms, then clear them from the instance. The source is backed up first."
+    text  "把此实例的参数覆盖写进 .dss，作为其 uniform 的默认值，然后从实例上清除这些覆盖。源文件会先备份。"
+    state machine
+}
+
+DreamShaderAdoptTweaksUnavailableTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Only a .dss source under a writable root takes tweaks as uniform defaults; use Extract Tweaks to .dsi instead."
+    text  "只有位于可写根下的 .dss 源文件才能把微调接收为 uniform 默认值；请改用“把微调提取为 .dsi”。"
+    state machine
+}
+
+DreamShaderExtractTweaksLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Extract Tweaks to .dsi"
+    text  "把微调提取为 .dsi"
+    state machine
+}
+
+DreamShaderExtractTweaksTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Write this instance's parameter overrides into a new .dsi whose parent is this material, compile it, and clear the overrides from this instance."
+    text  "把此实例的参数覆盖写进一个以此材质为父的新 .dsi，编译它，然后从此实例上清除这些覆盖。"
+    state machine
+}
+
+DreamShaderProvenanceActionsSection {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Generated Asset"
+    text  "生成的资产"
+    state machine
+}
+
+DreamShaderDecompileActionsSection {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Decompiler"
+    text  "反编译器"
+    state machine
+}
+
+DreamShaderExportMaterialDssLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Export .dss"
+    text  "导出 .dss"
+    state machine
+}
+
+DreamShaderExportMaterialDssTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Decompile this Material graph into a 2.0 DreamShader .dss source file."
+    text  "把此材质的图反编译为 2.0 的 DreamShader .dss 源文件。"
+    state machine
+}
+
+DreamShaderExportMaterialLegacyLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Export Legacy .dsm"
+    text  "导出旧版 .dsm"
+    state machine
+}
+
+DreamShaderExportMaterialLegacyTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Decompile this Material graph into a 1.x .dsm source file, with the 1.x decompiler that is kept through 2.0.x."
+    text  "用在 2.0.x 期间保留的 1.x 反编译器，把此材质的图反编译为 1.x 的 .dsm 源文件。"
+    state machine
+}
+
+DreamShaderFunctionProvenanceActionsSection {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Generated Asset"
+    text  "生成的资产"
+    state machine
+}
+
+DreamShaderFunctionDecompileActionsSection {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Decompiler"
+    text  "反编译器"
+    state machine
+}
+
+DreamShaderExportFunctionDssLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Export .dss"
+    text  "导出 .dss"
+    state machine
+}
+
+DreamShaderExportFunctionDssTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Decompile this Material Function graph into a 2.0 DreamShader .dss source file."
+    text  "把此材质函数的图反编译为 2.0 的 DreamShader .dss 源文件。"
+    state machine
+}
+
+DreamShaderExportFunctionLegacyLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Export Legacy .dsf"
+    text  "导出旧版 .dsf"
+    state machine
+}
+
+DreamShaderExportFunctionLegacyTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Decompile this Material Function graph into a 1.x .dsf source file, with the 1.x decompiler that is kept through 2.0.x."
+    text  "用在 2.0.x 期间保留的 1.x 反编译器，把此材质函数的图反编译为 1.x 的 .dsf 源文件。"
     state machine
 }
 
@@ -737,24 +560,178 @@ DreamShaderVirtualFunctionActionsSection {
     state machine
 }
 
-DreamShaderVirtualFunctionPrototypeCopied {
+DreamShaderOpenVirtualFunctionLabel {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Copied the extern prototype of {0}."
-    text  "已复制 {0} 的 extern 原型。"
+    src   "OpenVirtualFunction"
+    text  "打开 VirtualFunction"
     state machine
 }
 
-DreamShaderVirtualFunctionPrototypeCreated {
+DreamShaderOpenVirtualFunctionTooltip {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Created '{0}'."
-    text  "已创建 '{0}'。"
+    src   "Open the existing DreamShader VirtualFunction definition in VSCode."
+    text  "在 VSCode 中打开现有的 DreamShader VirtualFunction 定义。"
     state machine
 }
 
-DreamShaderVirtualFunctionPrototypeDirectoryFailed {
+DreamShaderCopyVirtualFunctionReferenceLabel {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "DreamShader failed to create directory '{0}'."
-    text  "DreamShader 无法创建目录 '{0}'。"
+    src   "Copy Virtual Function Reference"
+    text  "复制 VirtualFunction 引用"
+    state machine
+}
+
+DreamShaderCopyVirtualFunctionReferenceTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Copy a DreamShader Graph call that references this existing VirtualFunction."
+    text  "复制引用此现有 VirtualFunction 的 DreamShader Graph 调用。"
+    state machine
+}
+
+DreamShaderCopyVirtualFunctionLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "CopyVirtualFunction"
+    text  "复制 VirtualFunction"
+    state machine
+}
+
+DreamShaderCopyVirtualFunctionTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Copy a complete DreamShader VirtualFunction declaration for this Material Function."
+    text  "为此材质函数复制完整的 DreamShader VirtualFunction 声明。"
+    state machine
+}
+
+DreamShaderCreateVirtualFunctionLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "CreateVirtualFunction"
+    text  "创建 VirtualFunction"
+    state machine
+}
+
+DreamShaderCreateVirtualFunctionTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Create a .dsh file containing the VirtualFunction declaration."
+    text  "创建包含 VirtualFunction 声明的 .dsh 文件。"
+    state machine
+}
+
+DreamShaderCopyVirtualFunctionPrototypeLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Copy extern Prototype (2.0)"
+    text  "复制 extern 原型 (2.0)"
+    state machine
+}
+
+DreamShaderCopyVirtualFunctionPrototypeTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Copy the 2.0 extern prototype of this Material Function, with its /// @asset line, for a .dss or a .dsh."
+    text  "复制此材质函数的 2.0 extern 原型及其 /// @asset 行，用于 .dss 或 .dsh。"
+    state machine
+}
+
+DreamShaderCreateVirtualFunctionPrototypeLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Create extern Prototype (2.0)"
+    text  "创建 extern 原型 (2.0)"
+    state machine
+}
+
+DreamShaderCreateVirtualFunctionPrototypeTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Create a .dsh file holding the 2.0 extern prototype of this Material Function, for .dss sources to #include."
+    text  "创建一个 .dsh 文件，其中包含此材质函数的 2.0 extern 原型，供 .dss 源文件 #include。"
+    state machine
+}
+
+DreamShaderCopyVirtualFunctionCallLabel {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "CopyVirtualFunctionCall"
+    text  "复制 VirtualFunction 调用"
+    state machine
+}
+
+DreamShaderCopyVirtualFunctionCallTooltip {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Copy a DreamShader Graph call example for this VirtualFunction."
+    text  "为此 VirtualFunction 复制一个 DreamShader Graph 调用示例。"
+    state machine
+}
+
+DreamShaderEphemeralMaterialsShown {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Showing {0} Ephemeral material(s) in the Content Browser and asset pickers."
+    text  "已在 Content Browser 与资产选择器中显示 {0} 个临时态材质。"
+    state machine
+}
+
+DreamShaderEphemeralMaterialsHidden {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Hidden {0} Ephemeral material(s) from the Content Browser and asset pickers."
+    text  "已从 Content Browser 与资产选择器中隐藏 {0} 个临时态材质。"
+    state machine
+}
+
+DreamShaderMakeEphemeralNoneFound {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "No Materialized DreamShader ThinCustom products found."
+    text  "未找到已物化的 DreamShader ThinCustom 产物。"
+    state machine
+}
+
+DreamShaderMakeEphemeralResult {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Made {0} of {1} Materialized product(s) Ephemeral."
+    text  "已将 {0} 个（共 {1} 个）已物化产物转为临时态。"
+    state machine
+}
+
+DreamShaderExportMaterialNoAsset {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "DreamShader could not find the selected Material."
+    text  "DreamShader 找不到所选材质。"
+    state machine
+}
+
+DreamShaderExportFunctionNoAsset {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "DreamShader could not find the selected Material Function."
+    text  "DreamShader 找不到所选材质函数。"
+    state machine
+}
+
+DreamShaderExportInstanceNoAsset {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "DreamShader could not find the selected material instance."
+    text  "DreamShader 找不到所选的材质实例。"
+    state machine
+}
+
+DreamShaderExportFailed {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "DreamShader failed to export '{0}': {1}"
+    text  "DreamShader 导出 '{0}' 失败：{1}"
+    state machine
+}
+
+DreamShaderExportedNotOpened {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Exported '{0}' but could not open it."
+    text  "已导出 '{0}'，但无法打开它。"
+    state machine
+}
+
+DreamShaderExported {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "Exported '{0}'."
+    text  "已导出 '{0}'。"
+    state machine
+}
+
+DreamShaderCopyVirtualFunctionNoAsset {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "DreamShader could not find the selected Material Function."
+    text  "DreamShader 找不到所选材质函数。"
     state machine
 }
 
@@ -765,10 +742,24 @@ DreamShaderVirtualFunctionPrototypeFailed {
     state machine
 }
 
-DreamShaderVirtualFunctionPrototypeNotOpened {
+DreamShaderVirtualFunctionPrototypeCopied {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Created '{0}' but could not open it."
-    text  "已创建 '{0}'，但无法打开它。"
+    src   "Copied the extern prototype of {0}."
+    text  "已复制 {0} 的 extern 原型。"
+    state machine
+}
+
+DreamShaderCreateVirtualFunctionNoAsset {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "DreamShader could not find the selected Material Function."
+    text  "DreamShader 找不到所选材质函数。"
+    state machine
+}
+
+DreamShaderVirtualFunctionPrototypeDirectoryFailed {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "DreamShader failed to create directory '{0}'."
+    text  "DreamShader 无法创建目录 '{0}'。"
     state machine
 }
 
@@ -779,23 +770,37 @@ DreamShaderVirtualFunctionPrototypeWriteFailed {
     state machine
 }
 
-DreamToolsComboLabel {
+DreamShaderVirtualFunctionPrototypeNotOpened {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Dream"
-    text  "Dream"
+    src   "Created '{0}' but could not open it."
+    text  "已创建 '{0}'，但无法打开它。"
     state machine
 }
 
-DreamToolsComboTooltip {
+DreamShaderVirtualFunctionPrototypeCreated {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "Dream-family language tools: open a source workspace in VSCode, or rebuild a whole source tree (DreamShader / DreamFX / DreamUI)."
-    text  "Dream 系列语言工具：在 VSCode 中打开源码工作区，或者重建整棵源码树（DreamShader / DreamFX / DreamUI）。"
+    src   "Created '{0}'."
+    text  "已创建 '{0}'。"
     state machine
 }
 
-MaterialCompileErrorHeader {
+DreamShaderOpenVirtualFunctionNoAsset {
     at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
-    src   "[{0} / {1}] {2}"
-    text  "[{0} / {1}] {2}"
+    src   "DreamShader could not find the selected Material Function."
+    text  "DreamShader 找不到所选材质函数。"
+    state machine
+}
+
+DreamShaderCopyVirtualFunctionReferenceNoAsset {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "DreamShader could not find the selected Material Function."
+    text  "DreamShader 找不到所选材质函数。"
+    state machine
+}
+
+DreamShaderCopyVirtualFunctionCallNoAsset {
+    at    Source/DreamShaderEditor/Private/Bridge/DreamShaderEditorBridge.cpp
+    src   "DreamShader could not find the selected Material Function."
+    text  "DreamShader 找不到所选材质函数。"
     state machine
 }

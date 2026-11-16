@@ -1,17 +1,273 @@
 dloc 1
 culture zh-Hans
-namespace DreamShaderEditor.Settings
+namespace UObjectDisplayNames
 
-SectionDescription {
-    at    Source/DreamShader/Public/DreamShaderSettings.h
-    src   "Dream Shader Settings"
-    text  "Dream Shader 设置"
-    state machine
+DreamShaderSettings {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings
+    src   "DreamShader"
 }
+
+DreamShaderSettings:bAutoCompileOnSave {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bAutoCompileOnSave
+    src   "Auto Compile on Save"
+}
+
+DreamShaderSettings:bEnableDreamMCPEndpoint {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bEnableDreamMCPEndpoint
+    src   "Enable DreamMCP Endpoint"
+}
+
+DreamShaderSettings:bExportDecompiledLayout {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bExportDecompiledLayout
+    src   "Export Decompiled Layout"
+}
+
+DreamShaderSettings:BlendModeMappings {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:BlendModeMappings
+    src   "Blend Mode Mappings"
+}
+
+DreamShaderSettings:bOpenInNewWindow {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bOpenInNewWindow
+    src   "Open in New Window"
+}
+
+DreamShaderSettings:bScanPluginSourceDirectories {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bScanPluginSourceDirectories
+    src   "Scan Plugin Source Directories"
+}
+
+DreamShaderSettings:bShowEphemeralMaterials {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bShowEphemeralMaterials
+    src   "Show Ephemeral Materials"
+}
+
+DreamShaderSettings:bSyncSourceReferencesOnAssetRename {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bSyncSourceReferencesOnAssetRename
+    src   "Sync Source References On Asset Rename"
+}
+
+DreamShaderSettings:bVerboseLogs {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bVerboseLogs
+    src   "Verbose Logs"
+}
+
+DreamShaderSettings:DefaultBackend {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:DefaultBackend
+    src   "Default Compiler Backend"
+}
+
+DreamShaderSettings:GeneratedShaderDirectory {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:GeneratedShaderDirectory
+    src   "Generated Shader Directory"
+}
+
+DreamShaderSettings:GraphLayoutStyle {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:GraphLayoutStyle
+    src   "Graph Layout Style"
+}
+
+DreamShaderSettings:InstanceSubfolder {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:InstanceSubfolder
+    src   "Material Instance Subfolder"
+}
+
+DreamShaderSettings:MaterialDomainMappings {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:MaterialDomainMappings
+    src   "Material Domain Mappings"
+}
+
+DreamShaderSettings:PreprocessorDefines {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:PreprocessorDefines
+    src   "Preprocessor Defines"
+}
+
+DreamShaderSettings:SaveDebounceSeconds {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:SaveDebounceSeconds
+    src   "Save Debounce Seconds"
+}
+
+DreamShaderSettings:ShadingModelMappings {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:ShadingModelMappings
+    src   "Shading Model Mappings"
+}
+
+DreamShaderSettings:SourceDirectory {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:SourceDirectory
+    src   "Source Directory"
+}
+
+EDreamShaderDefaultBackend.EDreamShaderDefaultBackend_MAX {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend:EDreamShaderDefaultBackend_MAX
+    src   "EDream Shader Default Backend MAX"
+}
+
+EDreamShaderDefaultBackend.Graph {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend:Graph
+    src   "Graph"
+}
+
+EDreamShaderDefaultBackend.Instance {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend:Instance
+    src   "Instance"
+}
+
+EDreamShaderDefaultBackend.ThinCustom {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend:ThinCustom
+    src   "Thin Custom"
+}
+
+EDreamShaderGraphLayoutStyle.Blocks {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:Blocks
+    src   "Blocks"
+}
+
+EDreamShaderGraphLayoutStyle.Classic {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:Classic
+    src   "Classic"
+}
+
+EDreamShaderGraphLayoutStyle.EDreamShaderGraphLayoutStyle_MAX {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:EDreamShaderGraphLayoutStyle_MAX
+    src   "EDream Shader Graph Layout Style MAX"
+}
+
+EDreamShaderGraphLayoutStyle.Layered {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:Layered
+    src   "Layered"
+}
+
+EDreamShaderGraphLayoutStyle.SourceBands {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:SourceBands
+    src   "Source Bands"
+}
+
+namespace UObjectToolTips
+
+DreamShaderSettings:bEnableDreamMCPEndpoint {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bEnableDreamMCPEndpoint
+    src   "When enabled, the editor serves DreamShader to a DreamMCP server (an MCP server that lets an AI agent check, compile and preview sources) over HTTP on 127.0.0.1 only, behind a token written to Saved/DreamMCP/shader.json. Disable it to keep the editor from listening at all; -NoDreamMCP on the command line does the same for one session. Takes effect the next time the editor starts. The DreamShaderHost commandlet a DreamMCP server starts when no editor is open is not affected."
+}
+
+DreamShaderSettings:bScanPluginSourceDirectories {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bScanPluginSourceDirectories
+    src   "When enabled, every enabled plugin that ships a DShader folder contributes its own source root, so a plugin can carry the .dsm/.dsf/.dsh files that build its materials. Plugin roots are discovered and compiled but never rewritten by the editor -- only the project's own source directory is writable. Imports never cross roots: a file resolves its imports against its own root and that root's Packages folder."
+}
+
+DreamShaderSettings:bShowEphemeralMaterials {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bShowEphemeralMaterials
+    src   "Applies to the ThinCustom/Instance backend only -- it is the only one with an Ephemeral state, which it hides via UDreamShaderMaterialInstance::IsAsset. When enabled, Ephemeral materials appear in the Content Browser like unsaved assets. Disabled by default: the source files are the intended authoring surface, and hiding the materials also prevents accidental Save actions from materializing them to disk. Graph-backend materials are plain UMaterials with no way to opt out of asset enumeration, so they are always visible and this setting does not affect them."
+}
+
+DreamShaderSettings:bSyncSourceReferencesOnAssetRename {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bSyncSourceReferencesOnAssetRename
+    src   "When enabled, renaming or moving an asset in the editor rewrites the .dsm/.dsf/.dsh files that reference it, so a source keeps naming the asset rather than the path it used to have. Only files under the project source directory are rewritten -- plugin source roots are never touched -- and each file is copied to a .bak next to it before it is written. Batched renames such as Fix Up Redirectors are coalesced into a single pass. Deleting an asset is not covered: a deletion has no new path to write, and the compile error it produces is the correct outcome. Turn this off if you would rather the plugin never edited your source files on its own."
+}
+
+DreamShaderSettings:DefaultBackend {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:DefaultBackend
+    src   "How DreamShader materializes a source file that does not specify Settings = { Backend = \"...\" }. ThinCustom (the default) builds the material graph on a hidden per-material base and emits a lightweight, Ephemeral material instance of it -- full feature surface, no visible per-material asset. Graph builds a visible UMaterial node graph. Instance is a deprecated alias for ThinCustom."
+}
+
+DreamShaderSettings:GraphLayoutStyle {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:GraphLayoutStyle
+    src   "How the nodes of a generated graph are placed. Blocks, the default, boxes the graph by region and run of statements, in source order, and lets no wire leave a box: a value another box reads travels through a named reroute, and a constant is repeated where it is read. Source Bands puts one horizontal band per source statement, top to bottom in source order, so the graph reads like the file; Layered draws the whole graph as one layered drawing; those two insert no reroute nodes. These three are computed on the compiler's IR, before any node exists, and are deterministic. Classic is the 1.x layout, which works on the finished graph. Node positions are not part of a generated asset's digest: changing this never makes an asset look hand-edited, and it takes effect the next time a source is rebuilt. `dsc dump-layout` draws the three IR styles of a source as SVG without building anything."
+}
+
+DreamShaderSettings:InstanceSubfolder {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:InstanceSubfolder
+    src   "Subfolder, relative to the parent material's folder, where the Material Content Browser creates new material instances. Leave empty to create them alongside the parent."
+}
+
+DreamShaderSettings:PreprocessorDefines {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:PreprocessorDefines
+    src   "Preprocessor defines every .dsm/.dsf/.dsh source compiles with -- what its #if / #elif conditions read. The name answers defined(); a value that parses as an integer compares as a number, anything else as a string; an empty value still counts as defined; a name absent from this table evaluates to 0, as in C. Conditions are evaluated at GENERATION time and the losing branch is cut before the parser sees it, so a condition can select a Domain, a ShadingModel or a whole Outputs block -- none of which a StaticSwitch can reach, because they describe what the material IS rather than what it computes. Editing this table rebuilds only the generated assets whose sources actually read a name that changed. Names are case-sensitive and must match [A-Za-z_][A-Za-z0-9_]*. The DS_ prefix is reserved for the read-only builtins; an entry using it is dropped with a log warning rather than failing the compile, since a settings mistake has no source line to report against."
+}
+
+EDreamShaderDefaultBackend {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend
+    src   "Backend used for source files that do not specify Settings = { Backend = \"...\" } themselves."
+}
+
+EDreamShaderDefaultBackend.Graph {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend:Graph
+    src   "Build a UMaterial node graph per material (full DSL feature surface)."
+}
+
+EDreamShaderDefaultBackend.Instance {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend:Instance
+    src   "DEPRECATED alias for ThinCustom (kept for one deprecation window so existing configs and\nSettings = { Backend = \"Instance\" } sources keep working). The legacy graphless-host instance\nbackend is retired; \"Instance\" now generates the ThinCustom chain."
+}
+
+EDreamShaderDefaultBackend.ThinCustom {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend:ThinCustom
+    src   "Build the material graph on a hidden per-material base UMaterial and emit a lightweight\nmaterial instance of it. Full Graph feature surface (the construction is shared) plus the\ninstance's Ephemeral hiding and root shader-map ownership. The default."
+}
+
+EDreamShaderGraphLayoutStyle {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle
+    src   "How the nodes of a generated graph are placed. Positions are not part of a generated asset's digest, so switching never makes an asset look hand-edited."
+}
+
+EDreamShaderGraphLayoutStyle.Blocks {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:Blocks
+    src   "One box per `#pragma region` or run of statements, packed in source order like words on a page; no wire leaves a box -- a value another box reads travels through a named reroute, and a constant is repeated. Computed on the IR."
+}
+
+EDreamShaderGraphLayoutStyle.Classic {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:Classic
+    src   "The 1.x layout: blocks recovered from the material's outputs, named reroutes between blocks."
+}
+
+EDreamShaderGraphLayoutStyle.Layered {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:Layered
+    src   "One layered drawing of the whole graph. Computed on the IR, inserts no reroute."
+}
+
+EDreamShaderGraphLayoutStyle.SourceBands {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:SourceBands
+    src   "One horizontal band per source statement, in source order; a `#pragma region` is a box around consecutive bands. Computed on the IR, inserts no reroute."
+}
+
+namespace UObjectCategory
+
+Decompiler {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bExportDecompiledLayout
+    src   "Decompiler"
+}
+
+Editor {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bOpenInNewWindow
+    src   "Editor"
+}
+
+Compiler {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:DefaultBackend
+    src   "Compiler"
+}
+
+Mappings {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:ShadingModelMappings
+    src   "Mappings"
+}
+
+Paths {
+    at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:SourceDirectory
+    src   "Paths"
+}
+
+namespace DreamShaderEditor.Settings
 
 SectionText {
     at    Source/DreamShader/Public/DreamShaderSettings.h
     src   "Dream Shader"
     text  "Dream Shader"
+    state machine
+}
+
+SectionDescription {
+    at    Source/DreamShader/Public/DreamShaderSettings.h
+    src   "Dream Shader Settings"
+    text  "Dream Shader 设置"
     state machine
 }

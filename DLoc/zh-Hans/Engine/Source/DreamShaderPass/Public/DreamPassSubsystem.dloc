@@ -1,0 +1,265 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamPassApiActivation {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation
+    src   "Dream Pass Api Activation"
+}
+
+DreamPassApiActivation:Overrides {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation:Overrides
+    src   "Overrides"
+}
+
+DreamPassApiActivation:Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation:Pipeline
+    src   "Pipeline"
+}
+
+DreamPassApiActivation:PlayerIndex {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation:PlayerIndex
+    src   "Player Index"
+}
+
+DreamPassApiActivation:Priority {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation:Priority
+    src   "Priority"
+}
+
+DreamPassApiActivation:Weight {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation:Weight
+    src   "Weight"
+}
+
+DreamPassHandle {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassHandle
+    src   "Dream Pass Handle"
+}
+
+DreamPassHandle:Id {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassHandle:Id
+    src   "Id"
+}
+
+DreamPassMaterialPool {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassMaterialPool
+    src   "Dream Pass Material Pool"
+}
+
+DreamPassMaterialPool:Base {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassMaterialPool:Base
+    src   "Base"
+}
+
+DreamPassMaterialPool:Instances {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassMaterialPool:Instances
+    src   "Instances"
+}
+
+DreamPassSubsystem {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem
+    src   "Dream Pass Subsystem"
+}
+
+DreamPassSubsystem:AddPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddPipeline
+    src   "Add Pipeline"
+}
+
+DreamPassSubsystem:AddPipeline:Overrides {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddPipeline:Overrides
+    src   "Overrides"
+}
+
+DreamPassSubsystem:AddPipeline:Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddPipeline:Pipeline
+    src   "Pipeline"
+}
+
+DreamPassSubsystem:AddPipeline:PlayerIndex {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddPipeline:PlayerIndex
+    src   "Player Index"
+}
+
+DreamPassSubsystem:AddPipeline:Priority {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddPipeline:Priority
+    src   "Priority"
+}
+
+DreamPassSubsystem:AddPipeline:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddPipeline:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassSubsystem:AddToList {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddToList
+    src   "Add to List"
+}
+
+DreamPassSubsystem:AddToList:List {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddToList:List
+    src   "List"
+}
+
+DreamPassSubsystem:AddToList:Primitive {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddToList:Primitive
+    src   "Primitive"
+}
+
+DreamPassSubsystem:ApiActivations {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:ApiActivations
+    src   "Api Activations"
+}
+
+DreamPassSubsystem:ClearList {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:ClearList
+    src   "Clear List"
+}
+
+DreamPassSubsystem:ClearList:List {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:ClearList:List
+    src   "List"
+}
+
+DreamPassSubsystem:GlobalPipelines {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:GlobalPipelines
+    src   "Global Pipelines"
+}
+
+DreamPassSubsystem:IsActive {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:IsActive
+    src   "Is Active"
+}
+
+DreamPassSubsystem:IsActive:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:IsActive:Handle
+    src   "Handle"
+}
+
+DreamPassSubsystem:IsActive:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:IsActive:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassSubsystem:MaterialPools {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:MaterialPools
+    src   "Material Pools"
+}
+
+DreamPassSubsystem:RemoveFromList {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:RemoveFromList
+    src   "Remove from List"
+}
+
+DreamPassSubsystem:RemoveFromList:List {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:RemoveFromList:List
+    src   "List"
+}
+
+DreamPassSubsystem:RemoveFromList:Primitive {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:RemoveFromList:Primitive
+    src   "Primitive"
+}
+
+DreamPassSubsystem:RemovePipeline {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:RemovePipeline
+    src   "Remove Pipeline"
+}
+
+DreamPassSubsystem:RemovePipeline:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:RemovePipeline:Handle
+    src   "Handle"
+}
+
+DreamPassSubsystem:RemovePipeline:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:RemovePipeline:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassSubsystem:SetParameter {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetParameter
+    src   "Set Parameter"
+}
+
+DreamPassSubsystem:SetParameter:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetParameter:Handle
+    src   "Handle"
+}
+
+DreamPassSubsystem:SetParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetParameter:Name
+    src   "Name"
+}
+
+DreamPassSubsystem:SetParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetParameter:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassSubsystem:SetParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetParameter:Value
+    src   "Value"
+}
+
+DreamPassSubsystem:SetWeight {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetWeight
+    src   "Set Weight"
+}
+
+DreamPassSubsystem:SetWeight:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetWeight:Handle
+    src   "Handle"
+}
+
+DreamPassSubsystem:SetWeight:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetWeight:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassSubsystem:SetWeight:Weight {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetWeight:Weight
+    src   "Weight"
+}
+
+namespace UObjectToolTips
+
+DreamPassApiActivation {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation
+    src   "A pipeline activated through UDreamPassSubsystem::AddPipeline."
+}
+
+DreamPassHandle {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassHandle
+    src   "A handle to a pipeline activated through the API."
+}
+
+DreamPassMaterialPool {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassMaterialPool
+    src   "The material instances one pass material is drawn through: one per use in a frame, kept across frames."
+}
+
+DreamPassSubsystem {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem
+    src   "Which Custom Pass pipelines apply where, in one world.\n\nFour kinds of source activate a pipeline: the project settings' global pipelines, ADreamPassVolume,\nUDreamPassComponent and this subsystem's own API. For each view the subsystem gathers every activation, groups\nthem by pipeline -- a pipeline runs once per view however many sources ask for it -- and blends their parameter\noverrides in ascending priority, each by its weight, as post-process volumes do. Priority decides whose values\nwin; a pipeline's Order decides when it runs; the two are independent.\n\nIt also keeps what mesh passes select by: the pass layers primitives have (UDreamPassLayerComponent) and the\nnamed lists the API fills.\n\nGame thread only. The scene view extension it owns turns its answers into an immutable snapshot per view family;\nnothing here is read by the render thread."
+}
+
+DreamPassSubsystem:AddPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddPipeline
+    src   "Runs Pipeline in this world's views -- every view, or PlayerIndex's only -- until RemovePipeline."
+}
+
+DreamPassSubsystem:AddToList {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddToList
+    src   "Puts a primitive in a named list, which a mesh pass selects with `Filter = List(Name)`."
+}
+
+DreamPassSubsystem:GlobalPipelines {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:GlobalPipelines
+    src   "The global pipelines of the project settings, loaded; parallel to the settings' array."
+}
+
+DreamPassSubsystem:SetParameter {
+    at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetParameter
+    src   "Sets, or adds, one parameter override of an activation. False for an unknown handle or parameter, or the wrong type."
+}

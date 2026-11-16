@@ -2,83 +2,6 @@ dloc 1
 culture zh-Hans
 namespace DreamShaderIRToAstExpressions
 
-AttributesWithoutMaterial {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "it reads the attributes of no material"
-    text  "它读取的属性不属于任何材质"
-    state machine
-}
-
-CallInputUnconnectedSkipped {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "{0} leaves the required input '{1}' of '{2}' unconnected and nothing can stand in for it; the call is written without it and will not compile as it is."
-    text  "{0} 没有连接 '{2}' 的必需输入 '{1}'，也没有任何东西可以代替它；该调用写出时不带这个输入，照原样无法编译。"
-    state machine
-}
-
-CallInputUnconnectedZero {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "{0} leaves the required input '{1}' of '{2}' unconnected; '0.0' is passed for it."
-    text  "{0} 没有连接 '{2}' 的必需输入 '{1}'；以 '0.0' 传入。"
-    state machine
-}
-
-CallInputUndeclared {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "{0} connects an input '{1}' that '{2}' does not declare; the connection is dropped."
-    text  "{0} 连接了 '{2}' 没有声明的输入 '{1}'；该连接已被丢弃。"
-    state machine
-}
-
-CallOfVoidAsValue {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "the function it calls returns nothing"
-    text  "它调用的函数没有返回值"
-    state machine
-}
-
-CallOutWithoutLocal {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "the function it calls has 'out' parameters and the call was taken for a plain value"
-    text  "它调用的函数带有 'out' 参数，而这次调用被当成了普通值"
-    state machine
-}
-
-CallWithoutCallee {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "the function it calls could not be declared"
-    text  "它调用的函数无法声明"
-    state machine
-}
-
-CompareAsReflectedCall {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "{0} is an If whose branches no comparison selects between; it is written as 'UE.If(...)'."
-    text  "{0} 是一个 If，但它的分支并不是由某次比较来选择的；它被写成 'UE.If(...)'。"
-    state machine
-}
-
-CoreOpArity {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "it has the wrong number of operands"
-    text  "它的操作数个数不对"
-    state machine
-}
-
-CoreOpMissingOperand {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "one of its operands is not connected"
-    text  "它有一个操作数没有连接"
-    state machine
-}
-
-CoreOpNoSpelling {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "the language has no spelling for this operation"
-    text  "语言中没有这个操作的写法"
-    state machine
-}
-
 DescribeMissingNode {
     at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
     src   "node {0} of '{1}'"
@@ -93,10 +16,101 @@ DescribeNode {
     state machine
 }
 
+ValueHasNoSourceForm {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "{0} cannot be written as source: {1}. '0.0' stands in its place."
+    text  "{0} 无法写成源码：{1}。以 '0.0' 代替。"
+    state machine
+}
+
+TakeInvalidValue {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "a reader names an output the graph does not have"
+    text  "某个读取方指定了图中不存在的输出"
+    state machine
+}
+
+TakeUnboundInput {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "the function input is not one of the function's parameters"
+    text  "该函数输入不是函数的参数之一"
+    state machine
+}
+
+TakeUnnamedParameter {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "the parameter node carries no ParameterName"
+    text  "该参数节点没有 ParameterName"
+    state machine
+}
+
+TakeExtraOutput {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "a reader names an output past the one this node has in source"
+    text  "某个读取方指定的输出超出了该节点在源文件中拥有的输出"
+    state machine
+}
+
+TakeBeforeDeclared {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "it is read before the statement that declares it (the graph has a cycle)"
+    text  "它在声明它的语句之前就被读取了（图中存在环）"
+    state machine
+}
+
+TakeBeforeBuilt {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "it is read before it was written (the graph has a cycle)"
+    text  "它在被写入之前就被读取了（图中存在环）"
+    state machine
+}
+
+TakeMissingOutput {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "a reader names an output this node does not have"
+    text  "某个读取方指定了该节点没有的输出"
+    state machine
+}
+
+TakeBaseBeforeBuilt {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "it is read before it was written (the graph has a cycle)"
+    text  "它在被写入之前就被读取了（图中存在环）"
+    state machine
+}
+
+TakeUnnamedAttribute {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "the attribute it reads has no name"
+    text  "它读取的属性没有名字"
+    state machine
+}
+
+TakeUndeclaredOutput {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "the output a reader names is not one the called function declares"
+    text  "读取方指定的输出不是被调用函数声明的输出"
+    state machine
+}
+
+TakeStatement {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "it is a statement and has no value"
+    text  "它是一条语句，没有值"
+    state machine
+}
+
 ReflectedNoCatalogEntry {
     at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
     src   "its class is not in the builtin catalog"
     text  "它的类不在内置目录中"
+    state machine
+}
+
+ReflectedUnnamedPin {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "{0} has an input '{1}' that is neither a pin of '{2}.{3}' nor a name an argument can carry; it is left unconnected."
+    text  "{0} 有一个输入 '{1}'，它既不是 '{2}.{3}' 的引脚，也不是实参可以承载的名字；它保持未连接。"
     state machine
 }
 
@@ -114,17 +128,24 @@ ReflectedPropertyUnnamed {
     state machine
 }
 
-ReflectedUnnamedPin {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "{0} has an input '{1}' that is neither a pin of '{2}.{3}' nor a name an argument can carry; it is left unconnected."
-    text  "{0} 有一个输入 '{1}'，它既不是 '{2}.{3}' 的引脚，也不是实参可以承载的名字；它保持未连接。"
-    state machine
-}
-
 SampleWithoutOperands {
     at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
     src   "a texture sample needs its texture and its coordinates"
     text  "纹理采样需要纹理和坐标"
+    state machine
+}
+
+CoreOpMissingOperand {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "one of its operands is not connected"
+    text  "它有一个操作数没有连接"
+    state machine
+}
+
+CoreOpArity {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
+    src   "it has the wrong number of operands"
+    text  "它的操作数个数不对"
     state machine
 }
 
@@ -135,86 +156,65 @@ SwizzleWithoutMask {
     state machine
 }
 
-TakeBaseBeforeBuilt {
+CompareAsReflectedCall {
     at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "it is read before it was written (the graph has a cycle)"
-    text  "它在被写入之前就被读取了（图中存在环）"
+    src   "{0} is an If whose branches no comparison selects between; it is written as 'UE.If(...)'."
+    text  "{0} 是一个 If，但它的分支并不是由某次比较来选择的；它被写成 'UE.If(...)'。"
     state machine
 }
 
-TakeBeforeBuilt {
+CoreOpNoSpelling {
     at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "it is read before it was written (the graph has a cycle)"
-    text  "它在被写入之前就被读取了（图中存在环）"
+    src   "the language has no spelling for this operation"
+    text  "语言中没有这个操作的写法"
     state machine
 }
 
-TakeBeforeDeclared {
+CallInputUnconnectedZero {
     at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "it is read before the statement that declares it (the graph has a cycle)"
-    text  "它在声明它的语句之前就被读取了（图中存在环）"
+    src   "{0} leaves the required input '{1}' of '{2}' unconnected; '0.0' is passed for it."
+    text  "{0} 没有连接 '{2}' 的必需输入 '{1}'；以 '0.0' 传入。"
     state machine
 }
 
-TakeExtraOutput {
+CallInputUnconnectedSkipped {
     at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "a reader names an output past the one this node has in source"
-    text  "某个读取方指定的输出超出了该节点在源文件中拥有的输出"
+    src   "{0} leaves the required input '{1}' of '{2}' unconnected and nothing can stand in for it; the call is written without it and will not compile as it is."
+    text  "{0} 没有连接 '{2}' 的必需输入 '{1}'，也没有任何东西可以代替它；该调用写出时不带这个输入，照原样无法编译。"
     state machine
 }
 
-TakeInvalidValue {
+CallOutWithoutLocal {
     at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "a reader names an output the graph does not have"
-    text  "某个读取方指定了图中不存在的输出"
+    src   "the function it calls has 'out' parameters and the call was taken for a plain value"
+    text  "它调用的函数带有 'out' 参数，而这次调用被当成了普通值"
     state machine
 }
 
-TakeMissingOutput {
+CallInputUndeclared {
     at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "a reader names an output this node does not have"
-    text  "某个读取方指定了该节点没有的输出"
+    src   "{0} connects an input '{1}' that '{2}' does not declare; the connection is dropped."
+    text  "{0} 连接了 '{2}' 没有声明的输入 '{1}'；该连接已被丢弃。"
     state machine
 }
 
-TakeStatement {
+CallWithoutCallee {
     at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "it is a statement and has no value"
-    text  "它是一条语句，没有值"
+    src   "the function it calls could not be declared"
+    text  "它调用的函数无法声明"
     state machine
 }
 
-TakeUnboundInput {
+CallOfVoidAsValue {
     at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "the function input is not one of the function's parameters"
-    text  "该函数输入不是函数的参数之一"
+    src   "the function it calls returns nothing"
+    text  "它调用的函数没有返回值"
     state machine
 }
 
-TakeUndeclaredOutput {
+AttributesWithoutMaterial {
     at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "the output a reader names is not one the called function declares"
-    text  "读取方指定的输出不是被调用函数声明的输出"
-    state machine
-}
-
-TakeUnnamedAttribute {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "the attribute it reads has no name"
-    text  "它读取的属性没有名字"
-    state machine
-}
-
-TakeUnnamedParameter {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "the parameter node carries no ParameterName"
-    text  "该参数节点没有 ParameterName"
-    state machine
-}
-
-ValueHasNoSourceForm {
-    at    Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp
-    src   "{0} cannot be written as source: {1}. '0.0' stands in its place."
-    text  "{0} 无法写成源码：{1}。以 '0.0' 代替。"
+    src   "it reads the attributes of no material"
+    text  "它读取的属性不属于任何材质"
     state machine
 }

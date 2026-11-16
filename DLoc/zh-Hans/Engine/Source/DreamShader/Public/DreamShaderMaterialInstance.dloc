@@ -1,0 +1,42 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamShaderMaterialInstance {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance
+    src   "Dream Shader Material Instance"
+}
+
+DreamShaderMaterialInstance:SourceFilePath {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance:SourceFilePath
+    src   "Source File Path"
+}
+
+DreamShaderMaterialInstance:SourceHash {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance:SourceHash
+    src   "Source Hash"
+}
+
+namespace UObjectToolTips
+
+DreamShaderMaterialInstance {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance
+    src   "The DreamShader-generated material asset: a lightweight constant instance of a hidden per-material\nbase UMaterial that carries the real node graph (the ThinCustom chain). The instance is the\naddressable asset -- it hides from the Content Browser while memory-only (IsAsset) and owns its own\nstatic-permutation shader map as the ROOT of its inheritance chain (HasOverridenBaseProperties),\nso parameter/color child instances off it share one compiled map. Everything else -- parameters,\nsettings, domains, scene reads -- lives on the base as ordinary nodes and properties, enumerated\nnatively by the engine."
+}
+
+DreamShaderMaterialInstance:SourceFilePath {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance:SourceFilePath
+    src   "DreamShader source file this instance was generated from."
+}
+
+DreamShaderMaterialInstance:SourceHash {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance:SourceHash
+    src   "Hash of the source text (the regeneration skip check compares against it)."
+}
+
+namespace UObjectCategory
+
+DreamShader {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance:SourceFilePath
+    src   "DreamShader"
+}

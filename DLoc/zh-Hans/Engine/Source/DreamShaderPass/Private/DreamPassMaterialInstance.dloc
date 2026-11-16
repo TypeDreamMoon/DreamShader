@@ -1,0 +1,15 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamPassMaterialInstance {
+    at    Source/DreamShaderPass/Private/DreamPassMaterialInstance.h#DreamPassMaterialInstance
+    src   "Dream Pass Material Instance"
+}
+
+namespace UObjectToolTips
+
+DreamPassMaterialInstance {
+    at    Source/DreamShaderPass/Private/DreamPassMaterialInstance.h#DreamPassMaterialInstance
+    src   "A pool-owned MID whose reset never changes the shared parent material's editor previews."
+}

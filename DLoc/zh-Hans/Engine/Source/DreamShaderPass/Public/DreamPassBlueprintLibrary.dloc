@@ -1,0 +1,482 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamPassBlueprintLibrary {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary
+    src   "Dream Pass Blueprint Library"
+}
+
+DreamPassBlueprintLibrary:AddPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline
+    src   "Add Pipeline"
+}
+
+DreamPassBlueprintLibrary:AddPipeline:Overrides {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline:Overrides
+    src   "Overrides"
+}
+
+DreamPassBlueprintLibrary:AddPipeline:Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline:Pipeline
+    src   "Pipeline"
+}
+
+DreamPassBlueprintLibrary:AddPipeline:PlayerIndex {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline:PlayerIndex
+    src   "Player Index"
+}
+
+DreamPassBlueprintLibrary:AddPipeline:Priority {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline:Priority
+    src   "Priority"
+}
+
+DreamPassBlueprintLibrary:AddPipeline:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:AddPipeline:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline:WorldContextObject
+    src   "World Context Object"
+}
+
+DreamPassBlueprintLibrary:AddToList {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddToList
+    src   "Add to List"
+}
+
+DreamPassBlueprintLibrary:AddToList:List {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddToList:List
+    src   "List"
+}
+
+DreamPassBlueprintLibrary:AddToList:Primitive {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddToList:Primitive
+    src   "Primitive"
+}
+
+DreamPassBlueprintLibrary:AddToList:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddToList:WorldContextObject
+    src   "World Context Object"
+}
+
+DreamPassBlueprintLibrary:ClearList {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:ClearList
+    src   "Clear List"
+}
+
+DreamPassBlueprintLibrary:ClearList:List {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:ClearList:List
+    src   "List"
+}
+
+DreamPassBlueprintLibrary:ClearList:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:ClearList:WorldContextObject
+    src   "World Context Object"
+}
+
+DreamPassBlueprintLibrary:GetExportTarget {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:GetExportTarget
+    src   "Get Export Target"
+}
+
+DreamPassBlueprintLibrary:GetExportTarget:Buffer {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:GetExportTarget:Buffer
+    src   "Buffer"
+}
+
+DreamPassBlueprintLibrary:GetExportTarget:Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:GetExportTarget:Pipeline
+    src   "Pipeline"
+}
+
+DreamPassBlueprintLibrary:GetExportTarget:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:GetExportTarget:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:MakeBoolValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeBoolValue
+    src   "Make Bool Value"
+}
+
+DreamPassBlueprintLibrary:MakeBoolValue:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeBoolValue:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:MakeBoolValue:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeBoolValue:Value
+    src   "Value"
+}
+
+DreamPassBlueprintLibrary:MakeColorValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeColorValue
+    src   "Make Color Value"
+}
+
+DreamPassBlueprintLibrary:MakeColorValue:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeColorValue:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:MakeColorValue:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeColorValue:Value
+    src   "Value"
+}
+
+DreamPassBlueprintLibrary:MakeFloatValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeFloatValue
+    src   "Make Float Value"
+}
+
+DreamPassBlueprintLibrary:MakeFloatValue:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeFloatValue:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:MakeFloatValue:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeFloatValue:Value
+    src   "Value"
+}
+
+DreamPassBlueprintLibrary:MakeIntValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeIntValue
+    src   "Make Int Value"
+}
+
+DreamPassBlueprintLibrary:MakeIntValue:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeIntValue:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:MakeIntValue:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeIntValue:Value
+    src   "Value"
+}
+
+DreamPassBlueprintLibrary:MakeTextureValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeTextureValue
+    src   "Make Texture Value"
+}
+
+DreamPassBlueprintLibrary:MakeTextureValue:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeTextureValue:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:MakeTextureValue:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeTextureValue:Value
+    src   "Value"
+}
+
+DreamPassBlueprintLibrary:MakeVector2Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeVector2Value
+    src   "Make Vector 2Value"
+}
+
+DreamPassBlueprintLibrary:MakeVector2Value:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeVector2Value:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:MakeVector2Value:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeVector2Value:Value
+    src   "Value"
+}
+
+DreamPassBlueprintLibrary:MakeVector3Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeVector3Value
+    src   "Make Vector 3Value"
+}
+
+DreamPassBlueprintLibrary:MakeVector3Value:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeVector3Value:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:MakeVector3Value:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeVector3Value:Value
+    src   "Value"
+}
+
+DreamPassBlueprintLibrary:RemoveFromList {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemoveFromList
+    src   "Remove from List"
+}
+
+DreamPassBlueprintLibrary:RemoveFromList:List {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemoveFromList:List
+    src   "List"
+}
+
+DreamPassBlueprintLibrary:RemoveFromList:Primitive {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemoveFromList:Primitive
+    src   "Primitive"
+}
+
+DreamPassBlueprintLibrary:RemoveFromList:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemoveFromList:WorldContextObject
+    src   "World Context Object"
+}
+
+DreamPassBlueprintLibrary:RemovePipeline {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemovePipeline
+    src   "Remove Pipeline"
+}
+
+DreamPassBlueprintLibrary:RemovePipeline:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemovePipeline:Handle
+    src   "Handle"
+}
+
+DreamPassBlueprintLibrary:RemovePipeline:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemovePipeline:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:RemovePipeline:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemovePipeline:WorldContextObject
+    src   "World Context Object"
+}
+
+DreamPassBlueprintLibrary:SetBoolParameter {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetBoolParameter
+    src   "Set Bool Parameter"
+}
+
+DreamPassBlueprintLibrary:SetBoolParameter:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetBoolParameter:Handle
+    src   "Handle"
+}
+
+DreamPassBlueprintLibrary:SetBoolParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetBoolParameter:Name
+    src   "Name"
+}
+
+DreamPassBlueprintLibrary:SetBoolParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetBoolParameter:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:SetBoolParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetBoolParameter:Value
+    src   "Value"
+}
+
+DreamPassBlueprintLibrary:SetBoolParameter:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetBoolParameter:WorldContextObject
+    src   "World Context Object"
+}
+
+DreamPassBlueprintLibrary:SetColorParameter {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetColorParameter
+    src   "Set Color Parameter"
+}
+
+DreamPassBlueprintLibrary:SetColorParameter:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetColorParameter:Handle
+    src   "Handle"
+}
+
+DreamPassBlueprintLibrary:SetColorParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetColorParameter:Name
+    src   "Name"
+}
+
+DreamPassBlueprintLibrary:SetColorParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetColorParameter:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:SetColorParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetColorParameter:Value
+    src   "Value"
+}
+
+DreamPassBlueprintLibrary:SetColorParameter:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetColorParameter:WorldContextObject
+    src   "World Context Object"
+}
+
+DreamPassBlueprintLibrary:SetFloatParameter {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetFloatParameter
+    src   "Set Float Parameter"
+}
+
+DreamPassBlueprintLibrary:SetFloatParameter:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetFloatParameter:Handle
+    src   "Handle"
+}
+
+DreamPassBlueprintLibrary:SetFloatParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetFloatParameter:Name
+    src   "Name"
+}
+
+DreamPassBlueprintLibrary:SetFloatParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetFloatParameter:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:SetFloatParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetFloatParameter:Value
+    src   "Value"
+}
+
+DreamPassBlueprintLibrary:SetFloatParameter:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetFloatParameter:WorldContextObject
+    src   "World Context Object"
+}
+
+DreamPassBlueprintLibrary:SetIntParameter {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetIntParameter
+    src   "Set Int Parameter"
+}
+
+DreamPassBlueprintLibrary:SetIntParameter:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetIntParameter:Handle
+    src   "Handle"
+}
+
+DreamPassBlueprintLibrary:SetIntParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetIntParameter:Name
+    src   "Name"
+}
+
+DreamPassBlueprintLibrary:SetIntParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetIntParameter:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:SetIntParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetIntParameter:Value
+    src   "Value"
+}
+
+DreamPassBlueprintLibrary:SetIntParameter:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetIntParameter:WorldContextObject
+    src   "World Context Object"
+}
+
+DreamPassBlueprintLibrary:SetParameter {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetParameter
+    src   "Set Parameter"
+}
+
+DreamPassBlueprintLibrary:SetParameter:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetParameter:Handle
+    src   "Handle"
+}
+
+DreamPassBlueprintLibrary:SetParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetParameter:Name
+    src   "Name"
+}
+
+DreamPassBlueprintLibrary:SetParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetParameter:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:SetParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetParameter:Value
+    src   "Value"
+}
+
+DreamPassBlueprintLibrary:SetParameter:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetParameter:WorldContextObject
+    src   "World Context Object"
+}
+
+DreamPassBlueprintLibrary:SetPipelineWeight {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetPipelineWeight
+    src   "Set Pipeline Weight"
+}
+
+DreamPassBlueprintLibrary:SetPipelineWeight:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetPipelineWeight:Handle
+    src   "Handle"
+}
+
+DreamPassBlueprintLibrary:SetPipelineWeight:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetPipelineWeight:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:SetPipelineWeight:Weight {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetPipelineWeight:Weight
+    src   "Weight"
+}
+
+DreamPassBlueprintLibrary:SetPipelineWeight:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetPipelineWeight:WorldContextObject
+    src   "World Context Object"
+}
+
+DreamPassBlueprintLibrary:SetTextureParameter {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetTextureParameter
+    src   "Set Texture Parameter"
+}
+
+DreamPassBlueprintLibrary:SetTextureParameter:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetTextureParameter:Handle
+    src   "Handle"
+}
+
+DreamPassBlueprintLibrary:SetTextureParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetTextureParameter:Name
+    src   "Name"
+}
+
+DreamPassBlueprintLibrary:SetTextureParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetTextureParameter:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassBlueprintLibrary:SetTextureParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetTextureParameter:Value
+    src   "Value"
+}
+
+DreamPassBlueprintLibrary:SetTextureParameter:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetTextureParameter:WorldContextObject
+    src   "World Context Object"
+}
+
+namespace UObjectToolTips
+
+DreamPassBlueprintLibrary {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary
+    src   "Blueprint access to UDreamPassSubsystem: activating pipelines, setting their parameters, filling mesh pass lists."
+}
+
+DreamPassBlueprintLibrary:AddPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline
+    src   "Runs Pipeline in the world's views -- every view, or PlayerIndex's only -- until RemovePipeline."
+}
+
+DreamPassBlueprintLibrary:AddToList {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddToList
+    src   "Puts a primitive in a named list, which a mesh pass selects with `Filter = List(Name)`."
+}
+
+DreamPassBlueprintLibrary:GetExportTarget {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:GetExportTarget
+    src   "The render target an exported buffer is copied into, for UMG, Niagara or a material parameter."
+}
+
+namespace UObjectCategory
+
+"DreamShader|Custom Pass" {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline
+    src   "DreamShader|Custom Pass"
+}
+
+"DreamShader|Custom Pass|Values" {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeBoolValue
+    src   "DreamShader|Custom Pass|Values"
+}

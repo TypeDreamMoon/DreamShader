@@ -1,0 +1,135 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamPassVolume {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume
+    src   "Dream Pass Volume"
+}
+
+DreamPassVolume:bEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:bEnabled
+    src   "Enabled"
+}
+
+DreamPassVolume:BlendRadius {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:BlendRadius
+    src   "Blend Radius"
+}
+
+DreamPassVolume:BlendWeight {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:BlendWeight
+    src   "Blend Weight"
+}
+
+DreamPassVolume:bUnbound {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:bUnbound
+    src   "Infinite Extent (Unbound)"
+}
+
+DreamPassVolume:Overrides {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:Overrides
+    src   "Overrides"
+}
+
+DreamPassVolume:Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:Pipeline
+    src   "Pipeline"
+}
+
+DreamPassVolume:Priority {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:Priority
+    src   "Priority"
+}
+
+DreamPassVolume:SetBlendWeight {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:SetBlendWeight
+    src   "Set Blend Weight"
+}
+
+DreamPassVolume:SetBlendWeight:InBlendWeight {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:SetBlendWeight:InBlendWeight
+    src   "In Blend Weight"
+}
+
+DreamPassVolume:SetEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:SetEnabled
+    src   "Set Enabled"
+}
+
+DreamPassVolume:SetEnabled:bInEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:SetEnabled:bInEnabled
+    src   "In Enabled"
+}
+
+DreamPassVolume:SetParameter {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:SetParameter
+    src   "Set Parameter"
+}
+
+DreamPassVolume:SetParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:SetParameter:Name
+    src   "Name"
+}
+
+DreamPassVolume:SetParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:SetParameter:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassVolume:SetParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:SetParameter:Value
+    src   "Value"
+}
+
+namespace UObjectToolTips
+
+DreamPassVolume {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume
+    src   "Runs a Custom Pass pipeline in the views inside it, the way a post-process volume applies its settings: BlendWeight\ninside, fading to 0 over BlendRadius outside, everywhere when unbound. However many volumes and other sources ask for\none pipeline, it runs once per view; their overrides blend in ascending Priority, each by its weight there\n(UDreamPassSubsystem::ResolveView).\n\nA source of the world's UDreamPassSubsystem while its components are registered -- in editor worlds too, so an editor\nviewport inside the volume shows the pipeline -- and asked about every view on the game thread each frame. Nothing is\ncached: an edit, a move or a Blueprint call takes effect on the next frame. The shape is the brush's: a volume spawned\nat runtime has none, and applies only when unbound."
+}
+
+DreamPassVolume:bEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:bEnabled
+    src   "Off: the volume applies nowhere. In the editor, hiding the volume also takes it out of the editor viewports."
+}
+
+DreamPassVolume:BlendRadius {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:BlendRadius
+    src   "How far outside the volume, in cm, its weight fades from BlendWeight to 0. Below 1, the edge is hard."
+}
+
+DreamPassVolume:BlendWeight {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:BlendWeight
+    src   "0: no effect, 1: full effect, inside the volume."
+}
+
+DreamPassVolume:bUnbound {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:bUnbound
+    src   "Applies to every view of the world, wherever it is, rather than to the views inside the volume."
+}
+
+DreamPassVolume:Overrides {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:Overrides
+    src   "The parameter values the volume runs the pipeline with. A parameter left out keeps what lower priorities give it."
+}
+
+DreamPassVolume:Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:Pipeline
+    src   "The pipeline the volume runs. None: the volume does nothing."
+}
+
+DreamPassVolume:Priority {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:Priority
+    src   "Where the volume's overrides sit among every other activation of the same pipeline: higher wins."
+}
+
+DreamPassVolume:SetBlendWeight {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:SetBlendWeight
+    src   "Clamped to 0..1."
+}
+
+DreamPassVolume:SetParameter {
+    at    Source/DreamShaderPass/Public/DreamPassVolume.h#DreamPassVolume:SetParameter
+    src   "Sets, or adds, one parameter override. False when the pipeline has no such parameter, or not of the value's type."
+}

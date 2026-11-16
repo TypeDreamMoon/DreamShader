@@ -2,6 +2,13 @@ dloc 1
 culture zh-Hans
 namespace DreamShaderMaterialBrowser
 
+CompilerUnavailable {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserActions.cpp
+    src   "The DreamShader compiler module is not available, so nothing was compiled."
+    text  "DreamShader 编译器模块不可用，因此没有编译任何内容。"
+    state machine
+}
+
 CompileFail {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserActions.cpp
     src   "Failed to compile {0}"
@@ -16,24 +23,17 @@ CompileOk {
     state machine
 }
 
-CompiledAll {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserActions.cpp
-    src   "Compiled {0} source(s), {1} failed"
-    text  "已编译 {0} 个源,{1} 个失败"
-    state machine
-}
-
-CompilerUnavailable {
-    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserActions.cpp
-    src   "The DreamShader compiler module is not available, so nothing was compiled."
-    text  "DreamShader 编译器模块不可用，因此没有编译任何内容。"
-    state machine
-}
-
 CompilingAll {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserActions.cpp
     src   "Compiling all DreamShader sources..."
     text  "正在编译所有 DreamShader 源..."
+    state machine
+}
+
+CompiledAll {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserActions.cpp
+    src   "Compiled {0} source(s), {1} failed"
+    text  "已编译 {0} 个源,{1} 个失败"
     state machine
 }
 

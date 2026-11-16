@@ -2,13 +2,6 @@ dloc 1
 culture zh-Hans
 namespace DreamShaderVirtualFunctionSyncService
 
-ConditionalSourceNotSynced {
-    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionSyncService.cpp
-    src   "DSH9001: '{0}' uses conditional compilation, and VirtualFunction sync rewrites a source in place at byte offsets taken from the file as written -- it cannot tell which of your branches a definition belongs to, and refuses rather than risk writing one branch over the others. Refresh these definitions by moving them into a source without directives, or edit them by hand."
-    text  "DSH9001: '{0}' 使用了条件编译,而 VirtualFunction 同步是按文件原样的字节偏移就地改写源文件——它分不清某个定义属于你的哪个分支,与其冒着把一个分支写到其他分支上的风险,不如拒绝。请把这些定义移到没有指令的源文件里再刷新,或者手动编辑。"
-    state machine
-}
-
 ExpectedOneVirtualFunctionBlock {
     at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionSyncService.cpp
     src   "Expected exactly one VirtualFunction block."
@@ -16,24 +9,17 @@ ExpectedOneVirtualFunctionBlock {
     state machine
 }
 
-InvalidAssetReference {
+ReadSourceFileFailed {
     at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionSyncService.cpp
-    src   "VirtualFunction '{0}' asset reference is invalid: {1}"
-    text  "VirtualFunction '{0}' 的资产引用无效: {1}"
+    src   "DreamShader could not read VirtualFunction source file '{0}'."
+    text  "DreamShader 无法读取 VirtualFunction 源文件 '{0}'。"
     state machine
 }
 
-InvalidDeclaration {
+ConditionalSourceNotSynced {
     at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionSyncService.cpp
-    src   "VirtualFunction declaration is invalid: {0}"
-    text  "VirtualFunction 声明无效: {0}"
-    state machine
-}
-
-MissingClosingBrace {
-    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionSyncService.cpp
-    src   "VirtualFunction body is missing a closing '}'."
-    text  "VirtualFunction 函数体缺少闭合的 '}'。"
+    src   "DSH9001: '{0}' uses conditional compilation, and VirtualFunction sync rewrites a source in place at byte offsets taken from the file as written -- it cannot tell which of your branches a definition belongs to, and refuses rather than risk writing one branch over the others. Refresh these definitions by moving them into a source without directives, or edit them by hand."
+    text  "DSH9001: '{0}' 使用了条件编译,而 VirtualFunction 同步是按文件原样的字节偏移就地改写源文件——它分不清某个定义属于你的哪个分支,与其冒着把一个分支写到其他分支上的风险,不如拒绝。请把这些定义移到没有指令的源文件里再刷新,或者手动编辑。"
     state machine
 }
 
@@ -44,17 +30,31 @@ MissingClosingParenthesis {
     state machine
 }
 
+MissingClosingBrace {
+    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionSyncService.cpp
+    src   "VirtualFunction body is missing a closing '}'."
+    text  "VirtualFunction 函数体缺少闭合的 '}'。"
+    state machine
+}
+
+InvalidDeclaration {
+    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionSyncService.cpp
+    src   "VirtualFunction declaration is invalid: {0}"
+    text  "VirtualFunction 声明无效: {0}"
+    state machine
+}
+
+InvalidAssetReference {
+    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionSyncService.cpp
+    src   "VirtualFunction '{0}' asset reference is invalid: {1}"
+    text  "VirtualFunction '{0}' 的资产引用无效: {1}"
+    state machine
+}
+
 MissingMaterialFunction {
     at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionSyncService.cpp
     src   "VirtualFunction '{0}' references missing MaterialFunction '{1}'."
     text  "VirtualFunction '{0}' 引用了缺失的材质函数 '{1}'。"
-    state machine
-}
-
-ReadSourceFileFailed {
-    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionSyncService.cpp
-    src   "DreamShader could not read VirtualFunction source file '{0}'."
-    text  "DreamShader 无法读取 VirtualFunction 源文件 '{0}'。"
     state machine
 }
 

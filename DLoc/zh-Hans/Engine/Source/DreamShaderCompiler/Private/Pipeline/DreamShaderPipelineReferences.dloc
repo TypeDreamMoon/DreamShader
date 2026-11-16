@@ -2,10 +2,10 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.Pipeline.References
 
-MaterialCompileFailed {
+NoGenerationReferenceMissing {
     at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
-    src   "The material '{0}' comes from '{1}', which failed to compile, so this pipeline has no material to check its pass against. {2}"
-    text  "材质 '{0}' 来自 '{1}'，而后者编译失败，因此此管线没有可用来检查其 Pass 的材质。{2}"
+    src   "'{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is nothing to check this reference against. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`."
+    text  "'{0}' 来自 '{1}'，后者将它标记为 NoGeneration，且它从未被构建过，因此没有可用来检查此引用的资产。请按名称编译一次 '{1}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。"
     state machine
 }
 
@@ -13,6 +13,34 @@ MaterialCompiledFirst {
     at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
     src   "'{0}' was missing or older than its source, so '{1}' was compiled first."
     text  "'{0}' 不存在或比它的源文件旧，因此先编译了 '{1}'。"
+    state machine
+}
+
+PipelineCompiledFirst {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The pipeline '{0}' was missing or older than its source, so '{1}' was compiled first."
+    text  "管线 '{0}' 不存在或比它的源文件旧，因此先编译了 '{1}'。"
+    state machine
+}
+
+MaterialCompileFailed {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The material '{0}' comes from '{1}', which failed to compile, so this pipeline has no material to check its pass against. {2}"
+    text  "材质 '{0}' 来自 '{1}'，而后者编译失败，因此此管线没有可用来检查其 Pass 的材质。{2}"
+    state machine
+}
+
+PipelineCompileFailed {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The pipeline '{0}' comes from '{1}', which failed to compile, so the buffer this material reads cannot be checked. {2}"
+    text  "管线 '{0}' 来自 '{1}'，而后者编译失败，因此无法检查此材质读取的缓冲。{2}"
+    state machine
+}
+
+MaterialReferenceMalformed {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The material '{0}' does not resolve to an asset path. {1}"
+    text  "材质 '{0}' 无法解析为资产路径。{1}"
     state machine
 }
 
@@ -30,13 +58,6 @@ MaterialReferenceCycleError {
     state machine
 }
 
-MaterialReferenceMalformed {
-    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
-    src   "The material '{0}' does not resolve to an asset path. {1}"
-    text  "材质 '{0}' 无法解析为资产路径。{1}"
-    state machine
-}
-
 MaterialReferenceNotMaterial {
     at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
     src   "'{0}' is a {1}, not a material or a material instance."
@@ -51,10 +72,10 @@ MaterialSourceDoesNotCompile {
     state machine
 }
 
-NoGenerationReferenceMissing {
+PassBufferNoPipeline {
     at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
-    src   "'{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is nothing to check this reference against. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`."
-    text  "'{0}' 来自 '{1}'，后者将它标记为 NoGeneration，且它从未被构建过，因此没有可用来检查此引用的资产。请按名称编译一次 '{1}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。"
+    src   "UE.DreamPassBuffer names no Pipeline: write the name of the '.dsp' (Pipeline = \"CP_Highlight\") or the pipeline asset's path."
+    text  "UE.DreamPassBuffer 没有指定 Pipeline：请写出 '.dsp' 的名称（Pipeline = \"CP_Highlight\"）或管线资产的路径。"
     state machine
 }
 
@@ -65,31 +86,17 @@ PassBufferNoBuffer {
     state machine
 }
 
-PassBufferNoPipeline {
+PassBufferPipelineMalformed {
     at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
-    src   "UE.DreamPassBuffer names no Pipeline: write the name of the '.dsp' (Pipeline = \"CP_Highlight\") or the pipeline asset's path."
-    text  "UE.DreamPassBuffer 没有指定 Pipeline：请写出 '.dsp' 的名称（Pipeline = \"CP_Highlight\"）或管线资产的路径。"
+    src   "The pipeline '{0}' does not resolve to an asset path. {1}"
+    text  "管线 '{0}' 无法解析为资产路径。{1}"
     state machine
 }
 
-PassBufferNotExportedInSource {
+PassBufferPipelineNotFound {
     at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
-    src   "Buffer '{1}' of the pipeline '{0}' is not exported. Declare it with Export = true in the .dsp."
-    text  "管线 '{0}' 的缓冲 '{1}' 没有导出。请在 .dsp 中用 Export = true 声明它。"
-    state machine
-}
-
-PassBufferNotPipeline {
-    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
-    src   "'{0}' is a {1}, not a DreamShader pass pipeline."
-    text  "'{0}' 是 {1}，不是 DreamShader Pass 管线。"
-    state machine
-}
-
-PassBufferNotSampleable {
-    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
-    src   "Buffer '{1}' of the pipeline '{0}' is {2}, which a material cannot sample. Export a float or normalized buffer instead."
-    text  "管线 '{0}' 的缓冲 '{1}' 是 {2}，材质无法采样。请改为导出浮点或归一化缓冲。"
+    src   "No pipeline named '{0}' is built by a .dsp under '{1}'; write the pipeline asset's path, or check the name."
+    text  "'{1}' 下没有任何 .dsp 构建名为 '{0}' 的管线；请写管线资产的路径，或检查这个名称。"
     state machine
 }
 
@@ -107,10 +114,17 @@ PassBufferPipelineCycleError {
     state machine
 }
 
-PassBufferPipelineMalformed {
+PassBufferNotPipeline {
     at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
-    src   "The pipeline '{0}' does not resolve to an asset path. {1}"
-    text  "管线 '{0}' 无法解析为资产路径。{1}"
+    src   "'{0}' is a {1}, not a DreamShader pass pipeline."
+    text  "'{0}' 是 {1}，不是 DreamShader Pass 管线。"
+    state machine
+}
+
+PipelineSourceDoesNotCompile {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The pipeline '{0}' comes from '{1}', which does not compile, so the buffer this material reads cannot be checked. {2}"
+    text  "管线 '{0}' 来自 '{1}'，而后者无法编译，因此无法检查此材质读取的缓冲。{2}"
     state machine
 }
 
@@ -121,13 +135,6 @@ PassBufferPipelineMissing {
     state machine
 }
 
-PassBufferPipelineNotFound {
-    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
-    src   "No pipeline named '{0}' is built by a .dsp under '{1}'; write the pipeline asset's path, or check the name."
-    text  "'{1}' 下没有任何 .dsp 构建名为 '{0}' 的管线；请写管线资产的路径，或检查这个名称。"
-    state machine
-}
-
 PassBufferUnknownInSource {
     at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
     src   "The pipeline '{0}' declares no buffer '{1}'."
@@ -135,23 +142,16 @@ PassBufferUnknownInSource {
     state machine
 }
 
-PipelineCompileFailed {
+PassBufferNotExportedInSource {
     at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
-    src   "The pipeline '{0}' comes from '{1}', which failed to compile, so the buffer this material reads cannot be checked. {2}"
-    text  "管线 '{0}' 来自 '{1}'，而后者编译失败，因此无法检查此材质读取的缓冲。{2}"
+    src   "Buffer '{1}' of the pipeline '{0}' is not exported. Declare it with Export = true in the .dsp."
+    text  "管线 '{0}' 的缓冲 '{1}' 没有导出。请在 .dsp 中用 Export = true 声明它。"
     state machine
 }
 
-PipelineCompiledFirst {
+PassBufferNotSampleable {
     at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
-    src   "The pipeline '{0}' was missing or older than its source, so '{1}' was compiled first."
-    text  "管线 '{0}' 不存在或比它的源文件旧，因此先编译了 '{1}'。"
-    state machine
-}
-
-PipelineSourceDoesNotCompile {
-    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
-    src   "The pipeline '{0}' comes from '{1}', which does not compile, so the buffer this material reads cannot be checked. {2}"
-    text  "管线 '{0}' 来自 '{1}'，而后者无法编译，因此无法检查此材质读取的缓冲。{2}"
+    src   "Buffer '{1}' of the pipeline '{0}' is {2}, which a material cannot sample. Export a float or normalized buffer instead."
+    text  "管线 '{0}' 的缓冲 '{1}' 是 {2}，材质无法采样。请改为导出浮点或归一化缓冲。"
     state machine
 }

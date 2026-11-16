@@ -1,0 +1,85 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamPassLayerComponent {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent
+    src   "Dream Pass Layers"
+}
+
+DreamPassLayerComponent:bAllPrimitives {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:bAllPrimitives
+    src   "All Primitives"
+}
+
+DreamPassLayerComponent:ComponentTag {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:ComponentTag
+    src   "Component Tag"
+}
+
+DreamPassLayerComponent:GetLayerNameOptions {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:GetLayerNameOptions
+    src   "Get Layer Name Options"
+}
+
+DreamPassLayerComponent:GetLayerNameOptions:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:GetLayerNameOptions:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassLayerComponent:Layers {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:Layers
+    src   "Layers"
+}
+
+DreamPassLayerComponent:Refresh {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:Refresh
+    src   "Refresh"
+}
+
+DreamPassLayerComponent:SetLayers {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:SetLayers
+    src   "Set Layers"
+}
+
+DreamPassLayerComponent:SetLayers:NewLayers {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:SetLayers:NewLayers
+    src   "New Layers"
+}
+
+namespace UObjectToolTips
+
+DreamPassLayerComponent {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent
+    src   "Gives the primitives of its actor pass layers, which a mesh pass selects with `Filter = Layer(Name)`.\n\nThe layers are the names of Project Settings > DreamShader Custom Pass > Layer Names. Every primitive component of\nthe actor receives them, or -- with All Primitives off -- only those that carry Component Tag. The layers are added\nto whatever else gives a primitive layers, and taken away again when this component is unregistered, so two layer\ncomponents can share an actor; they should not share a layer.\n\nThe primitives are gathered when the component registers and when Refresh is called: one added to the actor later\ngets its layers from a Refresh."
+}
+
+DreamPassLayerComponent:bAllPrimitives {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:bAllPrimitives
+    src   "Every primitive component of the actor. Off: only those with Component Tag."
+}
+
+DreamPassLayerComponent:ComponentTag {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:ComponentTag
+    src   "With All Primitives off, the component tag a primitive needs to receive the layers. None selects no primitive."
+}
+
+DreamPassLayerComponent:GetLayerNameOptions {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:GetLayerNameOptions
+    src   "The details panel's choices for Layers."
+}
+
+DreamPassLayerComponent:Layers {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:Layers
+    src   "The pass layers the primitives are in: names from the project settings' Layer Names."
+}
+
+DreamPassLayerComponent:Refresh {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:Refresh
+    src   "Gathers the actor's primitives again and gives them the layers: after a primitive was added or a tag changed."
+}
+
+DreamPassLayerComponent:SetLayers {
+    at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:SetLayers
+    src   "Replaces the layers and applies them at once."
+}

@@ -1,17 +1,118 @@
 dloc 1
 culture zh-Hans
-namespace DreamShader.Pass.Settings
+namespace UObjectDisplayNames
 
-SectionDescription {
-    at    Source/DreamShaderPass/Public/DreamPassSettings.h
-    src   "Pipelines that run in every world, and the names of the layers mesh passes select by."
-    text  "在每个世界中运行的管线，以及网格 Pass 用来筛选的层名称。"
-    state machine
+DreamPassGlobalPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline
+    src   "Dream Pass Global Pipeline"
 }
+
+DreamPassGlobalPipeline:bEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:bEnabled
+    src   "Enabled"
+}
+
+DreamPassGlobalPipeline:Overrides {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Overrides
+    src   "Overrides"
+}
+
+DreamPassGlobalPipeline:Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Pipeline
+    src   "Pipeline"
+}
+
+DreamPassGlobalPipeline:Priority {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Priority
+    src   "Priority"
+}
+
+DreamPassSettings {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings
+    src   "DreamShader Custom Pass"
+}
+
+DreamPassSettings:bEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:bEnabled
+    src   "Enabled"
+}
+
+DreamPassSettings:GlobalPipelines {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:GlobalPipelines
+    src   "Global Pipelines"
+}
+
+DreamPassSettings:LayerNames {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:LayerNames
+    src   "Layer Names"
+}
+
+namespace UObjectToolTips
+
+DreamPassGlobalPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline
+    src   "A pipeline that applies to every view of every world, with the parameter values it applies with."
+}
+
+DreamPassGlobalPipeline:Priority {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Priority
+    src   "Where its parameter overrides sit among every other activation of the same pipeline: higher wins."
+}
+
+DreamPassSettings {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings
+    src   "Project Settings ▸ DreamPlugin ▸ DreamShader Custom Pass."
+}
+
+DreamPassSettings:bEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:bEnabled
+    src   "Off: no pipeline runs anywhere, whatever activates it. r.DreamPass.Enable turns it off for a session."
+}
+
+DreamPassSettings:GlobalPipelines {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:GlobalPipelines
+    src   "Pipelines that apply to every view of every world."
+}
+
+DreamPassSettings:LayerNames {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:LayerNames
+    src   "The pass layers, at most 32: a UDreamPassLayerComponent gives primitives some of them, and a mesh pass's\n`Filter = Layer(Name)` selects the primitives that have one. The order is the bit order; renaming one is safe,\nmoving one re-targets every compiled pipeline that names it until those are compiled again."
+}
+
+namespace UObjectCategory
+
+Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Pipeline
+    src   "Pipeline"
+}
+
+Runtime {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:bEnabled
+    src   "Runtime"
+}
+
+Pipelines {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:GlobalPipelines
+    src   "Pipelines"
+}
+
+Layers {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:LayerNames
+    src   "Layers"
+}
+
+namespace DreamShader.Pass.Settings
 
 SectionText {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h
     src   "DreamShader Custom Pass"
     text  "DreamShader Custom Pass"
+    state machine
+}
+
+SectionDescription {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h
+    src   "Pipelines that run in every world, and the names of the layers mesh passes select by."
+    text  "在每个世界中运行的管线，以及网格 Pass 用来筛选的层名称。"
     state machine
 }

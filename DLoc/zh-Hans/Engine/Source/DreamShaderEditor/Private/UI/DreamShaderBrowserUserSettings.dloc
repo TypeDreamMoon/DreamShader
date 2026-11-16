@@ -1,0 +1,160 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamShaderBrowserUserSettings {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings
+    src   "Dream Shader Browser User Settings"
+}
+
+DreamShaderBrowserUserSettings:bDivergedOnly {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bDivergedOnly
+    src   "Diverged Only"
+}
+
+DreamShaderBrowserUserSettings:bEphemeralOnly {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bEphemeralOnly
+    src   "Ephemeral Only"
+}
+
+DreamShaderBrowserUserSettings:bErrorsOnly {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bErrorsOnly
+    src   "Errors Only"
+}
+
+DreamShaderBrowserUserSettings:bHideLibraries {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bHideLibraries
+    src   "Hide Libraries"
+}
+
+DreamShaderBrowserUserSettings:bHidePipelines {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bHidePipelines
+    src   "Hide Pipelines"
+}
+
+DreamShaderBrowserUserSettings:bHideUnmanaged {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bHideUnmanaged
+    src   "Hide Unmanaged"
+}
+
+DreamShaderBrowserUserSettings:bSortAscending {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bSortAscending
+    src   "Sort Ascending"
+}
+
+DreamShaderBrowserUserSettings:bStaleOnly {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bStaleOnly
+    src   "Stale Only"
+}
+
+DreamShaderBrowserUserSettings:bTileView {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bTileView
+    src   "Tile View"
+}
+
+DreamShaderBrowserUserSettings:InspectorPaneFraction {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:InspectorPaneFraction
+    src   "Inspector Pane Fraction"
+}
+
+DreamShaderBrowserUserSettings:LastSelectedKey {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:LastSelectedKey
+    src   "Last Selected Key"
+}
+
+DreamShaderBrowserUserSettings:NavigationPaneFraction {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:NavigationPaneFraction
+    src   "Navigation Pane Fraction"
+}
+
+DreamShaderBrowserUserSettings:NavigationScope {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:NavigationScope
+    src   "Navigation Scope"
+}
+
+DreamShaderBrowserUserSettings:PreviewMesh {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:PreviewMesh
+    src   "Preview Mesh"
+}
+
+DreamShaderBrowserUserSettings:SortColumn {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:SortColumn
+    src   "Sort Column"
+}
+
+DreamShaderBrowserUserSettings:ViewMode {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:ViewMode
+    src   "View Mode"
+}
+
+EDreamShaderBrowserSortColumn.Asset {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserSortColumn:Asset
+    src   "Asset"
+}
+
+EDreamShaderBrowserSortColumn.EDreamShaderBrowserSortColumn_MAX {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserSortColumn:EDreamShaderBrowserSortColumn_MAX
+    src   "EDream Shader Browser Sort Column MAX"
+}
+
+EDreamShaderBrowserSortColumn.Name {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserSortColumn:Name
+    src   "Name"
+}
+
+EDreamShaderBrowserSortColumn.Root {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserSortColumn:Root
+    src   "Root"
+}
+
+EDreamShaderBrowserSortColumn.Status {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserSortColumn:Status
+    src   "Status"
+}
+
+EDreamShaderBrowserViewMode.Assets {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserViewMode:Assets
+    src   "Assets"
+}
+
+EDreamShaderBrowserViewMode.EDreamShaderBrowserViewMode_MAX {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserViewMode:EDreamShaderBrowserViewMode_MAX
+    src   "EDream Shader Browser View Mode MAX"
+}
+
+EDreamShaderBrowserViewMode.Sources {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserViewMode:Sources
+    src   "Sources"
+}
+
+namespace UObjectToolTips
+
+DreamShaderBrowserUserSettings {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings
+    src   "Per-user, per-project state of the Material Content Browser: which mode it was in, how the three\npanes were split, which filters were on, what was selected. Saved so the tab reopens the way it\nwas closed rather than reset to defaults every session. Nothing in here is project content."
+}
+
+DreamShaderBrowserUserSettings:bHidePipelines {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bHidePipelines
+    src   "The quick filter that drops every `.dsp` from the list."
+}
+
+DreamShaderBrowserUserSettings:LastSelectedKey {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:LastSelectedKey
+    src   "The entry key (source path or object path) selected when the tab was last used."
+}
+
+DreamShaderBrowserUserSettings:NavigationScope {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:NavigationScope
+    src   "Navigation tree node that scopes the list: a source directory, or a content path."
+}
+
+DreamShaderBrowserUserSettings:PreviewMesh {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:PreviewMesh
+    src   "Preview primitive for the inspector: sphere, plane, cube, cylinder, shaderball."
+}
+
+EDreamShaderBrowserViewMode.Assets {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserViewMode:Assets
+    src   "the source tree (.dss/.dsi/.dsp and the 1.x kinds), with compile status"
+}

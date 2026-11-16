@@ -2,6 +2,55 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.Emitter
 
+MakeAttributesFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
+    src   "Failed to create a MakeMaterialAttributes node."
+    text  "无法创建 MakeMaterialAttributes 节点。"
+    state machine
+}
+
+MakeAttributesNoPin {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
+    src   "MakeMaterialAttributes has no pin for the attribute '{0}'."
+    text  "MakeMaterialAttributes 没有属性 '{0}' 的引脚。"
+    state machine
+}
+
+MakeAttributesSetFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
+    src   "Failed to create the SetMaterialAttributes node that carries what MakeMaterialAttributes has no pin for."
+    text  "创建 SetMaterialAttributes 节点失败；它用来承载 MakeMaterialAttributes 没有引脚的那些属性。"
+    state machine
+}
+
+MakeAttributesNoPinNorSet {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
+    src   "MakeMaterialAttributes has no pin for the attribute '{0}', and SetMaterialAttributes could not take it either."
+    text  "MakeMaterialAttributes 没有属性 '{0}' 的引脚，SetMaterialAttributes 也接不下它。"
+    state machine
+}
+
+SetAttributesFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
+    src   "Failed to create a SetMaterialAttributes node."
+    text  "无法创建 SetMaterialAttributes 节点。"
+    state machine
+}
+
+SetAttributesNoBase {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
+    src   "A SetMaterialAttributes node has no MaterialAttributes input; there is nothing for it to modify."
+    text  "SetMaterialAttributes 节点没有 MaterialAttributes 输入；它没有东西可修改。"
+    state machine
+}
+
+SetAttributesConnectFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
+    src   "SetMaterialAttributes could not take a value for the attribute '{0}'."
+    text  "SetMaterialAttributes 无法接受属性 '{0}' 的值。"
+    state machine
+}
+
 BreakAttributesFailed {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
     src   "Failed to create a BreakMaterialAttributes node."
@@ -23,52 +72,10 @@ GetAttributesFailed {
     state machine
 }
 
-MakeAttributesFailed {
+SinkWithoutMaterial {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
-    src   "Failed to create a MakeMaterialAttributes node."
-    text  "无法创建 MakeMaterialAttributes 节点。"
-    state machine
-}
-
-MakeAttributesNoPin {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
-    src   "MakeMaterialAttributes has no pin for the attribute '{0}'."
-    text  "MakeMaterialAttributes 没有属性 '{0}' 的引脚。"
-    state machine
-}
-
-MakeAttributesNoPinNorSet {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
-    src   "MakeMaterialAttributes has no pin for the attribute '{0}', and SetMaterialAttributes could not take it either."
-    text  "MakeMaterialAttributes 没有属性 '{0}' 的引脚，SetMaterialAttributes 也接不下它。"
-    state machine
-}
-
-MakeAttributesSetFailed {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
-    src   "Failed to create the SetMaterialAttributes node that carries what MakeMaterialAttributes has no pin for."
-    text  "创建 SetMaterialAttributes 节点失败；它用来承载 MakeMaterialAttributes 没有引脚的那些属性。"
-    state machine
-}
-
-SetAttributesConnectFailed {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
-    src   "SetMaterialAttributes could not take a value for the attribute '{0}'."
-    text  "SetMaterialAttributes 无法接受属性 '{0}' 的值。"
-    state machine
-}
-
-SetAttributesFailed {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
-    src   "Failed to create a SetMaterialAttributes node."
-    text  "无法创建 SetMaterialAttributes 节点。"
-    state machine
-}
-
-SetAttributesNoBase {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
-    src   "A SetMaterialAttributes node has no MaterialAttributes input; there is nothing for it to modify."
-    text  "SetMaterialAttributes 节点没有 MaterialAttributes 输入；它没有东西可修改。"
+    src   "This graph carries a MaterialSink, which only a material product has; a material function drives FunctionOutput nodes instead."
+    text  "这张图带有 MaterialSink，而只有材质产物才有它；材质函数驱动的是 FunctionOutput 节点。"
     state machine
 }
 
@@ -76,12 +83,5 @@ SinkNoPropertyInput {
     at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
     src   "This material has no input for the attribute '{0}'; check the material domain and shading model the file asks for."
     text  "这个材质没有属性 '{0}' 的输入；请检查文件要求的材质域和着色模型。"
-    state machine
-}
-
-SinkWithoutMaterial {
-    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp
-    src   "This graph carries a MaterialSink, which only a material product has; a material function drives FunctionOutput nodes instead."
-    text  "这张图带有 MaterialSink，而只有材质产物才有它；材质函数驱动的是 FunctionOutput 节点。"
     state machine
 }

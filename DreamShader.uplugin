@@ -46,6 +46,14 @@
 		{
 			"Name": "DreamShader",
 			"LoadingPolicy": "Editor"
+		},
+		{
+			"Name": "DreamShaderPropertyNames",
+			"LoadingPolicy": "PropertyNames"
+		},
+		{
+			"Name": "DreamShaderToolTips",
+			"LoadingPolicy": "ToolTips"
 		}
 	],
 	"Plugins": [

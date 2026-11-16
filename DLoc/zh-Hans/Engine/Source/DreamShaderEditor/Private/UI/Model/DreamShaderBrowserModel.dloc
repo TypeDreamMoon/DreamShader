@@ -2,13 +2,6 @@ dloc 1
 culture zh-Hans
 namespace DreamShaderMaterialBrowser
 
-DiagnosticLineFmt {
-    at    Source/DreamShaderEditor/Private/UI/Model/DreamShaderBrowserModel.cpp
-    src   "L{0}:{1} {2}"
-    text  "L{0}:{1} {2}"
-    state machine
-}
-
 FunctionDetail {
     at    Source/DreamShaderEditor/Private/UI/Model/DreamShaderBrowserModel.cpp
     src   "Function library / header. Recompiles the materials that import it."
@@ -20,5 +13,12 @@ GenPageNoGeneratedAsset {
     at    Source/DreamShaderEditor/Private/UI/Model/DreamShaderBrowserModel.cpp
     src   "No generated asset at {0}"
     text  "{0} 没有生成的资产"
+    state machine
+}
+
+DiagnosticLineFmt {
+    at    Source/DreamShaderEditor/Private/UI/Model/DreamShaderBrowserModel.cpp
+    src   "L{0}:{1} {2}"
+    text  "L{0}:{1} {2}"
     state machine
 }

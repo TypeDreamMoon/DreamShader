@@ -2,38 +2,17 @@ dloc 1
 culture zh-Hans
 namespace DreamShaderMaterialBrowser
 
-BridgeBusy {
+StatusCountTip {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "bridge: {0}"
-    text  "桥接:{0}"
+    src   "Click to filter the list to these."
+    text  "点击以把列表筛选为这些。"
     state machine
 }
 
-BridgeIdleGuest {
+StatusCountFmt {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "bridge: idle (another editor owns writes)"
-    text  "桥接:空闲(另一个编辑器持有写入权)"
-    state machine
-}
-
-BridgeIdleOwner {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "bridge: idle"
-    text  "桥接:空闲"
-    state machine
-}
-
-BridgeOff {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "bridge: off"
-    text  "桥接:关闭"
-    state machine
-}
-
-CompileMenu {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Compile"
-    text  "编译"
+    src   "{0} {1}"
+    text  "{0} {1}"
     state machine
 }
 
@@ -44,45 +23,80 @@ CompileMenuTip {
     state machine
 }
 
-MenuSectionBuild {
+CompileMenu {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Build"
-    text  "构建"
+    src   "Compile"
+    text  "编译"
     state machine
 }
 
-MenuSectionCopy {
+NewMenuTip {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Copy"
-    text  "复制"
+    src   "Create a new source file from a template, in the selected folder."
+    text  "从模板在所选文件夹中创建一个新的源文件。"
     state machine
 }
 
-MenuSectionDecompile {
+NewMenu {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Decompiler"
-    text  "反编译器"
+    src   "New"
+    text  "新建"
     state machine
 }
 
-MenuSectionOpen {
+SearchHintV2 {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Open"
-    text  "打开"
+    src   "Search name, path, root, asset, error…"
+    text  "搜索名称、路径、根、资产、错误…"
     state machine
 }
 
-MenuSectionProvenance {
+ViewMenuTip {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Generated asset"
-    text  "生成的资产"
+    src   "List or tiles, sorting, and what the Content Browser shows."
+    text  "列表或平铺、排序,以及内容浏览器显示什么。"
     state machine
 }
 
-NewFunction {
+ViewMenu {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Material function (.dsf)"
-    text  "材质函数 (.dsf)"
+    src   "View"
+    text  "视图"
+    state machine
+}
+
+OpenWorkspaceTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Open the DreamShader source workspace in VSCode."
+    text  "在 VSCode 中打开 DreamShader 源工作区。"
+    state machine
+}
+
+OpenSettingsTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Open the DreamShader project settings."
+    text  "打开 DreamShader 项目设置。"
+    state machine
+}
+
+NewSectionLang2 {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "DreamShaderLang 2.0"
+    text  "DreamShaderLang 2.0"
+    state machine
+}
+
+NewMaterialDss {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Material (.dss)"
+    text  "材质 (.dss)"
+    state machine
+}
+
+NewMaterialDssTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "HLSL with declarations: two uniforms and an exported entry that writes base colour and roughness, ready to compile."
+    text  "带声明的 HLSL：两个 uniform，加一个写基础色和粗糙度的导出入口，可直接编译。"
     state machine
 }
 
@@ -97,6 +111,97 @@ NewFunctionDssTip {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
     src   "An exported function with one input, one optional input and a return value. Every export of a .dss is an asset of its own."
     text  "一个导出函数：一个输入、一个可选输入、一个返回值。.dss 里的每个 export 各自是一个资产。"
+    state machine
+}
+
+NewInstance {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Instance (.dsi)"
+    text  "实例 (.dsi)"
+    state machine
+}
+
+NewInstanceTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "A material instance source: a #pragma instance naming its parent, and one uniform per parameter to override."
+    text  "材质实例源文件：一个指明父材质的 #pragma instance，加上每个要覆盖的参数各一个 uniform。"
+    state machine
+}
+
+NewSectionPipeline {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Custom Pass pipeline (.dsp)"
+    text  "Custom Pass 管线 (.dsp)"
+    state machine
+}
+
+NewPipelinePostProcess {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Fullscreen post-process chain"
+    text  "全屏后处理链"
+    state machine
+}
+
+NewPipelinePostProcessTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "A copy grabs the scene at half size and a fullscreen pass blends it back tinted, through a Post Process material written next to it."
+    text  "一个复制 Pass 以半尺寸抓取场景，再由一个全屏 Pass 通过写在它旁边的后处理材质，把它染色后混合回去。"
+    state machine
+}
+
+NewPipelineMeshMask {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Mesh mask chain"
+    text  "网格遮罩链"
+    state machine
+}
+
+NewPipelineMeshMaskTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "A mesh pass draws the objects of a list into a mask, and a fullscreen pass outlines them through walls; both materials are written next to it."
+    text  "一个网格 Pass 把某个列表中的对象绘制到遮罩中，再由一个全屏 Pass 为它们描边，隔着墙也能看到；两个材质都会写在它旁边。"
+    state machine
+}
+
+NewPipelineCompute {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Compute chain"
+    text  "Compute 链"
+    state machine
+}
+
+NewPipelineComputeTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "A compute shader advances a 256 x 256 field every frame, kept from one frame to the next and exported as a render target; the shader is written in the .dsp."
+    text  "一个 Compute 着色器每帧推进一张 256 x 256 的数据场，其内容跨帧保留，并导出为渲染目标；着色器写在 .dsp 里。"
+    state machine
+}
+
+NewSectionLegacy {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "1.x blocks"
+    text  "1.x 块语法"
+    state machine
+}
+
+NewMaterial {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Material (.dsm)"
+    text  "材质 (.dsm)"
+    state machine
+}
+
+NewMaterialTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "A Shader block with a base colour and roughness, ready to compile."
+    text  "一个带基础色和粗糙度的 Shader 块,可直接编译。"
+    state machine
+}
+
+NewFunction {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Material function (.dsf)"
+    text  "材质函数 (.dsf)"
     state machine
 }
 
@@ -121,150 +226,59 @@ NewHeaderTip {
     state machine
 }
 
-NewInstance {
+ViewSectionLayout {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Instance (.dsi)"
-    text  "实例 (.dsi)"
+    src   "Sources list"
+    text  "源文件列表"
     state machine
 }
 
-NewInstanceTip {
+ViewSectionSort {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "A material instance source: a #pragma instance naming its parent, and one uniform per parameter to override."
-    text  "材质实例源文件：一个指明父材质的 #pragma instance，加上每个要覆盖的参数各一个 uniform。"
+    src   "Sort by"
+    text  "排序方式"
     state machine
 }
 
-NewMaterial {
+SortName {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Material (.dsm)"
-    text  "材质 (.dsm)"
+    src   "Name"
+    text  "名称"
     state machine
 }
 
-NewMaterialDss {
+SortStatus {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Material (.dss)"
-    text  "材质 (.dss)"
+    src   "Status"
+    text  "状态"
     state machine
 }
 
-NewMaterialDssTip {
+SortRoot {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "HLSL with declarations: two uniforms and an exported entry that writes base colour and roughness, ready to compile."
-    text  "带声明的 HLSL：两个 uniform，加一个写基础色和粗糙度的导出入口，可直接编译。"
+    src   "Root"
+    text  "根"
     state machine
 }
 
-NewMaterialTip {
+SortAsset {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "A Shader block with a base colour and roughness, ready to compile."
-    text  "一个带基础色和粗糙度的 Shader 块,可直接编译。"
+    src   "Asset path"
+    text  "资产路径"
     state machine
 }
 
-NewMenu {
+SortAscending {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "New"
-    text  "新建"
+    src   "Ascending"
+    text  "升序"
     state machine
 }
 
-NewMenuTip {
+ViewSectionGlobal {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Create a new source file from a template, in the selected folder."
-    text  "从模板在所选文件夹中创建一个新的源文件。"
-    state machine
-}
-
-NewPipelineCompute {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Compute chain"
-    text  "Compute 链"
-    state machine
-}
-
-NewPipelineComputeTip {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "A compute shader advances a 256 x 256 field every frame, kept from one frame to the next and exported as a render target; the shader is written in the .dsp."
-    text  "一个 Compute 着色器每帧推进一张 256 x 256 的数据场，其内容跨帧保留，并导出为渲染目标；着色器写在 .dsp 里。"
-    state machine
-}
-
-NewPipelineMeshMask {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Mesh mask chain"
-    text  "网格遮罩链"
-    state machine
-}
-
-NewPipelineMeshMaskTip {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "A mesh pass draws the objects of a list into a mask, and a fullscreen pass outlines them through walls; both materials are written next to it."
-    text  "一个网格 Pass 把某个列表中的对象绘制到遮罩中，再由一个全屏 Pass 为它们描边，隔着墙也能看到；两个材质都会写在它旁边。"
-    state machine
-}
-
-NewPipelinePostProcess {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Fullscreen post-process chain"
-    text  "全屏后处理链"
-    state machine
-}
-
-NewPipelinePostProcessTip {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "A copy grabs the scene at half size and a fullscreen pass blends it back tinted, through a Post Process material written next to it."
-    text  "一个复制 Pass 以半尺寸抓取场景，再由一个全屏 Pass 通过写在它旁边的后处理材质，把它染色后混合回去。"
-    state machine
-}
-
-NewSectionLang2 {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "DreamShaderLang 2.0"
-    text  "DreamShaderLang 2.0"
-    state machine
-}
-
-NewSectionLegacy {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "1.x blocks"
-    text  "1.x 块语法"
-    state machine
-}
-
-NewSectionPipeline {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Custom Pass pipeline (.dsp)"
-    text  "Custom Pass 管线 (.dsp)"
-    state machine
-}
-
-NothingStale {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Nothing is stale."
-    text  "没有过期的源。"
-    state machine
-}
-
-OpenSettingsTip {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Open the DreamShader project settings."
-    text  "打开 DreamShader 项目设置。"
-    state machine
-}
-
-OpenWorkspaceTip {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Open the DreamShader source workspace in VSCode."
-    text  "在 VSCode 中打开 DreamShader 源工作区。"
-    state machine
-}
-
-SearchHintV2 {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Search name, path, root, asset, error…"
-    text  "搜索名称、路径、根、资产、错误…"
+    src   "Content Browser"
+    text  "内容浏览器"
     state machine
 }
 
@@ -282,73 +296,10 @@ ShowEphemeralTip {
     state machine
 }
 
-SortAscending {
+StatusTotal {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Ascending"
-    text  "升序"
-    state machine
-}
-
-SortAsset {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Asset path"
-    text  "资产路径"
-    state machine
-}
-
-SortName {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Name"
-    text  "名称"
-    state machine
-}
-
-SortRoot {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Root"
-    text  "根"
-    state machine
-}
-
-SortStatus {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Status"
-    text  "状态"
-    state machine
-}
-
-StatusCountFmt {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "{0} {1}"
-    text  "{0} {1}"
-    state machine
-}
-
-StatusCountTip {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Click to filter the list to these."
-    text  "点击以把列表筛选为这些。"
-    state machine
-}
-
-StatusDivergedCount {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "edited by hand"
-    text  "手动编辑过"
-    state machine
-}
-
-StatusEphemeralCount {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Ephemeral"
-    text  "临时态"
-    state machine
-}
-
-StatusErrorCount {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "errors"
-    text  "错误"
+    src   "{0} sources"
+    text  "{0} 个源文件"
     state machine
 }
 
@@ -366,10 +317,24 @@ StatusStaleCount {
     state machine
 }
 
-StatusTotal {
+StatusErrorCount {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "{0} sources"
-    text  "{0} 个源文件"
+    src   "errors"
+    text  "错误"
+    state machine
+}
+
+StatusDivergedCount {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "edited by hand"
+    text  "手动编辑过"
+    state machine
+}
+
+StatusEphemeralCount {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Ephemeral"
+    text  "临时态"
     state machine
 }
 
@@ -380,37 +345,72 @@ StatusUnmanagedCount {
     state machine
 }
 
-ViewMenu {
+BridgeOff {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "View"
-    text  "视图"
+    src   "bridge: off"
+    text  "桥接:关闭"
     state machine
 }
 
-ViewMenuTip {
+BridgeBusy {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "List or tiles, sorting, and what the Content Browser shows."
-    text  "列表或平铺、排序,以及内容浏览器显示什么。"
+    src   "bridge: {0}"
+    text  "桥接:{0}"
     state machine
 }
 
-ViewSectionGlobal {
+BridgeIdleGuest {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Content Browser"
-    text  "内容浏览器"
+    src   "bridge: idle (another editor owns writes)"
+    text  "桥接:空闲(另一个编辑器持有写入权)"
     state machine
 }
 
-ViewSectionLayout {
+BridgeIdleOwner {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Sources list"
-    text  "源文件列表"
+    src   "bridge: idle"
+    text  "桥接:空闲"
     state machine
 }
 
-ViewSectionSort {
+MenuSectionOpen {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
-    src   "Sort by"
-    text  "排序方式"
+    src   "Open"
+    text  "打开"
+    state machine
+}
+
+MenuSectionBuild {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Build"
+    text  "构建"
+    state machine
+}
+
+MenuSectionProvenance {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Generated asset"
+    text  "生成的资产"
+    state machine
+}
+
+MenuSectionDecompile {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Decompiler"
+    text  "反编译器"
+    state machine
+}
+
+MenuSectionCopy {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Copy"
+    text  "复制"
+    state machine
+}
+
+NothingStale {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserShell.cpp
+    src   "Nothing is stale."
+    text  "没有过期的源。"
     state machine
 }

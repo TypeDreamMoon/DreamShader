@@ -2,38 +2,10 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.PassRegistryCommandlet
 
-CollectedPassGone {
-    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
-    src   "'{0}' no longer runs pass '{1}' in HLSL there."
-    text  "'{0}' 已不再在该槽位中以 HLSL 运行 Pass '{1}'。"
-    state machine
-}
-
-CollectedPipelineGone {
-    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
-    src   "no .dsp builds '{0}' any more."
-    text  "已没有任何 .dsp 构建 '{0}'。"
-    state machine
-}
-
 ComputeWord {
     at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
     src   "compute"
     text  "Compute"
-    state machine
-}
-
-NoPipelines {
-    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
-    src   "No .dsp under the source roots; the registry is rewritten from Registry.json as it stands."
-    text  "源根下没有任何 .dsp；注册表将按 Registry.json 的现状重写。"
-    state machine
-}
-
-PipelineAssetOrphaned {
-    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
-    src   "No .dsp builds '{0}' any more, but the asset is still there and its pass '{1}' points at {2} slot {3}. Delete the asset or restore its source: once the slot is collected and given to another pass, that pass's shader is what this one would run."
-    text  "已没有任何 .dsp 构建 '{0}'，但该资产仍在，它的 Pass '{1}' 指向 {2} 槽位 {3}。请删除该资产或恢复它的源文件：一旦该槽位被回收并分配给另一个 Pass，这个 Pass 运行的就会是那个 Pass 的着色器。"
     state machine
 }
 
@@ -44,17 +16,24 @@ PixelWord {
     state machine
 }
 
-RebuildCompileFailed {
+PipelineAssetOrphaned {
     at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
-    src   "'{0}' did not compile, so its pipeline keeps the slots it had: {1}"
-    text  "'{0}' 没有编译通过，因此它的管线保留原有的槽位：{1}"
+    src   "No .dsp builds '{0}' any more, but the asset is still there and its pass '{1}' points at {2} slot {3}. Delete the asset or restore its source: once the slot is collected and given to another pass, that pass's shader is what this one would run."
+    text  "已没有任何 .dsp 构建 '{0}'，但该资产仍在，它的 Pass '{1}' 指向 {2} 槽位 {3}。请删除该资产或恢复它的源文件：一旦该槽位被回收并分配给另一个 Pass，这个 Pass 运行的就会是那个 Pass 的着色器。"
     state machine
 }
 
-RegistryReset {
+SnapshotMissingDroppedAtStart {
     at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
-    src   "Registry.json did not parse and was moved aside to '{0}'; the compiles that follow give every HLSL pass a slot afresh."
-    text  "Registry.json 无法解析，已被移到 '{0}'；接下来的编译会为每个 HLSL Pass 重新分配槽位。"
+    src   "The snapshot of {0} slot {1} (pass '{2}' of '{3}') is not on disk, and the registry file includes it: the next start takes the slot's section out of the registry file, and the pass does nothing until its source is compiled again -- unless the registry file is read-only, and then the global shaders fail to compile, which is fatal. Compile '{4}', or run 'dsc pass-registry -Rebuild'; commit the Slots folder with the registry."
+    text  "{0} 槽位 {1}（'{3}' 的 Pass '{2}'）的快照不在磁盘上，而注册表文件包含了它：下次启动时会把该槽位的区段从注册表文件中移除，在其源文件重新编译之前，这个 Pass 不会做任何事——除非注册表文件是只读的，那样全局着色器会编译失败，这是致命错误。请编译 '{4}'，或运行 'dsc pass-registry -Rebuild'；并把 Slots 文件夹与注册表一起提交。"
+    state machine
+}
+
+SlotUnknown {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
+    src   "'{0}' does not compile far enough to tell whether it still runs pass '{1}' in {2} slot {3}, so the slot is kept. Fix the source and compile it."
+    text  "'{0}' 的编译没有进行到足以判断它是否仍在 {2} 槽位 {3} 中运行 Pass '{1}' 的程度，因此保留该槽位。请修正源文件并编译。"
     state machine
 }
 
@@ -72,17 +51,17 @@ SlotCollected {
     state machine
 }
 
-SlotUnknown {
+CollectedPipelineGone {
     at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
-    src   "'{0}' does not compile far enough to tell whether it still runs pass '{1}' in {2} slot {3}, so the slot is kept. Fix the source and compile it."
-    text  "'{0}' 的编译没有进行到足以判断它是否仍在 {2} 槽位 {3} 中运行 Pass '{1}' 的程度，因此保留该槽位。请修正源文件并编译。"
+    src   "no .dsp builds '{0}' any more."
+    text  "已没有任何 .dsp 构建 '{0}'。"
     state machine
 }
 
-SnapshotMissingDroppedAtStart {
+CollectedPassGone {
     at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
-    src   "The snapshot of {0} slot {1} (pass '{2}' of '{3}') is not on disk, and the registry file includes it: the next start takes the slot's section out of the registry file, and the pass does nothing until its source is compiled again -- unless the registry file is read-only, and then the global shaders fail to compile, which is fatal. Compile '{4}', or run 'dsc pass-registry -Rebuild'; commit the Slots folder with the registry."
-    text  "{0} 槽位 {1}（'{3}' 的 Pass '{2}'）的快照不在磁盘上，而注册表文件包含了它：下次启动时会把该槽位的区段从注册表文件中移除，在其源文件重新编译之前，这个 Pass 不会做任何事——除非注册表文件是只读的，那样全局着色器会编译失败，这是致命错误。请编译 '{4}'，或运行 'dsc pass-registry -Rebuild'；并把 Slots 文件夹与注册表一起提交。"
+    src   "'{0}' no longer runs pass '{1}' in HLSL there."
+    text  "'{0}' 已不再在该槽位中以 HLSL 运行 Pass '{1}'。"
     state machine
 }
 
@@ -93,6 +72,13 @@ StaleSlot {
     state machine
 }
 
+StaleSlotTaken {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
+    src   "gives to pass '{0}' of '{1}'"
+    text  "把该槽位分配给了 '{1}' 的 Pass '{0}'"
+    state machine
+}
+
 StaleSlotFree {
     at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
     src   "leaves free"
@@ -100,9 +86,23 @@ StaleSlotFree {
     state machine
 }
 
-StaleSlotTaken {
+RegistryReset {
     at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
-    src   "gives to pass '{0}' of '{1}'"
-    text  "把该槽位分配给了 '{1}' 的 Pass '{0}'"
+    src   "Registry.json did not parse and was moved aside to '{0}'; the compiles that follow give every HLSL pass a slot afresh."
+    text  "Registry.json 无法解析，已被移到 '{0}'；接下来的编译会为每个 HLSL Pass 重新分配槽位。"
+    state machine
+}
+
+NoPipelines {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
+    src   "No .dsp under the source roots; the registry is rewritten from Registry.json as it stands."
+    text  "源根下没有任何 .dsp；注册表将按 Registry.json 的现状重写。"
+    state machine
+}
+
+RebuildCompileFailed {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp
+    src   "'{0}' did not compile, so its pipeline keeps the slots it had: {1}"
+    text  "'{0}' 没有编译通过，因此它的管线保留原有的槽位：{1}"
     state machine
 }

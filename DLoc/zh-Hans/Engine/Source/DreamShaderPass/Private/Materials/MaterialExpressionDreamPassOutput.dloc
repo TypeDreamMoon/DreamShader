@@ -2,17 +2,17 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.Pass.OutputNode
 
-Keywords {
-    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassOutput.cpp
-    src   "dream pass custom pass mesh pass output dreamshader"
-    text  "dream pass custom pass mesh pass output dreamshader 网格 Pass 输出"
-    state machine
-}
-
 MenuCategory {
     at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassOutput.cpp
     src   "DreamShader"
     text  "DreamShader"
+    state machine
+}
+
+NotANumber {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassOutput.cpp
+    src   "Dream Pass Output: {0} takes a float1 to float4 value; a Substrate BSDF, material attributes or a texture cannot be written to a buffer."
+    text  "Dream Pass Output：{0} 接受 float1 到 float4 的值；Substrate BSDF、材质属性或纹理都不能写入缓冲。"
     state machine
 }
 
@@ -23,9 +23,9 @@ NeedsEngine {
     state machine
 }
 
-NotANumber {
+Keywords {
     at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassOutput.cpp
-    src   "Dream Pass Output: {0} takes a float1 to float4 value; a Substrate BSDF, material attributes or a texture cannot be written to a buffer."
-    text  "Dream Pass Output：{0} 接受 float1 到 float4 的值；Substrate BSDF、材质属性或纹理都不能写入缓冲。"
+    src   "dream pass custom pass mesh pass output dreamshader"
+    text  "dream pass custom pass mesh pass output dreamshader 网格 Pass 输出"
     state machine
 }

@@ -1,0 +1,62 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+MaterialExpressionDreamPassBuffer {
+    at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer
+    src   "Material Expression Dream Pass Buffer"
+}
+
+MaterialExpressionDreamPassBuffer:Buffer {
+    at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Buffer
+    src   "Buffer"
+}
+
+MaterialExpressionDreamPassBuffer:Coordinates {
+    at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Coordinates
+    src   "Coordinates"
+}
+
+MaterialExpressionDreamPassBuffer:Pipeline {
+    at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Pipeline
+    src   "Pipeline"
+}
+
+MaterialExpressionDreamPassBuffer:SamplerSource {
+    at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:SamplerSource
+    src   "Sampler Source"
+}
+
+namespace UObjectToolTips
+
+MaterialExpressionDreamPassBuffer {
+    at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer
+    src   "Reads a buffer a DreamShader Custom Pass pipeline exports (`Export = true` in its `.dsp`): the render target the\npipeline copies the buffer into after its last writer, sampled as a float4. Without Coordinates it reads at the\nviewport UV, where a buffer of the view's size lines up with the screen. In a vertex shader (World Position Offset)\nit reads mip 0.\n\nWhat a material sees is the latest picture of the buffer: this frame's when the pipeline wrote it earlier in the\nframe than the material renders, the previous frame's otherwise.\n`UE.DreamPassBuffer(Pipeline = ..., Buffer = \"...\", Coordinates = ...)` in a `.dss`."
+}
+
+MaterialExpressionDreamPassBuffer:Buffer {
+    at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Buffer
+    src   "A buffer of Pipeline declared with `Export = true`."
+}
+
+MaterialExpressionDreamPassBuffer:Coordinates {
+    at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Coordinates
+    src   "Where to read, in the render target's UV. Defaults to the viewport UV."
+}
+
+MaterialExpressionDreamPassBuffer:Pipeline {
+    at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Pipeline
+    src   "The pipeline that exports the buffer. A hard reference: loading the material loads the pipeline and its render targets,\nso the one it samples always resolves; the material lists that render target among its textures, which cooks it too."
+}
+
+MaterialExpressionDreamPassBuffer:SamplerSource {
+    at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:SamplerSource
+    src   "Where the sampler comes from. From Texture Asset, the default as on a Texture Sample node, uses the render target's own\naddress and filter settings, the ones Blueprints, UMG and Niagara read it with. A shared sampler (Wrap or Clamp) does\nnot use up one of the material's sampler slots."
+}
+
+namespace UObjectCategory
+
+"Dream Pass Buffer" {
+    at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Pipeline
+    src   "Dream Pass Buffer"
+}

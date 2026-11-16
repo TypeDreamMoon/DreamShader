@@ -2,24 +2,38 @@ dloc 1
 culture zh-Hans
 namespace DreamShaderMaterialBrowser
 
-NavContent {
+QuickFilters {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
-    src   "Content"
-    text  "内容"
+    src   "Quick filters"
+    text  "快速筛选"
     state machine
 }
 
-NavSources {
+QFErrors {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
-    src   "Sources"
-    text  "源文件"
+    src   "Errors"
+    text  "错误"
     state machine
 }
 
-NavUnmanaged {
+QFErrorsTip {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
-    src   "Not managed by DreamShader"
-    text  "未由 DreamShader 管理"
+    src   "Sources whose last compile failed, or that could not be read."
+    text  "上次编译失败、或无法读取的源文件。"
+    state machine
+}
+
+QFStale {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Stale"
+    text  "过期"
+    state machine
+}
+
+QFStaleTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Sources that changed since their asset was last generated."
+    text  "自上次生成资产以来有改动的源文件。"
     state machine
 }
 
@@ -48,20 +62,6 @@ QFEphemeralTip {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
     src   "Materials that have not been written to disk."
     text  "只显示尚未写入磁盘的材质。"
-    state machine
-}
-
-QFErrors {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
-    src   "Errors"
-    text  "错误"
-    state machine
-}
-
-QFErrorsTip {
-    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
-    src   "Sources whose last compile failed, or that could not be read."
-    text  "上次编译失败、或无法读取的源文件。"
     state machine
 }
 
@@ -107,23 +107,23 @@ QFHideUnmanagedTip {
     state machine
 }
 
-QFStale {
+NavSources {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
-    src   "Stale"
-    text  "过期"
+    src   "Sources"
+    text  "源文件"
     state machine
 }
 
-QFStaleTip {
+NavUnmanaged {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
-    src   "Sources that changed since their asset was last generated."
-    text  "自上次生成资产以来有改动的源文件。"
+    src   "Not managed by DreamShader"
+    text  "未由 DreamShader 管理"
     state machine
 }
 
-QuickFilters {
+NavContent {
     at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
-    src   "Quick filters"
-    text  "快速筛选"
+    src   "Content"
+    text  "内容"
     state machine
 }

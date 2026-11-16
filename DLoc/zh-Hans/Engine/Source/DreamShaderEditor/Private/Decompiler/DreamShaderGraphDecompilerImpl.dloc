@@ -2,10 +2,10 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.Decompiler.Impl
 
-AppendNodeOverflow {
+NoMaterialAssetProvided {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "Append node '{0}' resolved to {1} + {2} components, which cannot fit a float4; masked its inputs down to {3} + {4}. Review the emitted swizzle."
-    text  "追加节点 '{0}' 解析为 {1} + {2} 个分量,超出 float4 容量;已将其输入向下掩码为 {3} + {4}。请检查生成的 swizzle。"
+    src   "No Material asset was provided."
+    text  "未提供材质资产。"
     state machine
 }
 
@@ -16,17 +16,10 @@ DecompilingMaterial {
     state machine
 }
 
-DecompilingMaterialFunction {
+ScanningMaterialOutputs {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "Decompiling Material Function '{0}'..."
-    text  "正在反编译材质函数 '{0}'..."
-    state machine
-}
-
-DecompilingNode {
-    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "Decompiling node {0}: {1}"
-    text  "正在反编译节点 {0}: {1}"
+    src   "Scanning material outputs for '{0}'..."
+    text  "正在扫描材质输出 '{0}'..."
     state machine
 }
 
@@ -37,17 +30,38 @@ DuplicateCustomOutputNode {
     state machine
 }
 
-EmitVirtualFunctionFailed {
+FormattingDSMSource {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "Failed to emit VirtualFunction for '{0}': {1}"
-    text  "无法为 '{0}' 生成 VirtualFunction: {1}"
+    src   "Formatting DSM source for '{0}'..."
+    text  "正在格式化 DSM 源码 '{0}'..."
     state machine
 }
 
-ExportedAsUEExpression {
+NoMaterialFunctionAssetProvided {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "Exported '{0}' as UE.Expression; review reflected literal properties if the node has editor-only state."
-    text  "已导出 '{0}' 为 UE.Expression;若节点具有仅编辑器可见的状态,请检查反射的字面属性。"
+    src   "No MaterialFunction asset was provided."
+    text  "未提供材质函数资产。"
+    state machine
+}
+
+DecompilingMaterialFunction {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
+    src   "Decompiling Material Function '{0}'..."
+    text  "正在反编译材质函数 '{0}'..."
+    state machine
+}
+
+ScanningFunctionInputsOutputs {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
+    src   "Scanning function inputs and outputs for '{0}'..."
+    text  "正在扫描函数输入与输出 '{0}'..."
+    state machine
+}
+
+MaterialFunctionHasNoOutputs {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
+    src   "MaterialFunction '{0}' does not expose any outputs."
+    text  "材质函数 '{0}' 未暴露任何输出。"
     state machine
 }
 
@@ -58,10 +72,31 @@ FormattingDSFSource {
     state machine
 }
 
-FormattingDSMSource {
+RecursiveRerouteDependency {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "Formatting DSM source for '{0}'..."
-    text  "正在格式化 DSM 源码 '{0}'..."
+    src   "Detected a recursive reroute dependency while decompiling node '{0}'; emitted a default literal to avoid stack overflow."
+    text  "反编译节点 '{0}' 时检测到递归 Reroute 依赖;已生成默认字面量以避免循环。"
+    state machine
+}
+
+NamedRerouteUsageMissingDeclaration {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
+    src   "Named reroute usage '{0}' has no valid declaration; emitted its default value."
+    text  "命名 Reroute 用法 '{0}' 没有有效声明;已生成其默认值。"
+    state machine
+}
+
+RecursiveGraphDependency {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
+    src   "Detected a recursive graph dependency while decompiling node '{0}'; emitted a default literal to avoid stack overflow."
+    text  "反编译节点 '{0}' 时检测到递归图依赖;已生成默认字面量以避免循环。"
+    state machine
+}
+
+NamedRerouteUsageInvalidDeclaration {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
+    src   "Named reroute usage '{0}' has no valid declaration; emitted a default literal."
+    text  "命名 Reroute 用法 '{0}' 没有有效声明;已生成默认字面量。"
     state machine
 }
 
@@ -69,6 +104,27 @@ GetMaterialAttributesMissingOutput {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
     src   "GetMaterialAttributes node '{0}' has no attribute for output {1}; emitted a default literal."
     text  "GetMaterialAttributes 节点 '{0}' 没有输出 {1} 对应的属性;已生成默认字面量。"
+    state machine
+}
+
+AppendNodeOverflow {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
+    src   "Append node '{0}' resolved to {1} + {2} components, which cannot fit a float4; masked its inputs down to {3} + {4}. Review the emitted swizzle."
+    text  "追加节点 '{0}' 解析为 {1} + {2} 个分量,超出 float4 容量;已将其输入向下掩码为 {3} + {4}。请检查生成的 swizzle。"
+    state machine
+}
+
+ExportedAsUEExpression {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
+    src   "Exported '{0}' as UE.Expression; review reflected literal properties if the node has editor-only state."
+    text  "已导出 '{0}' 为 UE.Expression;若节点具有仅编辑器可见的状态,请检查反射的字面属性。"
+    state machine
+}
+
+RecursiveNamedRerouteDependency {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
+    src   "Detected a recursive named reroute dependency for '{0}'; emitted a default literal to avoid stack overflow."
+    text  "检测到 '{0}' 的递归命名 Reroute 依赖;已生成默认字面量以避免栈溢出。"
     state machine
 }
 
@@ -86,72 +142,16 @@ MaterialFunctionCallNotPlain {
     state machine
 }
 
-MaterialFunctionHasNoOutputs {
+EmitVirtualFunctionFailed {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "MaterialFunction '{0}' does not expose any outputs."
-    text  "材质函数 '{0}' 未暴露任何输出。"
+    src   "Failed to emit VirtualFunction for '{0}': {1}"
+    text  "无法为 '{0}' 生成 VirtualFunction: {1}"
     state machine
 }
 
-NamedRerouteUsageInvalidDeclaration {
+DecompilingNode {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "Named reroute usage '{0}' has no valid declaration; emitted a default literal."
-    text  "命名 Reroute 用法 '{0}' 没有有效声明;已生成默认字面量。"
-    state machine
-}
-
-NamedRerouteUsageMissingDeclaration {
-    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "Named reroute usage '{0}' has no valid declaration; emitted its default value."
-    text  "命名 Reroute 用法 '{0}' 没有有效声明;已生成其默认值。"
-    state machine
-}
-
-NoMaterialAssetProvided {
-    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "No Material asset was provided."
-    text  "未提供材质资产。"
-    state machine
-}
-
-NoMaterialFunctionAssetProvided {
-    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "No MaterialFunction asset was provided."
-    text  "未提供材质函数资产。"
-    state machine
-}
-
-RecursiveGraphDependency {
-    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "Detected a recursive graph dependency while decompiling node '{0}'; emitted a default literal to avoid stack overflow."
-    text  "反编译节点 '{0}' 时检测到递归图依赖;已生成默认字面量以避免循环。"
-    state machine
-}
-
-RecursiveNamedRerouteDependency {
-    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "Detected a recursive named reroute dependency for '{0}'; emitted a default literal to avoid stack overflow."
-    text  "检测到 '{0}' 的递归命名 Reroute 依赖;已生成默认字面量以避免栈溢出。"
-    state machine
-}
-
-RecursiveRerouteDependency {
-    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "Detected a recursive reroute dependency while decompiling node '{0}'; emitted a default literal to avoid stack overflow."
-    text  "反编译节点 '{0}' 时检测到递归 Reroute 依赖;已生成默认字面量以避免循环。"
-    state machine
-}
-
-ScanningFunctionInputsOutputs {
-    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "Scanning function inputs and outputs for '{0}'..."
-    text  "正在扫描函数输入与输出 '{0}'..."
-    state machine
-}
-
-ScanningMaterialOutputs {
-    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphDecompilerImpl.cpp
-    src   "Scanning material outputs for '{0}'..."
-    text  "正在扫描材质输出 '{0}'..."
+    src   "Decompiling node {0}: {1}"
+    text  "正在反编译节点 {0}: {1}"
     state machine
 }

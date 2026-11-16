@@ -2,10 +2,10 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.IRBuilder
 
-IRBuilderAggregateAsValue {
+IRBuilderMaterialIntoPin {
     at    Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp
-    src   "A struct has no graph form here; use one of its fields."
-    text  "结构体在这里没有图形式；请使用它的某个字段。"
+    src   "A 'material' value reached a pin that carries {0}; only a MaterialAttributes pin accepts one."
+    text  "'material' 值被连到了传递 {0} 的引脚上；只有 MaterialAttributes 引脚才接受这种值。"
     state machine
 }
 
@@ -16,24 +16,10 @@ IRBuilderAggregateIntoPin {
     state machine
 }
 
-IRBuilderFieldOfNonMaterial {
-    at    Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp
-    src   "The IR builder cannot read '{0}' here: the binder typed what it is read from as a material, but that did not lower to one."
-    text  "IR 构建器无法在此读取 '{0}'：绑定器把它的读取来源定为材质类型，但降级后得到的并不是材质。"
-    state machine
-}
-
 IRBuilderMaterialIntoParam {
     at    Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp
     src   "A 'material' value was passed where {0} was expected."
     text  "在需要 {0} 的地方传入了 'material' 值。"
-    state machine
-}
-
-IRBuilderMaterialIntoPin {
-    at    Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp
-    src   "A 'material' value reached a pin that carries {0}; only a MaterialAttributes pin accepts one."
-    text  "'material' 值被连到了传递 {0} 的引脚上；只有 MaterialAttributes 引脚才接受这种值。"
     state machine
 }
 
@@ -44,24 +30,10 @@ IRBuilderMatrixValue {
     state machine
 }
 
-IRBuilderNestedAttributeWrite {
+IRBuilderFieldOfNonMaterial {
     at    Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp
-    src   "'{0}' writes into the material held in an attribute, and an attribute takes one whole value, not a write to part of it; assign that attribute a whole material, or set the attribute on the material itself."
-    text  "'{0}' 写入的是某个属性里存放的材质，而属性只接受一个完整的值，不能只写其中一部分；请给该属性赋一个完整的材质，或直接在材质本身上设置这个属性。"
-    state machine
-}
-
-IRBuilderNoAttributeEntry {
-    at    Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp
-    src   "The material attribute table has no entry {0}; the module was bound against a different catalog than this build is reading."
-    text  "材质属性表中没有条目 {0}；该模块绑定时使用的目录与本次构建读取的目录不同。"
-    state machine
-}
-
-IRBuilderNoExpressionEntry {
-    at    Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp
-    src   "The builtin catalog has no expression entry {0}; the module was bound against a different catalog than this build is reading."
-    text  "内置目录中没有表达式条目 {0}；该模块绑定时所用的目录与本次构建读取的目录不同。"
+    src   "The IR builder cannot read '{0}' here: the binder typed what it is read from as a material, but that did not lower to one."
+    text  "IR 构建器无法在此读取 '{0}'：绑定器把它的读取来源定为材质类型，但降级后得到的并不是材质。"
     state machine
 }
 
@@ -69,6 +41,20 @@ IRBuilderNoLowering {
     at    Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp
     src   "The IR builder has no lowering for a bound expression of kind {0}."
     text  "IR 构建器没有针对种类为 {0} 的已绑定表达式的降级规则。"
+    state machine
+}
+
+IRBuilderAggregateAsValue {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp
+    src   "A struct has no graph form here; use one of its fields."
+    text  "结构体在这里没有图形式；请使用它的某个字段。"
+    state machine
+}
+
+IRBuilderNoExpressionEntry {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp
+    src   "The builtin catalog has no expression entry {0}; the module was bound against a different catalog than this build is reading."
+    text  "内置目录中没有表达式条目 {0}；该模块绑定时所用的目录与本次构建读取的目录不同。"
     state machine
 }
 
@@ -83,5 +69,19 @@ IRBuilderUnsetLocalRead {
     at    Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp
     src   "'{0}' is read here, but nothing gives it a value on any path that reaches this line; assign it first, or give it an initializer where it is declared."
     text  "此处读取了 '{0}'，但到达这一行的任何路径上都没有给它赋值；请先为它赋值，或在声明处给它一个初始值。"
+    state machine
+}
+
+IRBuilderNestedAttributeWrite {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp
+    src   "'{0}' writes into the material held in an attribute, and an attribute takes one whole value, not a write to part of it; assign that attribute a whole material, or set the attribute on the material itself."
+    text  "'{0}' 写入的是某个属性里存放的材质，而属性只接受一个完整的值，不能只写其中一部分；请给该属性赋一个完整的材质，或直接在材质本身上设置这个属性。"
+    state machine
+}
+
+IRBuilderNoAttributeEntry {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp
+    src   "The material attribute table has no entry {0}; the module was bound against a different catalog than this build is reading."
+    text  "材质属性表中没有条目 {0}；该模块绑定时使用的目录与本次构建读取的目录不同。"
     state machine
 }

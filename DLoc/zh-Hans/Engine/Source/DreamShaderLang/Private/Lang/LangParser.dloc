@@ -2,17 +2,24 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.Lang.Parser
 
-DescribeDirective {
+ExportInHeader {
     at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
-    src   "directive '#{0}'"
-    text  "指令 '#{0}'"
+    src   "A '.dsh' header cannot export '{0}'; only a '.dss' file produces assets."
+    text  "'.dsh' 头文件不能 export '{0}';只有 '.dss' 文件才生成资产。"
     state machine
 }
 
-DescribeDocComment {
+ExpectedFound {
     at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
-    src   "a '///' comment"
-    text  "'///' 注释"
+    src   "Expected {What}, found {Token}."
+    text  "期望 {What},但遇到了 {Token}。"
+    state machine
+}
+
+ExpectedFoundIdentifier {
+    at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
+    src   "Expected {What}, found {Token}."
+    text  "期望 {What},但遇到了 {Token}。"
     state machine
 }
 
@@ -37,24 +44,10 @@ DescribeKeyword {
     state machine
 }
 
-DescribeKind {
-    at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
-    src   "'{0}'"
-    text  "'{0}'"
-    state machine
-}
-
 DescribeNumber {
     at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
     src   "number '{0}'"
     text  "数字 '{0}'"
-    state machine
-}
-
-DescribeSpelling {
-    at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
-    src   "'{0}'"
-    text  "'{0}'"
     state machine
 }
 
@@ -65,6 +58,20 @@ DescribeString {
     state machine
 }
 
+DescribeDocComment {
+    at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
+    src   "a '///' comment"
+    text  "'///' 注释"
+    state machine
+}
+
+DescribeDirective {
+    at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
+    src   "directive '#{0}'"
+    text  "指令 '#{0}'"
+    state machine
+}
+
 DescribeUnknown {
     at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
     src   "'{0}'"
@@ -72,31 +79,17 @@ DescribeUnknown {
     state machine
 }
 
-ExpectedFound {
+DescribeSpelling {
     at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
-    src   "Expected {What}, found {Token}."
-    text  "期望 {What},但遇到了 {Token}。"
+    src   "'{0}'"
+    text  "'{0}'"
     state machine
 }
 
-ExpectedFoundIdentifier {
+DescribeKind {
     at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
-    src   "Expected {What}, found {Token}."
-    text  "期望 {What},但遇到了 {Token}。"
-    state machine
-}
-
-ExportInHeader {
-    at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
-    src   "A '.dsh' header cannot export '{0}'; only a '.dss' file produces assets."
-    text  "'.dsh' 头文件不能 export '{0}';只有 '.dss' 文件才生成资产。"
-    state machine
-}
-
-TrailingTokenAfterExpression {
-    at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
-    src   "Expected the end of the expression, found {0}."
-    text  "期望表达式到此结束,但遇到了 {0}。"
+    src   "'{0}'"
+    text  "'{0}'"
     state machine
 }
 
@@ -111,5 +104,12 @@ WhileParsingABlock {
     at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
     src   "a block"
     text  "代码块"
+    state machine
+}
+
+TrailingTokenAfterExpression {
+    at    Source/DreamShaderLang/Private/Lang/LangParser.cpp
+    src   "Expected the end of the expression, found {0}."
+    text  "期望表达式到此结束,但遇到了 {0}。"
     state machine
 }

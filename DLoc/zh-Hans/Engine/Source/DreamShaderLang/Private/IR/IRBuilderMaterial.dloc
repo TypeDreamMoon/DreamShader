@@ -2,13 +2,6 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.IRBuilder
 
-IRBuilderAttributeNotSet {
-    at    Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp
-    src   "'{0}' is read before anything wrote it; a material attribute has no value until this function assigns one."
-    text  "'{0}' 在被写入之前就被读取了；在这个函数给材质属性赋值之前，它没有值。"
-    state machine
-}
-
 IRBuilderNoInputType {
     at    Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp
     src   "A parameter of type {0} cannot be a material function input; the graph has no pin that carries one."
@@ -16,10 +9,17 @@ IRBuilderNoInputType {
     state machine
 }
 
-IRBuilderNoTextureObject {
+IRBuilderReadNoAttributeEntry {
     at    Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp
-    src   "'{0}' is a constant texture, which is a TextureObject node, and this engine has no such material expression; declare it 'uniform'."
-    text  "'{0}' 是常量纹理，对应 TextureObject 节点，而此引擎没有这个材质表达式；请把它声明为 'uniform'。"
+    src   "The material attribute table has no entry {0}; the module was bound against a different catalog than this build is reading."
+    text  "材质属性表中没有条目 {0}；该模块绑定时使用的目录与本次构建读取的目录不同。"
+    state machine
+}
+
+IRBuilderAttributeNotSet {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp
+    src   "'{0}' is read before anything wrote it; a material attribute has no value until this function assigns one."
+    text  "'{0}' 在被写入之前就被读取了；在这个函数给材质属性赋值之前，它没有值。"
     state machine
 }
 
@@ -30,9 +30,9 @@ IRBuilderNoWholeSetAttribute {
     state machine
 }
 
-IRBuilderReadNoAttributeEntry {
+IRBuilderNoTextureObject {
     at    Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp
-    src   "The material attribute table has no entry {0}; the module was bound against a different catalog than this build is reading."
-    text  "材质属性表中没有条目 {0}；该模块绑定时使用的目录与本次构建读取的目录不同。"
+    src   "'{0}' is a constant texture, which is a TextureObject node, and this engine has no such material expression; declare it 'uniform'."
+    text  "'{0}' 是常量纹理，对应 TextureObject 节点，而此引擎没有这个材质表达式；请把它声明为 'uniform'。"
     state machine
 }

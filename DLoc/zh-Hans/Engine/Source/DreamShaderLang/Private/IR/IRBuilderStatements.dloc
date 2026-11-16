@@ -2,17 +2,17 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.IRBuilder
 
-IRBuilderDiscard {
-    at    Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp
-    src   "'discard' has no material-graph form; set the material's OpacityMask to zero instead, or move the branch into a '/// @custom' function."
-    text  "'discard' 没有材质图形式；请改为把材质的 OpacityMask 设为零，或者把这个分支移进一个 '/// @custom' 函数。"
-    state machine
-}
-
 IRBuilderJumpInBranch {
     at    Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp
     src   "'{0}' inside an 'if' cannot be unrolled, because both arms of the 'if' become nodes and only one of them may leave the loop; move it to the top of the loop body, or write the loop in a '/// @custom' function."
     text  "位于 'if' 内的 '{0}' 无法展开，因为 'if' 的两个分支都会变成节点，而只能有其中一个离开循环；请把它移到循环体的最前面，或把这个循环写在 '/// @custom' 函数中。"
+    state machine
+}
+
+IRBuilderDiscard {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp
+    src   "'discard' has no material-graph form; set the material's OpacityMask to zero instead, or move the branch into a '/// @custom' function."
+    text  "'discard' 没有材质图形式；请改为把材质的 OpacityMask 设为零，或者把这个分支移进一个 '/// @custom' 函数。"
     state machine
 }
 

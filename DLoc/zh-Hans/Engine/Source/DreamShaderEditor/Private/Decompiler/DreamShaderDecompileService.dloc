@@ -9,24 +9,31 @@ DecompileDidNotProduceSourceText {
     state machine
 }
 
-DecompileDidNotSayWhy {
+FailedToResolveOutputFilePath {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
-    src   "The decompile failed without reporting why."
-    text  "反编译失败，但没有报告原因。"
+    src   "DreamShader failed to resolve an output file path."
+    text  "DreamShader 无法解析输出文件路径。"
     state machine
 }
 
-DecompileDssLanguage {
+FailedToCreateOutputDirectory {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
-    src   "2.0"
-    text  "2.0"
+    src   "DreamShader failed to create output directory '{0}'."
+    text  "DreamShader 无法创建输出目录 '{0}'。"
     state machine
 }
 
-DecompileDssText {
+FailedToWriteDecompiledSource {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
-    src   "2.0"
-    text  "2.0"
+    src   "DreamShader failed to write decompiled source '{0}'."
+    text  "DreamShader 无法写入反编译源码 '{0}'。"
+    state machine
+}
+
+NoAssetProvided {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "No asset was provided."
+    text  "未提供资产。"
     state machine
 }
 
@@ -37,10 +44,24 @@ DecompileFormatContradictsExtension {
     state machine
 }
 
+DecompileDssLanguage {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "2.0"
+    text  "2.0"
+    state machine
+}
+
 DecompileLegacyLanguage {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
     src   "1.x"
     text  "1.x"
+    state machine
+}
+
+DecompileDssText {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "2.0"
+    text  "2.0"
     state machine
 }
 
@@ -58,24 +79,10 @@ DecompilerCannotWriteDss {
     state machine
 }
 
-FailedToCreateOutputDirectory {
+DecompileDidNotSayWhy {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
-    src   "DreamShader failed to create output directory '{0}'."
-    text  "DreamShader 无法创建输出目录 '{0}'。"
-    state machine
-}
-
-FailedToResolveOutputFilePath {
-    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
-    src   "DreamShader failed to resolve an output file path."
-    text  "DreamShader 无法解析输出文件路径。"
-    state machine
-}
-
-FailedToWriteDecompiledSource {
-    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
-    src   "DreamShader failed to write decompiled source '{0}'."
-    text  "DreamShader 无法写入反编译源码 '{0}'。"
+    src   "The decompile failed without reporting why."
+    text  "反编译失败，但没有报告原因。"
     state machine
 }
 
@@ -83,13 +90,6 @@ LegacyDecompileNeedsAsset {
     at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
     src   "The 1.x decompiler takes one asset at a time; name the asset rather than its source."
     text  "1.x 反编译器一次只处理一个资产；请指定资产，而不是它的源文件。"
-    state machine
-}
-
-NoAssetProvided {
-    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
-    src   "No asset was provided."
-    text  "未提供资产。"
     state machine
 }
 

@@ -1,0 +1,222 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamPassComponent {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent
+    src   "Dream Pass Component"
+}
+
+DreamPassComponent:bEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:bEnabled
+    src   "Enabled"
+}
+
+DreamPassComponent:Overrides {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Overrides
+    src   "Overrides"
+}
+
+DreamPassComponent:Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Pipeline
+    src   "Pipeline"
+}
+
+DreamPassComponent:PlayerIndex {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:PlayerIndex
+    src   "Player Index"
+}
+
+DreamPassComponent:Priority {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Priority
+    src   "Priority"
+}
+
+DreamPassComponent:Scope {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Scope
+    src   "Scope"
+}
+
+DreamPassComponent:SetColorParameter {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetColorParameter
+    src   "Set Color Parameter"
+}
+
+DreamPassComponent:SetColorParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetColorParameter:Name
+    src   "Name"
+}
+
+DreamPassComponent:SetColorParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetColorParameter:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassComponent:SetColorParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetColorParameter:Value
+    src   "Value"
+}
+
+DreamPassComponent:SetEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetEnabled
+    src   "Set Enabled"
+}
+
+DreamPassComponent:SetEnabled:bInEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetEnabled:bInEnabled
+    src   "In Enabled"
+}
+
+DreamPassComponent:SetFloatParameter {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetFloatParameter
+    src   "Set Float Parameter"
+}
+
+DreamPassComponent:SetFloatParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetFloatParameter:Name
+    src   "Name"
+}
+
+DreamPassComponent:SetFloatParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetFloatParameter:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassComponent:SetFloatParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetFloatParameter:Value
+    src   "Value"
+}
+
+DreamPassComponent:SetParameter {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetParameter
+    src   "Set Parameter"
+}
+
+DreamPassComponent:SetParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetParameter:Name
+    src   "Name"
+}
+
+DreamPassComponent:SetParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetParameter:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassComponent:SetParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetParameter:Value
+    src   "Value"
+}
+
+DreamPassComponent:SetWeight {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetWeight
+    src   "Set Weight"
+}
+
+DreamPassComponent:SetWeight:InWeight {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetWeight:InWeight
+    src   "In Weight"
+}
+
+DreamPassComponent:Weight {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Weight
+    src   "Weight"
+}
+
+EDreamPassComponentScope.EDreamPassComponentScope_MAX {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#EDreamPassComponentScope:EDreamPassComponentScope_MAX
+    src   "EDream Pass Component Scope MAX"
+}
+
+EDreamPassComponentScope.ViewTarget {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#EDreamPassComponentScope:ViewTarget
+    src   "View Target"
+}
+
+EDreamPassComponentScope.World {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#EDreamPassComponentScope:World
+    src   "World"
+}
+
+namespace UObjectToolTips
+
+DreamPassComponent {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent
+    src   "Runs a Custom Pass pipeline from any actor: in every view of its world, or only in the views of the players whose view\ntarget the actor is -- a pawn's own effect, seen by whoever plays or spectates it. Its overrides blend with every other\nactivation of the same pipeline in ascending Priority, each by its weight (UDreamPassSubsystem::ResolveView).\n\nA source of the world's UDreamPassSubsystem while it is registered -- in editor worlds too -- and asked about every view\non the game thread each frame. Nothing is cached: a property set from a Blueprint takes effect on the next frame."
+}
+
+DreamPassComponent:bEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:bEnabled
+    src   "Off: the component applies nowhere."
+}
+
+DreamPassComponent:Overrides {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Overrides
+    src   "The parameter values the component runs the pipeline with. One left out keeps what lower priorities give it."
+}
+
+DreamPassComponent:Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Pipeline
+    src   "The pipeline the component runs. None: the component does nothing."
+}
+
+DreamPassComponent:PlayerIndex {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:PlayerIndex
+    src   "Only that local player's views, numbered as FSceneView::PlayerIndex numbers them (the controller id).\n-1: any view, editor viewports included."
+}
+
+DreamPassComponent:Priority {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Priority
+    src   "Where the component's overrides sit among every other activation of the same pipeline: higher wins."
+}
+
+DreamPassComponent:Scope {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Scope
+    src   "Every view of the world, or only the views whose view target is the owner."
+}
+
+DreamPassComponent:SetColorParameter {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetColorParameter
+    src   "A Float4 parameter (RGBA), or a Float3 one (RGB), whichever the pipeline declares."
+}
+
+DreamPassComponent:SetFloatParameter {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetFloatParameter
+    src   "A Float parameter."
+}
+
+DreamPassComponent:SetParameter {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetParameter
+    src   "Sets, or adds, one parameter override. False when the pipeline has no such parameter, or not of the value's type."
+}
+
+DreamPassComponent:SetWeight {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:SetWeight
+    src   "Clamped to 0..1."
+}
+
+DreamPassComponent:Weight {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Weight
+    src   "0: no effect, 1: full effect. The strength the overrides blend in with, and the pipeline's weight in the view unless\nanother source gives it more."
+}
+
+EDreamPassComponentScope {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#EDreamPassComponentScope
+    src   "Which views a UDreamPassComponent runs its pipeline in."
+}
+
+EDreamPassComponentScope.ViewTarget {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#EDreamPassComponentScope:ViewTarget
+    src   "Only the views whose view target is the owner: the player looking through it, and anyone spectating it."
+}
+
+EDreamPassComponentScope.World {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#EDreamPassComponentScope:World
+    src   "Every view of the world, wherever the owner is."
+}
+
+namespace UObjectCategory
+
+"Custom Pass" {
+    at    Source/DreamShaderPass/Public/DreamPassComponent.h#DreamPassComponent:Pipeline
+    src   "Custom Pass"
+}

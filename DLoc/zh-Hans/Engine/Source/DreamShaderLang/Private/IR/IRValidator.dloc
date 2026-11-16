@@ -2,304 +2,10 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.IR.Validator
 
-CallBadLocalProduct {
+UnsetOperand {
     at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} calls local product {1}, which this module does not have; it has {2}."
-    text  "节点 {0} 调用了本地产物 {1}，但此模块中没有这个产物；模块共有 {2} 个产物。"
-    state machine
-}
-
-CallNoTarget {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} names neither a function asset path nor a local product; a MaterialFunctionCall needs one of the two."
-    text  "节点 {0} 既没有指定函数资产路径，也没有指定本地产物；MaterialFunctionCall 需要二者之一。"
-    state machine
-}
-
-CallSelfProduct {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} calls the product it belongs to; a material function cannot call itself."
-    text  "节点 {0} 调用了它所属的产物；材质函数不能调用自身。"
-    state machine
-}
-
-DuplicateDedupeKey {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Nodes %{0} and %{1} of product {2} have the same dedupe key, so the dedupe pass should have merged them into one."
-    text  "产物 {2} 的节点 %{0} 和 %{1} 具有相同的去重键，去重步骤本应把它们合并为一个。"
-    state machine
-}
-
-DuplicateOutputName {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} names two outputs '{1}'; an output name selects one slot and must be unique."
-    text  "节点 {0} 有两个输出都叫 '{1}'；输出名用于选中一个槽位，必须唯一。"
-    state machine
-}
-
-DuplicatePinName {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} connects pin '{1}' twice; a pin takes one value."
-    text  "节点 {0} 两次连接了引脚 '{1}'；一个引脚只接受一个值。"
-    state machine
-}
-
-DuplicateProductName {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Products {0} and {1} would both be called '{2}'; one file cannot produce two assets of the same name."
-    text  "产物 {0} 和 {1} 都会被命名为 '{2}'；一个文件不能生成两个同名资产。"
-    state machine
-}
-
-DuplicateProperty {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} sets property '{1}' twice."
-    text  "节点 {0} 两次设置了属性 '{1}'。"
-    state machine
-}
-
-EmptyPinName {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} has a named input with no pin name."
-    text  "节点 {0} 有一个没有引脚名的命名输入。"
-    state machine
-}
-
-EmptyPropertyName {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} carries a property with no name."
-    text  "节点 {0} 带有一个没有名称的属性。"
-    state machine
-}
-
-FunctionHasSink {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Product {0} is a {1} and must have no MaterialSink node, but it has {2}."
-    text  "产物 {0} 是 {1}，不能有 MaterialSink 节点，但它有 {2} 个。"
-    state machine
-}
-
-FunctionListBadIndex {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Product {0} lists node %{1} in its {2}, and that node does not exist."
-    text  "产物 {0} 在它的 {2} 中列出了节点 %{1}，但该节点不存在。"
-    state machine
-}
-
-FunctionListWrongOp {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Product {0} lists node {1} in its {2}, where only {3} nodes belong."
-    text  "产物 {0} 在它的 {2} 中列出了节点 {1}，而那里只应包含 {3} 节点。"
-    state machine
-}
-
-FunctionNoOutputs {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Product {0} is a {1} and produces nothing; a material function needs at least one FunctionOutput."
-    text  "产物 {0} 是 {1}，却不产生任何输出；材质函数至少需要一个 FunctionOutput。"
-    state machine
-}
-
-FunctionRecordsSink {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Product {0} is a {1} and records sink node {2}; only a material has a sink."
-    text  "产物 {0} 是 {1}，却记录了 sink 节点 {2}；只有材质才有 sink。"
-    state machine
-}
-
-GraphHasCycle {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Product {0} cannot be ordered: these nodes feed themselves, directly or through others -- {1}."
-    text  "无法为产物 {0} 确定节点顺序：以下节点直接或经由其他节点把输出送回了自身——{1}。"
-    state machine
-}
-
-InstanceBackend {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Material instance product {0} carries backend {1}, and an instance is a plain material instance with the default backend."
-    text  "材质实例产物 {0} 带有后端 {1}，而实例就是使用默认后端的普通材质实例。"
-    state machine
-}
-
-InstanceBesideProducts {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "This module holds a material instance and {0} other product(s), and a material instance is the only product of its file."
-    text  "此模块包含一个材质实例和另外 {0} 个产物，而材质实例必须是其文件的唯一产物。"
-    state machine
-}
-
-InstanceDuplicateOverride {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Product {0} overrides '{1}' twice, and an instance sets each parameter once."
-    text  "产物 {0} 两次覆盖了 '{1}'，而实例对每个参数只设置一次。"
-    state machine
-}
-
-InstanceFontPage {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Override '{0}' of product {1} sets font page {2}, and a font page is zero or more."
-    text  "产物 {1} 的覆盖 '{0}' 设置了字体页 {2}，而字体页必须不小于零。"
-    state machine
-}
-
-InstanceHasGraph {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Product {0} is a material instance, which assigns its parent's parameters and has no graph, and it carries {1} node(s), a sink or a function signature."
-    text  "产物 {0} 是材质实例，它只给父材质的参数赋值、没有图，但它带有 {1} 个节点、一个汇点或一个函数签名。"
-    state machine
-}
-
-InstanceNoParent {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Material instance product {0} needs the material it is an instance of, and its parent reference is empty."
-    text  "材质实例产物 {0} 需要指明它是哪个材质的实例，而它的父引用是空的。"
-    state machine
-}
-
-InstanceNotInSchema {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Override '{0}' of product {1} names a parameter, and the parent schema the product carries has no such parameter."
-    text  "产物 {1} 的覆盖 '{0}' 指向一个参数，而该产物携带的父 schema 中没有这个参数。"
-    state machine
-}
-
-InstanceSchemaKind {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Override '{0}' of product {1} is a {2} override, and the parent schema lists that parameter as {3}."
-    text  "产物 {1} 的覆盖 '{0}' 是 {2} 覆盖，而父 schema 把该参数列为 {3}。"
-    state machine
-}
-
-InstanceValueMask {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "a Float4 of four components, each 0 or 1"
-    text  "四分量的 Float4，每个分量为 0 或 1"
-    state machine
-}
-
-InstanceValueObject {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "an Object path, empty for None"
-    text  "对象路径，None 时为空"
-    state machine
-}
-
-InstanceValueScalar {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "a Float4 of one component"
-    text  "单分量的 Float4"
-    state machine
-}
-
-InstanceValueShape {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Override '{0}' of product {1} is a {2} override holding a {3} value, and a {2} override holds {4}."
-    text  "产物 {1} 的覆盖 '{0}' 是 {2} 覆盖，却保存着一个 {3} 值，而 {2} 覆盖保存的应是{4}。"
-    state machine
-}
-
-InstanceValueStaticSwitch {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "a Bool"
-    text  "Bool"
-    state machine
-}
-
-InstanceValueVector {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "a Float4 of four components"
-    text  "四分量的 Float4"
-    state machine
-}
-
-LayoutHintKind {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Layout hint {0} of product {1} has kind '{2}'; a hint is spelled exactly 'Node' or 'Comment', so this one places nothing."
-    text  "产物 {1} 的布局提示 {0} 的种类是 '{2}'；提示的种类必须严格写作 'Node' 或 'Comment'，因此这条提示不会放置任何东西。"
-    state machine
-}
-
-LayoutHintNoName {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Layout hint {0} of product {1} draws a comment box with no title, so it draws nothing."
-    text  "产物 {1} 的布局提示 {0} 要绘制一个没有标题的注释框，因此什么也不会绘制。"
-    state machine
-}
-
-LayoutHintNoVar {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Layout hint {0} of product {1} places a node but names no variable, so it places nothing."
-    text  "产物 {1} 的布局提示 {0} 用于放置节点，但没有指定变量，因此不会放置任何东西。"
-    state machine
-}
-
-LayoutHintNodeColor {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Layout hint {0} of product {1} places a node and carries a colour, and only a comment box has one, so the colour is ignored."
-    text  "产物 {1} 的布局提示 {0} 摆放的是节点，却带有颜色，而只有注释框才有颜色，因此该颜色被忽略。"
-    state machine
-}
-
-ListInputs {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "function inputs"
-    text  "函数输入"
-    state machine
-}
-
-ListOutputs {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "function outputs"
-    text  "函数输出"
-    state machine
-}
-
-MaterialHasFunctionIO {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Material product {0} declares function inputs or outputs; a material has parameters and a sink, not a signature."
-    text  "材质产物 {0} 声明了函数输入或输出；材质有的是参数和 sink，而不是函数签名。"
-    state machine
-}
-
-MaterialSinkCount {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Material product {0} has {1} MaterialSink node(s); a material has exactly one."
-    text  "材质产物 {0} 有 {1} 个 MaterialSink 节点；一个材质恰好有一个。"
-    state machine
-}
-
-MaterialSinkIndex {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Material product {0} records its sink as {1} but the MaterialSink node is %{2}."
-    text  "材质产物 {0} 记录的 sink 是 {1}，但 MaterialSink 节点是 %{2}。"
-    state machine
-}
-
-MathOperandNotCarryable {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} does arithmetic on operand {1}, which is a {2}; the graph carries only float1 to float4, so a matrix, a texture or a material cannot reach a math node."
-    text  "节点 {0} 对操作数 {1} 做算术运算，而它是 {2}；图中只传递 float1 到 float4，因此矩阵、纹理或材质都不能进入数学运算节点。"
-    state machine
-}
-
-MathResultNotCarryable {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} produces a {1}; a math node's result must be float1 to float4."
-    text  "节点 {0} 产生的是 {1}；数学运算节点的结果必须是 float1 到 float4。"
-    state machine
-}
-
-MissingProperty {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} needs property '{1}' and does not have it."
-    text  "节点 {0} 需要属性 '{1}'，但没有这个属性。"
-    state machine
-}
-
-NodeBadRegion {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} sits in region {1}, which does not exist; the graph has {2} region(s)."
-    text  "节点 {0} 位于区域 {1}，但该区域不存在；图中共有 {2} 个区域。"
+    src   "Node {0} has nothing connected to {1}; every operand of this op must carry a value."
+    text  "节点 {0} 的 {1} 没有连接任何东西；这个操作的每个操作数都必须有值。"
     state machine
 }
 
@@ -310,13 +16,6 @@ OperandBadNode {
     state machine
 }
 
-OperandBadOutput {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} reads output {1} of node {2}, which has {3} output(s)."
-    text  "节点 {0} 读取节点 {2} 的输出 {1}，而该节点有 {3} 个输出。"
-    state machine
-}
-
 OperandReadsStatement {
     at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
     src   "Node {0} reads {1} from node {2}, which is a statement and produces no value."
@@ -324,94 +23,10 @@ OperandReadsStatement {
     state machine
 }
 
-OutputNamesNotParallel {
+OperandBadOutput {
     at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} has {1} output name(s) for {2} output(s); the two lists are either parallel or the names are omitted."
-    text  "节点 {0} 有 {2} 个输出，却有 {1} 个输出名；这两个列表要么一一对应，要么省略输出名。"
-    state machine
-}
-
-PartialDedupeKeys {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Product {0} has dedupe keys on {1} of its {2} nodes; the key is either computed for the whole graph or for none of it."
-    text  "产物 {0} 的 {2} 个节点中有 {1} 个带去重键；去重键要么为整个图计算，要么完全不计算。"
-    state machine
-}
-
-PipelineBesideProducts {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "This module holds a Custom Pass pipeline and {0} other product(s), and a pipeline is the only product of its file."
-    text  "此模块包含一个 Custom Pass 管线和另外 {0} 个产物，而管线必须是其文件的唯一产物。"
-    state machine
-}
-
-ProductNoName {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Product {0} has no name; the asset name comes from the exported function or from '/// @name'."
-    text  "产物 {0} 没有名称；资产名来自导出函数或 '/// @name'。"
-    state machine
-}
-
-ReflectedClassMismatch {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} names class '{1}' but its catalog entry is '{2}'; the two must agree."
-    text  "节点 {0} 指定的类是 '{1}'，但它的目录条目是 '{2}'；两者必须一致。"
-    state machine
-}
-
-ReflectedNoCatalogIndex {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} is a reflected node with catalog index {1}, which is not an entry of the builtin catalog."
-    text  "节点 {0} 是反射节点，其目录索引 {1} 不是内置目录中的条目。"
-    state machine
-}
-
-ReflectedUnknownPin {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} connects pin '{1}', which '{2}' does not have."
-    text  "节点 {0} 连接了引脚 '{1}'，但 '{2}' 没有这个引脚。"
-    state machine
-}
-
-ReflectedUnknownProperty {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} sets property '{1}', which '{2}' does not have."
-    text  "节点 {0} 设置了属性 '{1}'，但 '{2}' 没有这个属性。"
-    state machine
-}
-
-RegionBadParent {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Region {0} of product {1} names parent {2}, which does not exist."
-    text  "产物 {1} 的区域 {0} 指定的父区域 {2} 不存在。"
-    state machine
-}
-
-RegionCycle {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Region {0} of product {1} encloses itself; regions nest, they do not loop."
-    text  "产物 {1} 的区域 {0} 包含了自身；区域可以嵌套，但不能形成循环。"
-    state machine
-}
-
-SelectNotScalar {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} selects on a {1}; a condition is one 0/1 component."
-    text  "节点 {0} 以 {1} 作为选择条件；条件是一个取值为 0/1 的分量。"
-    state machine
-}
-
-SlotOperand {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "operand {0}"
-    text  "操作数 {0}"
-    state machine
-}
-
-SlotPin {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "pin '{0}'"
-    text  "引脚 '{0}'"
+    src   "Node {0} reads output {1} of node {2}, which has {3} output(s)."
+    text  "节点 {0} 读取节点 {2} 的输出 {1}，而该节点有 {3} 个输出。"
     state machine
 }
 
@@ -422,59 +37,31 @@ StatementHasOutputs {
     state machine
 }
 
-StaticSwitchNotBool {
+ValueHasNoOutputs {
     at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} switches on a {1}; a StaticSwitch condition is a single static bool."
-    text  "节点 {0} 以 {1} 作为开关条件；StaticSwitch 的条件是单个静态 bool。"
+    src   "Node {0} declares no outputs, so nothing can read it."
+    text  "节点 {0} 没有声明输出，因此无法读取它。"
     state machine
 }
 
-StrayCatalogIndex {
+OutputNamesNotParallel {
     at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} carries catalog index {1}; only a reflected node has one."
-    text  "节点 {0} 带有目录索引 {1}；只有反射节点才有目录索引。"
+    src   "Node {0} has {1} output name(s) for {2} output(s); the two lists are either parallel or the names are omitted."
+    text  "节点 {0} 有 {2} 个输出，却有 {1} 个输出名；这两个列表要么一一对应，要么省略输出名。"
     state machine
 }
 
-SwizzleMaskCharacter {
+DuplicateOutputName {
     at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} has mask '{1}'; masks are canonical lower-case x, y, z and w."
-    text  "节点 {0} 的掩码是 '{1}'；掩码使用规范的小写 x、y、z 和 w。"
+    src   "Node {0} names two outputs '{1}'; an output name selects one slot and must be unique."
+    text  "节点 {0} 有两个输出都叫 '{1}'；输出名用于选中一个槽位，必须唯一。"
     state machine
 }
 
-SwizzleMaskLength {
+UnexpectedOperands {
     at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} has mask '{1}'; a mask is one to four of x, y, z and w."
-    text  "节点 {0} 的掩码是 '{1}'；掩码由 1 到 4 个 x、y、z、w 中的字母组成。"
-    state machine
-}
-
-SwizzleMaskOrder {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} has mask '{1}', which is not in ascending order; a ComponentMask cannot reorder channels, so a reordering swizzle is masks plus an Append."
-    text  "节点 {0} 的掩码 '{1}' 不是升序；ComponentMask 不能重排通道，因此重排分量的 swizzle 由若干掩码加一个 Append 实现。"
-    state machine
-}
-
-SwizzleMaskRepeat {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} has mask '{1}', which names the same component twice; a ComponentMask cannot repeat a channel."
-    text  "节点 {0} 的掩码 '{1}' 把同一个分量写了两次；ComponentMask 不能重复同一个通道。"
-    state machine
-}
-
-SwizzleNoMask {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} needs a string Mask property holding the component letters."
-    text  "节点 {0} 需要一个存放分量字母的字符串 Mask 属性。"
-    state machine
-}
-
-SwizzleTooWide {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} masks '{1}' out of a {2}, which has only {3} component(s)."
-    text  "节点 {0} 从 {2} 中掩出 '{1}'，而它只有 {3} 个分量。"
+    src   "Node {0} carries {1} positional operand(s); this op takes {2}."
+    text  "节点 {0} 带有 {1} 个位置操作数；这个操作接受：{2}。"
     state machine
 }
 
@@ -492,10 +79,10 @@ TakesNothing {
     state machine
 }
 
-TakesNothing2 {
+UnexpectedNamedInputs {
     at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "no inputs at all"
-    text  "无任何输入"
+    src   "Node {0} carries {1} named input(s); this op takes {2}."
+    text  "节点 {0} 带有 {1} 个命名输入；这个操作接受：{2}。"
     state machine
 }
 
@@ -506,59 +93,10 @@ TakesOperands {
     state machine
 }
 
-UnexpectedNamedInputs {
+TakesNothing2 {
     at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} carries {1} named input(s); this op takes {2}."
-    text  "节点 {0} 带有 {1} 个命名输入；这个操作接受：{2}。"
-    state machine
-}
-
-UnexpectedOperands {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} carries {1} positional operand(s); this op takes {2}."
-    text  "节点 {0} 带有 {1} 个位置操作数；这个操作接受：{2}。"
-    state machine
-}
-
-UnknownAttributeSetType {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} lists '{1}' in AttributeSetTypes, which is not a material attribute."
-    text  "节点 {0} 在 AttributeSetTypes 中列出了 '{1}'，但它不是材质属性。"
-    state machine
-}
-
-UnknownMaterialAttribute {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} writes attribute '{1}', which is not in the engine's material attribute table."
-    text  "节点 {0} 写入了属性 '{1}'，但它不在引擎的材质属性表中。"
-    state machine
-}
-
-UnlistedFunctionInput {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Product {0} has node {1} that is not in its function input list; the list is what gives an input its order."
-    text  "产物 {0} 中的节点 {1} 不在它的函数输入列表中；输入的顺序正是由这个列表决定的。"
-    state machine
-}
-
-UnlistedFunctionOutput {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Product {0} has node {1} that is not in its function output list; the list is what gives an output its order."
-    text  "产物 {0} 中的节点 {1} 不在它的函数输出列表中；输出的顺序正是由这个列表决定的。"
-    state machine
-}
-
-UnsetOperand {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} has nothing connected to {1}; every operand of this op must carry a value."
-    text  "节点 {0} 的 {1} 没有连接任何东西；这个操作的每个操作数都必须有值。"
-    state machine
-}
-
-ValueHasNoOutputs {
-    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
-    src   "Node {0} declares no outputs, so nothing can read it."
-    text  "节点 {0} 没有声明输出，因此无法读取它。"
+    src   "no inputs at all"
+    text  "无任何输入"
     state machine
 }
 
@@ -576,9 +114,471 @@ WrongArityRange {
     state machine
 }
 
+NodeBadRegion {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} sits in region {1}, which does not exist; the graph has {2} region(s)."
+    text  "节点 {0} 位于区域 {1}，但该区域不存在；图中共有 {2} 个区域。"
+    state machine
+}
+
+EmptyPropertyName {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} carries a property with no name."
+    text  "节点 {0} 带有一个没有名称的属性。"
+    state machine
+}
+
+DuplicateProperty {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} sets property '{1}' twice."
+    text  "节点 {0} 两次设置了属性 '{1}'。"
+    state machine
+}
+
 WrongPropertyKind {
     at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
     src   "Node {0} stores property '{1}' as {2}; it must be {3}."
     text  "节点 {0} 把属性 '{1}' 存为 {2}；它必须是 {3}。"
+    state machine
+}
+
+MissingProperty {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} needs property '{1}' and does not have it."
+    text  "节点 {0} 需要属性 '{1}'，但没有这个属性。"
+    state machine
+}
+
+SwizzleNoMask {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} needs a string Mask property holding the component letters."
+    text  "节点 {0} 需要一个存放分量字母的字符串 Mask 属性。"
+    state machine
+}
+
+SwizzleMaskLength {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} has mask '{1}'; a mask is one to four of x, y, z and w."
+    text  "节点 {0} 的掩码是 '{1}'；掩码由 1 到 4 个 x、y、z、w 中的字母组成。"
+    state machine
+}
+
+SwizzleMaskCharacter {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} has mask '{1}'; masks are canonical lower-case x, y, z and w."
+    text  "节点 {0} 的掩码是 '{1}'；掩码使用规范的小写 x、y、z 和 w。"
+    state machine
+}
+
+SwizzleMaskRepeat {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} has mask '{1}', which names the same component twice; a ComponentMask cannot repeat a channel."
+    text  "节点 {0} 的掩码 '{1}' 把同一个分量写了两次；ComponentMask 不能重复同一个通道。"
+    state machine
+}
+
+SwizzleMaskOrder {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} has mask '{1}', which is not in ascending order; a ComponentMask cannot reorder channels, so a reordering swizzle is masks plus an Append."
+    text  "节点 {0} 的掩码 '{1}' 不是升序；ComponentMask 不能重排通道，因此重排分量的 swizzle 由若干掩码加一个 Append 实现。"
+    state machine
+}
+
+SwizzleTooWide {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} masks '{1}' out of a {2}, which has only {3} component(s)."
+    text  "节点 {0} 从 {2} 中掩出 '{1}'，而它只有 {3} 个分量。"
+    state machine
+}
+
+StaticSwitchNotBool {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} switches on a {1}; a StaticSwitch condition is a single static bool."
+    text  "节点 {0} 以 {1} 作为开关条件；StaticSwitch 的条件是单个静态 bool。"
+    state machine
+}
+
+SelectNotScalar {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} selects on a {1}; a condition is one 0/1 component."
+    text  "节点 {0} 以 {1} 作为选择条件；条件是一个取值为 0/1 的分量。"
+    state machine
+}
+
+MathOperandNotCarryable {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} does arithmetic on operand {1}, which is a {2}; the graph carries only float1 to float4, so a matrix, a texture or a material cannot reach a math node."
+    text  "节点 {0} 对操作数 {1} 做算术运算，而它是 {2}；图中只传递 float1 到 float4，因此矩阵、纹理或材质都不能进入数学运算节点。"
+    state machine
+}
+
+MathResultNotCarryable {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} produces a {1}; a math node's result must be float1 to float4."
+    text  "节点 {0} 产生的是 {1}；数学运算节点的结果必须是 float1 到 float4。"
+    state machine
+}
+
+ReflectedNoCatalogIndex {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} is a reflected node with catalog index {1}, which is not an entry of the builtin catalog."
+    text  "节点 {0} 是反射节点，其目录索引 {1} 不是内置目录中的条目。"
+    state machine
+}
+
+ReflectedClassMismatch {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} names class '{1}' but its catalog entry is '{2}'; the two must agree."
+    text  "节点 {0} 指定的类是 '{1}'，但它的目录条目是 '{2}'；两者必须一致。"
+    state machine
+}
+
+ReflectedUnknownPin {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} connects pin '{1}', which '{2}' does not have."
+    text  "节点 {0} 连接了引脚 '{1}'，但 '{2}' 没有这个引脚。"
+    state machine
+}
+
+ReflectedUnknownProperty {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} sets property '{1}', which '{2}' does not have."
+    text  "节点 {0} 设置了属性 '{1}'，但 '{2}' 没有这个属性。"
+    state machine
+}
+
+CallBadLocalProduct {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} calls local product {1}, which this module does not have; it has {2}."
+    text  "节点 {0} 调用了本地产物 {1}，但此模块中没有这个产物；模块共有 {2} 个产物。"
+    state machine
+}
+
+CallSelfProduct {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} calls the product it belongs to; a material function cannot call itself."
+    text  "节点 {0} 调用了它所属的产物；材质函数不能调用自身。"
+    state machine
+}
+
+CallNoTarget {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} names neither a function asset path nor a local product; a MaterialFunctionCall needs one of the two."
+    text  "节点 {0} 既没有指定函数资产路径，也没有指定本地产物；MaterialFunctionCall 需要二者之一。"
+    state machine
+}
+
+UnknownMaterialAttribute {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} writes attribute '{1}', which is not in the engine's material attribute table."
+    text  "节点 {0} 写入了属性 '{1}'，但它不在引擎的材质属性表中。"
+    state machine
+}
+
+UnknownAttributeSetType {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} lists '{1}' in AttributeSetTypes, which is not a material attribute."
+    text  "节点 {0} 在 AttributeSetTypes 中列出了 '{1}'，但它不是材质属性。"
+    state machine
+}
+
+SlotOperand {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "operand {0}"
+    text  "操作数 {0}"
+    state machine
+}
+
+EmptyPinName {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} has a named input with no pin name."
+    text  "节点 {0} 有一个没有引脚名的命名输入。"
+    state machine
+}
+
+DuplicatePinName {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} connects pin '{1}' twice; a pin takes one value."
+    text  "节点 {0} 两次连接了引脚 '{1}'；一个引脚只接受一个值。"
+    state machine
+}
+
+SlotPin {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "pin '{0}'"
+    text  "引脚 '{0}'"
+    state machine
+}
+
+StrayCatalogIndex {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Node {0} carries catalog index {1}; only a reflected node has one."
+    text  "节点 {0} 带有目录索引 {1}；只有反射节点才有目录索引。"
+    state machine
+}
+
+MaterialSinkCount {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Material product {0} has {1} MaterialSink node(s); a material has exactly one."
+    text  "材质产物 {0} 有 {1} 个 MaterialSink 节点；一个材质恰好有一个。"
+    state machine
+}
+
+MaterialSinkIndex {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Material product {0} records its sink as {1} but the MaterialSink node is %{2}."
+    text  "材质产物 {0} 记录的 sink 是 {1}，但 MaterialSink 节点是 %{2}。"
+    state machine
+}
+
+FunctionHasSink {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Product {0} is a {1} and must have no MaterialSink node, but it has {2}."
+    text  "产物 {0} 是 {1}，不能有 MaterialSink 节点，但它有 {2} 个。"
+    state machine
+}
+
+FunctionRecordsSink {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Product {0} is a {1} and records sink node {2}; only a material has a sink."
+    text  "产物 {0} 是 {1}，却记录了 sink 节点 {2}；只有材质才有 sink。"
+    state machine
+}
+
+FunctionListBadIndex {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Product {0} lists node %{1} in its {2}, and that node does not exist."
+    text  "产物 {0} 在它的 {2} 中列出了节点 %{1}，但该节点不存在。"
+    state machine
+}
+
+FunctionListWrongOp {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Product {0} lists node {1} in its {2}, where only {3} nodes belong."
+    text  "产物 {0} 在它的 {2} 中列出了节点 {1}，而那里只应包含 {3} 节点。"
+    state machine
+}
+
+ListInputs {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "function inputs"
+    text  "函数输入"
+    state machine
+}
+
+ListOutputs {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "function outputs"
+    text  "函数输出"
+    state machine
+}
+
+UnlistedFunctionInput {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Product {0} has node {1} that is not in its function input list; the list is what gives an input its order."
+    text  "产物 {0} 中的节点 {1} 不在它的函数输入列表中；输入的顺序正是由这个列表决定的。"
+    state machine
+}
+
+UnlistedFunctionOutput {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Product {0} has node {1} that is not in its function output list; the list is what gives an output its order."
+    text  "产物 {0} 中的节点 {1} 不在它的函数输出列表中；输出的顺序正是由这个列表决定的。"
+    state machine
+}
+
+MaterialHasFunctionIO {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Material product {0} declares function inputs or outputs; a material has parameters and a sink, not a signature."
+    text  "材质产物 {0} 声明了函数输入或输出；材质有的是参数和 sink，而不是函数签名。"
+    state machine
+}
+
+FunctionNoOutputs {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Product {0} is a {1} and produces nothing; a material function needs at least one FunctionOutput."
+    text  "产物 {0} 是 {1}，却不产生任何输出；材质函数至少需要一个 FunctionOutput。"
+    state machine
+}
+
+RegionBadParent {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Region {0} of product {1} names parent {2}, which does not exist."
+    text  "产物 {1} 的区域 {0} 指定的父区域 {2} 不存在。"
+    state machine
+}
+
+RegionCycle {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Region {0} of product {1} encloses itself; regions nest, they do not loop."
+    text  "产物 {1} 的区域 {0} 包含了自身；区域可以嵌套，但不能形成循环。"
+    state machine
+}
+
+LayoutHintKind {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Layout hint {0} of product {1} has kind '{2}'; a hint is spelled exactly 'Node' or 'Comment', so this one places nothing."
+    text  "产物 {1} 的布局提示 {0} 的种类是 '{2}'；提示的种类必须严格写作 'Node' 或 'Comment'，因此这条提示不会放置任何东西。"
+    state machine
+}
+
+LayoutHintNoVar {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Layout hint {0} of product {1} places a node but names no variable, so it places nothing."
+    text  "产物 {1} 的布局提示 {0} 用于放置节点，但没有指定变量，因此不会放置任何东西。"
+    state machine
+}
+
+LayoutHintNoName {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Layout hint {0} of product {1} draws a comment box with no title, so it draws nothing."
+    text  "产物 {1} 的布局提示 {0} 要绘制一个没有标题的注释框，因此什么也不会绘制。"
+    state machine
+}
+
+LayoutHintNodeColor {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Layout hint {0} of product {1} places a node and carries a colour, and only a comment box has one, so the colour is ignored."
+    text  "产物 {1} 的布局提示 {0} 摆放的是节点，却带有颜色，而只有注释框才有颜色，因此该颜色被忽略。"
+    state machine
+}
+
+InstanceValueScalar {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "a Float4 of one component"
+    text  "单分量的 Float4"
+    state machine
+}
+
+InstanceValueVector {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "a Float4 of four components"
+    text  "四分量的 Float4"
+    state machine
+}
+
+InstanceValueStaticSwitch {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "a Bool"
+    text  "Bool"
+    state machine
+}
+
+InstanceValueMask {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "a Float4 of four components, each 0 or 1"
+    text  "四分量的 Float4，每个分量为 0 或 1"
+    state machine
+}
+
+InstanceValueObject {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "an Object path, empty for None"
+    text  "对象路径，None 时为空"
+    state machine
+}
+
+InstanceHasGraph {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Product {0} is a material instance, which assigns its parent's parameters and has no graph, and it carries {1} node(s), a sink or a function signature."
+    text  "产物 {0} 是材质实例，它只给父材质的参数赋值、没有图，但它带有 {1} 个节点、一个汇点或一个函数签名。"
+    state machine
+}
+
+InstanceNoParent {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Material instance product {0} needs the material it is an instance of, and its parent reference is empty."
+    text  "材质实例产物 {0} 需要指明它是哪个材质的实例，而它的父引用是空的。"
+    state machine
+}
+
+InstanceBackend {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Material instance product {0} carries backend {1}, and an instance is a plain material instance with the default backend."
+    text  "材质实例产物 {0} 带有后端 {1}，而实例就是使用默认后端的普通材质实例。"
+    state machine
+}
+
+InstanceValueShape {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Override '{0}' of product {1} is a {2} override holding a {3} value, and a {2} override holds {4}."
+    text  "产物 {1} 的覆盖 '{0}' 是 {2} 覆盖，却保存着一个 {3} 值，而 {2} 覆盖保存的应是{4}。"
+    state machine
+}
+
+InstanceFontPage {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Override '{0}' of product {1} sets font page {2}, and a font page is zero or more."
+    text  "产物 {1} 的覆盖 '{0}' 设置了字体页 {2}，而字体页必须不小于零。"
+    state machine
+}
+
+InstanceDuplicateOverride {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Product {0} overrides '{1}' twice, and an instance sets each parameter once."
+    text  "产物 {0} 两次覆盖了 '{1}'，而实例对每个参数只设置一次。"
+    state machine
+}
+
+InstanceNotInSchema {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Override '{0}' of product {1} names a parameter, and the parent schema the product carries has no such parameter."
+    text  "产物 {1} 的覆盖 '{0}' 指向一个参数，而该产物携带的父 schema 中没有这个参数。"
+    state machine
+}
+
+InstanceSchemaKind {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Override '{0}' of product {1} is a {2} override, and the parent schema lists that parameter as {3}."
+    text  "产物 {1} 的覆盖 '{0}' 是 {2} 覆盖，而父 schema 把该参数列为 {3}。"
+    state machine
+}
+
+GraphHasCycle {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Product {0} cannot be ordered: these nodes feed themselves, directly or through others -- {1}."
+    text  "无法为产物 {0} 确定节点顺序：以下节点直接或经由其他节点把输出送回了自身——{1}。"
+    state machine
+}
+
+PartialDedupeKeys {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Product {0} has dedupe keys on {1} of its {2} nodes; the key is either computed for the whole graph or for none of it."
+    text  "产物 {0} 的 {2} 个节点中有 {1} 个带去重键；去重键要么为整个图计算，要么完全不计算。"
+    state machine
+}
+
+DuplicateDedupeKey {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Nodes %{0} and %{1} of product {2} have the same dedupe key, so the dedupe pass should have merged them into one."
+    text  "产物 {2} 的节点 %{0} 和 %{1} 具有相同的去重键，去重步骤本应把它们合并为一个。"
+    state machine
+}
+
+InstanceBesideProducts {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "This module holds a material instance and {0} other product(s), and a material instance is the only product of its file."
+    text  "此模块包含一个材质实例和另外 {0} 个产物，而材质实例必须是其文件的唯一产物。"
+    state machine
+}
+
+PipelineBesideProducts {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "This module holds a Custom Pass pipeline and {0} other product(s), and a pipeline is the only product of its file."
+    text  "此模块包含一个 Custom Pass 管线和另外 {0} 个产物，而管线必须是其文件的唯一产物。"
+    state machine
+}
+
+ProductNoName {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Product {0} has no name; the asset name comes from the exported function or from '/// @name'."
+    text  "产物 {0} 没有名称；资产名来自导出函数或 '/// @name'。"
+    state machine
+}
+
+DuplicateProductName {
+    at    Source/DreamShaderLang/Private/IR/IRValidator.cpp
+    src   "Products {0} and {1} would both be called '{2}'; one file cannot produce two assets of the same name."
+    text  "产物 {0} 和 {1} 都会被命名为 '{2}'；一个文件不能生成两个同名资产。"
     state machine
 }

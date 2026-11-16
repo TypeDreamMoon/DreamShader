@@ -1,0 +1,162 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamPassPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline
+    src   "Dream Pass Pipeline"
+}
+
+DreamPassPipeline:bHasSharedHlsl {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:bHasSharedHlsl
+    src   "Has Shared Hlsl"
+}
+
+DreamPassPipeline:Buffers {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Buffers
+    src   "Buffers"
+}
+
+DreamPassPipeline:DefaultInjection {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:DefaultInjection
+    src   "Default Injection"
+}
+
+DreamPassPipeline:EnabledParameter {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:EnabledParameter
+    src   "Enabled Parameter"
+}
+
+DreamPassPipeline:ExportTargets {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:ExportTargets
+    src   "Export Targets"
+}
+
+DreamPassPipeline:GetExportTarget {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:GetExportTarget
+    src   "Get Export Target"
+}
+
+DreamPassPipeline:GetExportTarget:Buffer {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:GetExportTarget:Buffer
+    src   "Buffer"
+}
+
+DreamPassPipeline:GetExportTarget:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:GetExportTarget:ReturnValue
+    src   "Return Value"
+}
+
+DreamPassPipeline:Order {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Order
+    src   "Order"
+}
+
+DreamPassPipeline:Parameters {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Parameters
+    src   "Parameters"
+}
+
+DreamPassPipeline:Passes {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Passes
+    src   "Passes"
+}
+
+DreamPassPipeline:Requires {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Requires
+    src   "Requires"
+}
+
+DreamPassPipeline:SharedHlsl {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SharedHlsl
+    src   "Shared Hlsl"
+}
+
+DreamPassPipeline:SharedHlslLine {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SharedHlslLine
+    src   "Shared Hlsl Line"
+}
+
+DreamPassPipeline:SourceFilePath {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SourceFilePath
+    src   "Source File Path"
+}
+
+DreamPassPipeline:SourceHash {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SourceHash
+    src   "Source Hash"
+}
+
+DreamPassPipeline:Views {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Views
+    src   "Views"
+}
+
+namespace UObjectToolTips
+
+DreamPassPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline
+    src   "A Custom Pass pipeline: named buffers, an ordered list of passes each with its own injection point, and the\nparameters an activation can override. What a `.dsp` source compiles to, and what it decompiles from.\n\nPlain data. Nothing here runs: UDreamPassSubsystem decides which pipelines apply to a view and with what\nparameter values, and the scene view extension runs their passes. Editing the asset in the details panel\ntakes effect on the next frame; Adopt Into Source writes the edit back to the `.dsp`."
+}
+
+DreamPassPipeline:bHasSharedHlsl {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:bHasSharedHlsl
+    src   "The `.dsp` has a file-level `hlsl { }` block (it may be empty)."
+}
+
+DreamPassPipeline:DefaultInjection {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:DefaultInjection
+    src   "The injection point of a pass that does not name one. Informational once compiled: every pass carries its own."
+}
+
+DreamPassPipeline:EnabledParameter {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:EnabledParameter
+    src   "A Bool parameter; the whole pipeline is off in a view where it is false. None: always on."
+}
+
+DreamPassPipeline:ExportTargets {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:ExportTargets
+    src   "The render target asset of every exported buffer, made by the compiler next to this asset."
+}
+
+DreamPassPipeline:Order {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Order
+    src   "Pipelines that have passes at the same injection point run in ascending Order, then by asset path."
+}
+
+DreamPassPipeline:Passes {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Passes
+    src   "In declaration order, which is execution order within an injection point."
+}
+
+DreamPassPipeline:Requires {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Requires
+    src   "EDreamPassRequirementFlags: what a view must offer for the pipeline to run in it at all."
+}
+
+DreamPassPipeline:SharedHlsl {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SharedHlsl
+    src   "That block: the text between its braces, verbatim. Its shared functions are compiled with every inline pass, its\nentries with the passes that name them (EDreamPassHlslSource::Shared). Kept for the way back to text; what runs is\neach slot's snapshot."
+}
+
+DreamPassPipeline:SharedHlslLine {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SharedHlslLine
+    src   "The line of the block's `{` in the `.dsp`."
+}
+
+DreamPassPipeline:SourceFilePath {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SourceFilePath
+    src   "The `.dsp` this asset was compiled from, project-relative. Also in the package's DreamShader.SourceFile metadata."
+}
+
+DreamPassPipeline:Views {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Views
+    src   "EDreamPassViewFlags: which kinds of view the pipeline runs in."
+}
+
+namespace UObjectCategory
+
+Source {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SourceFilePath
+    src   "Source"
+}

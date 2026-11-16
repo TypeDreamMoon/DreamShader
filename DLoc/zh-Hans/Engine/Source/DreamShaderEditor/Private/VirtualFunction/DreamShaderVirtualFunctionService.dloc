@@ -2,6 +2,13 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.VirtualFunction
 
+NoMaterialFunctionAssetProvided {
+    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionService.cpp
+    src   "No MaterialFunction asset was provided."
+    text  "未提供材质函数资产。"
+    state machine
+}
+
 InvalidMaterialFunctionPackagePath {
     at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionService.cpp
     src   "MaterialFunction '{0}' does not have a valid package path."
@@ -16,10 +23,10 @@ MaterialFunctionHasNoOutputs {
     state machine
 }
 
-NoMaterialFunctionAssetProvided {
+VirtualFunctionNameCannotBeEmpty {
     at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionService.cpp
-    src   "No MaterialFunction asset was provided."
-    text  "未提供材质函数资产。"
+    src   "VirtualFunction name cannot be empty."
+    text  "VirtualFunction 名称不能为空。"
     state machine
 }
 
@@ -27,13 +34,6 @@ VirtualFunctionHasNoOutputs {
     at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionService.cpp
     src   "VirtualFunction '{0}' does not expose any outputs."
     text  "VirtualFunction '{0}' 未暴露任何输出。"
-    state machine
-}
-
-VirtualFunctionNameCannotBeEmpty {
-    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionService.cpp
-    src   "VirtualFunction name cannot be empty."
-    text  "VirtualFunction 名称不能为空。"
     state machine
 }
 

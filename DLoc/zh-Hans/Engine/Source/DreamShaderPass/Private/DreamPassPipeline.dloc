@@ -2,13 +2,6 @@ dloc 1
 culture zh-Hans
 namespace DreamShader.Pass.Pipeline
 
-BindingNoBuffer {
-    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "a binding names no buffer."
-    text  "有一个绑定没有指定缓冲。"
-    state machine
-}
-
 BufferMipsUnsupported {
     at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
     src   "Buffer '{0}': only Mips = 1 is supported; passes cannot initialize or update a mip chain."
@@ -16,10 +9,17 @@ BufferMipsUnsupported {
     state machine
 }
 
-BufferName {
+PassProblem {
     at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "Buffer '{0}': the name is empty, taken twice, or a built-in one."
-    text  "缓冲 '{0}'：名称为空、重复，或与内置缓冲同名。"
+    src   "Pass '{0}': {1}"
+    text  "Pass '{0}'：{1}"
+    state machine
+}
+
+BindingNoBuffer {
+    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
+    src   "a binding names no buffer."
+    text  "有一个绑定没有指定缓冲。"
     state machine
 }
 
@@ -30,59 +30,31 @@ BuiltinPrevious {
     state machine
 }
 
-ClearOneWrite {
+UnknownBuffer {
     at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "a clear writes exactly one buffer."
-    text  "清除 Pass 必须恰好写入一个缓冲。"
+    src   "'{0}' is not a buffer of this pipeline."
+    text  "'{0}' 不是此管线的缓冲。"
     state machine
 }
 
-ComputeDispatchBuffer {
+PreviousWithoutHistory {
     at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "it dispatches over a buffer it does not name."
-    text  "它按缓冲派发，却没有指定是哪个缓冲。"
+    src   "'{0}.Previous': the buffer keeps no history."
+    text  "'{0}.Previous'：该缓冲不保留历史。"
     state machine
 }
 
-ComputeNoWrite {
+WritePrevious {
     at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "a compute pass writes at least one buffer."
-    text  "Compute Pass 至少要写入一个缓冲。"
+    src   "a write cannot target '.Previous'."
+    text  "写入的目标不能是 '.Previous'。"
     state machine
 }
 
-ComputeSlot {
+FullscreenNothing {
     at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "it has no compute shader slot."
-    text  "它没有 Compute 着色器槽位。"
-    state machine
-}
-
-ComputeTooMany {
-    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "it binds more buffers than a compute shader slot has."
-    text  "它绑定的缓冲数超出了 Compute 着色器槽位的容量。"
-    state machine
-}
-
-CopyOneEach {
-    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "a copy reads one buffer and writes one."
-    text  "复制 Pass 应读取一个缓冲并写入一个缓冲。"
-    state machine
-}
-
-EnabledParameter {
-    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "'{0}' is not a Bool parameter."
-    text  "'{0}' 不是 Bool 参数。"
-    state machine
-}
-
-ExportTarget {
-    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "Buffer '{0}' is exported but has no render target."
-    text  "缓冲 '{0}' 已导出，但没有渲染目标。"
+    src   "it has neither a material nor a pixel shader slot."
+    text  "它既没有材质，也没有像素着色器槽位。"
     state machine
 }
 
@@ -93,10 +65,10 @@ FullscreenBoth {
     state machine
 }
 
-FullscreenNothing {
+PixelSlotRange {
     at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "it has neither a material nor a pixel shader slot."
-    text  "它既没有材质，也没有像素着色器槽位。"
+    src   "its pixel shader slot is out of range."
+    text  "它的像素着色器槽位超出范围。"
     state machine
 }
 
@@ -114,10 +86,31 @@ FullscreenTooManyWrites {
     state machine
 }
 
-MeshDepthBuffer {
+ComputeSlot {
     at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "Depth = Own names no Depth32 buffer."
-    text  "Depth = Own 没有指定 Depth32 缓冲。"
+    src   "it has no compute shader slot."
+    text  "它没有 Compute 着色器槽位。"
+    state machine
+}
+
+ComputeNoWrite {
+    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
+    src   "a compute pass writes at least one buffer."
+    text  "Compute Pass 至少要写入一个缓冲。"
+    state machine
+}
+
+ComputeTooMany {
+    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
+    src   "it binds more buffers than a compute shader slot has."
+    text  "它绑定的缓冲数超出了 Compute 着色器槽位的容量。"
+    state machine
+}
+
+ComputeDispatchBuffer {
+    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
+    src   "it dispatches over a buffer it does not name."
+    text  "它按缓冲派发，却没有指定是哪个缓冲。"
     state machine
 }
 
@@ -142,6 +135,55 @@ MeshWrites {
     state machine
 }
 
+MeshDepthBuffer {
+    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
+    src   "Depth = Own names no Depth32 buffer."
+    text  "Depth = Own 没有指定 Depth32 缓冲。"
+    state machine
+}
+
+ClearOneWrite {
+    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
+    src   "a clear writes exactly one buffer."
+    text  "清除 Pass 必须恰好写入一个缓冲。"
+    state machine
+}
+
+CopyOneEach {
+    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
+    src   "a copy reads one buffer and writes one."
+    text  "复制 Pass 应读取一个缓冲并写入一个缓冲。"
+    state machine
+}
+
+UnknownParameter {
+    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
+    src   "'{0}' is not a parameter of this pipeline."
+    text  "'{0}' 不是此管线的参数。"
+    state machine
+}
+
+EnabledParameter {
+    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
+    src   "'{0}' is not a Bool parameter."
+    text  "'{0}' 不是 Bool 参数。"
+    state machine
+}
+
+BufferName {
+    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
+    src   "Buffer '{0}': the name is empty, taken twice, or a built-in one."
+    text  "缓冲 '{0}'：名称为空、重复，或与内置缓冲同名。"
+    state machine
+}
+
+ExportTarget {
+    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
+    src   "Buffer '{0}' is exported but has no render target."
+    text  "缓冲 '{0}' 已导出，但没有渲染目标。"
+    state machine
+}
+
 ParameterName {
     at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
     src   "Parameter '{0}': the name is empty or taken twice."
@@ -153,47 +195,5 @@ PassName {
     at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
     src   "Pass '{0}': the name is empty or taken twice."
     text  "Pass '{0}'：名称为空或重复。"
-    state machine
-}
-
-PassProblem {
-    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "Pass '{0}': {1}"
-    text  "Pass '{0}'：{1}"
-    state machine
-}
-
-PixelSlotRange {
-    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "its pixel shader slot is out of range."
-    text  "它的像素着色器槽位超出范围。"
-    state machine
-}
-
-PreviousWithoutHistory {
-    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "'{0}.Previous': the buffer keeps no history."
-    text  "'{0}.Previous'：该缓冲不保留历史。"
-    state machine
-}
-
-UnknownBuffer {
-    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "'{0}' is not a buffer of this pipeline."
-    text  "'{0}' 不是此管线的缓冲。"
-    state machine
-}
-
-UnknownParameter {
-    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "'{0}' is not a parameter of this pipeline."
-    text  "'{0}' 不是此管线的参数。"
-    state machine
-}
-
-WritePrevious {
-    at    Source/DreamShaderPass/Private/DreamPassPipeline.cpp
-    src   "a write cannot target '.Previous'."
-    text  "写入的目标不能是 '.Previous'。"
     state machine
 }
