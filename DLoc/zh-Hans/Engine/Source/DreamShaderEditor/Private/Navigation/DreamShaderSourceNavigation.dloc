@@ -1,0 +1,150 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Navigation
+
+OpenCallSiteLabel {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "Open Call Site"
+    text  "打开调用处"
+    state machine
+}
+
+OpenCallSiteTooltip {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "Open {File} at line {Line}, column {Column} -- the call that inlined the helper this node came from."
+    text  "打开 {File} 的第 {Line} 行第 {Column} 列——即内联了此节点所属辅助函数的那次调用。"
+    state machine
+}
+
+OpenSourceLineLabel {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "Open Source Line"
+    text  "打开源码行"
+    state machine
+}
+
+OpenSourceLineTooltip {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "Open {File} at line {Line}, column {Column} -- the DreamShader source this node was generated from."
+    text  "打开 {File} 的第 {Line} 行第 {Column} 列——即生成此节点的 DreamShader 源码。"
+    state machine
+}
+
+RevealNodeBadRequest {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "reveal-node needs a non-empty 'file' and a 'line' of 1 or more; got file '{File}' and line {Line}."
+    text  "reveal-node 需要非空的 'file' 和不小于 1 的 'line'；实际收到的 file 为 '{File}'，line 为 {Line}。"
+    state machine
+}
+
+RevealNodeEditorRefused {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "The material editor would not open for '{Asset}', so the node could not be revealed."
+    text  "材质编辑器无法为 '{Asset}' 打开，因此无法定位节点。"
+    state machine
+}
+
+RevealNodeExpressionMissing {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "The expression {Guid} recorded for line {Line} is not in '{Asset}' any more, so the node could not be selected; the asset changed since it was generated -- rebuild it from its source."
+    text  "为第 {Line} 行记录的表达式 {Guid} 已不在 '{Asset}' 中，因此无法选中节点；该资产在生成之后被改动过——请从源文件重建它。"
+    state machine
+}
+
+RevealNodeNoAsset {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "No asset loaded in this editor was generated from '{File}', so there is no graph to reveal a node in; compile the file first, or open one of its assets once so the editor knows about it."
+    text  "此编辑器中已加载的资产都不是由 '{File}' 生成的，因此没有可以定位节点的图；请先编译该文件，或把它的某个资产打开一次，让编辑器知道它。"
+    state machine
+}
+
+RevealNodeNoSpanOnLine {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "No node generated from '{File}' has a source span on line {Line}; the line produced no graph node (a declaration, a comment, or a statement that folded away)."
+    text  "由 '{File}' 生成的节点中，没有哪个的源码区间位于第 {Line} 行；这一行没有产生图节点（声明、注释，或被折叠掉的语句）。"
+    state machine
+}
+
+RevealNodeNoSpanTable {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "The {Count} asset(s) generated from '{File}' carry no DreamShader.SourceSpans metadata, so no node on them can be located; they predate node navigation -- rebuild them with -Force."
+    text  "由 '{File}' 生成的 {Count} 个资产没有 DreamShader.SourceSpans 元数据，因此无法定位其中的任何节点；它们生成于节点导航功能出现之前——请用 -Force 重建。"
+    state machine
+}
+
+RevealNodeNotMaterialEditor {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "'{Asset}' opened in an editor that is not the material editor, which has no node graph to select in; only a node of a Material or a Material Function can be revealed."
+    text  "'{Asset}' 打开在了一个不是材质编辑器的编辑器中，那里没有可供选择的节点图；只能在材质或材质函数中定位节点。"
+    state machine
+}
+
+RevealNodeOk {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "Revealed {Count} node(s) for {File}({Line}) in '{Asset}'."
+    text  "已在 '{Asset}' 中定位 {File}({Line}) 对应的 {Count} 个节点。"
+    state machine
+}
+
+SourceFileLaunchFailed {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "No text editor could be launched for '{File}'; VSCode, the OS default editor and Notepad all refused."
+    text  "无法为 '{File}' 启动任何文本编辑器；VSCode、操作系统默认编辑器和记事本都无法启动。"
+    state machine
+}
+
+SourceFileMissing {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "The source file '{File}' this node was generated from is not on disk any more, so it could not be opened; regenerate the asset, or restore the file."
+    text  "生成此节点的源文件 '{File}' 已不在磁盘上，因此无法打开；请重新生成该资产，或恢复该文件。"
+    state machine
+}
+
+SourceNavigationMenuLabel {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "DreamShader"
+    text  "DreamShader"
+    state machine
+}
+
+SourceNavigationMenuTooltip {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "Jump from this generated node back to the DreamShader source it came from."
+    text  "从这个生成的节点跳回生成它的 DreamShader 源码。"
+    state machine
+}
+
+SourceNavigationSectionLabel {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "Source"
+    text  "源码"
+    state machine
+}
+
+SpanTableBadKey {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "The DreamShader.SourceSpans entry '{Key}' of '{Asset}' is not an expression GUID and was skipped; that node cannot be navigated to."
+    text  "'{Asset}' 的 DreamShader.SourceSpans 条目 '{Key}' 不是表达式 GUID，已跳过；无法导航到该节点。"
+    state machine
+}
+
+SpanTableBadRow {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "The DreamShader.SourceSpans entry '{Key}' of '{Asset}' is not an object with file/line/col and was skipped; that node cannot be navigated to."
+    text  "'{Asset}' 的 DreamShader.SourceSpans 条目 '{Key}' 不是包含 file/line/col 的对象，已跳过；无法导航到该节点。"
+    state machine
+}
+
+SpanTableBadSpan {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "The DreamShader.SourceSpans entry '{Key}' of '{Asset}' names no file or a line below 1 and was skipped; that node cannot be navigated to."
+    text  "'{Asset}' 的 DreamShader.SourceSpans 条目 '{Key}' 没有指定文件，或行号小于 1，已跳过；无法导航到该节点。"
+    state machine
+}
+
+SpanTableNotJson {
+    at    Source/DreamShaderEditor/Private/Navigation/DreamShaderSourceNavigation.cpp
+    src   "The DreamShader.SourceSpans metadata of '{Asset}' is not a JSON object, so no node on it can be mapped back to a source line; rebuild the asset from its source."
+    text  "'{Asset}' 的 DreamShader.SourceSpans 元数据不是 JSON 对象，因此其中的节点都无法映射回源码行；请从源文件重建该资产。"
+    state machine
+}

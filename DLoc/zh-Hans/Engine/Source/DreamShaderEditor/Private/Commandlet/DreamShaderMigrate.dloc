@@ -1,0 +1,108 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Migrate
+
+AssetMoves {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "'{0}' builds '{1}', and its migrated text would build '{2}': a new asset, with the old one left behind. Give the declaration a '/// @name {1}'."
+    text  "'{0}' 构建的是 '{1}'，而迁移后的文本会构建 '{2}'：一个新资产，旧资产被留在原地。请给该声明加上 '/// @name {1}'。"
+    state machine
+}
+
+CatalogEmpty {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound and nothing can be migrated."
+    text  "内建表达式目录是空的，因此任何写到 'UE.*' 节点的内容都无法绑定，也就什么都迁移不了。"
+    state machine
+}
+
+CommentsLost {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "{0} comment(s) of '{1}' would not be in the migrated file ({2}), so nothing was written; this is a fault of the migration, not of the source."
+    text  "'{1}' 有 {0} 条注释不会出现在迁移后的文件中（{2}），因此什么都没有写入；这是迁移工具的问题，而不是源文件的问题。"
+    state machine
+}
+
+ConditionalSource {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "'{0}' uses '#if' conditional compilation, and only the branch taken with today's defines would reach the migrated file; migrate it by hand, or remove the conditionals first."
+    text  "'{0}' 使用了 '#if' 条件编译，只有按当前 define 被采用的分支才会进入迁移后的文件；请手动迁移，或先去掉这些条件。"
+    state machine
+}
+
+GraphDiffers {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "The migrated text of '{0}' does not build the graph the 1.x file builds: {1}"
+    text  "'{0}' 迁移后的文本构建出的图与 1.x 文件构建出的不同：{1}"
+    state machine
+}
+
+MigratedTextFails {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "The migrated text of '{0}' does not build as 2.0 source ({1}), so nothing was written; the text is in '{2}'."
+    text  "'{0}' 迁移后的文本无法作为 2.0 源文件构建（{1}），因此什么都没有写入；该文本保存在 '{2}'。"
+    state machine
+}
+
+NotLegacySource {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "'{0}' is not a 1.x source; migrate takes '.dsm', '.dsf' and '.dsh' files."
+    text  "'{0}' 不是 1.x 源文件；migrate 接受 '.dsm'、'.dsf' 和 '.dsh' 文件。"
+    state machine
+}
+
+NothingToMigrate {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "'{0}' has no 1.x declaration left; there is nothing to migrate."
+    text  "'{0}' 中已经没有 1.x 声明；没有可迁移的内容。"
+    state machine
+}
+
+OutputExists {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "'{0}' already exists and is not written over; move it away, or migrate into another folder with -Out."
+    text  "'{0}' 已经存在，不会被覆盖；请把它移走，或用 -Out 迁移到另一个文件夹。"
+    state machine
+}
+
+OutputUnmovable {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "'{0}' could not be written."
+    text  "无法写入 '{0}'。"
+    state machine
+}
+
+OutputUnwritable {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "'{0}' could not be written."
+    text  "无法写入 '{0}'。"
+    state machine
+}
+
+PreprocessFailed {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "'{0}' fails conditional compilation ({1}: {2}), and a source with '#if' lines is not migrated in any case."
+    text  "'{0}' 条件编译失败（{1}: {2}），而带有 '#if' 行的源文件本来就不会被迁移。"
+    state machine
+}
+
+SourceUndeletable {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "'{0}' could not be deleted, so '{1}' was not written: the two would declare the same assets."
+    text  "无法删除 '{0}'，因此没有写入 '{1}'：否则两个文件会声明相同的资产。"
+    state machine
+}
+
+SourceUnmovable {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "'{0}' could not be moved to '{1}', so '{2}' was not written: the two would declare the same assets."
+    text  "无法把 '{0}' 移动到 '{1}'，因此没有写入 '{2}'：否则两个文件会声明相同的资产。"
+    state machine
+}
+
+SourceUnreadable {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp
+    src   "'{0}' could not be read."
+    text  "无法读取 '{0}'。"
+    state machine
+}

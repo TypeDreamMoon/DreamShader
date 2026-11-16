@@ -1,0 +1,38 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.IRBuilder
+
+IRBuilderDiscard {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp
+    src   "'discard' has no material-graph form; set the material's OpacityMask to zero instead, or move the branch into a '/// @custom' function."
+    text  "'discard' 没有材质图形式；请改为把材质的 OpacityMask 设为零，或者把这个分支移进一个 '/// @custom' 函数。"
+    state machine
+}
+
+IRBuilderJumpInBranch {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp
+    src   "'{0}' inside an 'if' cannot be unrolled, because both arms of the 'if' become nodes and only one of them may leave the loop; move it to the top of the loop body, or write the loop in a '/// @custom' function."
+    text  "位于 'if' 内的 '{0}' 无法展开，因为 'if' 的两个分支都会变成节点，而只能有其中一个离开循环；请把它移到循环体的最前面，或把这个循环写在 '/// @custom' 函数中。"
+    state machine
+}
+
+IRBuilderLoopNotUnrollable {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp
+    src   "This loop runs a number of times the compiler cannot fix at {0} or fewer, and a material graph has no loops; give it a constant trip count, or move it into a '/// @custom' function."
+    text  "编译器无法确定这个循环的执行次数不超过 {0} 次，而材质图中没有循环；请给它一个固定的迭代次数，或把它移到 '/// @custom' 函数中。"
+    state machine
+}
+
+IRBuilderWholeMaterialMerge {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp
+    src   "The two sides of this branch end with a different whole material, and DreamShader chooses between attribute values, not between whole materials; assign the attributes one at a time on both sides, or mix the two materials with UE.BlendMaterialAttributes."
+    text  "这个分支的两侧各以一个不同的整体材质结束，而 DreamShader 是在属性值之间选择，不是在整体材质之间选择；请在两侧逐个给属性赋值，或者用 UE.BlendMaterialAttributes 混合这两个材质。"
+    state machine
+}
+
+IRBuilderWholeMaterialMergeNamed {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp
+    src   "'{0}' holds a different whole material in each arm of this 'if', and DreamShader chooses between attribute values, not between whole materials; assign its attributes one at a time in both arms, or mix the two materials with UE.BlendMaterialAttributes."
+    text  "'{0}' 在这个 'if' 的两个分支中持有不同的整个材质，而 DreamShader 只能在属性值之间选择，不能在整个材质之间选择；请在两个分支中逐个为它的属性赋值，或用 UE.BlendMaterialAttributes 混合这两个材质。"
+    state machine
+}

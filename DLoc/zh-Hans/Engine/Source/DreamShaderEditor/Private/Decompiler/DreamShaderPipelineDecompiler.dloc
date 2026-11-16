@@ -1,0 +1,122 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Decompiler.Pipeline
+
+FullscreenMaterialAndShader {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "The pass '{0}' has both a material, '{1}', and a shader, '{2}'; a fullscreen pass names one of the two, and the text keeps the material, which is what the pass draws."
+    text  "Pass '{0}' 同时有材质 '{1}' 和着色器 '{2}'；全屏 Pass 只能指定两者之一，文本中保留了材质，因为 Pass 绘制的是它。"
+    state machine
+}
+
+FullscreenNothing {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "The pass '{0}' has neither a material nor a shader, so the text names neither, and it does not build until one is given."
+    text  "Pass '{0}' 既没有材质也没有着色器，因此文本中两者都没有写，在补上其中之一之前它无法构建。"
+    state machine
+}
+
+LayerBitsUnnamed {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "A layer filter of the pass '{0}' selects layer bit(s) {1}, which the project's layer table has no name for; the text cannot say them and leaves them out."
+    text  "Pass '{0}' 的层筛选条件选择了层位 {1}，而项目的层表中没有它们的名称；文本无法表达它们，因此略去。"
+    state machine
+}
+
+LayerNamesFromTable {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "A layer filter of the pass '{0}' kept no spelling of its layers, so they are written as the project's layer table names its bits today: {1}."
+    text  "Pass '{0}' 的层筛选条件没有保留其中各层的拼写，因此按项目层表当前为这些位取的名称写出：{1}。"
+    state machine
+}
+
+MeshUsageEmpty {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "The pass '{0}' checks its override material for no usage flag at all, which a '.dsp' cannot say; the text leaves 'Usage' out, and a rebuild checks the default set ({1})."
+    text  "Pass '{0}' 不检查覆盖材质的任何使用标志，而 '.dsp' 无法表达这一点；文本中省略了 'Usage'，重建时会检查默认的那一组（{1}）。"
+    state machine
+}
+
+NoPipeline {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "There is no pass pipeline to decompile."
+    text  "没有可反编译的 Pass 管线。"
+    state machine
+}
+
+OwnDepthWithoutBuffer {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "The pass '{0}' tests against its own depth but names no Depth32 buffer for it; the text writes 'Own()' empty, and it does not build until one is named."
+    text  "Pass '{0}' 针对自己的深度做测试，却没有为它指定 Depth32 缓冲；文本中写出的是空的 'Own()'，在指定缓冲之前它无法构建。"
+    state machine
+}
+
+PipelinePathNotKept {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "A '.dsp' names its pipeline after its file and has no '/// @name', so '{0}' builds '{1}' where it is written, not '{2}'; move the file to where the pipeline's source belongs to keep its path."
+    text  "'.dsp' 以文件名命名其管线，也没有 '/// @name'，因此 '{0}' 在写出的位置构建的是 '{1}'，而不是 '{2}'；要保留管线的路径，请把文件移到该管线源文件应在的位置。"
+    state machine
+}
+
+PipelineTextDiffers {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "The decompiled pipeline reads back as a different pipeline ({0} difference(s); the first: {1}). It is written as it is; this is a defect of the decompiler or the printer."
+    text  "反编译出的管线读回后是另一个管线（{0} 处差异；第一处：{1}）。文本按原样写出；这是反编译器或打印器的缺陷。"
+    state machine
+}
+
+PipelineTextDoesNotBindEither {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "The decompiled pipeline parses but does not bind back into a pipeline: {0}: {1}. It is written as it is; either the asset breaks a rule a '.dsp' is checked against (an edit by hand can), or this is a defect of the decompiler."
+    text  "反编译出的管线可以解析，但无法重新绑定为管线：{0}: {1}。文本按原样写出；要么是资产违反了 '.dsp' 要检查的某条规则（手动编辑可能造成这种情况），要么是反编译器的缺陷。"
+    state machine
+}
+
+PipelineTextDoesNotParse {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "The decompiled pipeline does not parse back: {0}: {1}. It is written as it is; this is a defect of the decompiler."
+    text  "反编译出的管线无法重新解析：{0}: {1}。文本按原样写出；这是反编译器的缺陷。"
+    state machine
+}
+
+PipelineTextNoParseReason {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "the parser gave no reason"
+    text  "解析器没有给出原因"
+    state machine
+}
+
+PipelineTextNoProduct {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "the text builds no pipeline"
+    text  "该文本没有构建出任何管线"
+    state machine
+}
+
+PipelineTreeNotBuilt {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "The text of '{0}' could not be laid out; this is a defect of the decompiler, not of the asset."
+    text  "无法排版 '{0}' 的文本；这是反编译器的缺陷，而不是资产的问题。"
+    state machine
+}
+
+TextureConstantParam {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "The pass '{0}' binds '{1}' to a texture constant, which a 'param' cannot state; the binding is left out of the text."
+    text  "Pass '{0}' 把 '{1}' 绑定到一个纹理常量，而 'param' 无法表达这种绑定；文本中略去了该绑定。"
+    state machine
+}
+
+TextureDefaultNot2DKept {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "The parameter '{0}' defaults to '{1}', which is not a 2D texture. A '.dsp' declares every texture parameter 'Texture2D', and the text does so here too, keeping this default; it builds as it is."
+    text  "参数 '{0}' 的默认值是 '{1}'，它不是 2D 纹理。'.dsp' 把每个纹理参数都声明为 'Texture2D'，这里的文本也是如此，并保留了这个默认值；它可以按原样构建。"
+    state machine
+}
+
+ViewsEmpty {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp
+    src   "'{0}' runs in no kind of view, which a '.dsp' cannot say; the text leaves 'Views' out, and a rebuild runs in {1}."
+    text  "'{0}' 不在任何种类的视图中运行，而 '.dsp' 无法表达这一点；文本中省略了 'Views'，重建后它会在 {1} 中运行。"
+    state machine
+}

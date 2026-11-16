@@ -1,0 +1,115 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderIRToAst
+
+CustomCodeUnreadable {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "The code of the custom node '{0}' carries DreamShader's markers and does not read as what the compiler writes; it is kept verbatim as the body of one function, the functions it embeds included."
+    text  "Custom 节点 '{0}' 的代码带有 DreamShader 的标记，但读起来不像编译器写出的内容；它被原样保留为一个函数的函数体，其中内嵌的函数也一并保留。"
+    state machine
+}
+
+CustomPinRenamed {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "The custom function '{0}' has a pin '{1}' the language cannot declare under that name; it is written as '{2}', and the body still says '{1}'."
+    text  "Custom 函数 '{0}' 有一个引脚 '{1}'，语言无法用这个名字声明它；它被写成 '{2}'，而函数体里仍然写的是 '{1}'。"
+    state machine
+}
+
+CustomRenamed {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "The custom function '{0}' is written as '{1}': the name is taken or is not one the language allows. A custom body that calls it by the old name has to be changed by hand."
+    text  "Custom 函数 '{0}' 被写成 '{1}'：原名已被占用，或不是语言允许的名字。按旧名调用它的 Custom 函数体需要手动修改。"
+    state machine
+}
+
+ExternInferred {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "'{0}' is called and its interface was not available, so its 'extern' prototype is written from the calls alone: pins no call connects are missing from it, and their order is the order the calls wire them in."
+    text  "'{0}' 被调用了，但拿不到它的接口，因此它的 'extern' 原型只能根据这些调用写出：没有任何调用连接的引脚会缺失，引脚顺序就是这些调用连线的顺序。"
+    state machine
+}
+
+InstanceProduct {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "'{0}' is a material instance, which is written as a '.dsi' (PrintDreamShaderInstance), not as part of a '.dss'."
+    text  "'{0}' 是材质实例，应写成 '.dsi'（PrintDreamShaderInstance），而不是 '.dss' 的一部分。"
+    state machine
+}
+
+LayerApproximated {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "'{0}' is a {1}, and {2}."
+    text  "'{0}' 是 {1}，并且{2}。"
+    state machine
+}
+
+LayerDemoted {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "'{0}' is a {1}, and its pins are not the ones the language writes that kind with; it is written as a plain exported function, which builds a material function."
+    text  "'{0}' 是 {1}，但它的引脚不是语言书写这类资产时所用的那些；它被写成普通的导出函数，构建出来的是材质函数。"
+    state machine
+}
+
+LayerMaterialRequired {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "its material input '{0}' has to be connected, and the language makes the materials of a layer and of a blend optional, as the engine's own are: the rebuilt asset lets that input go unconnected"
+    text  "它的材质输入 '{0}' 必须连接，而语言让层和混合的材质输入是可选的（与引擎自带的一样）：重建后的资产允许该输入不连接"
+    state machine
+}
+
+LayerOutputRenamed {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "its output pin '{0}' is written under the input's name '{1}', because a layer's material goes in and out through one parameter"
+    text  "它的输出引脚 '{0}' 以输入的名字 '{1}' 写出，因为层的材质通过同一个参数进出"
+    state machine
+}
+
+LayoutHintsAmbiguous {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "{0} variable name(s) are placed differently by more than one function of this file, and '#pragma layout' goes by name for the whole file; their positions are not kept."
+    text  "有 {0} 个变量名被此文件中不止一个函数摆放在不同位置，而 '#pragma layout' 对整个文件按名字生效；它们的位置不会保留。"
+    state machine
+}
+
+LayoutHintsDropped {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "{0} node position(s) of '{1}' belong to values the source writes inline, and a position is kept by variable name; those nodes are placed by the layout pass when the file is built."
+    text  "'{1}' 有 {0} 个节点位置属于源文件中内联写出的值，而位置是按变量名保存的；这些节点会在构建该文件时由布局步骤摆放。"
+    state machine
+}
+
+OutputUnconnected {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "The output '{0}' of '{1}' is not connected to anything; nothing is written to it."
+    text  "'{1}' 的输出 '{0}' 没有连接到任何东西；不会向它写入任何内容。"
+    state machine
+}
+
+OutputWithoutParam {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "The output '{0}' of '{1}' did not become a parameter; nothing is written to it."
+    text  "'{1}' 的输出 '{0}' 没有成为参数；不会向它写入任何内容。"
+    state machine
+}
+
+PipelineProduct {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "'{0}' is a Custom Pass pipeline, which is written as a '.dsp' (PrintDreamShaderPipeline), not as part of a '.dss'."
+    text  "'{0}' 是 Custom Pass 管线，应写成 '.dsp'（PrintDreamShaderPipeline），而不是 '.dss' 的一部分。"
+    state machine
+}
+
+UniformDisagrees {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "The parameter '{0}' appears more than once and its nodes do not agree on its default, group or kind; the uniform is written from the first one, in '{1}'."
+    text  "参数 '{0}' 出现了不止一次，而它的各个节点在默认值、分组或种类上不一致；uniform 按 '{1}' 中的第一个写出。"
+    state machine
+}
+
+UniformRenamed {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAst.cpp
+    src   "The uniform '{0}' is written as '{1}': the name is already taken in this file."
+    text  "uniform '{0}' 被写成 '{1}'：这个名字在此文件中已被占用。"
+    state machine
+}

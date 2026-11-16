@@ -1,0 +1,101 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Lang.Expressions
+
+ArgumentsRightParen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "')' to close an argument list"
+    text  "用于闭合实参列表的 ')'"
+    state machine
+}
+
+CastRightParen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "')' to close a cast"
+    text  "用于闭合类型转换的 ')'"
+    state machine
+}
+
+ExpectedColonInConditional {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "Expected ':' to complete the conditional operator, found {0}."
+    text  "期望 ':' 来补全条件运算符,但遇到了 {0}。"
+    state machine
+}
+
+ExpectedExpression {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "Expected an expression, found {0}."
+    text  "期望一个表达式,但遇到了 {0}。"
+    state machine
+}
+
+ExpectedInitializerList {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "Expected an initializer list, found {0}."
+    text  "期望一个初始化列表,但遇到了 {0}。"
+    state machine
+}
+
+ExpectedMemberName {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "Expected a member or swizzle name after '.', found {0}."
+    text  "期望 '.' 之后是成员名或 swizzle 名,但遇到了 {0}。"
+    state machine
+}
+
+IndexRightBracket {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "']' to close an index"
+    text  "用于闭合下标的 ']'"
+    state machine
+}
+
+InitializerListNotAnExpression {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "An initializer list is only allowed as a variable initializer, not as a general expression."
+    text  "初始化列表只能用作变量的初始值，不能当作一般表达式。"
+    state machine
+}
+
+InitializerListRightBrace {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "'}' to close an initializer list"
+    text  "用于闭合初始化列表的 '}'"
+    state machine
+}
+
+ParenRightParen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "')' to close a parenthesized expression"
+    text  "用于闭合括号表达式的 ')'"
+    state machine
+}
+
+PositionalAfterNamedArgument {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "A positional argument cannot follow a named argument; give this argument a name too."
+    text  "位置实参不能跟在具名实参之后；请给这个实参也写上名字。"
+    state machine
+}
+
+WhileParsingArgumentList {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "an argument list"
+    text  "实参列表"
+    state machine
+}
+
+WhileParsingExpression {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "an expression"
+    text  "表达式"
+    state machine
+}
+
+WhileParsingInitializerList {
+    at    Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp
+    src   "an initializer list"
+    text  "初始化列表"
+    state machine
+}

@@ -1,0 +1,24 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.EditorDecompileTools
+
+DecompileToolsNoReason {
+    at    Source/DreamShaderEditor/Private/Tools/DreamShaderDecompileTools.cpp
+    src   "The decompiler reported a failure without saying why."
+    text  "反编译器报告了失败，但没有说明原因。"
+    state machine
+}
+
+DecompileToolsSourceNotBuilt {
+    at    Source/DreamShaderEditor/Private/Tools/DreamShaderDecompileTools.cpp
+    src   "Nothing '{0}' builds exists yet, so there is nothing to decompile; compile it first."
+    text  "'{0}' 构建的资产目前一个都不存在，因此没有可反编译的内容；请先编译它。"
+    state machine
+}
+
+DecompileToolsSourceUnresolved {
+    at    Source/DreamShaderEditor/Private/Tools/DreamShaderDecompileTools.cpp
+    src   "'{0}' could not be resolved to the assets it builds."
+    text  "无法从 '{0}' 解析出它构建的资产。"
+    state machine
+}

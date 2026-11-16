@@ -1,0 +1,451 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderEditorBridge
+
+DreamShaderAdoptBackupFailed {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Could not back up '{0}' to '{1}'; nothing was written."
+    text  "无法把 '{0}' 备份到 '{1}';什么都没有写入。"
+    state machine
+}
+
+DreamShaderAdoptConditionalSource {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "DSH8149: '{0}' uses conditional compilation, and '{1}' holds only the branch that was taken -- adopting it would write that one branch back over the file and delete the rest. Move the change into the matching branch of the source by hand, or use DreamShader > Detach first if this asset should stop being generated from it."
+    text  "DSH8149: '{0}' 使用了条件编译,而 '{1}' 只保存了被采用的那一个分支——采纳它会把这一个分支写回文件并删掉其余分支。请手动把改动搬进源文件对应的分支;若这个资产不应再由它生成,请先用 DreamShader > Detach。"
+    state machine
+}
+
+DreamShaderAdoptConfirmDss {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Rewrite '{0}' from the current contents of the {1} asset(s) it builds, '{2}' among them?\n\nThe existing source is copied to '{3}' first. The rewritten file is the decompiler's own form, so hand-written comments, helper functions and formatting in it are replaced."
+    text  "要用 '{0}' 所构建的 {1} 个资产（其中包括 '{2}'）的当前内容重写它吗？\n\n现有源文件会先复制到 '{3}'。重写后的文件采用反编译器自己的形式，因此其中手写的注释、辅助函数和排版都会被替换。"
+    state machine
+}
+
+DreamShaderAdoptDecompileFailed {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "DreamShader could not decompile '{0}', so nothing was written: {1}"
+    text  "DreamShader 无法反编译 '{0}'，因此什么都没有写入：{1}"
+    state machine
+}
+
+DreamShaderAdoptInstanceConditionalSource {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "DSH8149: '{0}' uses conditional compilation, so the overrides of '{1}' cannot be spliced into it without deleting the branches this build did not take; move the change into the source by hand."
+    text  "DSH8149: '{0}' 使用了条件编译，因此无法在不删除本次构建未采用分支的前提下把 '{1}' 的覆盖拼接进去；请手动把改动搬进源文件。"
+    state machine
+}
+
+DreamShaderAdoptInstanceConfirm {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Write the parameter overrides and instance settings of '{0}' back into '{1}'?\n\nThe existing file is copied to '{2}' first. Only the declarations whose values changed are rewritten, so comments and the order of the file are kept."
+    text  "要把 '{0}' 的参数覆盖和实例设置写回 '{1}' 吗？\n\n现有文件会先复制到 '{2}'。只有值发生变化的声明才会被重写，因此注释和文件中的顺序都会保留。"
+    state machine
+}
+
+DreamShaderAdoptInstanceNotDsi {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' is not a .dsi instance file, so the overrides of '{1}' cannot be spliced into it."
+    text  "'{0}' 不是 .dsi 实例文件，因此无法把 '{1}' 的覆盖拼接进去。"
+    state machine
+}
+
+DreamShaderAdoptInstanceNotMic {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' is built from the instance file '{1}' but is not a plain material instance, so nothing was adopted."
+    text  "'{0}' 由实例文件 '{1}' 构建，但它不是普通的材质实例，因此没有采纳任何内容。"
+    state machine
+}
+
+DreamShaderAdoptInstanceParentUnresolved {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "DSH9103: The Parent of '{0}' no longer resolves, so the overrides of '{1}' cannot be written back into it: {2}"
+    text  "DSH9103: '{0}' 的 Parent 已无法解析，因此无法把 '{1}' 的覆盖写回其中：{2}"
+    state machine
+}
+
+DreamShaderAdoptInstanceResult {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Wrote the overrides of '{0}' into '{1}' ({2} edit(s), backup: '{3}'). {4}"
+    text  "已把 '{0}' 的覆盖写入 '{1}'（{2} 处修改，备份：'{3}'）。{4}"
+    state machine
+}
+
+DreamShaderAdoptInstanceRewriteRefused {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "The overrides of '{0}' could not be spliced into '{1}', so nothing was written."
+    text  "无法把 '{0}' 的覆盖拼接进 '{1}'，因此什么都没有写入。"
+    state machine
+}
+
+DreamShaderAdoptInstanceUnbound {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' does not check, so the overrides of '{1}' cannot be spliced into it; fix the file first."
+    text  "'{0}' 没有通过检查，因此无法把 '{1}' 的覆盖拼接进去；请先修正这个文件。"
+    state machine
+}
+
+DreamShaderAdoptInstanceUnchanged {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' already states every override of '{1}', so only the instance was rebuilt. {2}"
+    text  "'{0}' 已经写明了 '{1}' 的每一个覆盖，因此只重建了实例。{2}"
+    state machine
+}
+
+DreamShaderAdoptInstanceUnreadable {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' could not be read, so nothing was adopted."
+    text  "无法读取 '{0}'，因此没有采纳任何内容。"
+    state machine
+}
+
+DreamShaderAdoptMigrationConfirm {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Adopt '{0}' as a migration of '{1}' to 2.0?\n\nThe asset is decompiled into '{2}', and the 1.x source is moved to '{3}'. The new file is the decompiler's own form, so comments and formatting of the old file are not carried over."
+    text  "要把 '{0}' 作为 '{1}' 到 2.0 的迁移来采纳吗？\n\n该资产会被反编译到 '{2}'，1.x 源文件会被移动到 '{3}'。新文件采用反编译器自己的形式，因此旧文件中的注释和排版不会保留。"
+    state machine
+}
+
+DreamShaderAdoptMigrationMoveFailed {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Could not move '{0}' out of the source tree, so the new '{1}' was removed again and nothing changed."
+    text  "无法把 '{0}' 移出源码树，因此新建的 '{1}' 又被删除，一切保持原样。"
+    state machine
+}
+
+DreamShaderAdoptMigrationResult {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Adopted '{0}' as a migration into '{1}' (the 1.x source's backup: '{2}'). {3}"
+    text  "已把 '{0}' 作为迁移采纳到 '{1}'（1.x 源文件的备份：'{2}'）。{3}"
+    state machine
+}
+
+DreamShaderAdoptMigrationTargetExists {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' already exists, so '{1}' cannot be adopted as a migration into it; move or delete that file first."
+    text  "'{0}' 已经存在，因此无法把 '{1}' 作为迁移采纳进去；请先移动或删除那个文件。"
+    state machine
+}
+
+DreamShaderAdoptNoBackup {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "none"
+    text  "无"
+    state machine
+}
+
+DreamShaderAdoptNoProducts {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' declares no asset any more, so '{1}' cannot be adopted into it."
+    text  "'{0}' 已不再声明任何资产，因此无法把 '{1}' 采纳进去。"
+    state machine
+}
+
+DreamShaderAdoptOpenInEditor {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' is open in an asset editor, whose copy a decompile cannot see, so nothing was adopted; save and close the editor, then adopt again."
+    text  "'{0}' 正在资产编辑器中打开，反编译看不到编辑器里的那份副本，因此没有采纳任何内容；请保存并关闭该编辑器，然后重新采纳。"
+    state machine
+}
+
+DreamShaderAdoptPackageSource {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "DSH8133: '{0}' is built from '{1}', a file of an installed package, which the package's installer replaces on every update; anything adopted into it would be lost then. Use Revert to Source to undo the edit, or Detach to keep the asset as it is."
+    text  "DSH8133：'{0}' 由 '{1}' 构建，该文件属于已安装的包，包的安装器在每次更新时都会替换它；反写进去的任何内容届时都会丢失。请使用“从源码还原”撤销手动修改，或使用“分离”保留资产当前的样子。"
+    state machine
+}
+
+DreamShaderAdoptPipelineConditionalSource {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "DSH8149: '{0}' uses conditional compilation, so the settings of '{1}' cannot be spliced into it without deleting the branches this build did not take; move the change into the source by hand."
+    text  "DSH8149: '{0}' 使用了条件编译，因此无法在不删除本次构建未采用分支的前提下把 '{1}' 的设置拼接进去；请手动把改动搬进源文件。"
+    state machine
+}
+
+DreamShaderAdoptPipelineConfirm {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Write the settings, parameters, buffers and passes of '{0}' back into '{1}'?\n\nThe existing file is copied to '{2}' first. Only the declarations and keys whose values changed are rewritten, so comments and the order of the file are kept."
+    text  "要把 '{0}' 的设置、参数、缓冲和 Pass 写回 '{1}' 吗？\n\n现有文件会先复制到 '{2}'。只有值发生变化的声明和键才会被重写，因此注释和文件中的顺序都会保留。"
+    state machine
+}
+
+DreamShaderAdoptPipelineNoProduct {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "DSH9228: '{0}' builds no pass pipeline any more, so '{1}' has nothing to be spliced into."
+    text  "DSH9228: '{0}' 已不再构建任何 Pass 管线，因此 '{1}' 没有可以拼接进去的地方。"
+    state machine
+}
+
+DreamShaderAdoptPipelineNotDsp {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "DSH9227: '{0}' is not a .dsp pipeline file, so the settings of '{1}' cannot be spliced into it."
+    text  "DSH9227: '{0}' 不是 .dsp 管线文件，因此无法把 '{1}' 的设置拼接进去。"
+    state machine
+}
+
+DreamShaderAdoptPipelineNotPipeline {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "DSH9226: '{0}' is built from the pipeline file '{1}' but is not a pass pipeline, so nothing was adopted."
+    text  "DSH9226: '{0}' 由管线文件 '{1}' 构建，但它不是 Pass 管线，因此没有采纳任何内容。"
+    state machine
+}
+
+DreamShaderAdoptPipelineResult {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Wrote the settings of '{0}' into '{1}' ({2} edit(s), backup: '{3}'). {4}"
+    text  "已把 '{0}' 的设置写入 '{1}'（{2} 处修改，备份：'{3}'）。{4}"
+    state machine
+}
+
+DreamShaderAdoptPipelineRewriteRefused {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "The settings of '{0}' could not be spliced into '{1}', so nothing was written."
+    text  "无法把 '{0}' 的设置拼接进 '{1}'，因此什么都没有写入。"
+    state machine
+}
+
+DreamShaderAdoptPipelineUnbound {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' does not check, so the settings of '{1}' cannot be spliced into it; fix the file first."
+    text  "'{0}' 没有通过检查，因此无法把 '{1}' 的设置拼接进去；请先修正这个文件。"
+    state machine
+}
+
+DreamShaderAdoptPipelineUnchanged {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' already states every setting of '{1}', so only the pipeline was rebuilt. {2}"
+    text  "'{0}' 已经写明了 '{1}' 的每一项设置，因此只重建了管线。{2}"
+    state machine
+}
+
+DreamShaderAdoptPipelineUnreadable {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' could not be read, so nothing was adopted."
+    text  "无法读取 '{0}'，因此没有采纳任何内容。"
+    state machine
+}
+
+DreamShaderAdoptResult {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Adopted '{0}' into '{1}' (backup: '{2}'). {3}"
+    text  "已把 '{0}' 采纳到 '{1}'(备份:'{2}')。{3}"
+    state machine
+}
+
+DreamShaderAdoptTweakedInstance {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' still matches its source and only carries parameter overrides, so there is nothing to adopt; use DreamShader > Adopt Tweaks as Source Defaults or Extract Tweaks to .dsi instead."
+    text  "'{0}' 仍与它的源文件一致，只带有参数覆盖，因此没有可采纳的内容；请改用 DreamShader >“把微调采纳为源文件默认值”或“把微调提取为 .dsi”。"
+    state machine
+}
+
+DreamShaderAdoptUnresolved {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' could not be resolved to the assets it builds, so nothing was adopted."
+    text  "无法从 '{0}' 解析出它构建的资产，因此没有采纳任何内容。"
+    state machine
+}
+
+DreamShaderDetachConfirm {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Stop managing '{0}'?\n\nIt keeps its current contents and becomes an ordinary asset. DreamShader will never rebuild it again, and compiling '{1}' afterwards fails with an ownership error until you move or rename one of them."
+    text  "停止管理 '{0}'?\n\n它保留当前内容,变成普通资产。DreamShader 以后不会再重建它;之后编译 '{1}' 会报所有权错误,直到你移动或重命名二者之一。"
+    state machine
+}
+
+DreamShaderDetachNoAsset {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "DreamShader could not find the selected asset."
+    text  "DreamShader 找不到所选资产。"
+    state machine
+}
+
+DreamShaderDetachNotGenerated {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' is not a DreamShader-generated asset."
+    text  "'{0}' 不是 DreamShader 生成的资产。"
+    state machine
+}
+
+DreamShaderDetachResult {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' is no longer managed by DreamShader. Save it to keep the change."
+    text  "'{0}' 不再由 DreamShader 管理。保存它以保留此更改。"
+    state machine
+}
+
+DreamShaderProvenanceInstanceDecompileNoReason {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "the decompiler gave no reason"
+    text  "反编译器没有给出原因"
+    state machine
+}
+
+DreamShaderProvenanceInstanceDecompileRefused {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' holds state a .dsi cannot state, so nothing was written: {1}"
+    text  "'{0}' 带有 .dsi 无法表达的状态，因此什么都没有写入：{1}"
+    state machine
+}
+
+DreamShaderProvenanceNoAsset {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "DreamShader could not find the selected asset."
+    text  "DreamShader 找不到所选资产。"
+    state machine
+}
+
+DreamShaderProvenancePipelineDecompileNoReason {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "the decompiler gave no reason"
+    text  "反编译器没有给出原因"
+    state machine
+}
+
+DreamShaderProvenancePipelineDecompileRefused {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' holds state a .dsp cannot state, so nothing was written: {1}"
+    text  "'{0}' 带有 .dsp 无法表达的状态，因此什么都没有写入：{1}"
+    state machine
+}
+
+DreamShaderProvenanceWriteFailed {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Could not write '{0}'."
+    text  "无法写入 '{0}'。"
+    state machine
+}
+
+DreamShaderRevertConfirm {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Rebuild '{0}' from '{1}'?\n\nEvery hand edit in the asset is discarded. The source file is not modified."
+    text  "从 '{1}' 重建 '{0}'?\n\n资产里的所有手改都会被丢弃。源文件不会被修改。"
+    state machine
+}
+
+DreamShaderTweaksAdoptConfirm {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Write the parameter overrides of '{0}' into '{1}' as the defaults of its uniforms?\n\nThe existing source is copied to '{2}' first, only the initializers and @default values that change are rewritten, and the overrides are then cleared from the instance."
+    text  "要把 '{0}' 的参数覆盖写进 '{1}'，作为其 uniform 的默认值吗？\n\n现有源文件会先复制到 '{2}'，只有发生变化的初始化器和 @default 值会被重写，之后这些覆盖会从实例上清除。"
+    state machine
+}
+
+DreamShaderTweaksAdoptResult {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Wrote {0} tweak(s) of '{1}' into '{2}' as uniform defaults and cleared them from the instance (backup: '{3}'). {4}"
+    text  "已把 '{1}' 的 {0} 处微调作为 uniform 默认值写入 '{2}'，并从实例上清除了它们（备份：'{3}'）。{4}"
+    state machine
+}
+
+DreamShaderTweaksConditionalSource {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "DSH8149: '{0}' uses conditional compilation, so the tweaks of '{1}' cannot be spliced into its uniforms without deleting the branches this build did not take; set the defaults by hand."
+    text  "DSH8149: '{0}' 使用了条件编译，因此无法在不删除本次构建未采用分支的前提下把 '{1}' 的微调拼接进它的 uniform；请手动设置默认值。"
+    state machine
+}
+
+DreamShaderTweaksExtractCompileFailed {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Wrote '{0}', but it did not compile, so the tweaks stay on '{1}'. {2}"
+    text  "已写入 '{0}'，但它没有编译通过，因此微调仍保留在 '{1}' 上。{2}"
+    state machine
+}
+
+DreamShaderTweaksExtractConfirm {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Create '{0}' holding the parameter overrides of '{1}', compile it, and clear the overrides from '{1}'?\n\nMeshes and materials that use '{1}' lose the tuned look until you point them at the new instance."
+    text  "要创建 '{0}' 来保存 '{1}' 的参数覆盖、编译它，并从 '{1}' 上清除这些覆盖吗？\n\n使用 '{1}' 的网格体和材质会失去调好的外观，直到你让它们指向新的实例。"
+    state machine
+}
+
+DreamShaderTweaksExtractResult {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "Extracted {0} tweak(s) of '{1}' into '{2}' and cleared them from the instance; anything that uses '{1}' shows the untuned material until it is pointed at the new instance.{3} {4}"
+    text  "已把 '{1}' 的 {0} 处微调提取到 '{2}'，并从实例上清除了它们；凡是使用 '{1}' 的地方都会显示未调整的材质，直到改为指向新的实例。{3} {4}"
+    state machine
+}
+
+DreamShaderTweaksExtractSaveFailed {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   " Clearing the tweaks could not be saved: {0}"
+    text  " 清除微调后的结果无法保存：{0}"
+    state machine
+}
+
+DreamShaderTweaksNeedDss {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' is not a .dss source, and tweaks are written into 2.0 uniform declarations; migrate the source first, or use Extract Tweaks to .dsi."
+    text  "'{0}' 不是 .dss 源文件，而微调要写进 2.0 的 uniform 声明；请先迁移该源文件，或使用“把微调提取为 .dsi”。"
+    state machine
+}
+
+DreamShaderTweaksNone {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' carries no parameter override a source default can state, so nothing was written."
+    text  "'{0}' 没有任何可以用源文件默认值表达的参数覆盖，因此什么都没有写入。"
+    state machine
+}
+
+DreamShaderTweaksNotTweaked {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' is not a generated instance that only carries parameter overrides, so there are no tweaks to write back."
+    text  "'{0}' 不是只带参数覆盖的生成实例，因此没有可写回的微调。"
+    state machine
+}
+
+DreamShaderTweaksOpenInEditor {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' is open in an asset editor, whose copy is not what a decompile reads, so no tweak was written; save and close the editor, then try again."
+    text  "'{0}' 正在资产编辑器中打开，反编译读到的不是编辑器里的那份副本，因此没有写入任何微调；请保存并关闭该编辑器，然后重试。"
+    state machine
+}
+
+DreamShaderTweaksRewriteRefused {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "The tweaks of '{0}' could not be spliced into the uniforms of '{1}', so nothing was written."
+    text  "无法把 '{0}' 的微调拼接进 '{1}' 的 uniform，因此什么都没有写入。"
+    state machine
+}
+
+DreamShaderTweaksSourceUnchecked {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' does not check, so the tweaks of '{1}' cannot be spliced into it; fix the source first."
+    text  "'{0}' 没有通过检查，因此无法把 '{1}' 的微调拼接进去；请先修正该源文件。"
+    state machine
+}
+
+DreamShaderTweaksTargetExists {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' already exists, so the tweaks were not extracted into it."
+    text  "'{0}' 已经存在，因此没有把微调提取进去。"
+    state machine
+}
+
+DreamShaderTweaksTargetNotDsi {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' is not a .dsi file name, so the tweaks were not extracted."
+    text  "'{0}' 不是 .dsi 文件名，因此没有提取微调。"
+    state machine
+}
+
+DreamShaderTweaksTargetReadOnly {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' is not under a writable source root, where the watcher would find it, so the tweaks were not extracted."
+    text  "'{0}' 不在可写的源根之下（只有在那里监视器才能发现它），因此没有提取微调。"
+    state machine
+}
+
+DreamShaderTweaksUnreadable {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "'{0}' could not be read, so no tweak was written."
+    text  "无法读取 '{0}'，因此没有写入任何微调。"
+    state machine
+}
+
+ProvenanceCompilerUnavailable {
+    at    Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp
+    src   "The DreamShader compiler module is not available, so nothing was rebuilt."
+    text  "DreamShader 编译器模块不可用，因此没有重建任何内容。"
+    state machine
+}

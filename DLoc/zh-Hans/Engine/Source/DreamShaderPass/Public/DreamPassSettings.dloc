@@ -1,0 +1,17 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Pass.Settings
+
+SectionDescription {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h
+    src   "Pipelines that run in every world, and the names of the layers mesh passes select by."
+    text  "在每个世界中运行的管线，以及网格 Pass 用来筛选的层名称。"
+    state machine
+}
+
+SectionText {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h
+    src   "DreamShader Custom Pass"
+    text  "DreamShader Custom Pass"
+    state machine
+}

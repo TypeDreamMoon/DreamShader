@@ -1,0 +1,17 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderEditor.Settings
+
+SectionDescription {
+    at    Source/DreamShader/Public/DreamShaderSettings.h
+    src   "Dream Shader Settings"
+    text  "Dream Shader 设置"
+    state machine
+}
+
+SectionText {
+    at    Source/DreamShader/Public/DreamShaderSettings.h
+    src   "Dream Shader"
+    text  "Dream Shader"
+    state machine
+}

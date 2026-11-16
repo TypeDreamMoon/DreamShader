@@ -1,0 +1,59 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Binder.PassNodes
+
+GateCustomPass {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPassNodes.cpp
+    src   "Unreal Engine {0} or later and DreamShader's Custom Pass module (DreamShaderPass)"
+    text  "Unreal Engine {0} 或更高版本，以及 DreamShader 的 Custom Pass 模块（DreamShaderPass）"
+    state machine
+}
+
+GateEngine {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPassNodes.cpp
+    src   "Unreal Engine {0} or later"
+    text  "Unreal Engine {0} 或更高版本"
+    state machine
+}
+
+KindFunction {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPassNodes.cpp
+    src   "material function"
+    text  "材质函数"
+    state machine
+}
+
+KindLayer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPassNodes.cpp
+    src   "material layer"
+    text  "材质层"
+    state machine
+}
+
+KindLayerBlend {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPassNodes.cpp
+    src   "material layer blend"
+    text  "材质层混合"
+    state machine
+}
+
+PassNodeNewTranslator {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPassNodes.cpp
+    src   "Material '{0}' asks for the new material translator ('bEnableNewHLSLGenerator = true'), and uses {1} (line {2}), which only the classic translator compiles; remove the setting."
+    text  "材质 '{0}' 要求使用新的材质翻译器（'bEnableNewHLSLGenerator = true'），却又使用了 {1}（第 {2} 行），而它只有经典翻译器才能编译；请删除这项设置。"
+    state machine
+}
+
+PassOutputInFunction {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPassNodes.cpp
+    src   "UE.DreamPassOutput does nothing in '{0}', a {1}: the engine compiles custom outputs from a material's own graph only, and only there does the node give the material its DreamPass shader tag. A material using '{0}' writes no pass outputs, and a mesh pass in 'Mode = Own' does not draw it; write UE.DreamPassOutput in the material itself."
+    text  "UE.DreamPassOutput 在 '{0}'（{1}）中不起作用：引擎只从材质自身的图中编译自定义输出，也只有在那里，该节点才会给材质打上 DreamPass 着色器标记。使用 '{0}' 的材质不会写出任何 Pass 输出，'Mode = Own' 的网格 Pass 也不会绘制它；请把 UE.DreamPassOutput 写在材质本身中。"
+    state machine
+}
+
+TwoPassOutputs {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPassNodes.cpp
+    src   "Material '{0}' gets a second UE.DreamPassOutput node here (the first is on line {1}), and a material compiles one custom output of a class; write all four outputs in one call. A call inside a loop, or in a helper called twice, makes more than one node."
+    text  "材质 '{0}' 在这里得到了第二个 UE.DreamPassOutput 节点（第一个在第 {1} 行），而同一类自定义输出，一个材质只编译一个；请在一次调用中写出全部四个输出。位于循环中的调用，或位于被调用两次的辅助函数中的调用，都会生成不止一个节点。"
+    state machine
+}

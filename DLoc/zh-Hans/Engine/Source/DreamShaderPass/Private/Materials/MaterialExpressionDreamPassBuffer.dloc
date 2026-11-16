@@ -1,0 +1,80 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Pass.BufferNode
+
+BuiltinBuffer {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassBuffer.cpp
+    src   "Dream Pass Buffer: '{0}' is a built-in buffer, which only passes can read; a material reads a buffer '{1}' declares with Export = true."
+    text  "Dream Pass Buffer：'{0}' 是内置缓冲，只有 Pass 才能读取；材质读取的是 '{1}' 中以 Export = true 声明的缓冲。"
+    state machine
+}
+
+Keywords {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassBuffer.cpp
+    src   "dream pass custom pass buffer export exported render target dreamshader"
+    text  "dream pass custom pass buffer export exported render target dreamshader 缓冲 导出 渲染目标"
+    state machine
+}
+
+MenuCategory {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassBuffer.cpp
+    src   "DreamShader"
+    text  "DreamShader"
+    state machine
+}
+
+NeedsEngine {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassBuffer.cpp
+    src   "Dream Pass Buffer needs Unreal Engine 5.8 or later."
+    text  "Dream Pass Buffer 需要 Unreal Engine 5.8 或更高版本。"
+    state machine
+}
+
+NoBuffer {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassBuffer.cpp
+    src   "Dream Pass Buffer: no Buffer of '{0}' is set."
+    text  "Dream Pass Buffer：没有设置 '{0}' 的 Buffer。"
+    state machine
+}
+
+NoPipeline {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassBuffer.cpp
+    src   "Dream Pass Buffer: no Pipeline is set."
+    text  "Dream Pass Buffer：没有设置 Pipeline。"
+    state machine
+}
+
+NoTarget {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassBuffer.cpp
+    src   "Dream Pass Buffer: buffer '{0}' of '{1}' is exported but the pipeline has no render target for it. Compile the .dsp again."
+    text  "Dream Pass Buffer：'{1}' 的缓冲 '{0}' 已导出，但管线中没有它的渲染目标。请重新编译该 .dsp。"
+    state machine
+}
+
+NotExported {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassBuffer.cpp
+    src   "Dream Pass Buffer: buffer '{0}' of '{1}' is not exported. Declare it with Export = true in the .dsp."
+    text  "Dream Pass Buffer：'{1}' 的缓冲 '{0}' 没有导出。请在 .dsp 中用 Export = true 声明它。"
+    state machine
+}
+
+NotSampleable {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassBuffer.cpp
+    src   "Dream Pass Buffer: buffer '{0}' of '{1}' is {2}, which a material cannot sample. Export a float or normalized buffer instead."
+    text  "Dream Pass Buffer：'{1}' 的缓冲 '{0}' 是 {2}，材质无法采样。请改为导出浮点或归一化缓冲。"
+    state machine
+}
+
+StaleTextureList {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassBuffer.cpp
+    src   "Dream Pass Buffer: the render target of '{0}.{1}' is newer than this material's list of textures. Recompile the material, or the .dss it is built from."
+    text  "Dream Pass Buffer：'{0}.{1}' 的渲染目标比此材质的纹理列表更新。请重新编译该材质，或构建它的 .dss。"
+    state machine
+}
+
+UnknownBuffer {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassBuffer.cpp
+    src   "Dream Pass Buffer: '{1}' has no buffer '{0}'."
+    text  "Dream Pass Buffer：'{1}' 中没有缓冲 '{0}'。"
+    state machine
+}

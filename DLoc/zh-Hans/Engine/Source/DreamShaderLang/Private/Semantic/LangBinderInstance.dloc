@@ -1,0 +1,269 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Binder.Instance
+
+InstanceAssetInitializer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' overrides a {1} parameter, which takes an asset rather than an HLSL value; write '/// @default /Game/...' (or '/// @default None') above it instead of an initializer."
+    text  "'{0}' 覆盖的是一个 {1} 参数，它接受的是资产而不是 HLSL 值；请在它上方写 '/// @default /Game/...'（或 '/// @default None'），而不要写初始化器。"
+    state machine
+}
+
+InstanceAssetNoDefault {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' overrides a {1} parameter and needs the asset it is set to, as '/// @default /Game/...' or '/// @default None', and it has none."
+    text  "'{0}' 覆盖的是一个 {1} 参数，需要用 '/// @default /Game/...' 或 '/// @default None' 给出它被设置成的资产，但这里没有。"
+    state machine
+}
+
+InstanceCaseOnlyName {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' matches the parent parameter '{1}' only in case, and DreamShader names are case-sensitive; write '{1}'."
+    text  "'{0}' 与父材质参数 '{1}' 只有大小写不同，而 DreamShader 的名称区分大小写；请写 '{1}'。"
+    state machine
+}
+
+InstanceDefaultOnValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'@default' has no effect on '{0}', a {1} override whose value is its initializer; remove it."
+    text  "'@default' 对 '{0}' 不起作用：它是一个 {1} 覆盖，其值就是初始化器；请删除它。"
+    state machine
+}
+
+InstanceDirectiveNeedsValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'@{0}' needs a value after it."
+    text  "'@{0}' 后面需要一个值。"
+    state machine
+}
+
+InstanceDuplicateOverride {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' is overridden a second time, and one instance sets a parameter once; the override on line {1} already sets it."
+    text  "'{0}' 被第二次覆盖，而一个实例对一个参数只设置一次；第 {1} 行的覆盖已经设置过它。"
+    state machine
+}
+
+InstanceHoldsConstant {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "A '.dsi' holds a '#pragma instance' and 'uniform' overrides, and '{0}' is not a 'uniform'; an instance only assigns parameters of its parent."
+    text  "'.dsi' 中只有一个 '#pragma instance' 和若干 'uniform' 覆盖，而 '{0}' 不是 'uniform'；实例只给父材质的参数赋值。"
+    state machine
+}
+
+InstanceHoldsFunction {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "A '.dsi' holds a '#pragma instance' and 'uniform' overrides, and '{0}' is a function; write it in a '.dss' or a '.dsh'."
+    text  "'.dsi' 中只有一个 '#pragma instance' 和若干 'uniform' 覆盖，而 '{0}' 是一个函数；请把它写在 '.dss' 或 '.dsh' 里。"
+    state machine
+}
+
+InstanceHoldsInclude {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "A '.dsi' holds a '#pragma instance' and 'uniform' overrides, and has no code that could use '{0}'; remove the include."
+    text  "'.dsi' 中只有一个 '#pragma instance' 和若干 'uniform' 覆盖，没有任何代码会用到 '{0}'；请删除这个 include。"
+    state machine
+}
+
+InstanceHoldsMaterialPragma {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "A '.dsi' is configured by '#pragma instance', and '#pragma material' configures a material; write these keys in '#pragma instance(...)'."
+    text  "'.dsi' 由 '#pragma instance' 配置，而 '#pragma material' 配置的是材质；请把这些键写进 '#pragma instance(...)'。"
+    state machine
+}
+
+InstanceHoldsStruct {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "A '.dsi' holds a '#pragma instance' and 'uniform' overrides, and 'struct {0}' declares a type; write it in a '.dsh'."
+    text  "'.dsi' 中只有一个 '#pragma instance' 和若干 'uniform' 覆盖，而 'struct {0}' 声明的是类型；请把它写在 '.dsh' 里。"
+    state machine
+}
+
+InstanceIgnoresGraphPragma {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'#pragma {0}' boxes or places graph nodes, and a '.dsi' has no graph; the line was ignored."
+    text  "'#pragma {0}' 用于给图节点加框或摆放位置，而 '.dsi' 没有图；该行已被忽略。"
+    state machine
+}
+
+InstanceInitializer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "The value of the override '{0}'"
+    text  "覆盖 '{0}' 的值"
+    state machine
+}
+
+InstanceLayerOnlyParameter {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' exists in the parent only as a layer or blend parameter, and a '.dsi' overrides global parameters only."
+    text  "'{0}' 在父材质中只作为层或混合参数存在，而 '.dsi' 只能覆盖全局参数。"
+    state machine
+}
+
+InstanceNameNeedsValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'@{0}' needs a value after it."
+    text  "'@{0}' 后面需要一个值。"
+    state machine
+}
+
+InstanceNoPragma {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "A '.dsi' needs one '#pragma instance(Parent = \"...\")' naming the material it is an instance of, and this file has none."
+    text  "'.dsi' 需要一个 '#pragma instance(Parent = \"...\")' 来指明它是哪个材质的实例，而此文件中没有。"
+    state machine
+}
+
+InstanceNoSchema {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "The parameters of the parent are not available here, so the names and types of these overrides are checked only for their shape; compile the parent first, or check the file in the editor."
+    text  "这里拿不到父材质的参数，所以这些覆盖的名称和类型只做形式检查；请先编译父材质，或在编辑器中检查此文件。"
+    state machine
+}
+
+InstanceOverrideArray {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' is an array, and an instance override assigns one parameter; override each element's parameter on its own."
+    text  "'{0}' 是数组，而一个实例覆盖只给一个参数赋值；请分别覆盖每个元素对应的参数。"
+    state machine
+}
+
+InstanceOverrideDirectiveNoEffect {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'@{0}' has no effect on an instance override, because an override assigns only the parent parameter's value and its metadata stays on the parent; remove it."
+    text  "'@{0}' 对实例覆盖不起作用，因为覆盖只设置父材质参数的值，元数据仍留在父材质上；请删除它。"
+    state machine
+}
+
+InstanceOverrideNoKind {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' is declared '{1}', which is no material parameter type; an override is a number, a bool, a texture, or one of RuntimeVirtualTexture, SparseVolumeTexture, TextureCollection, ParameterCollection and Font."
+    text  "'{0}' 被声明为 '{1}'，这不是材质参数类型；覆盖只能是数值、bool、纹理，或 RuntimeVirtualTexture、SparseVolumeTexture、TextureCollection、ParameterCollection、Font 之一。"
+    state machine
+}
+
+InstancePageMalformed {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'@page' takes one whole number of zero or more, and '{0}' is not that."
+    text  "'@page' 接受一个不小于零的整数，而 '{0}' 不是。"
+    state machine
+}
+
+InstancePageNotFont {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'@page' picks the page of a Font override, and '{0}' is a {1} override."
+    text  "'@page' 用于选择 Font 覆盖的页，而 '{0}' 是一个 {1} 覆盖。"
+    state machine
+}
+
+InstanceParentEmpty {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'Parent' in '#pragma instance' names the material this is an instance of, and it is empty."
+    text  "'#pragma instance' 中的 'Parent' 指明它是哪个材质的实例，而这里是空的。"
+    state machine
+}
+
+InstanceParentMissing {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'#pragma instance' needs 'Parent = \"/Game/.../M_Parent\"' naming the material this is an instance of, and it has none."
+    text  "'#pragma instance' 需要 'Parent = \"/Game/.../M_Parent\"' 来指明它是哪个材质的实例，而这里没有。"
+    state machine
+}
+
+InstancePragmaDirectiveNoEffect {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'@{0}' has no effect above '#pragma instance', where only '@name' is read; remove it."
+    text  "'@{0}' 写在 '#pragma instance' 上方不起作用，那里只读取 '@name'；请删除它。"
+    state machine
+}
+
+InstancePragmaDuplicateKey {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' is set twice by '#pragma instance'; it was already set on line {1}."
+    text  "'{0}' 在 '#pragma instance' 中被设置了两次；第 {1} 行已经设置过它。"
+    state machine
+}
+
+InstancePragmaOutsideDsi {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'#pragma instance' declares a material instance and belongs in a '.dsi' file of its own, and this line is in '{0}'; move it and its overrides into a '.dsi'."
+    text  "'#pragma instance' 声明的是一个材质实例，应当放在它自己的 '.dsi' 文件里，而这一行在 '{0}' 中；请把它和它的覆盖一起移到 '.dsi'。"
+    state machine
+}
+
+InstancePragmaPositional {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'#pragma instance' takes 'Key = Value' pairs, and '{0}' has no key."
+    text  "'#pragma instance' 接受 'Key = Value' 对，而 '{0}' 没有键。"
+    state machine
+}
+
+InstancePrunedParameter {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' is declared by the parent source but nothing there reads it, so the parent material has no such parameter (DSH4390); read it in the parent, or remove this override."
+    text  "'{0}' 在父材质的源文件中有声明，但那里没有任何地方读取它，所以父材质没有这个参数（DSH4390）；请在父材质中读取它，或删除这个覆盖。"
+    state machine
+}
+
+InstanceSecondPragma {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'#pragma instance' is written a second time, and one '.dsi' is one material instance; the line {0} already declares it."
+    text  "'#pragma instance' 被写了第二次，而一个 '.dsi' 就是一个材质实例；第 {0} 行已经声明过。"
+    state machine
+}
+
+InstanceStaticExtra {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' is a {1} parameter the parent sets at run time, and '/// @static' on this override asks for a static one; remove '@static'."
+    text  "'{0}' 是父材质在运行时设置的 {1} 参数，而这个覆盖上的 '/// @static' 要求的是静态参数；请删除 '@static'。"
+    state machine
+}
+
+InstanceStaticMissing {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' is a static {1} parameter in the parent, so the override needs '/// @static', and it has none."
+    text  "'{0}' 在父材质中是静态 {1} 参数，所以这个覆盖需要 '/// @static'，而这里没有。"
+    state machine
+}
+
+InstanceStaticOnAsset {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'/// @static' on an instance override means a static switch ('uniform bool') or a static component mask ('uniform bool4'), and '{0}' is declared '{1}'."
+    text  "实例覆盖上的 '/// @static' 表示静态开关（'uniform bool'）或静态分量掩码（'uniform bool4'），而 '{0}' 被声明为 '{1}'。"
+    state machine
+}
+
+InstanceStaticOnValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'/// @static' on an instance override means a static switch ('uniform bool') or a static component mask ('uniform bool4'), and '{0}' is declared '{1}'."
+    text  "实例覆盖上的 '/// @static' 表示静态开关（'uniform bool'）或静态分量掩码（'uniform bool4'），而 '{0}' 被声明为 '{1}'。"
+    state machine
+}
+
+InstanceTypeMismatch {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' is a {1} parameter of type '{2}' in the parent, and this override declares '{3}'."
+    text  "'{0}' 在父材质中是类型为 '{2}' 的 {1} 参数，而这个覆盖声明的是 '{3}'。"
+    state machine
+}
+
+InstanceUnknownParameter {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' is not a parameter of the parent '{1}'."
+    text  "'{0}' 不是父材质 '{1}' 的参数。"
+    state machine
+}
+
+InstanceValueNoInitializer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' overrides a {1} parameter and needs the value it is set to, as 'uniform {2} {0} = ...;', and it has no initializer."
+    text  "'{0}' 覆盖的是一个 {1} 参数，需要以 'uniform {2} {0} = ...;' 的形式给出它被设置成的值，而这里没有初始化器。"
+    state machine
+}
+
+InstanceValueNotConstant {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp
+    src   "'{0}' is set to a value the compiler can fold, a literal or an expression over literals, and this initializer is not one."
+    text  "'{0}' 要被设置为编译器可以折叠的值，即字面量或由字面量组成的表达式，而这个初始化器不是。"
+    state machine
+}

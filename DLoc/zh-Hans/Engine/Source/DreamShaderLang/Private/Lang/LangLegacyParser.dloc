@@ -1,0 +1,486 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Lang.LegacyParser
+
+AssetBlockInHeader {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected only Function, GraphFunction, Namespace and VirtualFunction blocks in a '.dsh' header, found the asset block '{0}', which belongs in a .dsm or .dsf file."
+    text  "期望 '.dsh' 头文件中只有 Function、GraphFunction、Namespace 和 VirtualFunction 块，但遇到了资产块 '{0}'，它应放在 .dsm 或 .dsf 文件中。"
+    state machine
+}
+
+AssetBlockInLegacyHeader {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected only Function, GraphFunction, Namespace and VirtualFunction blocks in a '.dsh' header, found the asset block '{0}', which belongs in a .dsm or .dsf file."
+    text  "期望 '.dsh' 头文件中只有 Function、GraphFunction、Namespace 和 VirtualFunction 块，但遇到了资产块 '{0}'，它应放在 .dsm 或 .dsf 文件中。"
+    state machine
+}
+
+AttributeEquals {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected '=' after the attribute '{0}', found {1}."
+    text  "期望属性 '{0}' 之后是 '='，但遇到了 {1}。"
+    state machine
+}
+
+AttributeName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected an attribute name such as 'Name', found {0}."
+    text  "期望一个属性名，例如 'Name'，但遇到了 {0}。"
+    state machine
+}
+
+AttributeRepeated {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "The attribute '{0}' is written twice; the later value wins, as it did in 1.x."
+    text  "属性 '{0}' 写了两次；与 1.x 一样，以后写的值为准。"
+    state machine
+}
+
+AttributeSeparator {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected ',' or ')' in the attribute list, found {0}."
+    text  "期望属性列表中是 ',' 或 ')'，但遇到了 {0}。"
+    state machine
+}
+
+AttributeValue {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a value after '{0} =', found {1}."
+    text  "期望 '{0} =' 之后是一个值，但遇到了 {1}。"
+    state machine
+}
+
+AttributesMissing {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected '(' with the block's attributes, such as '(Name = \"M_Example\")', found {0}."
+    text  "期望 '(' 及块的属性，例如 '(Name = \"M_Example\")'，但遇到了 {0}。"
+    state machine
+}
+
+BareReturn {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a value after 'return' in '{0}', which returns '{1}', found a bare 'return;'."
+    text  "期望 '{0}'（它返回 '{1}'）中的 'return' 之后是一个值，但遇到了空的 'return;'。"
+    state machine
+}
+
+BlockOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected '`{' to open the '{0}' block, found {1}."
+    text  "期望用 '`{' 开启 '{0}' 块，但遇到了 {1}。"
+    state machine
+}
+
+BlockWithoutName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a 'Name = \"...\"' attribute on '{0}', found none."
+    text  "期望 '{0}' 上有 'Name = \"...\"' 属性，但没有找到。"
+    state machine
+}
+
+CodeSection {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected 'Graph' as the body section of '{0}', found 'Code', which 1.x accepted only inside a Function."
+    text  "期望 '{0}' 的主体段是 'Graph'，但遇到了 'Code'，1.x 只在 Function 内部接受它。"
+    state machine
+}
+
+ExposeNotBool {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected 'true' or 'false' for 'ExposeToLibrary', found '{0}'; 1.x ignored the setting and so does this front end."
+    text  "期望 'ExposeToLibrary' 的值是 'true' 或 'false'，但遇到了 '{0}'；1.x 会忽略这个设置，此前端也一样。"
+    state machine
+}
+
+FunctionBodyOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected '`{' to open the body of '{0}', found {1}."
+    text  "期望用 '`{' 开启 '{0}' 的函数体，但遇到了 {1}。"
+    state machine
+}
+
+FunctionHeaderKey {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "'{0}' is not an attribute of a '{1}' block, and was ignored; the header takes Generate, Library and Description."
+    text  "'{0}' 不是 '{1}' 块的属性，已被忽略；该头部只接受 Generate、Library 和 Description。"
+    state machine
+}
+
+FunctionName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a function name after '{0}', found {1}."
+    text  "期望 '{0}' 之后是函数名，但遇到了 {1}。"
+    state machine
+}
+
+FunctionNameOrParen {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected '(' or a function name after '{0}', found {1}."
+    text  "期望 '{0}' 之后是 '(' 或函数名，但遇到了 {1}。"
+    state machine
+}
+
+FunctionParamsOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected '(' to open the parameter list of '{0}', found {1}."
+    text  "期望用 '(' 开启 '{0}' 的参数列表，但遇到了 {1}。"
+    state machine
+}
+
+FunctionSettingIgnored {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "'{0}' is not a setting of '{1}'; 1.x ignored it and so does this front end."
+    text  "'{0}' 不是 '{1}' 的设置项；1.x 会忽略它，此前端也一样。"
+    state machine
+}
+
+GenerateTemplatePlaceholder {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "'{0}' holds a placeholder other than '`{Name`}', the only one a Generate template has."
+    text  "'{0}' 含有 '`{Name`}' 以外的占位符；Generate 模板只有这一个占位符。"
+    state machine
+}
+
+GraphModifier {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a return type or a name after 'GraphFunction', found the modifier '{0}', which only a Function takes."
+    text  "期望 'GraphFunction' 之后是返回类型或名称，但遇到了修饰符 '{0}'，只有 Function 才接受它。"
+    state machine
+}
+
+GraphRepeated {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "The section '{0}' is written twice; the later one wins, as it did in 1.x."
+    text  "段 '{0}' 写了两次；与 1.x 一样，以后写的为准。"
+    state machine
+}
+
+HoistUnterminated {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a ')' to close the 'UE.' call in the body of '{0}', found the end of the body."
+    text  "期望用 ')' 闭合 '{0}' 函数体中的 'UE.' 调用，但遇到了函数体的结尾。"
+    state machine
+}
+
+ImportCase {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "'{0}' is read as 'import'; write it in lower case."
+    text  "'{0}' 被读作 'import'；请用小写书写。"
+    state machine
+}
+
+ImportNotHeader {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected an import of a '.dsh' header, found '{0}'; a material or function file is compiled on its own, not included."
+    text  "期望 import 的是 '.dsh' 头文件，但遇到了 '{0}'；材质文件或函数文件是单独编译的，不能被包含。"
+    state machine
+}
+
+ImportPath {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a double-quoted path after 'import', found {0}."
+    text  "期望 'import' 之后是双引号括起的路径，但遇到了 {0}。"
+    state machine
+}
+
+ImportQualified {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected an import path inside this file's own source root, found the root-qualified '{0}', which the 2.0 include resolver does not read."
+    text  "期望 import 路径位于此文件自己的源根之内，但遇到了带根限定的 '{0}'，2.0 的 include 解析器不读取这种写法。"
+    state machine
+}
+
+InlineModifier {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "'Inline' is the old spelling of 'SelfContained', and both read the same: the function's node embeds the functions it calls."
+    text  "'Inline' 是 'SelfContained' 的旧写法，两者读法相同：函数的节点会嵌入它所调用的函数。"
+    state machine
+}
+
+LayerInputRenamed {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "The layer input '{0}' becomes the 'inout material' parameter named after the output '{1}', so the input pin changes its name."
+    text  "层输入 '{0}' 会成为以输出 '{1}' 命名的 'inout material' 参数，因此输入引脚的名称会改变。"
+    state machine
+}
+
+LayerWithoutMaterial {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a MaterialAttributes output on '{0}', found none."
+    text  "期望 '{0}' 上有一个 MaterialAttributes 输出，但没有找到。"
+    state machine
+}
+
+LayoutRepeated {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "The section '{0}' is written twice; the later one wins, as it did in 1.x."
+    text  "段 '{0}' 写了两次；与 1.x 一样，以后写的为准。"
+    state machine
+}
+
+NameAfterModifier {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a function name after '{0}', found '('."
+    text  "期望 '{0}' 之后是函数名，但遇到了 '('。"
+    state machine
+}
+
+NamespaceMember {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected only Function and GraphFunction blocks inside the namespace '{0}', found {1}."
+    text  "期望命名空间 '{0}' 内只有 Function 和 GraphFunction 块，但遇到了 {1}。"
+    state machine
+}
+
+NamespaceNoName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a 'Name = \"...\"' attribute with a name on 'Namespace', found none."
+    text  "期望 'Namespace' 上有带名称的 'Name = \"...\"' 属性，但没有找到。"
+    state machine
+}
+
+NamespaceNotIdentifier {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected the namespace name to be an identifier, found '{0}'."
+    text  "期望命名空间名称是标识符，但遇到了 '{0}'。"
+    state machine
+}
+
+NamespaceOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected '`{' to open the namespace '{0}', found {1}."
+    text  "期望用 '`{' 开启命名空间 '{0}'，但遇到了 {1}。"
+    state machine
+}
+
+NoGenerationValue {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "'{0}' is not a value of NoGeneration, which is true or false; the block is built as if it were false."
+    text  "'{0}' 不是 NoGeneration 的取值，它只能是 true 或 false；该块按 false 构建。"
+    state machine
+}
+
+NoLegacyBlock {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a top-level Shader, ShaderFunction, ShaderLayer, ShaderLayerBlend, Function, GraphFunction, Namespace or VirtualFunction block in this 1.x file, found none."
+    text  "期望此 1.x 文件中有顶层的 Shader、ShaderFunction、ShaderLayer、ShaderLayerBlend、Function、GraphFunction、Namespace 或 VirtualFunction 块，但一个也没有找到。"
+    state machine
+}
+
+NoResult {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected '{0}' to return a value or to have at least one 'out' parameter, found neither."
+    text  "期望 '{0}' 返回一个值，或至少有一个 'out' 参数，但两者都没有。"
+    state machine
+}
+
+OldLayerWord {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "'{0}' is the old spelling of '{1}'; it still reads the same."
+    text  "'{0}' 是 '{1}' 的旧写法；读取方式不变。"
+    state machine
+}
+
+ParamQualifier {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected 'in' or 'out' before the parameter '{0}' of '{1}', found '{2}'; a 1.x function has no 'inout'."
+    text  "期望 '{1}' 的参数 '{0}' 之前是 'in' 或 'out'，但遇到了 '{2}'；1.x 函数没有 'inout'。"
+    state machine
+}
+
+ParamWords {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected '[in|out] Type Name' in the parameter list of '{0}', found '{1}'."
+    text  "期望 '{0}' 的参数列表中是 '[in|out] Type Name'，但遇到了 '{1}'。"
+    state machine
+}
+
+ReturnAndOut {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected either a return type or 'out' parameters on '{0}', found both."
+    text  "期望 '{0}' 只使用返回类型或 'out' 参数之一，但两者都出现了。"
+    state machine
+}
+
+ReturnParamName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a parameter name other than '__return', which 1.x reserved, in '{0}'."
+    text  "期望 '{0}' 中的参数名不是 '__return'，这个名字由 1.x 保留。"
+    state machine
+}
+
+SecondShader {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected one Shader block in a file, found a second one."
+    text  "期望一个文件中只有一个 Shader 块，但遇到了第二个。"
+    state machine
+}
+
+SectionName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a section name such as 'Properties' or 'Graph' in '{0}', found {1}."
+    text  "期望 '{0}' 中是一个段名，例如 'Properties' 或 'Graph'，但遇到了 {1}。"
+    state machine
+}
+
+SectionOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected '`{' after the section name '{0}', found {1}."
+    text  "期望段名 '{0}' 之后是 '`{'，但遇到了 {1}。"
+    state machine
+}
+
+ShaderInFunctionFile {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected ShaderFunction, ShaderLayer and ShaderLayerBlend blocks in a '.dsf' file, found a Shader block, which belongs in a .dsm file."
+    text  "期望 '.dsf' 文件中是 ShaderFunction、ShaderLayer 和 ShaderLayerBlend 块，但遇到了 Shader 块，它应放在 .dsm 文件中。"
+    state machine
+}
+
+ShaderWithoutGraph {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a Graph section in the Shader '{0}', found none."
+    text  "期望 Shader '{0}' 中有 Graph 段，但没有找到。"
+    state machine
+}
+
+ShaderWithoutOutputs {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "The Shader '{0}' has no Outputs section, so nothing its Graph computes reaches the material."
+    text  "Shader '{0}' 没有 Outputs 段，所以它的 Graph 计算出的任何结果都到不了材质。"
+    state machine
+}
+
+SubstrateNotHoisted {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "A 'Substrate.' call in the body of '{0}' is not lifted into a node, because no custom node input carries a Substrate value; it reaches the shader compiler as text."
+    text  "'{0}' 函数体中的 'Substrate.' 调用不会被提升为节点，因为 Custom 节点的输入无法承载 Substrate 值；它会作为文本交给着色器编译器。"
+    state machine
+}
+
+TwoPointZeroInLegacyFile {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a 1.x block in a '.{0}' file, found {1}, which is 2.0 syntax; 2.0 declarations belong in a .dss file or a .dsh header."
+    text  "期望 '.{0}' 文件中是 1.x 块，但遇到了 {1}，这是 2.0 语法；2.0 声明应放在 .dss 文件或 .dsh 头文件中。"
+    state machine
+}
+
+UnknownFunctionSection {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a function section (Properties, Inputs, Outputs, Settings, Graph or Layout), found '{0}'."
+    text  "期望一个函数段（Properties、Inputs、Outputs、Settings、Graph 或 Layout），但遇到了 '{0}'。"
+    state machine
+}
+
+UnknownShaderSection {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a Shader section (Properties, Settings, Outputs, Graph or Layout), found '{0}'."
+    text  "期望一个 Shader 段（Properties、Settings、Outputs、Graph 或 Layout），但遇到了 '{0}'。"
+    state machine
+}
+
+UnknownTopLevel {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a top-level Shader, ShaderFunction, ShaderLayer, ShaderLayerBlend, Function, GraphFunction, Namespace, VirtualFunction or import, found {0}."
+    text  "期望顶层的 Shader、ShaderFunction、ShaderLayer、ShaderLayerBlend、Function、GraphFunction、Namespace、VirtualFunction 或 import，但遇到了 {0}。"
+    state machine
+}
+
+UserExposedCaption {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "'UserExposedCaption' has no 2.0 spelling and is not applied; its value is kept for migration."
+    text  "'UserExposedCaption' 在 2.0 中没有对应写法，不会被应用；它的值会保留下来供迁移使用。"
+    state machine
+}
+
+VirtualBody {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected no body in the VirtualFunction '{0}', which declares an existing asset, found the section '{1}'."
+    text  "期望 VirtualFunction '{0}' 没有函数体（它声明的是已有资产），但遇到了段 '{1}'。"
+    state machine
+}
+
+VirtualNoAsset {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected an 'Asset = Path(...)' option on the VirtualFunction '{0}', found none."
+    text  "期望 VirtualFunction '{0}' 上有 'Asset = Path(...)' 选项，但没有找到。"
+    state machine
+}
+
+VirtualNoName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a 'Name = \"...\"' attribute with a name on 'VirtualFunction', found none."
+    text  "期望 'VirtualFunction' 上有带名称的 'Name = \"...\"' 属性，但没有找到。"
+    state machine
+}
+
+VirtualNoOutput {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected at least one output on the VirtualFunction '{0}', found none."
+    text  "期望 VirtualFunction '{0}' 至少有一个输出，但一个也没有。"
+    state machine
+}
+
+VirtualNotIdentifier {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected the VirtualFunction name to be an identifier, found '{0}'."
+    text  "期望 VirtualFunction 的名称是标识符，但遇到了 '{0}'。"
+    state machine
+}
+
+VirtualOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected '`{' to open the VirtualFunction '{0}', found {1}."
+    text  "期望用 '`{' 开启 VirtualFunction '{0}'，但遇到了 {1}。"
+    state machine
+}
+
+VirtualSectionName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a section name such as 'Inputs' in the VirtualFunction '{0}', found {1}."
+    text  "期望 VirtualFunction '{0}' 中是一个段名，例如 'Inputs'，但遇到了 {1}。"
+    state machine
+}
+
+VirtualSectionOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected '`{' after the section name '{0}', found {1}."
+    text  "期望段名 '{0}' 之后是 '`{'，但遇到了 {1}。"
+    state machine
+}
+
+VirtualUnknownSection {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "Expected a VirtualFunction section (Inputs, Outputs or Options), found '{0}'."
+    text  "期望一个 VirtualFunction 段（Inputs、Outputs 或 Options），但遇到了 '{0}'。"
+    state machine
+}
+
+WhileBlock {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "the '{0}' block"
+    text  "'{0}' 块"
+    state machine
+}
+
+WhileNamespace {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "the namespace '{0}'"
+    text  "命名空间 '{0}'"
+    state machine
+}
+
+WhileParams {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "the parameter list of '{0}'"
+    text  "'{0}' 的参数列表"
+    state machine
+}
+
+WhileVirtual {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp
+    src   "the VirtualFunction '{0}'"
+    text  "VirtualFunction '{0}'"
+    state machine
+}

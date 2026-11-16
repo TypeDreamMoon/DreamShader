@@ -1,0 +1,24 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Lang.PipelineSource
+
+NotAPipeline {
+    at    Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp
+    src   "Expected a '.dsp' file bound as a pipeline to rewrite, found another kind of file; the file was left unchanged."
+    text  "期望一个绑定为管线的 '.dsp' 文件来改写，但遇到的是另一种文件；文件保持不变。"
+    state machine
+}
+
+PipelineOverlappingEdits {
+    at    Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp
+    src   "Expected every change to this pipeline to touch its own stretch of text, found an edit at line {0} that overlaps another or runs past the end; the file was left unchanged."
+    text  "期望对此管线的每处修改都只涉及各自的一段文本，但第 {0} 行的一处修改与另一处重叠或超出了文件末尾；文件保持不变。"
+    state machine
+}
+
+PipelineSharedStatement {
+    at    Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp
+    src   "Expected '{0}' to be declared alone to rewrite or remove it, found it in a declaration shared with other names; split the declaration first."
+    text  "期望 '{0}' 是单独声明的，这样才能改写或删除它，但它与其他名称共用一条声明；请先拆开这条声明。"
+    state machine
+}

@@ -1,0 +1,500 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderMaterialBrowser
+
+AdoptBtn {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Adopt Into Source"
+    text  "采纳到源文件"
+    state machine
+}
+
+AdoptReadOnlyTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "This asset's source ships with a plugin and is read-only; adopt is not available."
+    text  "此资产的源文件随插件发布,是只读的;无法采纳。"
+    state machine
+}
+
+AdoptTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it."
+    text  "用此资产的当前内容重写 DreamShader 源文件,让你的手改成为事实来源。旧的源文件会在旁边备份一份。"
+    state machine
+}
+
+AdoptTweaksBtn {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Adopt Tweaks as Source Defaults"
+    text  "把微调采纳为源文件默认值"
+    state machine
+}
+
+AdoptTweaksTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Write this instance's parameter overrides into the .dss as the defaults of its uniforms, then clear them from the instance. The source is backed up first."
+    text  "把此实例的参数覆盖写进 .dss，作为其 uniform 的默认值，然后从实例上清除这些覆盖。源文件会先备份。"
+    state machine
+}
+
+AdoptTweaksUnavailableTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Only a .dss source under a writable root takes tweaks as uniform defaults; use Extract Tweaks to .dsi instead."
+    text  "只有位于可写根下的 .dss 源文件才能把微调接收为 uniform 默认值；请改用“把微调提取为 .dsi”。"
+    state machine
+}
+
+AssetLinkTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Show this asset in the Content list."
+    text  "在内容列表中显示此资产。"
+    state machine
+}
+
+AssetRow {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Asset"
+    text  "资产"
+    state machine
+}
+
+Base {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Base"
+    text  "基类"
+    state machine
+}
+
+BaseNone {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "-"
+    text  "-"
+    state machine
+}
+
+Blend {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Blend mode"
+    text  "混合模式"
+    state machine
+}
+
+ChainRowFmt {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "{0}{1}"
+    text  "{0}{1}"
+    state machine
+}
+
+ChildrenHeader {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Child instances ({0})"
+    text  "子实例 ({0})"
+    state machine
+}
+
+CreateInstanceBtn {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Create instance"
+    text  "创建实例"
+    state machine
+}
+
+DependentsHeader {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Used by ({0})"
+    text  "被引用 ({0})"
+    state machine
+}
+
+DetachBtn {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Detach"
+    text  "脱离"
+    state machine
+}
+
+DetachTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it."
+    text  "让此资产保持原样,并让 DreamShader 永远不再重建它。"
+    state machine
+}
+
+DiagJumpTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Open {0} at this line in your editor."
+    text  "在你的编辑器中打开 {0} 并跳到此行。"
+    state machine
+}
+
+DiagLocationCodeFmt {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "[{2}] L{0}:{1}"
+    text  "[{2}] L{0}:{1}"
+    state machine
+}
+
+DiagLocationFmt {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "L{0}:{1}"
+    text  "L{0}:{1}"
+    state machine
+}
+
+DiagnosticsHeader {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Diagnostics ({0})"
+    text  "诊断 ({0})"
+    state machine
+}
+
+Domain {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Domain"
+    text  "材质域"
+    state machine
+}
+
+ExportDsiBtn {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Export .dsi"
+    text  "导出 .dsi"
+    state machine
+}
+
+ExportDsiTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Decompile this material instance into a .dsi source file: its parent, its instance settings and every parameter that differs from the parent."
+    text  "把此材质实例反编译为 .dsi 源文件：它的父材质、实例设置，以及每个与父材质不同的参数。"
+    state machine
+}
+
+ExportDssFunctionBtn {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Export .dss"
+    text  "导出 .dss"
+    state machine
+}
+
+ExportDssFunctionTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Decompile this material function into a .dss source file under the project's DShader root."
+    text  "把此材质函数反编译为项目 DShader 根下的 .dss 源文件。"
+    state machine
+}
+
+ExportDssMaterialBtn {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Export .dss"
+    text  "导出 .dss"
+    state machine
+}
+
+ExportDssMaterialTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Decompile this material into a .dss source file under the project's DShader root."
+    text  "把此材质反编译为项目 DShader 根下的 .dss 源文件。"
+    state machine
+}
+
+ExtractTweaksBtn {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Extract Tweaks to .dsi"
+    text  "把微调提取为 .dsi"
+    state machine
+}
+
+ExtractTweaksTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Write this instance's parameter overrides into a new .dsi whose parent is this material, compile it, and clear the overrides from this instance."
+    text  "把此实例的参数覆盖写进一个以此材质为父的新 .dsi，编译它，然后从此实例上清除这些覆盖。"
+    state machine
+}
+
+ImportsHeader {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Imports ({0})"
+    text  "导入 ({0})"
+    state machine
+}
+
+Inheritance {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Inheritance"
+    text  "继承"
+    state machine
+}
+
+InspectorEmpty {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Select a source file or a material to inspect it."
+    text  "选择一个源文件或材质以查看详情。"
+    state machine
+}
+
+MaterializeBtn {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Materialize"
+    text  "物化"
+    state machine
+}
+
+MaterializeTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Write this memory-only material (and its base) to disk."
+    text  "将此仅内存材质(及其基类)写入磁盘。"
+    state machine
+}
+
+NoChildrenAnywhere {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "No child instances."
+    text  "没有子实例。"
+    state machine
+}
+
+OpenBtn {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Open"
+    text  "打开"
+    state machine
+}
+
+OpenInEditorBadge {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "open in an asset editor — a rebuild will refuse until it is closed"
+    text  "已在资产编辑器中打开 —— 关闭前重建会被拒绝"
+    state machine
+}
+
+PComp {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Compile"
+    text  "编译"
+    state machine
+}
+
+PCompTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Force-recompile this source (in memory)."
+    text  "强制重新编译此源(内存中)。"
+    state machine
+}
+
+PInstTipDsi {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Write a .dsi instance of this material and compile it (an ordinary material instance when DreamShader did not generate the material)."
+    text  "为此材质写一个 .dsi 实例并编译它（如果该材质不是 DreamShader 生成的，则创建普通的材质实例）。"
+    state machine
+}
+
+POpenMatTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Open the generated material asset."
+    text  "打开生成的材质资产。"
+    state machine
+}
+
+POpenPipelineTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Open the generated pass pipeline in its details panel: its passes by injection point, its buffers and their render targets."
+    text  "在细节面板中打开生成的 Pass 管线：按注入点分组的 Pass、它的缓冲及其渲染目标。"
+    state machine
+}
+
+POpenSrc {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Open source"
+    text  "打开源码"
+    state machine
+}
+
+POpenSrcTipAny {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Open the source file in your preferred editor."
+    text  "用你偏好的编辑器打开源文件。"
+    state machine
+}
+
+PipelineRow {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Pipeline"
+    text  "管线"
+    state machine
+}
+
+PipelineRowFmt {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "{0} pass(es), {1} buffer(s), {2} parameter(s); order {3}"
+    text  "{0} 个 Pass、{1} 个缓冲、{2} 个参数；Order {3}"
+    state machine
+}
+
+PreviewDragHint {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "drag to orbit"
+    text  "拖动以环绕"
+    state machine
+}
+
+PreviewFunction {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "function library"
+    text  "函数库"
+    state machine
+}
+
+PreviewMeshLabel {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Mesh"
+    text  "网格"
+    state machine
+}
+
+PreviewMeshTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "The shape the preview renders the material on."
+    text  "预览渲染材质时所用的形状。"
+    state machine
+}
+
+PreviewNoMaterial {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "not compiled yet"
+    text  "尚未编译"
+    state machine
+}
+
+PreviewPipeline {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "pass pipeline"
+    text  "Pass 管线"
+    state machine
+}
+
+ProvenanceExplainDiverged {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "The asset was edited by hand since it was generated, so a rebuild is refused to protect those edits. Decide which copy is the truth."
+    text  "此资产在生成之后被手动编辑过,因此重建被拒绝,以保护这些修改。请决定以哪一份为准。"
+    state machine
+}
+
+ProvenanceExplainForeign {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Not generated by DreamShader. Export it to a source file to bring it under DreamShader's management."
+    text  "不是 DreamShader 生成的。把它导出为源文件即可纳入 DreamShader 管理。"
+    state machine
+}
+
+ProvenanceExplainGenerated {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "The asset holds exactly what DreamShader last generated into it. A source change rebuilds it freely."
+    text  "此资产与 DreamShader 上次生成的内容完全一致。源文件变更会直接重建它。"
+    state machine
+}
+
+ProvenanceExplainTweakedActions {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "The generated content still matches, and you have set parameter overrides on the instance. Rebuilds go ahead as normal and put your values back; a parameter the source no longer declares is dropped and named in the log. Adopt Tweaks writes the values into the source as defaults, and Extract Tweaks moves them into a .dsi instance."
+    text  "生成的内容仍然一致，而你在实例上设置了参数覆盖。重建会照常进行，并把你的值放回去；源文件不再声明的参数会被丢弃，并在日志中列出。“采纳微调”会把这些值作为默认值写进源文件，“提取微调”会把它们移进一个 .dsi 实例。"
+    state machine
+}
+
+ProvenanceExplainUnstamped {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Generated by DreamShader, but carrying no digest this version can compare. The next rebuild restamps it."
+    text  "由 DreamShader 生成,但没有本版本能比对的指纹。下次重建会重新盖戳。"
+    state machine
+}
+
+ProvenanceHeader {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Provenance"
+    text  "来源"
+    state machine
+}
+
+ProvenanceRow {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Provenance"
+    text  "来源"
+    state machine
+}
+
+ProvenanceTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Whether the asset still holds what DreamShader last generated into it. A hand-edited asset refuses to rebuild until you choose Revert, Adopt or Detach from its Content Browser context menu. Parameter overrides on a generated instance are not a hand edit: they read as 'tweaked' and survive a rebuild."
+    text  "资产是否仍保持 DreamShader 上次生成进去的内容。被手改过的资产会拒绝重建,直到你在它的 Content Browser 右键菜单里选择还原、采纳或脱离。生成实例上的参数覆盖不算手改:它们显示为「已调参」,并且能在重建后保留。"
+    state machine
+}
+
+RevertBtn {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Revert to Source"
+    text  "还原到源文件"
+    state machine
+}
+
+RevertDivergedBtn {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Revert to Source (discards edits)"
+    text  "还原到源文件(丢弃修改)"
+    state machine
+}
+
+RevertTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Rebuild this asset from its DreamShader source, discarding every hand edit in it. The source file is not modified."
+    text  "从 DreamShader 源文件重建此资产,丢弃其中所有手改。源文件不会被修改。"
+    state machine
+}
+
+RootRow {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Root"
+    text  "根"
+    state machine
+}
+
+SourceLinkTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Show this file in the Sources list."
+    text  "在源文件列表中显示此文件。"
+    state machine
+}
+
+SourceNone {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "-"
+    text  "-"
+    state machine
+}
+
+SourceRow {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Source"
+    text  "源"
+    state machine
+}
+
+Storage {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "Storage"
+    text  "存储"
+    state machine
+}
+
+UnloadedChildFmt {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "└ {0} (not loaded)"
+    text  "└ {0}(未加载)"
+    state machine
+}
+
+UnloadedChildTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderInspector.cpp
+    src   "{0} (not loaded — click to load)"
+    text  "{0}(未加载 —— 点击加载)"
+    state machine
+}

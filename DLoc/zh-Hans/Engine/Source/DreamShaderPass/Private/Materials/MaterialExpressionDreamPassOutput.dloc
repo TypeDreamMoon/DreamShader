@@ -1,0 +1,31 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Pass.OutputNode
+
+Keywords {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassOutput.cpp
+    src   "dream pass custom pass mesh pass output dreamshader"
+    text  "dream pass custom pass mesh pass output dreamshader 网格 Pass 输出"
+    state machine
+}
+
+MenuCategory {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassOutput.cpp
+    src   "DreamShader"
+    text  "DreamShader"
+    state machine
+}
+
+NeedsEngine {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassOutput.cpp
+    src   "Dream Pass Output needs Unreal Engine 5.8 or later."
+    text  "Dream Pass Output 需要 Unreal Engine 5.8 或更高版本。"
+    state machine
+}
+
+NotANumber {
+    at    Source/DreamShaderPass/Private/Materials/MaterialExpressionDreamPassOutput.cpp
+    src   "Dream Pass Output: {0} takes a float1 to float4 value; a Substrate BSDF, material attributes or a texture cannot be written to a buffer."
+    text  "Dream Pass Output：{0} 接受 float1 到 float4 的值；Substrate BSDF、材质属性或纹理都不能写入缓冲。"
+    state machine
+}

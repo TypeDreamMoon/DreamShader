@@ -1,0 +1,1599 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Binder.Pipeline
+
+AfterTonemap {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "after"
+    text  "之后"
+    state machine
+}
+
+AssignStencilRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'AssignStencil' takes a stencil value from 1 to 255."
+    text  "'AssignStencil' 接受 1 到 255 之间的模板值。"
+    state machine
+}
+
+AssignStencilShape {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Nanite = AssignStencil(n)' takes one stencil value, 1 to 255."
+    text  "'Nanite = AssignStencil(n)' 接受一个模板值，范围为 1 到 255。"
+    state machine
+}
+
+BeforeTonemap {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "before"
+    text  "之前"
+    state machine
+}
+
+BlendableLocation {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is compiled for BlendableLocation {1}, and pass '{2}' runs it at {3}, {4} tonemapping, so its colours are in another space than it expects; use {5}."
+    text  "'{0}' 是按 BlendableLocation {1} 编译的，而 Pass '{2}' 在 {3} 运行它，那里位于色调映射{4}，因此它收到的颜色不在它预期的颜色空间中；请使用 {5}。"
+    state machine
+}
+
+BlockEntryNotFound {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "The 'hlsl' block of pass '{0}' does not define a function '{1}', which 'Entry' names; the entry is a function of the block itself."
+    text  "Pass '{0}' 的 'hlsl' 块中没有定义 'Entry' 所指的函数 '{1}'；入口必须是这个块自己的函数。"
+    state machine
+}
+
+BlockMainNotFound {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "The 'hlsl' block of pass '{0}' holds whole functions, and none is 'Main', the entry of a block when the pass writes no 'Entry'; name the entry function 'Main', or write 'Entry = <function>;'."
+    text  "Pass '{0}' 的 'hlsl' 块写的是完整函数，但其中没有 'Main'，即 Pass 不写 'Entry' 时块的入口；请把入口函数命名为 'Main'，或写 'Entry = <function>;'。"
+    state machine
+}
+
+BodyFormName {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a name of pass '{1}', and its 'hlsl' block holds the statements of a function the compiler writes, which names its own values {2}; rename the binding."
+    text  "'{0}' 是 Pass '{1}' 的名称，而它的 'hlsl' 块写的是由编译器生成的函数的语句，该函数自己的值名为 {2}；请重命名该绑定。"
+    state machine
+}
+
+BufferBuiltinName {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a built-in texture a pass binds without declaring it, and cannot be declared as a buffer."
+    text  "'{0}' 是 Pass 无需声明即可绑定的内置纹理，不能声明为缓冲。"
+    state machine
+}
+
+BufferKeyTwice {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is set twice for buffer '{1}'; it was already set on line {2}."
+    text  "缓冲 '{1}' 的 '{0}' 被设置了两次；它已在第 {2} 行设置过。"
+    state machine
+}
+
+BufferNameCaseClash {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Buffer '{0}' differs from '{1}', declared on line {2}, in case only; the pipeline asset keeps buffer names as Unreal names, which compare ignoring case, so the two would be one buffer there. Rename one."
+    text  "缓冲 '{0}' 与第 {2} 行声明的 '{1}' 只有大小写不同；管线资产把缓冲名保存为 Unreal 名称，而这种名称比较时不区分大小写，因此两者在资产中会成为同一个缓冲。请重命名其中一个。"
+    state machine
+}
+
+BufferNameTaken {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' already names a parameter or a constant of this pipeline; a buffer shares one namespace with them."
+    text  "'{0}' 已经是此管线中某个参数或常量的名称；缓冲与它们共用同一个命名空间。"
+    state machine
+}
+
+BufferNeverRead {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "No pass reads buffer '{0}' and it is not exported, so writing it is wasted work; read it, export it, or remove it."
+    text  "没有任何 Pass 读取缓冲 '{0}'，它也没有导出，因此写入它是白费工夫；请读取它、导出它，或删除它。"
+    state machine
+}
+
+BufferNeverWritten {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "No pass writes buffer '{0}', so whoever reads it reads its 'Clear' value."
+    text  "没有任何 Pass 写入缓冲 '{0}'，因此无论谁读取它，读到的都是它的 'Clear' 值。"
+    state machine
+}
+
+BufferSizeAndScale {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Size' gives buffer '{0}' a fixed size, so '{1}' has nothing to say; remove one of them."
+    text  "'Size' 已给缓冲 '{0}' 指定了固定尺寸，因此 '{1}' 不起作用；请删除其中一个。"
+    state machine
+}
+
+BufferTwice {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Buffer '{0}' is declared twice; the declaration on line {1} already makes it."
+    text  "缓冲 '{0}' 被声明了两次；第 {1} 行的声明已经创建了它。"
+    state machine
+}
+
+BuiltinNotWritable {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is the renderer's and pass '{1}' cannot write it at {2}; write a buffer of the pipeline instead."
+    text  "'{0}' 属于渲染器，Pass '{1}' 不能在 {2} 写入它；请改为写入管线自己的缓冲。"
+    state machine
+}
+
+BuiltinNotWritableSceneColorTranslucency {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'SceneColor' is read-only at PostProcess.TranslucencyAfterDOF, where pass '{1}' runs: the post-process chain carries the translucency there, so write 'Translucency', or write the scene colour at another point."
+    text  "'SceneColor' 在 PostProcess.TranslucencyAfterDOF 是只读的，而 Pass '{1}' 正在那里运行：那里的后处理链承载的是半透明，因此请写入 'Translucency'，或在其他注入点写入场景颜色。"
+    state machine
+}
+
+BuiltinNotWritableTranslucency {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Translucency' is written at PostProcess.TranslucencyAfterDOF only, and pass '{1}' runs at {2}; elsewhere on the chain it is read-only."
+    text  "'Translucency' 只能在 PostProcess.TranslucencyAfterDOF 写入，而 Pass '{1}' 在 {2} 运行；在后处理链的其他位置它是只读的。"
+    state machine
+}
+
+BuiltinNotYet {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' does not exist yet at {2}, where pass '{1}' runs; it exists from {3} on."
+    text  "'{0}' 在 {2} 还不存在，而 Pass '{1}' 在那里运行；它从 {3} 起才存在。"
+    state machine
+}
+
+BuiltinPrevious {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}.Previous': a built-in texture keeps no history."
+    text  "'{0}.Previous'：内置纹理不保留历史。"
+    state machine
+}
+
+ClearShape {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Clear pass '{0}' writes one buffer and reads none: 'write Buffer;' and 'Value = ...;'."
+    text  "清除 Pass '{0}' 应写入一个缓冲，且不读取任何缓冲：'write Buffer;' 和 'Value = ...;'。"
+    state machine
+}
+
+ComputeNoEntry {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Compute pass '{0}' needs 'Entry = <function>' naming its '[numthreads]' function."
+    text  "Compute Pass '{0}' 需要用 'Entry = <function>' 指定它带 '[numthreads]' 的函数。"
+    state machine
+}
+
+ComputeNoShader {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Compute pass '{0}' needs code to run: 'Shader = \"<file>.usf\"' with 'Entry = <function>', an 'hlsl { }' block of its own, or 'Entry' naming a function of the file's 'hlsl { }' block."
+    text  "Compute Pass '{0}' 需要可运行的代码：带 'Entry = <function>' 的 'Shader = \"<file>.usf\"'、它自己的 'hlsl { }' 块，或指向文件级 'hlsl { }' 块中某个函数的 'Entry'。"
+    state machine
+}
+
+ComputeNoWrite {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Compute pass '{0}' writes nothing; a compute pass writes at least one buffer, 'write Result = Buffer;'."
+    text  "Compute Pass '{0}' 没有写入任何内容；Compute Pass 至少要写入一个缓冲，例如 'write Result = Buffer;'。"
+    state machine
+}
+
+ComputeTooMany {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Compute pass '{0}' reads {1} and writes {2} buffers, and a compute slot has {3} inputs and {4} outputs."
+    text  "Compute Pass '{0}' 读取 {1} 个、写入 {2} 个缓冲，而 Compute 槽位只有 {3} 个输入和 {4} 个输出。"
+    state machine
+}
+
+CopyShape {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Copy pass '{0}' reads one buffer and writes one: 'read Source;' and 'write Target;'."
+    text  "复制 Pass '{0}' 应读取一个缓冲并写入一个缓冲：'read Source;' 和 'write Target;'。"
+    state machine
+}
+
+CustomDepthAfterBasePass {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' exists at AfterBasePass only when r.CustomDepth.Order draws custom depth before the base pass; where it does not, pass '{1}' reads a cleared placeholder. From AfterOpaque on it always exists."
+    text  "只有当 r.CustomDepth.Order 让自定义深度在 BasePass 之前绘制时，'{0}' 才会在 AfterBasePass 存在；否则 Pass '{1}' 读到的是一张已清空的占位纹理。从 AfterOpaque 起它总是存在。"
+    state machine
+}
+
+CustomStencilNotBindable {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'CustomStencil' is the stencil half of the custom depth texture, which no pass can bind as a texture of its own, and pass '{0}' {1} it; read it through the scene textures instead: a SceneTexture node in the material, CalcSceneCustomStencil in a '.usf'."
+    text  "'CustomStencil' 是自定义深度纹理中的模板部分，任何 Pass 都无法把它当作独立的纹理来绑定，而 Pass '{0}' 要{1}它；请改为通过场景纹理读取它：在材质中用 SceneTexture 节点，在 '.usf' 中用 CalcSceneCustomStencil。"
+    state machine
+}
+
+CustomStencilReads {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "reads"
+    text  "读取"
+    state machine
+}
+
+CustomStencilWrites {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "writes"
+    text  "写入"
+    state machine
+}
+
+DepthBoundMeshOrClear {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a Depth32 buffer, which a mesh pass tests against as 'Depth = Own({0})' and a clear pass resets ('write {0};', with 'Value' the depth); a {2} pass cannot '{1}' it."
+    text  "'{0}' 是 Depth32 缓冲，只能由网格 Pass 以 'Depth = Own({0})' 的方式对它做深度测试，或由清除 Pass 重置（'write {0};'，其 'Value' 即深度值）；{2} Pass 不能用 '{1}' 绑定它。"
+    state machine
+}
+
+DepthOwnBuiltin {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Depth = Own({0})' tests against a depth of this pipeline's own, and '{0}' is a built-in texture; declare 'buffer MyDepth : Depth32;', or write 'Depth = TestScene'."
+    text  "'Depth = Own({0})' 针对此管线自己的深度做测试，而 '{0}' 是内置纹理；请声明 'buffer MyDepth : Depth32;'，或改写为 'Depth = TestScene'。"
+    state machine
+}
+
+DepthOwnNotDepth {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Depth = Own({0})' needs a Depth32 buffer, and '{0}' is {1}."
+    text  "'Depth = Own({0})' 需要 Depth32 缓冲，而 '{0}' 是 {1}。"
+    state machine
+}
+
+DepthOwnShape {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Depth = Own(Buffer)' takes one Depth32 buffer of this pipeline."
+    text  "'Depth = Own(Buffer)' 接受此管线的一个 Depth32 缓冲。"
+    state machine
+}
+
+DispatchFactor {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Dispatch = Buffer / n' and 'Buffer * n' take a positive n."
+    text  "'Dispatch = Buffer / n' 和 'Buffer * n' 中的 n 必须为正数。"
+    state machine
+}
+
+DispatchSizeRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A fixed 'Dispatch' is at least one thread in each direction."
+    text  "固定的 'Dispatch' 在每个方向上至少要有一个线程。"
+    state machine
+}
+
+EnabledFalse {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Enabled' is false, so this would never run, and a pipeline asset has no switch that is always off; drive it with a 'uniform bool', or comment the declaration out."
+    text  "'Enabled' 为 false，因此它永远不会运行，而管线资产中没有始终关闭的开关；请用 'uniform bool' 控制它，或把这条声明注释掉。"
+    state machine
+}
+
+EnabledNotBool {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a '{1}', and 'Enabled' takes a 'uniform bool' or 'true'."
+    text  "'{0}' 是 '{1}'，而 'Enabled' 接受 'uniform bool' 或 'true'。"
+    state machine
+}
+
+EnabledUnknown {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a 'uniform' or 'static const' of this pipeline; 'Enabled' takes a 'uniform bool' or 'true'."
+    text  "'{0}' 不是此管线的 'uniform' 或 'static const'；'Enabled' 接受 'uniform bool' 或 'true'。"
+    state machine
+}
+
+EnabledUnknownDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a 'uniform' or 'static const' of this pipeline; did you mean '{1}'? Names are case-sensitive."
+    text  "'{0}' 不是此管线的 'uniform' 或 'static const'；你是不是想写 '{1}'？名称区分大小写。"
+    state machine
+}
+
+EntryIsComputeShader {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{1}' in '{0}' is a compute shader entry ('[numthreads]' is in front of it), and fullscreen pass '{2}' runs its Entry as a pixel shader; name the pixel shader function, or make the pass 'compute'."
+    text  "'{0}' 中的 '{1}' 是 Compute 着色器的入口（它前面有 '[numthreads]'），而全屏 Pass '{2}' 会把它的 Entry 当作像素着色器运行；请指定像素着色器函数，或把这个 Pass 改为 'compute'。"
+    state machine
+}
+
+EntryNoNumThreads {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' in '{1}' has no '[numthreads(x, y, z)]' the compiler can read; write 'Threads = uint3(x, y, z)' in the pass."
+    text  "'{1}' 中的 '{0}' 没有编译器能读取的 '[numthreads(x, y, z)]'；请在 Pass 中写 'Threads = uint3(x, y, z)'。"
+    state machine
+}
+
+EntryNotFound {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' does not define a function '{1}'."
+    text  "'{0}' 中没有定义函数 '{1}'。"
+    state machine
+}
+
+EntryNotFound2 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' does not define a function '{1}'."
+    text  "'{0}' 中没有定义函数 '{1}'。"
+    state machine
+}
+
+EntryNotName {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Entry' takes the name of the function in the shader file: 'Entry = BlurCS;'."
+    text  "'Entry' 接受着色器文件中的函数名：'Entry = BlurCS;'。"
+    state machine
+}
+
+EntryUnreadNumThreads {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not in what the compiler could read of '{1}', which includes a file it cannot follow, so its '[numthreads(x, y, z)]' is unknown; write 'Threads = uint3(x, y, z)' in the pass."
+    text  "'{0}' 不在编译器能读取到的 '{1}' 内容中（该文件 include 了编译器无法追踪的文件），因此它的 '[numthreads(x, y, z)]' 未知；请在 Pass 中写 'Threads = uint3(x, y, z)'。"
+    state machine
+}
+
+EntryWithBodyForm {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "The 'hlsl' block of pass '{0}' holds the statements of its entry, whose function the compiler writes, so 'Entry' has no function to name; remove it, or write whole functions in the block: '{1}'."
+    text  "Pass '{0}' 的 'hlsl' 块写的是入口的语句，函数由编译器生成，因此 'Entry' 没有可指的函数；请删除它，或在块中写完整函数：'{1}'。"
+    state machine
+}
+
+EntryWithMaterial {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Entry' names a function of a shader file, and fullscreen pass '{0}' draws a material."
+    text  "'Entry' 指定的是着色器文件中的函数，而全屏 Pass '{0}' 绘制的是材质。"
+    state machine
+}
+
+ExportFormat {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Buffer '{0}' is exported, and an exported buffer becomes a render target asset that materials sample, which a '{1}' buffer cannot be; export a float format."
+    text  "缓冲 '{0}' 已导出，而导出的缓冲会成为供材质采样的渲染目标资产，'{1}' 缓冲无法做到这一点；请导出浮点格式。"
+    state machine
+}
+
+ExportLateFrame {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Buffer '{0}' is exported and last written at {1}: opaque and translucent materials that sample it see the previous frame's contents, UI sees this frame's."
+    text  "缓冲 '{0}' 已导出，最后一次写入在 {1}：采样它的不透明和半透明材质看到的是上一帧的内容，UI 看到的是本帧的。"
+    state machine
+}
+
+ExportMidFrame {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Buffer '{0}' is exported and last written at {1}: opaque materials that sample it see the previous frame's contents, translucent and post-process materials and UI see this frame's."
+    text  "缓冲 '{0}' 已导出，最后一次写入在 {1}：采样它的不透明材质看到的是上一帧的内容，半透明材质、后处理材质和 UI 看到的是本帧的。"
+    state machine
+}
+
+FilterNamedArgument {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}(...)' takes its arguments by position."
+    text  "'{0}(...)' 按位置接受实参。"
+    state machine
+}
+
+FilterOperator {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A filter joins its terms with '|' (either) and '&' (both), and nothing else."
+    text  "筛选条件只能用 '|'（任一）和 '&'（同时）连接各项。"
+    state machine
+}
+
+FilterTermShape {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A filter term is 'Stencil(value)', 'Stencil(value, mask)', 'Layer(Name | ...)' or 'List(Name)'."
+    text  "筛选项的写法是 'Stencil(value)'、'Stencil(value, mask)'、'Layer(Name | ...)' 或 'List(Name)'。"
+    state machine
+}
+
+FilterUnknownTerm {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a filter term; a mesh pass selects by 'Stencil(...)', 'Layer(...)' and 'List(...)'."
+    text  "'{0}' 不是筛选项；网格 Pass 按 'Stencil(...)'、'Layer(...)' 和 'List(...)' 选择。"
+    state machine
+}
+
+FullscreenDomain {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a {1} material, and a fullscreen pass draws a Post Process one: '#pragma material(Domain = PostProcess)'."
+    text  "'{0}' 是 {1} 材质，而全屏 Pass 绘制的是后处理材质：'#pragma material(Domain = PostProcess)'。"
+    state machine
+}
+
+FullscreenMaterialAndShader {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Fullscreen pass '{0}' draws a 'Material' or runs a 'Shader', and it names both."
+    text  "全屏 Pass '{0}' 要么绘制 'Material'，要么运行 'Shader'，而它两者都指定了。"
+    state machine
+}
+
+FullscreenMaterialNoFreeSlots {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' takes {1} of the {2} post-process input slots with its SceneTexture nodes, which leaves {4} for its UserSceneTexture inputs, and it has {5}; read fewer buffers in it, or write pass '{3}' as a '.usf' pass."
+    text  "'{0}' 的 SceneTexture 节点占用了 {2} 个后处理输入槽位中的 {1} 个，留给 UserSceneTexture 输入的只剩 {4} 个，而它有 {5} 个；请在其中读取更少的缓冲，或把 Pass '{3}' 改写成 '.usf' Pass。"
+    state machine
+}
+
+FullscreenMaterialOneWrite {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A fullscreen material pass writes exactly one buffer, as 'write Buffer;', and '{0}' writes {1}."
+    text  "全屏材质 Pass 必须恰好写入一个缓冲，写作 'write Buffer;'，而 '{0}' 写入了 {1} 个。"
+    state machine
+}
+
+FullscreenMaterialTooEarly {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A fullscreen material pass needs the scene textures, which do not exist yet at {0}; run '{1}' at AfterBasePass or later."
+    text  "全屏材质 Pass 需要场景纹理，而它们在 {0} 还不存在；请在 AfterBasePass 或更晚的注入点运行 '{1}'。"
+    state machine
+}
+
+FullscreenMaterialTooManyReads {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Fullscreen material pass '{0}' reads {1} buffers, and a post-process material has {2} input slots, shared with its own SceneTexture nodes; split the pass in two, or write it with 'Shader =' (a '.usf' pass reads up to {3})."
+    text  "全屏材质 Pass '{0}' 读取 {1} 个缓冲，而后处理材质只有 {2} 个输入槽位，还要与它自己的 SceneTexture 节点共用；请把这个 Pass 拆成两个，或改用 'Shader =' 编写（'.usf' Pass 最多可读取 {3} 个）。"
+    state machine
+}
+
+FullscreenMaterialUnverified {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A fullscreen material pass at {0} has not been verified on this engine yet; BeforePostProcess is the point it is known to work at."
+    text  "位于 {0} 的全屏材质 Pass 尚未在此引擎上验证过；已知能正常工作的注入点是 BeforePostProcess。"
+    state machine
+}
+
+FullscreenMaterialWriteSlot {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A material has one output and no name for it; write 'write {0};'."
+    text  "材质只有一个输出，且没有名称；请写 'write {0};'。"
+    state machine
+}
+
+FullscreenNothing {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Fullscreen pass '{0}' needs code to run: 'Material = \"...\"' (a Post Process material), 'Shader = \"<file>.usf\"' with 'Entry', an 'hlsl { }' block of its own, or 'Entry' naming a function of the file's 'hlsl { }' block."
+    text  "全屏 Pass '{0}' 需要可运行的代码：'Material = \"...\"'（后处理材质）、带 'Entry' 的 'Shader = \"<file>.usf\"'、它自己的 'hlsl { }' 块，或指向文件级 'hlsl { }' 块中某个函数的 'Entry'。"
+    state machine
+}
+
+FullscreenShaderBeforeBasePass {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "At BeforeBasePass only scene depth exists: the other scene textures pass '{0}' could read are placeholders."
+    text  "在 BeforeBasePass 只有场景深度存在：Pass '{0}' 能读取的其他场景纹理都只是占位纹理。"
+    state machine
+}
+
+FullscreenShaderNoWrite {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Fullscreen pass '{0}' writes nothing; a pass draws into at least one buffer, 'write Result = Buffer;'."
+    text  "全屏 Pass '{0}' 没有写入任何内容；Pass 至少要绘制到一个缓冲中，例如 'write Result = Buffer;'。"
+    state machine
+}
+
+FullscreenShaderTooMany {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Fullscreen pass '{0}' reads {1} and writes {2} buffers, and the pixel slot a '.usf' pass runs in has {3} inputs and {4} outputs."
+    text  "全屏 Pass '{0}' 读取 {1} 个、写入 {2} 个缓冲，而 '.usf' Pass 运行所在的 Pixel 槽位只有 {3} 个输入和 {4} 个输出。"
+    state machine
+}
+
+HlslBlockInKind {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A {0} pass runs no HLSL of its own, so pass '{1}' cannot hold an 'hlsl' block."
+    text  "{0} Pass 不运行自己的 HLSL，因此 Pass '{1}' 不能包含 'hlsl' 块。"
+    state machine
+}
+
+HlslBlockOutsideDsp {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only a '.dsp' file holds, and '{0}' is not one; a pipeline cannot be included."
+    text  "文件级的 'hlsl' 块是 Custom Pass 管线的 HLSL，只有 '.dsp' 文件才能包含它，而 '{0}' 不是 '.dsp'；管线不能被 include。"
+    state machine
+}
+
+HlslBlockWithMaterial {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Fullscreen pass '{0}' draws a material, and an 'hlsl' block is the code of a pass that runs HLSL of its own; remove the block, or 'Material' to run it."
+    text  "全屏 Pass '{0}' 绘制的是材质，而 'hlsl' 块是运行自己 HLSL 的 Pass 的代码；请删除这个块，或删除 'Material' 以运行它。"
+    state machine
+}
+
+IncludeInBodyForm {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'#include' cannot stand among the statements of a function, and the 'hlsl' block of pass '{0}' holds the statements of its entry; include the file in the file's 'hlsl' block, or write whole functions in the pass's block."
+    text  "'#include' 不能出现在函数的语句之间，而 Pass '{0}' 的 'hlsl' 块写的是它的入口的语句；请在文件级 'hlsl' 块中 include 该文件，或在这个 Pass 的块中写完整函数。"
+    state machine
+}
+
+InjectionNotName {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Injection' takes the name of an injection point, written without quotes: 'Injection = PostProcess.AfterDOF;'."
+    text  "'Injection' 接受注入点的名称，不加引号：'Injection = PostProcess.AfterDOF;'。"
+    state machine
+}
+
+InlineEntryIsComputeShader {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a compute shader entry ('[numthreads]' is in front of it), and fullscreen pass '{1}' runs its entry as a pixel shader; name the pixel shader function, or make the pass 'compute'."
+    text  "'{0}' 是 Compute 着色器的入口（它前面有 '[numthreads]'），而全屏 Pass '{1}' 会把它的入口当作像素着色器运行；请指定像素着色器函数，或把这个 Pass 改为 'compute'。"
+    state machine
+}
+
+InlineEntryNoNumThreads {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' has no '[numthreads(x, y, z)]' in front of it that the compiler can read -- three whole numbers; write them so, or write 'Threads = uint3(x, y, z)' in pass '{1}'."
+    text  "'{0}' 前面没有编译器能读取的 '[numthreads(x, y, z)]'（需要三个整数）；请这样写，或在 Pass '{1}' 中写 'Threads = uint3(x, y, z)'。"
+    state machine
+}
+
+InlineThreadsDisagree {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Threads = uint3({0}, {1}, {2})' disagrees with the '[numthreads({3}, {4}, {5})]' in front of '{6}' in the '.dsp', and the dispatch would be sized for groups the shader does not have; leave 'Threads' out, or write the same numbers."
+    text  "'Threads = uint3({0}, {1}, {2})' 与 '.dsp' 中 '{6}' 前面的 '[numthreads({3}, {4}, {5})]' 不一致，派发会按着色器实际没有的线程组大小来计算；请去掉 'Threads'，或写成相同的数值。"
+    state machine
+}
+
+InputUnbound {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' reads the UserSceneTexture '{1}', and pass '{2}' binds nothing to it, so it samples black; add 'read {1} = <Buffer>;'."
+    text  "'{0}' 读取 UserSceneTexture '{1}'，而 Pass '{2}' 没有给它绑定任何东西，因此采样结果是黑色；请添加 'read {1} = <Buffer>;'。"
+    state machine
+}
+
+IntegerFormatUnsupported {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is an integer format, which no pass can read or write yet: HLSL passes see float4 textures, and materials and mesh passes write floats. Use 'R32F' or 'RG32F' (an id is exact up to 16777216)."
+    text  "'{0}' 是整数格式，目前还没有任何 Pass 能读写它：HLSL Pass 看到的是 float4 纹理，材质和网格 Pass 写入的是浮点数。请使用 'R32F' 或 'RG32F'（ID 在 16777216 以内都能精确表示）。"
+    state machine
+}
+
+LayerShape {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Layer' takes pass layer names joined by '|': 'Layer(Highlight)', 'Layer(Enemies | Allies)'."
+    text  "'Layer' 接受用 '|' 连接的 Pass 层名称：'Layer(Highlight)'、'Layer(Enemies | Allies)'。"
+    state machine
+}
+
+ListShape {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'List' takes one list name: 'List(Enemies)'."
+    text  "'List' 接受一个列表名称：'List(Enemies)'。"
+    state machine
+}
+
+MaterialNotFound {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "No material '{0}' was found: a bare name is the material a '.dss' under the same source root builds, an object path any material or material instance."
+    text  "找不到材质 '{0}'：裸名称指的是同一源根下某个 '.dss' 构建的材质，对象路径则可以指向任意材质或材质实例。"
+    state machine
+}
+
+MaterialNotString {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Material' takes the material as a quoted name or object path: 'Material = \"PP_Composite\";'."
+    text  "'Material' 接受带引号的材质名称或对象路径：'Material = \"PP_Composite\";'。"
+    state machine
+}
+
+MeshAfterUpscaleCopied {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "At {0} the view is upscaled and scene depth is still at render resolution; mesh pass '{1}' tests against it, or against a copy of it brought into the pixels of outputs of another size, so its depth test is only as fine as the render resolution."
+    text  "在 {0}，视图已经放大，而场景深度仍是渲染分辨率；网格 Pass '{1}' 针对它做深度测试，或针对一份换算到其他尺寸输出像素上的副本做测试，因此它的深度测试精度只能达到渲染分辨率。"
+    state machine
+}
+
+MeshAtBeginView {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A mesh pass draws primitives against a view that has no depth yet at BeginView; run '{0}' at BeforeBasePass or later."
+    text  "网格 Pass 要在视图上绘制图元，而视图在 BeginView 还没有深度；请在 BeforeBasePass 或更晚的注入点运行 '{0}'。"
+    state machine
+}
+
+MeshAtEndOfView {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "At EndOfView the view is at output resolution and has no depth to draw primitives against; run mesh pass '{0}' earlier."
+    text  "在 EndOfView，视图处于输出分辨率，也没有可供绘制图元时测试的深度；请让网格 Pass '{0}' 更早运行。"
+    state machine
+}
+
+MeshBeforeBasePassTestScene {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "At BeforeBasePass scene depth holds what the depth prepass drew, which may not be everything; mesh pass '{0}' is meant to run there with 'Depth = None' or 'Depth = Own(...)'."
+    text  "在 BeforeBasePass，场景深度只包含深度预通道绘制的内容，未必是全部；网格 Pass '{0}' 在那里运行时应使用 'Depth = None' 或 'Depth = Own(...)'。"
+    state machine
+}
+
+MeshDomain {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a {1} material, and a mesh pass draws primitives with a Surface one."
+    text  "'{0}' 是 {1} 材质，而网格 Pass 用 Surface 材质绘制图元。"
+    state machine
+}
+
+MeshModeNeedsMaterial {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Mode = {0}' draws with the pass's own material, and mesh pass '{1}' names none; add 'Material = \"...\"', or write 'Mode = Own'."
+    text  "'Mode = {0}' 使用 Pass 指定的材质绘制，而网格 Pass '{1}' 没有指定材质；请添加 'Material = \"...\"'，或改写为 'Mode = Own'。"
+    state machine
+}
+
+MeshNewTranslator {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' asks for the new material translator, which UE.DreamPassOutput does not support; remove 'bEnableNewHLSLGenerator' from it."
+    text  "'{0}' 要求使用新的材质翻译器，而 UE.DreamPassOutput 不支持它；请从中删除 'bEnableNewHLSLGenerator'。"
+    state machine
+}
+
+MeshNoFilter {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Mesh pass '{0}' needs 'Filter = ...' to say which primitives it draws: 'Stencil(1)', 'Layer(Name)', 'List(Name)'."
+    text  "网格 Pass '{0}' 需要用 'Filter = ...' 说明它绘制哪些图元：'Stencil(1)'、'Layer(Name)'、'List(Name)'。"
+    state machine
+}
+
+MeshNoPassOutput {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' has no UE.DreamPassOutput in its graph, so a mesh pass has nothing to write; add 'UE.DreamPassOutput(Output0 = ...);' to the material."
+    text  "'{0}' 的图中没有 UE.DreamPassOutput，因此网格 Pass 没有东西可写；请在材质中添加 'UE.DreamPassOutput(Output0 = ...);'。"
+    state machine
+}
+
+MeshOutputNotConnected {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' leaves Output{1} of its UE.DreamPassOutput unconnected, so '{2}' would receive nothing."
+    text  "'{0}' 的 UE.DreamPassOutput 的 Output{1} 没有连接，因此 '{2}' 收不到任何内容。"
+    state machine
+}
+
+MeshOwnDepthSceneTargets {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Mesh pass '{0}' writes '{1}', a texture of the scene, and tests against its own depth '{2}', which is bound from its corner: in a view that does not start at the corner of the scene's textures -- the second view of split screen, the right eye in stereo -- the depth does not reach the view's pixels, and the runtime skips the pass there."
+    text  "网格 Pass '{0}' 写入场景纹理 '{1}'，并针对自身深度 '{2}' 做测试，而该深度是从其角点开始绑定的：在不从场景纹理角点开始的视图中——分屏的第二个视图、立体渲染的右眼——深度覆盖不到视图的像素，运行时会在那里跳过这个 Pass。"
+    state machine
+}
+
+MeshOwnDepthSmaller {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Mesh pass '{0}' tests against its own depth '{1}', which is {2}, and its outputs are {3}; an own depth is bound as it is, so it must be at least their size: give it their resolution and a scale no smaller than theirs, or a fixed size no smaller than theirs."
+    text  "网格 Pass '{0}' 针对自身深度 '{1}' 做测试，它的尺寸是 {2}，而输出是 {3}；自身深度按原样绑定，因此至少要与输出一样大：请给它与输出相同的分辨率和不小于输出的缩放比例，或不小于输出的固定尺寸。"
+    state machine
+}
+
+MeshOwnIgnoresMaterial {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Mode = Own' draws every primitive with its own material, so the 'Material' of mesh pass '{0}' is never used."
+    text  "'Mode = Own' 用每个图元的自身材质绘制，因此网格 Pass '{0}' 的 'Material' 永远不会被用到。"
+    state machine
+}
+
+MeshOwnParams {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Mesh pass '{0}' draws every primitive with its own material, so its 'param' lines reach no material."
+    text  "网格 Pass '{0}' 用每个图元的自身材质绘制，因此它的 'param' 行传不到任何材质。"
+    state machine
+}
+
+MeshReads {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Mesh pass '{0}' cannot read a buffer: a mesh pass binds no input, and its material samples what it needs itself."
+    text  "网格 Pass '{0}' 不能读取缓冲：网格 Pass 不绑定任何输入，它的材质会自行采样所需的内容。"
+    state machine
+}
+
+MeshSceneAndOwnTargets {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Mesh pass '{0}' writes '{1}', a texture of the scene, together with '{2}', a buffer of the pipeline. A mesh pass draws all its targets through one viewport, so they have to be one size holding the view at one place; the scene's textures are usually larger than the view they hold (rounded up, and in the editor grown to the largest view so far) while a buffer is the view's size, and the runtime skips the pass whenever the two differ. Write them in two mesh passes."
+    text  "网格 Pass '{0}' 同时写入场景纹理 '{1}' 和管线缓冲 '{2}'。网格 Pass 通过同一个视口绘制它的所有目标，因此这些目标必须尺寸相同，且视图在其中的位置相同；场景纹理通常比其中的视图大（会向上取整，在编辑器中还会增长到迄今最大的视图尺寸），而缓冲与视图一样大，两者不一致时运行时就会跳过这个 Pass。请用两个网格 Pass 分别写入它们。"
+    state machine
+}
+
+MeshSizesDiffer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "The outputs of mesh pass '{0}' are drawn together and have one size: '{1}' is {2}, and '{3}' is {4}."
+    text  "网格 Pass '{0}' 的各个输出是一起绘制的，必须尺寸相同：'{1}' 是 {2}，而 '{3}' 是 {4}。"
+    state machine
+}
+
+MeshUsage {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Mesh pass '{0}' draws {1} primitives, and '{2}' is not compiled for them; give the material its usage flag ('#pragma material({3} = true)' in its '.dss'), or leave {1} out of 'Usage'."
+    text  "网格 Pass '{0}' 要绘制 {1} 图元，而 '{2}' 没有为它们编译；请给该材质加上对应的使用标志（在它的 '.dss' 中写 '#pragma material({3} = true)'），或从 'Usage' 中去掉 {1}。"
+    state machine
+}
+
+MeshWriteInteger {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Mesh pass '{0}' writes '{1}', a {2} buffer, and a mesh pass writes the float4 outputs of UE.DreamPassOutput, which an integer target would take as raw bits; write a float buffer."
+    text  "网格 Pass '{0}' 写入的 '{1}' 是 {2} 缓冲，而网格 Pass 写入的是 UE.DreamPassOutput 的 float4 输出，整数目标会把它们当作原始位接收；请写入浮点缓冲。"
+    state machine
+}
+
+MeshWriteSlot {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A mesh pass names the output of UE.DreamPassOutput each write takes: 'write Output0 = {0};' (Output0 to Output3)."
+    text  "网格 Pass 要为每个 write 指明它取自 UE.DreamPassOutput 的哪个输出：'write Output0 = {0};'（Output0 到 Output3）。"
+    state machine
+}
+
+MeshWrites {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Mesh pass '{0}' writes {1} buffers, and a mesh pass writes one to four, 'write Output0 = Buffer;' for each output of UE.DreamPassOutput it fills."
+    text  "网格 Pass '{0}' 写入了 {1} 个缓冲，而网格 Pass 只能写入一到四个：它填充的 UE.DreamPassOutput 的每个输出各对应一行 'write Output0 = Buffer;'。"
+    state machine
+}
+
+MipsUnsupported {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Mips' of buffer '{0}' is {1}; only 1 is supported because passes cannot initialize or update a mip chain."
+    text  "缓冲区 '{0}' 的 'Mips' 为 {1}；只支持 1，因为 pass 无法初始化或更新 mip 链。"
+    state machine
+}
+
+Numbers {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "numbers"
+    text  "数值"
+    state machine
+}
+
+Numbers2 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "numbers"
+    text  "数值"
+    state machine
+}
+
+ParamNotAffine {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A 'param' over a parameter or 'DreamPassWeight' keeps the shape 'Source * a + b', with a and b numbers the compiler can fold; this expression has another shape. Compute it in the shader or the material instead."
+    text  "基于参数或 'DreamPassWeight' 的 'param' 必须保持 'Source * a + b' 的形式，其中 a 和 b 是编译器可以折叠的数值；这个表达式是别的形式。请改为在着色器或材质中计算它。"
+    state machine
+}
+
+ParamNotFoldable {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A 'param' is a parameter of the pipeline (times a number, plus a number), 'DreamPassWeight' (the same), or a value the compiler can fold, and this is none of them."
+    text  "'param' 只能是管线的参数（乘以一个数、再加上一个数）、'DreamPassWeight'（同上），或编译器可以折叠的值，而这里都不是。"
+    state machine
+}
+
+ParamOperandNotScalar {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "What scales or offsets a parameter in a 'param' is one number the compiler can fold; a vector, or a value known only at run time, has no place in the asset's 'Source * a + b'."
+    text  "在 'param' 中缩放或偏移参数的，只能是编译器可以折叠的单个数值；向量或仅在运行时才知道的值，在资产的 'Source * a + b' 中都没有位置。"
+    state machine
+}
+
+ParamScaledNotNumber {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a {1}, which is passed on as it is; only a number can be scaled or offset."
+    text  "'{0}' 是 {1}，只能原样传递；只有数值才能缩放或偏移。"
+    state machine
+}
+
+ParamUnknownName {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a 'uniform' or 'static const' of this pipeline, nor 'DreamPassWeight'."
+    text  "'{0}' 既不是此管线的 'uniform' 或 'static const'，也不是 'DreamPassWeight'。"
+    state machine
+}
+
+ParamUnknownNameDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a 'uniform' or 'static const' of this pipeline; did you mean '{1}'? Names are case-sensitive."
+    text  "'{0}' 不是此管线的 'uniform' 或 'static const'；你是不是想写 '{1}'？名称区分大小写。"
+    state machine
+}
+
+ParameterNameCaseClash {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "The parameter '{0}' differs from '{1}', declared on line {2}, in case only; the pipeline asset keeps parameter names as Unreal names, which compare ignoring case, so the two would be one parameter there. Rename one."
+    text  "参数 '{0}' 与第 {2} 行声明的 '{1}' 只有大小写不同；管线资产把参数名保存为 Unreal 名称，而这种名称比较时不区分大小写，因此两者在资产中会成为同一个参数。请重命名其中一个。"
+    state machine
+}
+
+PassEnabledNotName {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Enabled' takes the name of a 'uniform bool', or 'true'."
+    text  "'Enabled' 接受 'uniform bool' 的名称，或 'true'。"
+    state machine
+}
+
+PassKeyOfOtherKind {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a key of {1} passes, and '{2}' is a {3} pass."
+    text  "'{0}' 是 {1} Pass 的键，而 '{2}' 是 {3} Pass。"
+    state machine
+}
+
+PassKeyTwice {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is set twice in pass '{1}'; it was already set on line {2}."
+    text  "'{0}' 在 Pass '{1}' 中被设置了两次；它已在第 {2} 行设置过。"
+    state machine
+}
+
+PassNameCaseClash {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Pass '{0}' differs from '{1}', declared on line {2}, in case only; the pipeline asset keeps pass names as Unreal names, which compare ignoring case, so the two would be one pass there. Rename one."
+    text  "Pass '{0}' 与第 {2} 行声明的 '{1}' 只有大小写不同；管线资产把 Pass 名称保存为 Unreal 名称，而这种名称比较时不区分大小写，因此两者在资产中会成为同一个 Pass。请重命名其中一个。"
+    state machine
+}
+
+PassTwice {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A pass named '{0}' is already declared on line {1}; RDG events and stats are named after passes, so each name is used once."
+    text  "名为 '{0}' 的 Pass 已在第 {1} 行声明；RDG 事件和统计数据以 Pass 命名，因此每个名称只能使用一次。"
+    state machine
+}
+
+PipelineArray {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is an array, and a pipeline has no array parameters or constants; declare one per element."
+    text  "'{0}' 是数组，而管线没有数组参数或数组常量；请为每个元素各声明一个。"
+    state machine
+}
+
+PipelineConstantNoInitializer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a compile-time constant and must be initialised where it is declared."
+    text  "'{0}' 是编译期常量，必须在声明处初始化。"
+    state machine
+}
+
+PipelineConstantType {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is declared '{1}', and a pipeline constant is a number or a bool of one to four components."
+    text  "'{0}' 被声明为 '{1}'，而管线常量必须是一到四个分量的数值或 bool。"
+    state machine
+}
+
+PipelineDeclarationOutsideDsp {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0} {1}' is a declaration of a Custom Pass pipeline, which only a '.dsp' file holds, and '{2}' is not one; a pipeline cannot be included."
+    text  "'{0} {1}' 是 Custom Pass 管线的声明，只有 '.dsp' 文件才能包含它，而 '{2}' 不是 '.dsp'；管线不能被 include。"
+    state machine
+}
+
+PipelineDefaultNotConstant {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "The default of '{0}' is written into the pipeline asset, so it has to be a value the compiler can fold: a literal, a 'static const', or arithmetic over those."
+    text  "'{0}' 的默认值会写入管线资产，因此它必须是编译器可以折叠的值：字面量、'static const'，或由它们组成的算术表达式。"
+    state machine
+}
+
+PipelineDirectiveNoEffect {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'@{0}' has no effect on {1} in a '.dsp'; remove it."
+    text  "'@{0}' 对 '.dsp' 中的 {1} 不起作用；请删除它。"
+    state machine
+}
+
+PipelineEnabledNotName {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Enabled' takes the name of a 'uniform bool' or 'true', and '{0}' is neither."
+    text  "'Enabled' 接受 'uniform bool' 的名称或 'true'，而 '{0}' 两者都不是。"
+    state machine
+}
+
+PipelineFlagUnknown {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not one of the '{1}' a pipeline knows: {2}."
+    text  "'{0}' 不是管线认识的 '{1}' 取值之一：{2}。"
+    state machine
+}
+
+PipelineFlagUnknownDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not one of the '{1}' a pipeline knows; did you mean '{2}'?"
+    text  "'{0}' 不是管线认识的 '{1}' 取值之一；你是不是想写 '{2}'？"
+    state machine
+}
+
+PipelineFlagsQuoted {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' takes names written without quotes and joined by '|', such as '{0} = {1}', and \"{2}\" is a quoted string."
+    text  "'{0}' 接受不加引号、用 '|' 连接的名称，例如 '{0} = {1}'，而 \"{2}\" 是带引号的字符串。"
+    state machine
+}
+
+PipelineHoldsFunction {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A '.dsp' holds '#pragma pipeline', 'uniform', 'static const', 'buffer' and 'pass' declarations and an 'hlsl' block, and '{0}' is a function outside it; an HLSL function goes in an 'hlsl { }' block, the file's or a pass's, and a DreamShaderLang one in a '.dss' or a '.dsh'."
+    text  "'.dsp' 中只有 '#pragma pipeline'、'uniform'、'static const'、'buffer'、'pass' 声明和一个 'hlsl' 块，而 '{0}' 是写在块外的函数；HLSL 函数请写进 'hlsl { }' 块（文件级的或某个 Pass 的），DreamShaderLang 函数请写在 '.dss' 或 '.dsh' 里。"
+    state machine
+}
+
+PipelineHoldsInclude {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A '.dsp' includes no DreamShaderLang, and has no code that could use '{0}'; remove the include. A shader file the HLSL of a pass needs is included inside its 'hlsl { }' block."
+    text  "'.dsp' 不 include 任何 DreamShaderLang 文件，其中也没有代码会用到 '{0}'；请删除这个 include。Pass 的 HLSL 需要的着色器文件，请在它的 'hlsl { }' 块里 include。"
+    state machine
+}
+
+PipelineHoldsMaterialPragma {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'#pragma material' configures a material, and a '.dsp' is configured by '#pragma pipeline(...)'; the material a pass draws with is a '.dss' of its own."
+    text  "'#pragma material' 配置的是材质，而 '.dsp' 由 '#pragma pipeline(...)' 配置；Pass 绘制所用的材质是单独的 '.dss'。"
+    state machine
+}
+
+PipelineHoldsStruct {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A '.dsp' holds '#pragma pipeline', 'uniform', 'static const', 'buffer' and 'pass' declarations and an 'hlsl' block, and 'struct {0}' declares a type outside it; an HLSL struct goes in an 'hlsl { }' block, and a DreamShaderLang one in a '.dsh'."
+    text  "'.dsp' 中只有 '#pragma pipeline'、'uniform'、'static const'、'buffer'、'pass' 声明和一个 'hlsl' 块，而 'struct {0}' 是在块外声明的类型；HLSL 结构体请写进 'hlsl { }' 块，DreamShaderLang 结构体请写在 '.dsh' 里。"
+    state machine
+}
+
+PipelineIgnoresGraphPragma {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'#pragma {0}' boxes or places graph nodes, and a '.dsp' has no graph; the line was ignored."
+    text  "'#pragma {0}' 用于给图节点加框或摆放位置，而 '.dsp' 没有图；该行已被忽略。"
+    state machine
+}
+
+PipelineNoCustomPassFacts {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "This engine has no Custom Pass runtime (it needs Unreal Engine 5.8 or later), so what the passes' materials offer them -- UserSceneTexture inputs, UE.DreamPassOutput pins, usage flags, the pre-exposure and translator settings -- was not read and not checked; the pipeline is not built on this engine."
+    text  "当前引擎没有 Custom Pass 运行时（需要 Unreal Engine 5.8 或更高版本），因此各 Pass 的材质为它们提供的内容——UserSceneTexture 输入、UE.DreamPassOutput 引脚、使用标志、预曝光和翻译器设置——既没有读取，也没有检查；该管线不会在此引擎上构建。"
+    state machine
+}
+
+PipelineNoReferences {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "The materials, shader files and pass layers this pipeline names are not available here, so they were taken as written and the checks that need them were skipped; compile the pipeline in the editor to have them checked."
+    text  "此管线引用的材质、着色器文件和 Pass 层在这里不可用，因此按所写内容接受它们，并跳过了依赖它们的检查；请在编辑器中编译该管线以完成这些检查。"
+    state machine
+}
+
+PipelineNoViews {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Views' names no view, so the pipeline would run nowhere."
+    text  "'Views' 没有指定任何视图，因此该管线不会在任何地方运行。"
+    state machine
+}
+
+PipelineOrderNotInteger {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Order' takes a whole number, the order among pipelines at one injection point (smaller first), and '{0}' is not one."
+    text  "'Order' 接受一个整数，表示同一注入点上各管线之间的顺序（小的在前），而 '{0}' 不是整数。"
+    state machine
+}
+
+PipelineParameterType {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is declared '{1}', and a pipeline parameter is a float, float2, float3, float4, int, bool or Texture2D."
+    text  "'{0}' 被声明为 '{1}'，而管线参数只能是 float、float2、float3、float4、int、bool 或 Texture2D。"
+    state machine
+}
+
+PipelinePragmaDuplicateKey {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is set twice by '#pragma pipeline'; it was already set on line {1}."
+    text  "'{0}' 在 '#pragma pipeline' 中被设置了两次；第 {1} 行已经设置过它。"
+    state machine
+}
+
+PipelinePragmaOutsideDsp {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'#pragma pipeline' configures a Custom Pass pipeline and belongs in a '.dsp' file of its own, and this line is in '{0}'; move it, with the pipeline's buffers and passes, into a '.dsp'."
+    text  "'#pragma pipeline' 配置的是 Custom Pass 管线，应当放在它自己的 '.dsp' 文件里，而这一行在 '{0}' 中；请把它连同管线的缓冲和 Pass 一起移到 '.dsp' 中。"
+    state machine
+}
+
+PipelinePragmaUnknownKey {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a key of '#pragma pipeline'; the keys are {1}."
+    text  "'{0}' 不是 '#pragma pipeline' 的键；可用的键有 {1}。"
+    state machine
+}
+
+PipelinePragmaUnknownKeyDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a key of '#pragma pipeline'; did you mean '{1}'? Keys are case-sensitive."
+    text  "'{0}' 不是 '#pragma pipeline' 的键；你是不是想写 '{1}'？键名区分大小写。"
+    state machine
+}
+
+PipelineSecondPragma {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'#pragma pipeline' is written a second time, and one '.dsp' is one pipeline; the line {0} already configures it."
+    text  "'#pragma pipeline' 被写了第二次，而一个 '.dsp' 就是一个管线；第 {0} 行已经配置过它。"
+    state machine
+}
+
+PipelineTextureInitializer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a texture parameter, which takes an asset rather than a value; write '/// @default /Game/...' above it instead of an initializer."
+    text  "'{0}' 是纹理参数，它接受的是资产而不是值；请在它上方写 '/// @default /Game/...'，而不要写初始化器。"
+    state machine
+}
+
+PipelineVariableStorage {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a file-scope variable of a '.dsp', which is a 'uniform' (a parameter an activation may override) or a 'static const' (a compile-time value)."
+    text  "'{0}' 是 '.dsp' 中的文件作用域变量，它必须是 'uniform'（激活时可覆盖的参数）或 'static const'（编译期值）。"
+    state machine
+}
+
+PipelineWeightDeclared {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'DreamPassWeight' is the pipeline's weight in a view, which every pass can read as 'param P = DreamPassWeight'; it cannot be declared."
+    text  "'DreamPassWeight' 是管线在视图中的权重，每个 Pass 都可以通过 'param P = DreamPassWeight' 读取它；它不能被声明。"
+    state machine
+}
+
+PreExposure {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Pass '{0}' writes a data buffer, and '{1}' scales what it reads and writes by the exposure; give it '#pragma material(bDisablePreExposureScale = true)'."
+    text  "Pass '{0}' 写入的是数据缓冲，而 '{1}' 会按曝光缩放它读写的内容；请给它加上 '#pragma material(bDisablePreExposureScale = true)'。"
+    state machine
+}
+
+PreviousWithoutHistory {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}.Previous' reads last frame's '{0}', and '{0}' keeps none; declare it with 'History = true'."
+    text  "'{0}.Previous' 读取的是上一帧的 '{0}'，而 '{0}' 不保留历史；请用 'History = true' 声明它。"
+    state machine
+}
+
+ReadAndWrite {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Pass '{0}' reads and writes '{1}', and one pass cannot have one texture as its input and its output; write another buffer, or read '{1}.Previous' of a 'History = true' buffer."
+    text  "Pass '{0}' 同时读取和写入 '{1}'，而一个 Pass 不能把同一张纹理既当输入又当输出；请写入另一个缓冲，或读取 'History = true' 缓冲的 '{1}.Previous'。"
+    state machine
+}
+
+ReadBeforeWrite {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Pass '{0}' reads '{1}' before '{2}' writes it in the frame, so it reads the buffer's 'Clear' value; move the reader after the writer, or read '{1}.Previous'."
+    text  "在帧内，Pass '{0}' 在 '{2}' 写入 '{1}' 之前就读取了它，因此读到的是该缓冲的 'Clear' 值；请把读取方移到写入方之后，或读取 '{1}.Previous'。"
+    state machine
+}
+
+ReadBeforeWriteNoClear {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Pass '{0}' reads '{1}' before '{2}' writes it, and '{1}' is 'Clear = None', so what it reads is undefined; move the reader after the writer, or give the buffer a 'Clear' value."
+    text  "Pass '{0}' 在 '{2}' 写入 '{1}' 之前就读取了它，而 '{1}' 是 'Clear = None'，因此读到的内容是未定义的；请把读取方移到写入方之后，或给该缓冲一个 'Clear' 值。"
+    state machine
+}
+
+ReadNeverWrittenNoClear {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Pass '{0}' reads '{1}', which no pass writes, and '{1}' is 'Clear = None', so what it reads is undefined."
+    text  "Pass '{0}' 读取 '{1}'，但没有任何 Pass 写入它，而 '{1}' 是 'Clear = None'，因此读到的内容是未定义的。"
+    state machine
+}
+
+ReadNotAnInput {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' reads no UserSceneTexture of '{1}': its inputs are {2}."
+    text  "'{0}' 没有名为 '{1}' 的 UserSceneTexture 输入：它的输入有 {2}。"
+    state machine
+}
+
+Reads {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "reads"
+    text  "读取"
+    state machine
+}
+
+ResolutionFixed {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A fixed size is written 'Size = int2(width, height)', not 'Resolution = Fixed'."
+    text  "固定尺寸要写成 'Size = int2(width, height)'，而不是 'Resolution = Fixed'。"
+    state machine
+}
+
+RuntimeValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "value known only at run time"
+    text  "仅在运行时才知道的值"
+    state machine
+}
+
+RuntimeValue2 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "value known only at run time"
+    text  "仅在运行时才知道的值"
+    state machine
+}
+
+ScaleRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Scale' of buffer '{0}' is {1}, and a scale is between 0.0625 and 4."
+    text  "缓冲 '{0}' 的 'Scale' 是 {1}，而缩放比例必须在 0.0625 到 4 之间。"
+    state machine
+}
+
+SceneColorAfterBasePass {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "At AfterBasePass scene colour holds the emissive light only; nothing is lit yet, so pass '{0}' {1} that."
+    text  "在 AfterBasePass，场景颜色只包含自发光；此时还没有任何光照，因此 Pass '{0}' {1}的就是这样的场景颜色。"
+    state machine
+}
+
+SceneColorResolution {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Pass '{0}' writes scene colour, which is {1} at {2}, and '{3}' with it, which is {4}; targets drawn together have one size."
+    text  "Pass '{0}' 写入场景颜色（它在 {2} 的尺寸是 {1}），同时还写入 '{3}'（尺寸是 {4}）；一起绘制的目标必须尺寸相同。"
+    state machine
+}
+
+SecondFileHlslBlock {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "This file already has an 'hlsl' block, on line {0}, and a '.dsp' has one: write every shared function and entry in it."
+    text  "这个文件在第 {0} 行已经有一个 'hlsl' 块，而一个 '.dsp' 只有一个：请把所有共用函数和入口都写在那里。"
+    state machine
+}
+
+SecondPassHlslBlock {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Pass '{0}' holds a second 'hlsl' block, and the code of a pass is one block; the one on line {1} is it."
+    text  "Pass '{0}' 包含第二个 'hlsl' 块，而 Pass 的代码只有一个块：第 {1} 行的那个就是。"
+    state machine
+}
+
+ShaderAndHlslBlock {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Pass '{0}' runs the shader file '{1}' and holds an 'hlsl' block as well, and the code of a pass is in one place: remove 'Shader' to run the block, or the block to run the file."
+    text  "Pass '{0}' 运行着色器文件 '{1}'，同时又包含一个 'hlsl' 块，而 Pass 的代码只能在一处：删除 'Shader' 以运行这个块，或删除这个块以运行该文件。"
+    state machine
+}
+
+ShaderExtension {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a '.usf' or '.ush' file; the engine compiles shader files of those two kinds only."
+    text  "'{0}' 不是 '.usf' 或 '.ush' 文件；引擎只编译这两种着色器文件。"
+    state machine
+}
+
+ShaderNeedsEntry {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Pass '{0}' runs a shader file, and needs 'Entry = <function>' naming the function in it."
+    text  "Pass '{0}' 运行的是着色器文件，需要用 'Entry = <function>' 指定其中的函数。"
+    state machine
+}
+
+ShaderNotFound {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "The shader file '{0}' does not exist; a path starting with '/' is a virtual shader path, and any other is read from the folder of this '.dsp'."
+    text  "着色器文件 '{0}' 不存在；以 '/' 开头的路径是虚拟着色器路径，其他路径则相对于此 '.dsp' 所在的文件夹读取。"
+    state machine
+}
+
+ShaderNotString {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Shader' takes the shader file as a quoted path: 'Shader = \"Passes/Blur.usf\";'."
+    text  "'Shader' 接受带引号的着色器文件路径：'Shader = \"Passes/Blur.usf\";'。"
+    state machine
+}
+
+SharedCodeNamesBinding {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is in the shared code of the file's 'hlsl' block, and pass '{1}' defines it in its HLSL slot ('{2}'); the shared code is compiled into the slot of every pass whose HLSL is in the '.dsp', after those #defines. Rename it in the block: only an entry, compiled into the slots of the passes that name it, uses a pass's names."
+    text  "'{0}' 出现在文件级 'hlsl' 块的共用代码中，而 Pass '{1}' 在其 HLSL 槽位中定义了它（'{2}'）；共用代码会编译进每个 HLSL 写在 '.dsp' 中的 Pass 的槽位，位于这些 #define 之后。请在块中重命名它：只有入口（只编译进指定它的 Pass 的槽位）才能使用 Pass 的名称。"
+    state machine
+}
+
+SharedCodeNamesEntry {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is in the shared code of the file's 'hlsl' block, and is the entry of pass '{1}' as well, which the pass's slot renames to the slot's entry point with a #define; the shared code is compiled into that slot, after it. Rename it in the block."
+    text  "'{0}' 出现在文件级 'hlsl' 块的共用代码中，同时它也是 Pass '{1}' 的入口，该 Pass 的槽位会用同名的 #define 把它改名为槽位的入口点；共用代码编译在那之后。请在块中重命名它。"
+    state machine
+}
+
+SharedEntryCalled {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is the entry of pass '{1}' in the file's 'hlsl' block, and is called here; an entry is compiled only into the slots of the passes that name it, so nothing else can call it. Move what it shares into a function of its own in the block, and call that."
+    text  "'{0}' 是文件级 'hlsl' 块中 Pass '{1}' 的入口，却在这里被调用；入口只编译进指定它的 Pass 的槽位，其他地方都不能调用它。请把它和别处共用的部分提成块中的一个独立函数，然后调用那个函数。"
+    state machine
+}
+
+SharedEntryNotFound {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "The file's 'hlsl' block does not define a function '{1}', which pass '{0}' names as its 'Entry'."
+    text  "文件级 'hlsl' 块中没有定义函数 '{1}'，而 Pass '{0}' 把它指定为 'Entry'。"
+    state machine
+}
+
+SharedEntryWithoutBlock {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Pass '{0}' has no 'Shader' and no 'hlsl' block of its own, so 'Entry = {1}' names a function of the file's 'hlsl' block, and this '.dsp' has none; write the function in an 'hlsl { }' block at file scope, write the pass's code in an 'hlsl' block of its own, or give it 'Shader = \"<file>.usf\"'."
+    text  "Pass '{0}' 没有 'Shader'，也没有自己的 'hlsl' 块，因此 'Entry = {1}' 指的是文件级 'hlsl' 块中的函数，而这个 '.dsp' 没有文件级块；请把该函数写进文件级的 'hlsl { }' 块，或把这个 Pass 的代码写进它自己的 'hlsl' 块，或给它 'Shader = \"<file>.usf\"'。"
+    state machine
+}
+
+SizeRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Size' of buffer '{0}' is {1} x {2}, and each side is between 1 and 16384."
+    text  "缓冲 '{0}' 的 'Size' 是 {1} x {2}，而每条边都必须在 1 到 16384 之间。"
+    state machine
+}
+
+SlotNameDerived {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a name of pass '{1}' in its HLSL slot twice: the slot's registry names a read's size and UV rect <Name>Size and <Name>UVRect, and a write's size <Name>Size, beside the names the pass binds; rename one of them."
+    text  "'{0}' 作为 Pass '{1}' 在其 HLSL 槽位中的名称出现了两次：除了 Pass 绑定的名称之外，槽位注册表还会把 read 的尺寸和 UV 矩形命名为 <Name>Size 和 <Name>UVRect，把 write 的尺寸命名为 <Name>Size；请重命名其中一个。"
+    state machine
+}
+
+SlotNameEntry {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a name of pass '{1}' in its HLSL slot, and so is its entry point: the slot's registry renames the Entry to the slot's own entry function with a #define of that name; rename the binding."
+    text  "'{0}' 是 Pass '{1}' 在其 HLSL 槽位中的名称，而它的入口点也叫这个名字：槽位注册表会用同名的 #define 把 Entry 改名为槽位自己的入口函数；请重命名该绑定。"
+    state machine
+}
+
+SlotNameReserved {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a name of pass '{1}' in its HLSL slot, and names starting with DP_ are the slot's own parameters (DreamPass.ush); rename the binding."
+    text  "'{0}' 是 Pass '{1}' 在其 HLSL 槽位中的名称，而以 DP_ 开头的名称属于槽位自身的参数（DreamPass.ush）；请重命名该绑定。"
+    state machine
+}
+
+SlotParamsTooMany {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "The parameters of pass '{0}' do not fit the {1} float4 of a shader slot, packed in order (a float4 takes a vector of its own, a float3 three components, a float2 a half, a scalar one); pass fewer, or pack them yourself."
+    text  "Pass '{0}' 的参数按顺序打包后放不进着色器槽位的 {1} 个 float4（float4 独占一个向量，float3 占三个分量，float2 占半个，标量占一个）；请减少参数，或自行打包。"
+    state machine
+}
+
+SlotPassBeginView {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "At BeginView the scene textures do not exist yet: the SceneTextures pass '{0}' sees are placeholders. Its 'View' holds the camera -- transforms, position, view rect, time -- but nothing the renderer adds later: no sky or atmosphere, PreExposure 1, and last frame's transforms equal this frame's."
+    text  "在 BeginView，场景纹理还不存在：Pass '{0}' 看到的 SceneTextures 只是占位内容。它的 'View' 包含相机数据——变换矩阵、位置、视口矩形、时间——但不含渲染器之后才填的内容：没有天空和大气，PreExposure 为 1，上一帧的变换等于本帧的。"
+    state machine
+}
+
+SlotTextureParamMaterial {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is a {1}, and the parameter block of a shader slot holds numbers only, so no texture parameter reaches a '.usf' pass. A material takes one through 'param': draw this pass with a material ('Material = ...'), or let a fullscreen material pass that takes the texture by 'param' write it into a buffer this pass reads."
+    text  "'{0}' 是 {1}，而着色器槽位的参数块只能存放数值，因此任何纹理参数都传不到 '.usf' Pass。材质可以通过 'param' 接收纹理：请改用材质绘制这个 Pass（'Material = ...'），或让一个通过 'param' 接收该纹理的全屏材质 Pass 把它写入这个 Pass 读取的缓冲。"
+    state machine
+}
+
+SlotTwice {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is bound twice in pass '{1}'; inside a pass every input, output and parameter has a name of its own."
+    text  "'{0}' 在 Pass '{1}' 中被绑定了两次；在一个 Pass 内，每个输入、输出和参数都必须有自己的名称。"
+    state machine
+}
+
+SlotTwiceCase {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' and '{1}' differ in case only, and pass '{2}' matches them to its material's inputs and parameters as Unreal names, which ignore case: give them names of their own."
+    text  "'{0}' 和 '{1}' 只有大小写不同，而 Pass '{2}' 会把它们作为 Unreal 名称与其材质的输入和参数匹配，这种名称不区分大小写：请给它们各取不同的名称。"
+    state machine
+}
+
+StencilArity {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Stencil' takes the stencil value and, optionally, the mask it is compared under: 'Stencil(1)', 'Stencil(4, 0x0F)'."
+    text  "'Stencil' 接受模板值，以及可选的比较掩码：'Stencil(1)'、'Stencil(4, 0x0F)'。"
+    state machine
+}
+
+StencilMaskWithoutStencil {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Nanite = StencilMask' writes where CustomStencil matches the filter's 'Stencil(...)', and the filter of '{0}' has none; use 'AssignStencil(n)' for layers and lists."
+    text  "'Nanite = StencilMask' 会在 CustomStencil 与筛选条件中的 'Stencil(...)' 匹配处写入，而 '{0}' 的筛选条件中没有这一项；对于层和列表，请使用 'AssignStencil(n)'。"
+    state machine
+}
+
+StencilRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A stencil value and its mask are 0 to 255."
+    text  "模板值及其掩码必须在 0 到 255 之间。"
+    state machine
+}
+
+ThreadsDisagree {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Threads = uint3({0}, {1}, {2})' disagrees with '[numthreads({3}, {4}, {5})]' of '{6}', and the dispatch would be sized for groups the shader does not have; leave 'Threads' out, or write the same numbers."
+    text  "'Threads = uint3({0}, {1}, {2})' 与 '{6}' 的 '[numthreads({3}, {4}, {5})]' 不一致，派发会按着色器实际没有的线程组大小来计算；请去掉 'Threads'，或写成相同的数值。"
+    state machine
+}
+
+ThreadsRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Threads' is a thread group of at least 1 in each direction, at most 64 in z and at most 1024 threads in all."
+    text  "'Threads' 表示一个线程组：每个方向至少为 1，z 方向最多为 64，总线程数最多为 1024。"
+    state machine
+}
+
+TonemapperWritesNothing {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Pass '{0}' replaces the tonemapper, which makes the frame's final colour, and writes no 'SceneColor'; add 'write SceneColor;'."
+    text  "Pass '{0}' 替换了负责生成帧最终颜色的色调映射器，却没有写入 'SceneColor'；请添加 'write SceneColor;'。"
+    state machine
+}
+
+TranslucencyOnlyThere {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Translucency' exists on the post-process chain only (PostProcess.*), and pass '{1}' runs at {2}."
+    text  "'Translucency' 只存在于后处理链上（PostProcess.*），而 Pass '{1}' 在 {2} 运行。"
+    state machine
+}
+
+TwoTonemappers {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "Pass '{0}' replaces the tonemapper, and so does '{1}'; one view runs one tonemapper, so a pipeline replaces it at most once."
+    text  "Pass '{0}' 替换了色调映射器，'{1}' 也替换了它；一个视图只运行一个色调映射器，因此一个管线最多只能替换它一次。"
+    state machine
+}
+
+UnknownBuffer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is neither a buffer of this pipeline nor a built-in texture; declare it with 'buffer {0} : <Format>;'."
+    text  "'{0}' 既不是此管线的缓冲，也不是内置纹理；请用 'buffer {0} : <Format>;' 声明它。"
+    state machine
+}
+
+UnknownBufferDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is neither a buffer of this pipeline nor a built-in texture; did you mean '{1}'? Names are case-sensitive."
+    text  "'{0}' 既不是此管线的缓冲，也不是内置纹理；你是不是想写 '{1}'？名称区分大小写。"
+    state machine
+}
+
+UnknownBufferKey {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a key of a buffer; the keys are {1}."
+    text  "'{0}' 不是缓冲的键；可用的键有 {1}。"
+    state machine
+}
+
+UnknownBufferKeyDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a key of a buffer; did you mean '{1}'? Keys are case-sensitive."
+    text  "'{0}' 不是缓冲的键；你是不是想写 '{1}'？键名区分大小写。"
+    state machine
+}
+
+UnknownFormat {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a buffer format; the formats are {1}."
+    text  "'{0}' 不是缓冲格式；可用的格式有 {1}。"
+    state machine
+}
+
+UnknownFormatDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a buffer format; did you mean '{1}'? Formats are case-sensitive."
+    text  "'{0}' 不是缓冲格式；你是不是想写 '{1}'？格式名区分大小写。"
+    state machine
+}
+
+UnknownInjection {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not an injection point; the points are {1}."
+    text  "'{0}' 不是注入点；可用的注入点有 {1}。"
+    state machine
+}
+
+UnknownInjectionDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not an injection point; did you mean '{1}'?"
+    text  "'{0}' 不是注入点；你是不是想写 '{1}'？"
+    state machine
+}
+
+UnknownLayerDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a pass layer of this project; did you mean '{1}'?"
+    text  "'{0}' 不是本项目的 Pass 层；你是不是想写 '{1}'？"
+    state machine
+}
+
+UnknownLayerFirstNames {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a pass layer of this project; the layers are the first {1} names of Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names."
+    text  "'{0}' 不是本项目的 Pass 层；Pass 层是项目设置 > DreamPlugin > DreamShader Custom Pass > Layer Names 中的前 {1} 个名称。"
+    state machine
+}
+
+UnknownPassKey {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a key of a {1} pass; its keys are {2}."
+    text  "'{0}' 不是 {1} Pass 的键；它的键有 {2}。"
+    state machine
+}
+
+UnknownPassKeyDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a key of a {1} pass; did you mean '{2}'? Keys are case-sensitive."
+    text  "'{0}' 不是 {1} Pass 的键；你是不是想写 '{2}'？键名区分大小写。"
+    state machine
+}
+
+UnknownPassKind {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a pass kind; a pass is {1}."
+    text  "'{0}' 不是 Pass 种类；Pass 可以是 {1}。"
+    state machine
+}
+
+UnknownPassKindDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a pass kind; did you mean '{1}'? Kinds are written in lower case."
+    text  "'{0}' 不是 Pass 种类；你是不是想写 '{1}'？种类名要用小写。"
+    state machine
+}
+
+UsageShape {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'Usage' takes vertex factory kinds joined by '|': {0}."
+    text  "'Usage' 接受用 '|' 连接的顶点工厂种类：{0}。"
+    state machine
+}
+
+UsageUnknown {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a mesh usage; the usages are {1}."
+    text  "'{0}' 不是网格用途；可用的用途有 {1}。"
+    state machine
+}
+
+UsageUnknownDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a mesh usage; did you mean '{1}'?"
+    text  "'{0}' 不是网格用途；你是不是想写 '{1}'？"
+    state machine
+}
+
+UseAfterTonemapping {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'BlendableLocation = SceneColorAfterTonemapping'"
+    text  "'BlendableLocation = SceneColorAfterTonemapping'"
+    state machine
+}
+
+UseBeforeTonemapping {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'BlendableLocation = SceneColorAfterDOF' or 'SceneColorBeforeDOF'"
+    text  "'BlendableLocation = SceneColorAfterDOF' 或 'SceneColorBeforeDOF'"
+    state machine
+}
+
+UtilityParams {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "A {0} pass has no shader or material to give a 'param' to."
+    text  "{0} Pass 没有可以接收 'param' 的着色器或材质。"
+    state machine
+}
+
+ValueNotBool {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' takes 'true' or 'false'."
+    text  "'{0}' 接受 'true' 或 'false'。"
+    state machine
+}
+
+ValueNotInteger {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' takes a whole number the compiler can fold, and this is a {1}."
+    text  "'{0}' 接受编译器可以折叠的整数，而这里是 {1}。"
+    state machine
+}
+
+ValueNotNumber {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' takes a number the compiler can fold, and this is a {1}."
+    text  "'{0}' 接受编译器可以折叠的数值，而这里是 {1}。"
+    state machine
+}
+
+ValueNotVector {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' takes {1} the compiler can fold, and this is a {2}."
+    text  "'{0}' 接受编译器可以折叠的 {1}，而这里是 {2}。"
+    state machine
+}
+
+ValueNotWord {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' takes one of {1}, written without quotes."
+    text  "'{0}' 接受 {1} 之一，不加引号。"
+    state machine
+}
+
+ValueUnknownWord {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a value of '{1}'; it takes {2}."
+    text  "'{0}' 不是 '{1}' 的取值；它接受 {2}。"
+    state machine
+}
+
+ValueUnknownWordDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}' is not a value of '{1}'; did you mean '{2}'?"
+    text  "'{0}' 不是 '{1}' 的取值；你是不是想写 '{2}'？"
+    state machine
+}
+
+VectorOfN {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "{0} {1}"
+    text  "{0} 个{1}"
+    state machine
+}
+
+VectorOfRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "{0} to {1} {2}"
+    text  "{0} 到 {1} 个{2}"
+    state machine
+}
+
+WhereBuffer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "a buffer"
+    text  "缓冲"
+    state machine
+}
+
+WhereHlslBlock {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "the file's 'hlsl' block"
+    text  "文件级 'hlsl' 块"
+    state machine
+}
+
+WherePass {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "a pass"
+    text  "Pass"
+    state machine
+}
+
+WherePipelineConstant {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "a constant"
+    text  "常量"
+    state machine
+}
+
+WherePipelineParameter {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "a pipeline parameter"
+    text  "管线参数"
+    state machine
+}
+
+WherePipelinePragma {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'#pragma pipeline'"
+    text  "'#pragma pipeline'"
+    state machine
+}
+
+WholeNumbers {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "whole numbers"
+    text  "整数"
+    state machine
+}
+
+WholeNumbers2 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "whole numbers"
+    text  "整数"
+    state machine
+}
+
+WritePrevious {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "'{0}.Previous' is last frame's contents, which nothing writes any more; write '{0}'."
+    text  "'{0}.Previous' 是上一帧的内容，不会再被写入；请写入 '{0}'。"
+    state machine
+}
+
+WritesInto {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp
+    src   "writes into"
+    text  "写入"
+    state machine
+}

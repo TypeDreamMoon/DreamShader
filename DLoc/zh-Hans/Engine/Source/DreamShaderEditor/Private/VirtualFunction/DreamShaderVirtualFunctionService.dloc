@@ -1,0 +1,45 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.VirtualFunction
+
+InvalidMaterialFunctionPackagePath {
+    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionService.cpp
+    src   "MaterialFunction '{0}' does not have a valid package path."
+    text  "材质函数 '{0}' 没有有效的包路径。"
+    state machine
+}
+
+MaterialFunctionHasNoOutputs {
+    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionService.cpp
+    src   "MaterialFunction '{0}' does not expose any outputs."
+    text  "材质函数 '{0}' 未暴露任何输出。"
+    state machine
+}
+
+NoMaterialFunctionAssetProvided {
+    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionService.cpp
+    src   "No MaterialFunction asset was provided."
+    text  "未提供材质函数资产。"
+    state machine
+}
+
+VirtualFunctionHasNoOutputs {
+    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionService.cpp
+    src   "VirtualFunction '{0}' does not expose any outputs."
+    text  "VirtualFunction '{0}' 未暴露任何输出。"
+    state machine
+}
+
+VirtualFunctionNameCannotBeEmpty {
+    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionService.cpp
+    src   "VirtualFunction name cannot be empty."
+    text  "VirtualFunction 名称不能为空。"
+    state machine
+}
+
+VirtualFunctionNoPrototype {
+    at    Source/DreamShaderEditor/Private/VirtualFunction/DreamShaderVirtualFunctionService.cpp
+    src   "The VirtualFunction definition did not read back as an extern prototype."
+    text  "VirtualFunction 定义没有能读回为 extern 原型。"
+    state machine
+}

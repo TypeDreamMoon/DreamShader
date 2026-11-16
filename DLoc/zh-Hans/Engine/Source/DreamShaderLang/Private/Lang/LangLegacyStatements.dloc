@@ -1,0 +1,157 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Lang.LegacyStatements
+
+ArrayLocal {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected a single value in a 1.x Graph declaration, found the array declarator '{0}'; move this code to a .dss file."
+    text  "期望 1.x Graph 声明中是单个值，但遇到了数组声明符 '{0}'；请把这段代码移到 .dss 文件。"
+    state machine
+}
+
+BadAssignmentTarget {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected a variable or 'variable.member' on the left of a 1.x Graph assignment, found '{0}'."
+    text  "期望 1.x Graph 赋值的左侧是变量或 'variable.member'，但遇到了 '{0}'。"
+    state machine
+}
+
+CastInLegacy {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected a constructor such as 'float3(x)' in a 1.x Graph expression, found the cast '({0})', which 1.x never had; move this code to a .dss file."
+    text  "期望 1.x Graph 表达式中是构造器，例如 'float3(x)'，但遇到了强制转换 '({0})'，1.x 从来没有这种写法；请把这段代码移到 .dss 文件。"
+    state machine
+}
+
+CompoundAssignment {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected '=' in a 1.x Graph assignment, found '{0}', which 1.x read as the declaration of a variable named '{1}'; write 'x = x + y' or move this code to a .dss file."
+    text  "期望 1.x Graph 赋值中是 '='，但遇到了 '{0}'，1.x 会把它读成对名为 '{1}' 的变量的声明；请写 'x = x + y'，或把这段代码移到 .dss 文件。"
+    state machine
+}
+
+ConditionTruncated {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected at most one comparison in a 1.x Graph 'if' condition, found '{0}' as well, where 1.x silently dropped the rest of the condition; move this code to a .dss file."
+    text  "期望 1.x Graph 的 'if' 条件中最多只有一次比较，但还遇到了 '{0}'，1.x 会悄悄丢掉条件的其余部分；请把这段代码移到 .dss 文件。"
+    state machine
+}
+
+ElseWithoutBraces {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected braces around the body of a 1.x Graph 'else', found a single statement."
+    text  "期望 1.x Graph 的 'else' 主体带花括号，但遇到了单条语句。"
+    state machine
+}
+
+EndRegionWithoutRegion {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected a '#Region' before this '#EndRegion', found none open."
+    text  "期望这个 '#EndRegion' 之前有一个 '#Region'，但没有处于开启状态的区域。"
+    state machine
+}
+
+HexLiteral {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected a decimal number in a 1.x Graph expression, found the hexadecimal literal '{0}', which 1.x read as 0 followed by a name; move this code to a .dss file."
+    text  "期望 1.x Graph 表达式中是十进制数，但遇到了十六进制字面量 '{0}'，1.x 会把它读成 0 后面跟一个名称；请把这段代码移到 .dss 文件。"
+    state machine
+}
+
+IfWithoutBraces {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected braces around the body of a 1.x Graph 'if', found a single statement."
+    text  "期望 1.x Graph 的 'if' 主体带花括号，但遇到了单条语句。"
+    state machine
+}
+
+IncrementDecrement {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected no '++' or '--' in a 1.x Graph expression, found '{0}'; move this code to a .dss file."
+    text  "期望 1.x Graph 表达式中没有 '++' 或 '--'，但遇到了 '{0}'；请把这段代码移到 .dss 文件。"
+    state machine
+}
+
+IndexTruncated {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected no '[ ]' in a 1.x Graph expression, found '{0}', where 1.x silently dropped the index and everything after it; use a swizzle such as '.r' or move this code to a .dss file."
+    text  "期望 1.x Graph 表达式中没有 '[ ]'，但遇到了 '{0}'，1.x 会悄悄丢掉下标及其后的全部内容；请改用 '.r' 之类的 swizzle，或把这段代码移到 .dss 文件。"
+    state machine
+}
+
+InitializerList {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected an expression as a 1.x Graph initializer, found an initializer list; use a constructor such as 'float3(a, b, c)'."
+    text  "期望 1.x Graph 初始化器是表达式，但遇到了初始化列表；请使用构造器，例如 'float3(a, b, c)'。"
+    state machine
+}
+
+NestedAssignment {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected an assignment only as a whole 1.x Graph statement, found one inside an expression; move this code to a .dss file."
+    text  "期望赋值只作为一条完整的 1.x Graph 语句出现，但它出现在表达式内部；请把这段代码移到 .dss 文件。"
+    state machine
+}
+
+NestedBlock {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected no bare block in a 1.x Graph body, found one; 1.x has blocks only after 'if' and 'else'."
+    text  "期望 1.x Graph 主体中没有裸块，但遇到了一个；1.x 只在 'if' 和 'else' 之后才有块。"
+    state machine
+}
+
+NoZeroForType {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected an initializer on the 1.x Graph variable '{0}' of type '{1}', found none, and 1.x had no zero value for that type."
+    text  "期望类型为 '{1}' 的 1.x Graph 变量 '{0}' 带有初始化器，但没有找到，而 1.x 没有该类型的零值。"
+    state machine
+}
+
+OperatorTruncated {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected only '+', '-', '*', '/', calls and members in a 1.x Graph expression, found '{0}', where 1.x silently dropped the rest of the expression; move this code to a .dss file."
+    text  "期望 1.x Graph 表达式中只有 '+'、'-'、'*'、'/'、调用和成员访问，但遇到了 '{0}'，1.x 会悄悄丢掉表达式的其余部分；请把这段代码移到 .dss 文件。"
+    state machine
+}
+
+OtherDirectiveInGraph {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected '#Region' or '#EndRegion' as the only '#' line in a 1.x Graph body, found '#{0}'."
+    text  "期望 1.x Graph 主体中的 '#' 行只有 '#Region' 或 '#EndRegion'，但遇到了 '#{0}'。"
+    state machine
+}
+
+RegionNotClosed {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected '#EndRegion' to close the region '{0}' before the end of the Graph body, found none."
+    text  "期望在 Graph 主体结束之前用 '#EndRegion' 闭合区域 '{0}'，但没有找到。"
+    state machine
+}
+
+RegionWithoutName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected a name after '#Region', found none."
+    text  "期望 '#Region' 之后是一个名称，但什么都没有。"
+    state machine
+}
+
+StatementNotInLegacy {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected a declaration, an assignment, a call or 'if' in a 1.x Graph body, found '{0}', which 1.x did not have; move this code to a .dss file."
+    text  "期望 1.x Graph 主体中是声明、赋值、调用或 'if'，但遇到了 '{0}'，1.x 没有这种语句；请把这段代码移到 .dss 文件。"
+    state machine
+}
+
+StorageOnLocal {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected no storage keyword on a 1.x Graph variable, found '{0}'; move this code to a .dss file."
+    text  "期望 1.x Graph 变量上没有存储关键字，但遇到了 '{0}'；请把这段代码移到 .dss 文件。"
+    state machine
+}
+
+UnusedExpression {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp
+    src   "Expected a call or an assignment as a 1.x Graph statement, found an expression whose value is never used."
+    text  "期望 1.x Graph 语句是调用或赋值，但遇到了一个值从未被使用的表达式。"
+    state machine
+}

@@ -1,0 +1,129 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Preprocessor.Expression
+
+BadIntegerLiteral {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "'{0}' is not a valid integer literal (decimal, or 0x hexadecimal)."
+    text  "'{0}' 不是合法的整数字面量(十进制,或 0x 十六进制)。"
+    state machine
+}
+
+ConditionDivideByZero {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "{0}({1}): the right operand of '{2}' in this '{3}' condition is zero."
+    text  "{0}({1}): 这个 '{3}' 条件里 '{2}' 的右操作数为零。"
+    state machine
+}
+
+ConditionTypeMismatch {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "{0}({1}): type mismatch in '{2}' condition: {3}"
+    text  "{0}({1}): '{2}' 条件中的类型不匹配:{3}"
+    state machine
+}
+
+DefinedExpectedCloseParenthesis {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "expected ')' to close 'defined({0})' but found {1}."
+    text  "期望 ')' 来关闭 'defined({0})',但遇到了 {1}。"
+    state machine
+}
+
+DefinedNeedsName {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "'defined' needs a define name, but found {0}."
+    text  "'defined' 需要一个 define 名字,但遇到了 {0}。"
+    state machine
+}
+
+ExpectedCloseParenthesis {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "expected ')' but found {0}."
+    text  "期望 ')',但遇到了 {0}。"
+    state machine
+}
+
+InvalidConditionExpression {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "{0}({1}): invalid '{2}' condition: {3}"
+    text  "{0}({1}): 无效的 '{2}' 条件:{3}"
+    state machine
+}
+
+MissingConditionExpression {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "{0}({1}): '{2}' requires a condition expression."
+    text  "{0}({1}): '{2}' 需要一个条件表达式。"
+    state machine
+}
+
+MixedEqualityOperands {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "'{0}' cannot compare a string with a number."
+    text  "'{0}' 不能把字符串和数字做比较。"
+    state machine
+}
+
+StringAsCondition {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "a condition must be a number, but this one is the string \"{0}\". Compare it with '==' instead."
+    text  "条件必须是数字,但这里是字符串 \"{0}\"。请改用 '==' 做比较。"
+    state machine
+}
+
+StringAsTruthValue {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "'{0}' needs a number, but one operand is the string \"{1}\"."
+    text  "'{0}' 需要数字,但有一个操作数是字符串 \"{1}\"。"
+    state machine
+}
+
+StringInNumericOperator {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "'{0}' is only defined for numbers, but one operand is the string \"{1}\". Strings compare only with '==' and '!='."
+    text  "'{0}' 只对数字有定义,但有一个操作数是字符串 \"{1}\"。字符串只能用 '==' 和 '!=' 比较。"
+    state machine
+}
+
+TokenEndOfCondition {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "the end of the condition"
+    text  "条件的末尾"
+    state machine
+}
+
+TokenSpelling {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "'{0}'"
+    text  "'{0}'"
+    state machine
+}
+
+TrailingTokensAfterDirective {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "{0}({1}): '{2}' is already complete before '{3}'. Nothing may follow a directive but a '//' comment."
+    text  "{0}({1}): '{2}' 在 '{3}' 之前已经完整。指令后面只能跟 '//' 注释。"
+    state machine
+}
+
+UnexpectedCharacter {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "unexpected character '{0}'."
+    text  "意外的字符 '{0}'。"
+    state machine
+}
+
+UnexpectedTokenInCondition {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "unexpected {0}."
+    text  "意外的 {0}。"
+    state machine
+}
+
+UnterminatedConditionString {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp
+    src   "unterminated string literal."
+    text  "字符串字面量未终止。"
+    state machine
+}

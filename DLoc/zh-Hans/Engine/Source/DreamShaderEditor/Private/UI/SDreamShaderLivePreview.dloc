@@ -1,0 +1,10 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderMaterialBrowser
+
+PreviewRendering {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderLivePreview.cpp
+    src   "rendering…"
+    text  "渲染中…"
+    state machine
+}

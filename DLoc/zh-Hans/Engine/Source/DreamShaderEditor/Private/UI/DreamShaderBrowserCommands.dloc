@@ -1,0 +1,10 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderMaterialBrowser
+
+CommandContext {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
+    src   "Material Content Browser"
+    text  "材质内容浏览器"
+    state machine
+}

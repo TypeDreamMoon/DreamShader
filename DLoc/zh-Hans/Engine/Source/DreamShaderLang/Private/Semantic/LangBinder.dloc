@@ -1,0 +1,332 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Binder
+
+ArraySizeNotLiteral {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "An array size must be an integer literal."
+    text  "数组大小必须是整数字面量。"
+    state machine
+}
+
+ArraySizeOutOfRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "An array size must be between 1 and 4096."
+    text  "数组大小必须在 1 到 4096 之间。"
+    state machine
+}
+
+ConstantNeedsInitializer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' is a compile-time constant and must be initialised where it is declared."
+    text  "'{0}' 是编译期常量，必须在声明处初始化。"
+    state machine
+}
+
+CustomBodyParsed {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'@custom' on '{0}' did not make its body opaque; the directive has to sit in the '///' block directly above the declaration."
+    text  "'{0}' 上的 '@custom' 没有让它的函数体变为不透明；这条指令必须写在紧挨着声明上方的 '///' 块里。"
+    state machine
+}
+
+CustomMaterialParameter {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' is '@custom', so '{1}' becomes an input pin of a Custom node, and a Custom node cannot take a material; pass the fields it needs instead."
+    text  "'{0}' 是 '@custom'，因此 '{1}' 会成为 Custom 节点的输入引脚，而 Custom 节点不能接收材质；请改为传入它需要的字段。"
+    state machine
+}
+
+DirectiveWrongLinkage {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'@{0}' means nothing here; it belongs on {1}."
+    text  "'@{0}' 放在这里没有意义；它应该用在 {1} 上。"
+    state machine
+}
+
+DuplicateParameter {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' is declared twice in the parameter list of '{1}'."
+    text  "'{0}' 在 '{1}' 的参数列表中声明了两次。"
+    state machine
+}
+
+DuplicateStructField {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' is declared twice in struct '{1}'."
+    text  "'{0}' 在结构体 '{1}' 中声明了两次。"
+    state machine
+}
+
+EmptyCatalog {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "The builtin catalog is empty, so no 'UE.' expression and no material attribute can be resolved; export it with 'dsc export-catalog'."
+    text  "内置目录为空，因此无法解析任何 'UE.' 表达式和材质属性；请用 'dsc export-catalog' 导出它。"
+    state machine
+}
+
+EntryAndExports {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' is exported from a file whose entry is '{1}'; a file makes a material or it makes functions, not both. Move it to its own file, or drop 'export' to make it a helper."
+    text  "'{0}' 是从一个入口为 '{1}' 的文件中导出的；一个文件要么生成材质，要么生成函数，不能两者兼有。请把它移到单独的文件中，或去掉 'export' 让它成为辅助函数。"
+    state machine
+}
+
+ExternWithoutAsset {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'extern {0}' has nothing to bind to; add '/// @asset /Game/.../MF_Name' above it."
+    text  "'extern {0}' 没有可绑定的对象；请在它上方加上 '/// @asset /Game/.../MF_Name'。"
+    state machine
+}
+
+FunctionShadowsBuiltin {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' is a builtin operation and cannot be redeclared; rename the function."
+    text  "'{0}' 是内置运算，不能重新声明；请给这个函数改名。"
+    state machine
+}
+
+GenerateOutsidePackage {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' asks to generate '{1}', and only a package's header generates material functions; this file is not in one, so nothing is generated. Write an 'export' function (or a 1.x ShaderFunction) to make a material function of your own."
+    text  "'{0}' 要求生成 '{1}'，但只有包的头文件才会生成材质函数；此文件不在包中，因此不会生成任何东西。要为项目自己创建材质函数，请编写 'export' 函数（或 1.x 的 ShaderFunction）。"
+    state machine
+}
+
+GlobalStorage {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' is a file-scope variable with no storage class; write 'uniform' for a material parameter or 'static const' for a compile-time constant."
+    text  "'{0}' 是没有存储类别的文件作用域变量；材质参数请写 'uniform'，编译期常量请写 'static const'。"
+    state machine
+}
+
+GlobalTypeUnsupported {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "A file-scope variable of type {0} has no node; a 'uniform' or 'static const' must be numeric, bool, a texture or a sampler."
+    text  "类型为 {0} 的文件作用域变量没有对应的节点；'uniform' 或 'static const' 必须是数值、bool、纹理或采样器。"
+    state machine
+}
+
+HoistedCallRecursion {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' reaches itself through the 'UE.' calls lifted out of its body, and each call makes a new custom node, so the graph would never end."
+    text  "'{0}' 通过从它函数体中提升出来的 'UE.' 调用又回到了自身，而每次调用都会生成一个新的 Custom 节点，图将永无止境。"
+    state machine
+}
+
+IncludeCycle {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "Including '{0}' from '{1}' closes a cycle; a header may not include itself, directly or through another header."
+    text  "从 '{1}' 包含 '{0}' 会形成循环；头文件不能直接或经由其他头文件包含自身。"
+    state machine
+}
+
+IncludesUnavailable {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' cannot be read: this front end was started without an include resolver, so nothing a header declares is visible."
+    text  "无法读取 '{0}'：此前端启动时没有 include 解析器，因此头文件声明的任何内容都不可见。"
+    state machine
+}
+
+LayerBlendNotExported {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'@layerblend' makes '{0}' a material layer blend asset, so it has to be 'export'."
+    text  "'@layerblend' 让 '{0}' 成为材质层混合资产，因此它必须是 'export'。"
+    state machine
+}
+
+LayerBlendSignature {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "A '@layerblend' function is written 'export void {0}(material Base, material Top, ..., inout material Result)': at least one 'material' input and a final 'inout material'."
+    text  "'@layerblend' 函数的写法是 'export void {0}(material Base, material Top, ..., inout material Result)'：至少一个 'material' 输入，最后是一个 'inout material'。"
+    state machine
+}
+
+LayerNotExported {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'@layer' makes '{0}' a material layer asset, so it has to be 'export'."
+    text  "'@layer' 让 '{0}' 成为材质层资产，因此它必须是 'export'。"
+    state machine
+}
+
+LayerSignature {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "A '@layer' function is written 'export void {0}(inout material m)'."
+    text  "'@layer' 函数的写法是 'export void {0}(inout material m)'。"
+    state machine
+}
+
+LegacyBlockNameTaken {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "The asset of this block and a function this file can call are both named '{0}', which 1.x kept apart; the block is declared as '{1}', and a '.dss' writes that name."
+    text  "这个块的资产与此文件可以调用的一个函数都叫 '{0}'，1.x 会把两者分开；该块被声明为 '{1}'，'.dss' 中要写这个名字。"
+    state machine
+}
+
+LinkageTargetExport {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "an exported function"
+    text  "导出函数"
+    state machine
+}
+
+LinkageTargetExtern {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "an 'extern' prototype"
+    text  "'extern' 原型"
+    state machine
+}
+
+LinkageTargetLegacyExport {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "a block of a 1.x source that produces an asset"
+    text  "1.x 源文件中会生成资产的块"
+    state machine
+}
+
+MaterialPragmaWithoutEntry {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'#pragma material' configures a material, and this file has no 'export void Name(inout material m)' entry to configure."
+    text  "'#pragma material' 用于配置材质，而这个文件没有可供配置的 'export void Name(inout material m)' 入口。"
+    state machine
+}
+
+MultiDimensionalArray {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "A multi-dimensional array has no graph form; declare one dimension, or move the code into a '/// @custom' function."
+    text  "多维数组在图中没有对应形式；请只声明一个维度，或把代码移到 '/// @custom' 函数中。"
+    state machine
+}
+
+NoGenerationInHeader {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'#pragma nogeneration' in '{0}' was ignored: it marks the file it is written in, a header builds nothing, and the files that include it are not marked by it. Write it in each of those files instead."
+    text  "'{0}' 中的 '#pragma nogeneration' 已被忽略：它只标记写有它的文件，头文件本身不构建任何东西，包含它的文件也不会因此被标记。请改为在每个这样的文件中写它。"
+    state machine
+}
+
+ParamDocUnknown {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'@param {0}' does not name a parameter of '{1}'."
+    text  "'@param {0}' 指的不是 '{1}' 的参数。"
+    state machine
+}
+
+PinDocUnknown {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'@pin {0}' does not name a parameter of '{1}'."
+    text  "'@pin {0}' 指的不是 '{1}' 的参数。"
+    state machine
+}
+
+PrototypeWithoutExtern {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' has no body; a prototype has to be 'extern' and carry '/// @asset'."
+    text  "'{0}' 没有函数体；原型必须是 'extern' 并带有 '/// @asset'。"
+    state machine
+}
+
+RedefinitionAcrossFiles {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' is declared in '{1}' and again in '{2}'; a name included from a header may not be declared a second time."
+    text  "'{0}' 已在 '{1}' 中声明，又在 '{2}' 中再次声明；从头文件包含进来的名称不能再声明第二次。"
+    state machine
+}
+
+RedefinitionSameFile {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' is already declared in this file; one name declares one thing."
+    text  "'{0}' 已在此文件中声明；一个名称只能声明一样东西。"
+    state machine
+}
+
+StaticDocUnknown {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'@static {0}' does not name a parameter of '{1}'."
+    text  "'@static {0}' 指的不是 '{1}' 的参数。"
+    state machine
+}
+
+StaticOnNonBoolUniform {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'@static' asks for a static switch and is only meaningful on a 'uniform bool'."
+    text  "'@static' 表示需要静态开关，只对 'uniform bool' 有意义。"
+    state machine
+}
+
+StaticParamNotBool {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'@static {0}' makes a parameter a static bool pin, which only a 'bool' input can be, and '{0}' is {1}."
+    text  "'@static {0}' 会让参数成为静态 bool 引脚，只有 'bool' 输入才可以，而 '{0}' 是 {1}。"
+    state machine
+}
+
+StaticParamOut {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "an 'out' or 'inout' parameter"
+    text  "'out' 或 'inout' 参数"
+    state machine
+}
+
+TextureUniformInitializer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "A texture uniform has no HLSL initializer; write its default asset as '/// @default /Game/...'."
+    text  "纹理 uniform 没有 HLSL 初始化器；请把它的默认资产写成 '/// @default /Game/...'。"
+    state machine
+}
+
+TwoEntries {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' is a second material entry; '{1}' above it is already the entry, and one file makes one material."
+    text  "'{0}' 是第二个材质入口；它上方的 '{1}' 已经是入口，而一个文件只生成一个材质。"
+    state machine
+}
+
+UniformArray {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "A 'uniform' array has no parameter node; declare one uniform per element, or make it 'static const'."
+    text  "'uniform' 数组没有对应的参数节点；请为每个元素各声明一个 uniform，或把它改为 'static const'。"
+    state machine
+}
+
+UnknownType {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' is not a builtin type and no 'struct' of that name is declared before this line."
+    text  "'{0}' 不是内置类型，在这一行之前也没有声明同名的 'struct'。"
+    state machine
+}
+
+UnknownTypeDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' is not a type; did you mean '{1}'? Type names are case-sensitive."
+    text  "'{0}' 不是类型；你是不是想写 '{1}'？类型名区分大小写。"
+    state machine
+}
+
+UnsizedArrayNeedsInitializer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "An unsized array needs an initializer list to take its length from."
+    text  "未指定大小的数组需要一个初始化列表来确定其长度。"
+    state machine
+}
+
+UnsupportedType {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "'{0}' is not a type this front end can resolve."
+    text  "'{0}' 不是此前端能够解析的类型。"
+    state machine
+}
+
+VoidParameter {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "A parameter cannot be 'void'."
+    text  "参数不能是 'void'。"
+    state machine
+}
+
+VoidStructField {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinder.cpp
+    src   "A struct field cannot be 'void'."
+    text  "结构体字段不能是 'void'。"
+    state machine
+}

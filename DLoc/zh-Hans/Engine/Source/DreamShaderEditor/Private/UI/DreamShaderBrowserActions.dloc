@@ -1,0 +1,52 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderMaterialBrowser
+
+CompileFail {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserActions.cpp
+    src   "Failed to compile {0}"
+    text  "编译失败: {0}"
+    state machine
+}
+
+CompileOk {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserActions.cpp
+    src   "Compiled {0}"
+    text  "已编译 {0}"
+    state machine
+}
+
+CompiledAll {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserActions.cpp
+    src   "Compiled {0} source(s), {1} failed"
+    text  "已编译 {0} 个源,{1} 个失败"
+    state machine
+}
+
+CompilerUnavailable {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserActions.cpp
+    src   "The DreamShader compiler module is not available, so nothing was compiled."
+    text  "DreamShader 编译器模块不可用，因此没有编译任何内容。"
+    state machine
+}
+
+CompilingAll {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserActions.cpp
+    src   "Compiling all DreamShader sources..."
+    text  "正在编译所有 DreamShader 源..."
+    state machine
+}
+
+InstanceNeedsCompile {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserActions.cpp
+    src   "Compile {0} first."
+    text  "请先编译 {0}。"
+    state machine
+}
+
+Materialized {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserActions.cpp
+    src   "Materialized {0} to disk"
+    text  "已物化 {0} 到磁盘"
+    state machine
+}

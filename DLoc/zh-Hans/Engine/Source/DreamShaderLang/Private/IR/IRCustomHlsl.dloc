@@ -1,0 +1,171 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.CustomHlsl
+
+CustomBadFunctionIndex {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "Custom node code was asked for function {0}, but the bound module has {1}."
+    text  "请求为函数 {0} 生成 Custom 节点代码，但已绑定的模块中有 {1} 个函数。"
+    state machine
+}
+
+CustomCallArity {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' takes {1} argument(s) but this call passes {2}; a call that carries a texture cannot be matched up by position otherwise."
+    text  "'{0}' 接受 {1} 个实参，但这次调用传入了 {2} 个；否则带有纹理的调用无法按位置一一对应。"
+    state machine
+}
+
+CustomCallArityPlain {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' takes {1} argument(s) in the HLSL it becomes, but this call passes {2}."
+    text  "'{0}' 生成的 HLSL 接受 {1} 个实参，但这次调用传入了 {2} 个。"
+    state machine
+}
+
+CustomCallCycle {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "The '@custom' functions {0} call each other in a cycle; HLSL has no recursion, so their bodies cannot be embedded in a custom node."
+    text  "'@custom' 函数 {0} 相互循环调用；HLSL 不支持递归，因此它们的函数体无法嵌入 Custom 节点。"
+    state machine
+}
+
+CustomCallVoidValue {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' returns nothing in the HLSL it becomes, so this call has no value to read; pass a variable for each of its 'out' parameters and read those."
+    text  "'{0}' 生成的 HLSL 没有返回值，这次调用没有可读取的值；请为它的每个 'out' 参数传入一个变量，再读取这些变量。"
+    state machine
+}
+
+CustomCallsGraphFunction {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' is not a '@custom' function and cannot be called from the HLSL body of '{1}'; a custom node sees no graph values, so mark '{0}' '@custom' as well or move the call out of the body."
+    text  "'{0}' 不是 '@custom' 函数，不能在 '{1}' 的 HLSL 函数体中调用；Custom 节点看不到图中的值，因此请把 '{0}' 也标为 '@custom'，或把这个调用移出函数体。"
+    state machine
+}
+
+CustomCallsHoistingFunction {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' takes the 'UE.' calls lifted out of its body as inputs of its own custom node, so the HLSL body of '{1}' cannot call it; call it from a graph body instead."
+    text  "'{0}' 会把从函数体中提升出来的 'UE.' 调用作为它自己 Custom 节点的输入，所以 '{1}' 的 HLSL 函数体不能调用它；请改在图函数体中调用。"
+    state machine
+}
+
+CustomCaseOnlyMatch {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' differs from the function '{1}' only in case; HLSL is case-sensitive, so this call is left for the shader compiler. Did you mean '{1}'?"
+    text  "'{0}' 与函数 '{1}' 只有大小写不同；HLSL 区分大小写，因此这个调用留给着色器编译器处理。你是不是想写 '{1}'？"
+    state machine
+}
+
+CustomDuplicateParameterName {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' declares '{1}' twice in the HLSL it generates; a texture parameter also claims '{1}Sampler', which the engine declares alongside it."
+    text  "'{0}' 在它生成的 HLSL 中两次声明了 '{1}'；纹理参数还会占用 '{1}Sampler' 这个名字，引擎会在声明纹理的同时声明它。"
+    state machine
+}
+
+CustomEmptyInclude {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' has an '#include' with an empty path; write the virtual shader path the header lives at, for example \"/Engine/Private/Common.ush\"."
+    text  "'{0}' 中有一个路径为空的 '#include'；请写出头文件所在的虚拟着色器路径，例如 \"/Engine/Private/Common.ush\"。"
+    state machine
+}
+
+CustomHoistedRange {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' lifts the call behind its input '{1}' out of a place its body does not have, so its custom node's code cannot be built."
+    text  "'{0}' 提升其输入 '{1}' 背后的调用时，指向了函数体中不存在的位置，因此无法生成它的 Custom 节点代码。"
+    state machine
+}
+
+CustomInoutParameter {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' declares '{1}' as 'inout', which a custom node cannot carry; split it into an 'in' parameter and an 'out' parameter."
+    text  "'{0}' 把 '{1}' 声明为 'inout'，而 Custom 节点无法承载这种参数；请把它拆成一个 'in' 参数和一个 'out' 参数。"
+    state machine
+}
+
+CustomMaterialInput {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' takes the material '{1}' as an input; a custom node cannot accept material attributes on a pin, so read the fields the body needs and pass them as floats."
+    text  "'{0}' 把材质 '{1}' 作为输入；Custom 节点的引脚不能接收材质属性，因此请读取函数体需要的字段，并以 float 形式传入。"
+    state machine
+}
+
+CustomNeverReturns {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' declares a return type but its body never returns a value; the node's first output will be 0."
+    text  "'{0}' 声明了返回类型，但函数体从未返回值；节点的第一个输出将为 0。"
+    state machine
+}
+
+CustomNoVerbatimBody {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' has no verbatim HLSL body, so it cannot become a custom node; only a '/// @custom' function can."
+    text  "'{0}' 没有原样保留的 HLSL 函数体，因此不能成为 Custom 节点；只有 '/// @custom' 函数可以。"
+    state machine
+}
+
+CustomNotACustomFunction {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' is not marked '/// @custom', so it has no custom node to build."
+    text  "'{0}' 没有标记 '/// @custom'，因此没有要构建的 Custom 节点。"
+    state machine
+}
+
+CustomPrepareFailed {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' could not be prepared for a custom node."
+    text  "无法为 Custom 节点准备 '{0}'。"
+    state machine
+}
+
+CustomSelfContainedCall {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' is 'selfcontained', so the '@custom' function '{1}' it calls is not embedded in its node; the call is left for the shader compiler to resolve out of this body's own includes."
+    text  "'{0}' 是 'selfcontained'，因此它调用的 '@custom' 函数 '{1}' 不会嵌入它的节点；这个调用留给着色器编译器，从该函数体自己的 include 中解析。"
+    state machine
+}
+
+CustomSubstrateParameter {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' uses Substrate on '{1}'; a custom node has no Substrate pins, so build that part of the material out of reflected Substrate nodes."
+    text  "'{0}' 在 '{1}' 上使用了 Substrate；Custom 节点没有 Substrate 引脚，因此请用反射的 Substrate 节点构建材质的这一部分。"
+    state machine
+}
+
+CustomSubstrateReturn {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' returns Substrate; a custom node has no Substrate pins, so build that part of the material out of reflected Substrate nodes."
+    text  "'{0}' 返回 Substrate；Custom 节点没有 Substrate 引脚，因此请用反射的 Substrate 节点构建材质的这一部分。"
+    state machine
+}
+
+CustomTextureArgumentNotAName {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "The texture argument for '{0}' of '{1}' has to be a plain texture name, because the sampler that goes with it is named after it."
+    text  "'{1}' 的 '{0}' 对应的纹理实参必须是单纯的纹理名，因为与它配套的采样器是按它命名的。"
+    state machine
+}
+
+CustomTextureOutput {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' returns a texture through '{1}'; a custom node output carries float1..4 or material attributes, never a texture object."
+    text  "'{0}' 通过 '{1}' 返回纹理；Custom 节点的输出承载 float1..4 或材质属性，绝不承载纹理对象。"
+    state machine
+}
+
+CustomTextureReturn {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' returns a texture object; a custom node output carries float1..4 or material attributes, never a texture object."
+    text  "'{0}' 返回纹理对象；Custom 节点的输出承载 float1..4 或材质属性，绝不承载纹理对象。"
+    state machine
+}
+
+CustomVoidBareReturn {
+    at    Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp
+    src   "'{0}' returns void but its body uses 'return;'; a custom node always returns its first output, so give the function a return type or restructure the body."
+    text  "'{0}' 返回 void，但函数体中使用了 'return;'；Custom 节点总是返回它的第一个输出，因此请给函数加上返回类型，或调整函数体的结构。"
+    state machine
+}

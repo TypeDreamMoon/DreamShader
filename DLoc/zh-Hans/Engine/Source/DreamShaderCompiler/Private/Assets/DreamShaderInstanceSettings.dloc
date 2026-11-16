@@ -1,0 +1,59 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.InstanceSettings
+
+BadKeyValue {
+    at    Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp
+    src   "'{0}' is not a valid value for the instance key '{1}'. {2}"
+    text  "'{0}' 不是实例键 '{1}' 的有效值。{2}"
+    state machine
+}
+
+RefusedBackend {
+    at    Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp
+    src   "an instance has no backend of its own; it is a plain material instance of its parent."
+    text  "实例没有自己的后端；它就是其父材质的普通材质实例。"
+    state machine
+}
+
+RefusedBaseStruct {
+    at    Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp
+    src   "write the overrides as keys of their own, such as BlendMode or TwoSided."
+    text  "请把这些覆盖写成各自独立的键，例如 BlendMode 或 TwoSided。"
+    state machine
+}
+
+RefusedFlag {
+    at    Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp
+    src   "an override flag follows from the key that sets its value."
+    text  "覆盖标志由设置其值的键自动带出。"
+    state machine
+}
+
+RefusedKey {
+    at    Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp
+    src   "'{0}' cannot be set from an instance file: {1}"
+    text  "'{0}' 不能在实例文件中设置：{1}"
+    state machine
+}
+
+RefusedParameterArray {
+    at    Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp
+    src   "parameter values are written as uniform overrides."
+    text  "参数值要写成 uniform 覆盖。"
+    state machine
+}
+
+RefusedUsageFlags {
+    at    Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp
+    src   "usage flags are a bitmask the engine merges with the parent's, which one key value cannot express."
+    text  "使用标志是一个位掩码，引擎会把它与父材质的合并，单个键值无法表达。"
+    state machine
+}
+
+UnknownKey {
+    at    Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp
+    src   "'{0}' is not an instance key; a key is a material property an instance can override, such as BlendMode, TwoSided, OpacityMaskClipValue or PhysMaterial."
+    text  "'{0}' 不是实例键；实例键是实例可以覆盖的材质属性，例如 BlendMode、TwoSided、OpacityMaskClipValue 或 PhysMaterial。"
+    state machine
+}

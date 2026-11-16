@@ -1,0 +1,164 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Binder.Statements
+
+BreakOutsideLoop {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "'break' leaves a loop, and this one is not inside a 'for', 'while' or 'do'."
+    text  "'break' 用于跳出循环，而这个 'break' 不在 'for'、'while' 或 'do' 之内。"
+    state machine
+}
+
+ConditionNotScalar {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "{0} has to be a single true-or-false value, and this is {1}."
+    text  "{0} 必须是单个真/假值，而这里是 {1}。"
+    state machine
+}
+
+ConstantNotConstant {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "'{0}' is a compile-time constant, and this initializer is not one; a constant is built from literals and other constants."
+    text  "'{0}' 是编译期常量，而这个初始化器不是常量；常量由字面量和其他常量构成。"
+    state machine
+}
+
+ContinueOutsideLoop {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "'continue' starts the next turn of a loop, and this one is not inside a 'for', 'while' or 'do'."
+    text  "'continue' 用于开始循环的下一轮，而这个 'continue' 不在 'for'、'while' 或 'do' 之内。"
+    state machine
+}
+
+DiscardOutsideEntry {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "'discard' belongs in a material entry or a layer; a material function has no pixel of its own to drop. Write the mask into 'm.OpacityMask' instead."
+    text  "'discard' 应当用在材质入口或材质层中；材质函数没有属于自己的像素可以丢弃。请改为把遮罩写入 'm.OpacityMask'。"
+    state machine
+}
+
+DoWhileCondition {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "The condition of a 'do'"
+    text  "'do' 的条件"
+    state machine
+}
+
+ForCondition {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "The condition of a 'for'"
+    text  "'for' 的条件"
+    state machine
+}
+
+GlobalInitializer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "The initializer of '{0}'"
+    text  "'{0}' 的初始化器"
+    state machine
+}
+
+IfCondition {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "The condition of an 'if'"
+    text  "'if' 的条件"
+    state machine
+}
+
+LocalConstantNeedsInitializer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "'{0}' is a compile-time constant and must be initialised where it is declared."
+    text  "'{0}' 是编译期常量，必须在声明处初始化。"
+    state machine
+}
+
+LocalConstantNotConstant {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "'{0}' is a compile-time constant, and this initializer is not one."
+    text  "'{0}' 是编译期常量，而这个初始化器不是常量。"
+    state machine
+}
+
+LocalInitializer {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "The initializer of '{0}'"
+    text  "'{0}' 的初始化器"
+    state machine
+}
+
+LocalRedeclared {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "'{0}' is already declared in this block."
+    text  "'{0}' 已在此代码块中声明。"
+    state machine
+}
+
+LocalShadowsGlobal {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "'{0}' hides the file-scope declaration of the same name for the rest of this function."
+    text  "在此函数的剩余部分中，'{0}' 会遮蔽文件作用域中的同名声明。"
+    state machine
+}
+
+LocalShadowsLocal {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "'{0}' hides a variable of the same name from an enclosing block; give one of them another name."
+    text  "'{0}' 遮蔽了外层代码块中的同名变量；请给其中一个改名。"
+    state machine
+}
+
+LocalShadowsParam {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "'{0}' hides the parameter of the same name; give one of them another name."
+    text  "'{0}' 遮蔽了同名参数；请给其中一个改名。"
+    state machine
+}
+
+OutParamNeverAssigned {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "'{0}' is an 'out' parameter of '{1}' but the body never assigns it, so a caller would read a value nothing produced. Assign it before the function returns, or remove the parameter."
+    text  "'{0}' 是 '{1}' 的 'out' 参数，但函数体从未给它赋值，因此调用方会读到一个没有任何东西产生的值。请在函数返回前给它赋值，或删除这个参数。"
+    state machine
+}
+
+ParameterDefault {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "The default value of '{0}'"
+    text  "'{0}' 的默认值"
+    state machine
+}
+
+ReturnValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "The value returned from '{0}'"
+    text  "'{0}' 的返回值"
+    state machine
+}
+
+ReturnWithValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "'{0}' returns nothing, so this 'return' cannot carry a value; extra results are written to 'out' parameters."
+    text  "'{0}' 不返回任何值，因此这个 'return' 不能带值；额外的结果写入 'out' 参数。"
+    state machine
+}
+
+ReturnWithoutValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "'{0}' returns {1}, so this 'return' needs a value."
+    text  "'{0}' 返回 {1}，因此这个 'return' 需要带一个值。"
+    state machine
+}
+
+VoidLocal {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "A variable cannot be 'void'."
+    text  "变量不能是 'void'。"
+    state machine
+}
+
+WhileCondition {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp
+    src   "The condition of a 'while'"
+    text  "'while' 的条件"
+    state machine
+}

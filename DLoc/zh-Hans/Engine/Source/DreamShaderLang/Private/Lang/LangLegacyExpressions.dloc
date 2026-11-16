@@ -1,0 +1,129 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Lang.LegacyExpressions
+
+CustomOutputType {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected 'OutputType' of a Custom expression to be float1 to float4 or MaterialAttributes, found '{0}'."
+    text  "期望 Custom 表达式的 'OutputType' 是 float1 到 float4 或 MaterialAttributes，但遇到了 '{0}'。"
+    state machine
+}
+
+IgnoredNamedArgument {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "'{0}' is not an argument '{1}' reads; 1.x ignored it, so it is dropped."
+    text  "'{0}' 不是 '{1}' 会读取的实参；1.x 会忽略它，所以它被丢弃。"
+    state machine
+}
+
+IgnoredPositionalArgument {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "'{0}' takes no positional argument here; 1.x ignored it, so it is dropped."
+    text  "'{0}' 在这里不接受位置实参；1.x 会忽略它，所以它被丢弃。"
+    state machine
+}
+
+LegacyTransformSpace {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "'{0}' is the 1.x name of the '{1}' space of '{2}'; a '.dss' writes '{1}'."
+    text  "'{0}' 是 '{2}' 的 '{1}' 空间在 1.x 中的名称；'.dss' 中要写 '{1}'。"
+    state machine
+}
+
+OutputIndexNotInteger {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected 'OutputIndex' to be a whole number of zero or more, found '{0}'."
+    text  "期望 'OutputIndex' 是不小于零的整数，但遇到了 '{0}'。"
+    state machine
+}
+
+OutputNotName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected 'Output' to name an output with a quoted name or an identifier, found '{0}'."
+    text  "期望 'Output' 用带引号的名称或标识符指明一个输出，但遇到了 '{0}'。"
+    state machine
+}
+
+PinCallPositional {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected every argument of the parameter call '{0}' to name an input pin, found a positional argument."
+    text  "期望参数调用 '{0}' 的每个实参都指明一个输入引脚，但遇到了位置实参。"
+    state machine
+}
+
+QualifierNeedsName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected a name after '::', found {0}."
+    text  "期望 '::' 之后是一个名称，但遇到了 {0}。"
+    state machine
+}
+
+SampleTexture2DShape {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected 'SampleTexture2D' to take exactly two positional arguments, a texture and coordinates, found {0} argument(s)."
+    text  "期望 'SampleTexture2D' 恰好接受两个位置实参（纹理和坐标），但遇到了 {0} 个实参。"
+    state machine
+}
+
+SceneTextureShape {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected 'UE.SceneTexture' to take exactly one argument, 'Id = ...', found {0} argument(s)."
+    text  "期望 'UE.SceneTexture' 恰好接受一个实参 'Id = ...'，但遇到了 {0} 个实参。"
+    state machine
+}
+
+SelectorBoth {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected either 'Output' or 'OutputIndex' on this call, found both."
+    text  "期望这次调用上只有 'Output' 或 'OutputIndex' 之一，但两者都出现了。"
+    state machine
+}
+
+SelectorOnConstructor {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected an output selector only on a call that has outputs, found one on the constructor '{0}'."
+    text  "期望输出选择器只出现在有输出的调用上，但它出现在构造器 '{0}' 上。"
+    state machine
+}
+
+SelectorOnParameterCall {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected the parameter call '{0}' to take only its inputs, found an output selector."
+    text  "期望参数调用 '{0}' 只接受它的输入，但遇到了输出选择器。"
+    state machine
+}
+
+StaticSwitchInputs {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected the static switch '{0}' to be called with a 'True = ...' and a 'False = ...' input, found at most one of them."
+    text  "期望调用静态开关 '{0}' 时同时给出 'True = ...' 和 'False = ...' 两个输入，但最多只找到其中一个。"
+    state machine
+}
+
+StaticSwitchSugarDefault {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected 'Default' of 'UE.StaticSwitchParameter' to be true or false, found '{0}'."
+    text  "期望 'UE.StaticSwitchParameter' 的 'Default' 是 true 或 false，但遇到了 '{0}'。"
+    state machine
+}
+
+StaticSwitchSugarInputs {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected the static switch '{0}' to be called with a 'True = ...' and a 'False = ...' input, found at most one of them."
+    text  "期望调用静态开关 '{0}' 时同时给出 'True = ...' 和 'False = ...' 两个输入，但最多只找到其中一个。"
+    state machine
+}
+
+StaticSwitchSugarName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected 'UE.StaticSwitchParameter' to name its parameter with 'Name = \"...\"', found no name."
+    text  "期望 'UE.StaticSwitchParameter' 用 'Name = \"...\"' 指明它的参数名，但没有找到名称。"
+    state machine
+}
+
+StaticSwitchSugarSort {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp
+    src   "Expected 'SortPriority' of 'UE.StaticSwitchParameter' to be a whole number, found '{0}'."
+    text  "期望 'UE.StaticSwitchParameter' 的 'SortPriority' 是整数，但遇到了 '{0}'。"
+    state machine
+}
