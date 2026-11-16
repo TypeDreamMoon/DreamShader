@@ -5,4 +5,6 @@ namespace UObjectDisplayNames
 DreamShaderCommandlet {
     at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandlet.h#DreamShaderCommandlet
     src   "Dream Shader Commandlet"
+    text  "DreamShader 命令台"
+    state machine
 }

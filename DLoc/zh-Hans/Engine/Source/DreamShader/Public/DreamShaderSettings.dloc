@@ -5,96 +5,134 @@ namespace UObjectDisplayNames
 DreamShaderSettings {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings
     src   "DreamShader"
+    text  "DreamShader"
+    state machine
 }
 
 DreamShaderSettings:bAutoCompileOnSave {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bAutoCompileOnSave
     src   "Auto Compile on Save"
+    text  "保存时自动编译"
+    state machine
 }
 
 DreamShaderSettings:bEnableDreamMCPEndpoint {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bEnableDreamMCPEndpoint
     src   "Enable DreamMCP Endpoint"
+    text  "启用 DreamMCP 端点"
+    state machine
 }
 
 DreamShaderSettings:bExportDecompiledLayout {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bExportDecompiledLayout
     src   "Export Decompiled Layout"
+    text  "导出反编译布局"
+    state machine
 }
 
 DreamShaderSettings:BlendModeMappings {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:BlendModeMappings
     src   "Blend Mode Mappings"
+    text  "混合模式映射"
+    state machine
 }
 
 DreamShaderSettings:bOpenInNewWindow {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bOpenInNewWindow
     src   "Open in New Window"
+    text  "在新窗口中打开"
+    state machine
 }
 
 DreamShaderSettings:bScanPluginSourceDirectories {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bScanPluginSourceDirectories
     src   "Scan Plugin Source Directories"
+    text  "扫描插件源目录"
+    state machine
 }
 
 DreamShaderSettings:bShowEphemeralMaterials {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bShowEphemeralMaterials
     src   "Show Ephemeral Materials"
+    text  "显示临时材质"
+    state machine
 }
 
 DreamShaderSettings:bSyncSourceReferencesOnAssetRename {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bSyncSourceReferencesOnAssetRename
     src   "Sync Source References On Asset Rename"
+    text  "资产重命名时同步源码引用"
+    state machine
 }
 
 DreamShaderSettings:bVerboseLogs {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bVerboseLogs
     src   "Verbose Logs"
+    text  "详细日志"
+    state machine
 }
 
 DreamShaderSettings:DefaultBackend {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:DefaultBackend
     src   "Default Compiler Backend"
+    text  "默认编译器后端"
+    state machine
 }
 
 DreamShaderSettings:GeneratedShaderDirectory {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:GeneratedShaderDirectory
     src   "Generated Shader Directory"
+    text  "生成的着色器目录"
+    state machine
 }
 
 DreamShaderSettings:GraphLayoutStyle {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:GraphLayoutStyle
     src   "Graph Layout Style"
+    text  "图表布局风格"
+    state machine
 }
 
 DreamShaderSettings:InstanceSubfolder {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:InstanceSubfolder
     src   "Material Instance Subfolder"
+    text  "材质实例子目录"
+    state machine
 }
 
 DreamShaderSettings:MaterialDomainMappings {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:MaterialDomainMappings
     src   "Material Domain Mappings"
+    text  "材质域映射"
+    state machine
 }
 
 DreamShaderSettings:PreprocessorDefines {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:PreprocessorDefines
     src   "Preprocessor Defines"
+    text  "预处理器定义"
+    state machine
 }
 
 DreamShaderSettings:SaveDebounceSeconds {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:SaveDebounceSeconds
     src   "Save Debounce Seconds"
+    text  "保存防抖秒数"
+    state machine
 }
 
 DreamShaderSettings:ShadingModelMappings {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:ShadingModelMappings
     src   "Shading Model Mappings"
+    text  "着色模型映射"
+    state machine
 }
 
 DreamShaderSettings:SourceDirectory {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:SourceDirectory
     src   "Source Directory"
+    text  "源目录"
+    state machine
 }
 
 EDreamShaderDefaultBackend.EDreamShaderDefaultBackend_MAX {
@@ -105,26 +143,36 @@ EDreamShaderDefaultBackend.EDreamShaderDefaultBackend_MAX {
 EDreamShaderDefaultBackend.Graph {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend:Graph
     src   "Graph"
+    text  "图表"
+    state machine
 }
 
 EDreamShaderDefaultBackend.Instance {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend:Instance
     src   "Instance"
+    text  "实例"
+    state machine
 }
 
 EDreamShaderDefaultBackend.ThinCustom {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend:ThinCustom
     src   "Thin Custom"
+    text  "薄自定义"
+    state machine
 }
 
 EDreamShaderGraphLayoutStyle.Blocks {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:Blocks
     src   "Blocks"
+    text  "块"
+    state machine
 }
 
 EDreamShaderGraphLayoutStyle.Classic {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:Classic
     src   "Classic"
+    text  "经典"
+    state machine
 }
 
 EDreamShaderGraphLayoutStyle.EDreamShaderGraphLayoutStyle_MAX {
@@ -135,11 +183,15 @@ EDreamShaderGraphLayoutStyle.EDreamShaderGraphLayoutStyle_MAX {
 EDreamShaderGraphLayoutStyle.Layered {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:Layered
     src   "Layered"
+    text  "分层"
+    state machine
 }
 
 EDreamShaderGraphLayoutStyle.SourceBands {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderGraphLayoutStyle:SourceBands
     src   "Source Bands"
+    text  "源通道"
+    state machine
 }
 
 namespace UObjectToolTips
@@ -157,6 +209,8 @@ DreamShaderSettings:bScanPluginSourceDirectories {
 DreamShaderSettings:bShowEphemeralMaterials {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bShowEphemeralMaterials
     src   "Applies to the ThinCustom/Instance backend only -- it is the only one with an Ephemeral state, which it hides via UDreamShaderMaterialInstance::IsAsset. When enabled, Ephemeral materials appear in the Content Browser like unsaved assets. Disabled by default: the source files are the intended authoring surface, and hiding the materials also prevents accidental Save actions from materializing them to disk. Graph-backend materials are plain UMaterials with no way to opt out of asset enumeration, so they are always visible and this setting does not affect them."
+    text  "仅对 ThinCustom/Instance 后端生效——只有它有 Ephemeral 状态，并用 UDreamShaderMaterialInstance::IsAsset 把它隐藏。启用后，临时材质会像未保存资产一样出现在内容浏览器里。默认关闭：源文件才是预期的编写面板，隐藏材质也能防止误触保存把它们写死到磁盘。Graph 后端的材质是普通 UMaterial，无法退出资产枚举，所以它们始终可见，此设置对它们无效。"
+    state machine
 }
 
 DreamShaderSettings:bSyncSourceReferencesOnAssetRename {
@@ -187,21 +241,29 @@ DreamShaderSettings:PreprocessorDefines {
 EDreamShaderDefaultBackend {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend
     src   "Backend used for source files that do not specify Settings = { Backend = \"...\" } themselves."
+    text  "用于未自行指定 `Settings = { Backend = \"...\" }` 的源文件的后端。"
+    state machine
 }
 
 EDreamShaderDefaultBackend.Graph {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend:Graph
     src   "Build a UMaterial node graph per material (full DSL feature surface)."
+    text  "为每个材质构建 UMaterial 节点图表（DSL 的全部特性）。"
+    state machine
 }
 
 EDreamShaderDefaultBackend.Instance {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend:Instance
     src   "DEPRECATED alias for ThinCustom (kept for one deprecation window so existing configs and\nSettings = { Backend = \"Instance\" } sources keep working). The legacy graphless-host instance\nbackend is retired; \"Instance\" now generates the ThinCustom chain."
+    text  "ThinCustom 的已弃用别名（保留一个弃用窗口，让既有配置与\n`Settings = { Backend = \"Instance\" }` 的源码继续可用）。旧的无线图表宿主实例\n后端已退役；现在 \"Instance\" 生成的是 ThinCustom 链路。"
+    state machine
 }
 
 EDreamShaderDefaultBackend.ThinCustom {
     at    Source/DreamShader/Public/DreamShaderSettings.h#EDreamShaderDefaultBackend:ThinCustom
     src   "Build the material graph on a hidden per-material base UMaterial and emit a lightweight\nmaterial instance of it. Full Graph feature surface (the construction is shared) plus the\ninstance's Ephemeral hiding and root shader-map ownership. The default."
+    text  "在一个隐藏的每材质基 UMaterial 上构建材质图表，并生成它的轻量\n材质实例。具备 Graph 的全部特性（构建过程共用），再加上\n实例的 Ephemeral 隐藏与根着色器映射归属。默认选项。"
+    state machine
 }
 
 EDreamShaderGraphLayoutStyle {
@@ -234,26 +296,36 @@ namespace UObjectCategory
 Decompiler {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bExportDecompiledLayout
     src   "Decompiler"
+    text  "反编译"
+    state machine
 }
 
 Editor {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:bOpenInNewWindow
     src   "Editor"
+    text  "编辑器"
+    state machine
 }
 
 Compiler {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:DefaultBackend
     src   "Compiler"
+    text  "编译"
+    state machine
 }
 
 Mappings {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:ShadingModelMappings
     src   "Mappings"
+    text  "映射"
+    state machine
 }
 
 Paths {
     at    Source/DreamShader/Public/DreamShaderSettings.h#DreamShaderSettings:SourceDirectory
     src   "Paths"
+    text  "路径"
+    state machine
 }
 
 namespace DreamShaderEditor.Settings

@@ -14,169 +14,237 @@ namespace UICommands.DreamShaderMaterialBrowser
 Refresh {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Refresh"
+    text  "刷新"
+    state machine
 }
 
 Refresh_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Rescan the source roots and recompute every status."
+    text  "重新扫描源根并重新计算全部状态。"
+    state machine
 }
 
 CompileSelected {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Compile"
+    text  "编译"
+    state machine
 }
 
 CompileSelected_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Force-recompile the selected sources (in memory)."
+    text  "强制重新编译选中的源码（仅在内存中）。"
+    state machine
 }
 
 CompileStale {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Compile stale"
+    text  "编译过期的"
+    state machine
 }
 
 CompileStale_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Recompile every source whose generated asset is stale or missing."
+    text  "重新编译所有生成资产已过期或缺失的源码。"
+    state machine
 }
 
 CompileAll {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Compile all"
+    text  "编译全部"
+    state machine
 }
 
 CompileAll_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Force-recompile every compilable source -- .dss, .dsi, .dsp, .dsm and .dsf (in memory)."
+    text  "强制重新编译所有可编译的源码——.dss、.dsi、.dsp、.dsm 与 .dsf（仅在内存中）。"
+    state machine
 }
 
 OpenMaterial {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Open material"
+    text  "打开材质"
+    state machine
 }
 
 OpenMaterial_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Open the generated material in its asset editor, or a pass pipeline in its details panel."
+    text  "在资产编辑器中打开生成的材质，或在细节面板中打开 Pass 管线。"
+    state machine
 }
 
 OpenSource {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Open source"
+    text  "打开源码"
+    state machine
 }
 
 OpenSource_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Open the source file in your preferred text editor, at the first error when there is one."
+    text  "用你偏好的文本编辑器打开源文件；有错误时定位到第一个错误。"
+    state machine
 }
 
 CreateInstance {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Create instance"
+    text  "创建实例"
+    state machine
 }
 
 CreateInstance_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Write a .dsi material instance source of this material and compile it; for a material DreamShader did not generate, create an ordinary material instance."
+    text  "为这个材质写一份 .dsi 材质实例源码并编译它；对不是 DreamShader 生成的材质，则创建普通的材质实例。"
+    state machine
 }
 
 Materialize {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Materialize"
+    text  "物化到磁盘"
+    state machine
 }
 
 Materialize_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Write this memory-only material (and its base) to disk."
+    text  "把这个仅存在于内存中的材质（及其基材质）写到磁盘。"
+    state machine
 }
 
 RevealInContentBrowser {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Reveal in Content Browser"
+    text  "在内容浏览器中显示"
+    state machine
 }
 
 RevealInContentBrowser_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Select the generated asset in the main Content Browser."
+    text  "在主内容浏览器中选中生成的资产。"
+    state machine
 }
 
 CopySourcePath {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Copy source path"
+    text  "复制源码路径"
+    state machine
 }
 
 CopySourcePath_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Copy the absolute source file path to the clipboard."
+    text  "把源文件的绝对路径复制到剪贴板。"
+    state machine
 }
 
 CopyAssetPath {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Copy asset path"
+    text  "复制资产路径"
+    state machine
 }
 
 CopyAssetPath_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Copy the generated asset's object path to the clipboard."
+    text  "把生成资产的对象路径复制到剪贴板。"
+    state machine
 }
 
 RevertToSource {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Revert to Source"
+    text  "回退到源码"
+    state machine
 }
 
 RevertToSource_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Rebuild this asset from its DreamShader source, discarding every hand edit in it. The source file is not modified."
+    text  "用它的 DreamShader 源码重建这个资产，丢弃其中所有手工修改。源文件本身不会被改动。"
+    state machine
 }
 
 AdoptIntoSource {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Adopt Into Source"
+    text  "写入源码"
+    state machine
 }
 
 AdoptIntoSource_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it."
+    text  "用这个资产的当前内容重写 DreamShader 源文件，让手工修改成为唯一真相。原源码会备份在旁边。"
+    state machine
 }
 
 DetachFromDreamShader {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Detach From DreamShader"
+    text  "与 DreamShader 脱钩"
+    state machine
 }
 
 DetachFromDreamShader_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it."
+    text  "原样保留这个资产，并让 DreamShader 不再重建它。"
+    state machine
 }
 
 ExportSource {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Export .dss"
+    text  "导出 .dss"
+    state machine
 }
 
 ExportSource_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Decompile this hand-authored asset into a 2.0 DreamShader source file: a .dss for a material or a material function, a .dsi for a material instance."
+    text  "把这个手工编写的资产反编译成 2.0 的 DreamShader 源文件：材质或材质函数用 .dss，材质实例用 .dsi。"
+    state machine
 }
 
 FocusSearch {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Search"
+    text  "搜索"
+    state machine
 }
 
 FocusSearch_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Focus the search box."
+    text  "聚焦搜索框。"
+    state machine
 }
 
 ToggleTileView {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Tiles"
+    text  "平铺"
+    state machine
 }
 
 ToggleTileView_ToolTip {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserCommands.cpp
     src   "Show the sources as thumbnail tiles instead of a list."
+    text  "以缩略图平铺方式显示源码，而不是列表。"
+    state machine
 }

@@ -5,16 +5,22 @@ namespace UObjectDisplayNames
 DreamShaderMaterialInstance {
     at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance
     src   "Dream Shader Material Instance"
+    text  "DreamShader 材质实例"
+    state machine
 }
 
 DreamShaderMaterialInstance:SourceFilePath {
     at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance:SourceFilePath
     src   "Source File Path"
+    text  "源文件路径"
+    state machine
 }
 
 DreamShaderMaterialInstance:SourceHash {
     at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance:SourceHash
     src   "Source Hash"
+    text  "源码哈希"
+    state machine
 }
 
 namespace UObjectToolTips
@@ -39,4 +45,6 @@ namespace UObjectCategory
 DreamShader {
     at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance:SourceFilePath
     src   "DreamShader"
+    text  "DreamShader"
+    state machine
 }

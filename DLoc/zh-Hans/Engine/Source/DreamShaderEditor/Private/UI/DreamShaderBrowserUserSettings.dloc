@@ -5,91 +5,127 @@ namespace UObjectDisplayNames
 DreamShaderBrowserUserSettings {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings
     src   "Dream Shader Browser User Settings"
+    text  "DreamShader 浏览器用户设置"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:bDivergedOnly {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bDivergedOnly
     src   "Diverged Only"
+    text  "仅偏离的"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:bEphemeralOnly {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bEphemeralOnly
     src   "Ephemeral Only"
+    text  "仅临时材质"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:bErrorsOnly {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bErrorsOnly
     src   "Errors Only"
+    text  "仅错误"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:bHideLibraries {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bHideLibraries
     src   "Hide Libraries"
+    text  "隐藏库"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:bHidePipelines {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bHidePipelines
     src   "Hide Pipelines"
+    text  "隐藏管线"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:bHideUnmanaged {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bHideUnmanaged
     src   "Hide Unmanaged"
+    text  "隐藏未托管"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:bSortAscending {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bSortAscending
     src   "Sort Ascending"
+    text  "升序排列"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:bStaleOnly {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bStaleOnly
     src   "Stale Only"
+    text  "仅过期的"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:bTileView {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:bTileView
     src   "Tile View"
+    text  "平铺视图"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:InspectorPaneFraction {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:InspectorPaneFraction
     src   "Inspector Pane Fraction"
+    text  "检查器面板占比"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:LastSelectedKey {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:LastSelectedKey
     src   "Last Selected Key"
+    text  "最后选中的键"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:NavigationPaneFraction {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:NavigationPaneFraction
     src   "Navigation Pane Fraction"
+    text  "导航面板占比"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:NavigationScope {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:NavigationScope
     src   "Navigation Scope"
+    text  "导航作用域"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:PreviewMesh {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:PreviewMesh
     src   "Preview Mesh"
+    text  "预览网格"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:SortColumn {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:SortColumn
     src   "Sort Column"
+    text  "排序列"
+    state machine
 }
 
 DreamShaderBrowserUserSettings:ViewMode {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#DreamShaderBrowserUserSettings:ViewMode
     src   "View Mode"
+    text  "视图模式"
+    state machine
 }
 
 EDreamShaderBrowserSortColumn.Asset {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserSortColumn:Asset
     src   "Asset"
+    text  "资产"
+    state machine
 }
 
 EDreamShaderBrowserSortColumn.EDreamShaderBrowserSortColumn_MAX {
@@ -100,21 +136,29 @@ EDreamShaderBrowserSortColumn.EDreamShaderBrowserSortColumn_MAX {
 EDreamShaderBrowserSortColumn.Name {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserSortColumn:Name
     src   "Name"
+    text  "名称"
+    state machine
 }
 
 EDreamShaderBrowserSortColumn.Root {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserSortColumn:Root
     src   "Root"
+    text  "根"
+    state machine
 }
 
 EDreamShaderBrowserSortColumn.Status {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserSortColumn:Status
     src   "Status"
+    text  "状态"
+    state machine
 }
 
 EDreamShaderBrowserViewMode.Assets {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserViewMode:Assets
     src   "Assets"
+    text  "资产"
+    state machine
 }
 
 EDreamShaderBrowserViewMode.EDreamShaderBrowserViewMode_MAX {
@@ -125,6 +169,8 @@ EDreamShaderBrowserViewMode.EDreamShaderBrowserViewMode_MAX {
 EDreamShaderBrowserViewMode.Sources {
     at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserUserSettings.h#EDreamShaderBrowserViewMode:Sources
     src   "Sources"
+    text  "源码"
+    state machine
 }
 
 namespace UObjectToolTips

@@ -5,221 +5,309 @@ namespace UObjectDisplayNames
 DreamPassApiActivation {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation
     src   "Dream Pass Api Activation"
+    text  "Dream Pass API 激活"
+    state machine
 }
 
 DreamPassApiActivation:Overrides {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation:Overrides
     src   "Overrides"
+    text  "覆盖"
+    state machine
 }
 
 DreamPassApiActivation:Pipeline {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation:Pipeline
     src   "Pipeline"
+    text  "管线"
+    state machine
 }
 
 DreamPassApiActivation:PlayerIndex {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation:PlayerIndex
     src   "Player Index"
+    text  "玩家索引"
+    state machine
 }
 
 DreamPassApiActivation:Priority {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation:Priority
     src   "Priority"
+    text  "优先级"
+    state machine
 }
 
 DreamPassApiActivation:Weight {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation:Weight
     src   "Weight"
+    text  "权重"
+    state machine
 }
 
 DreamPassHandle {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassHandle
     src   "Dream Pass Handle"
+    text  "Dream Pass 句柄"
+    state machine
 }
 
 DreamPassHandle:Id {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassHandle:Id
     src   "Id"
+    text  "ID"
+    state machine
 }
 
 DreamPassMaterialPool {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassMaterialPool
     src   "Dream Pass Material Pool"
+    text  "Dream Pass 材质池"
+    state machine
 }
 
 DreamPassMaterialPool:Base {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassMaterialPool:Base
     src   "Base"
+    text  "基础"
+    state machine
 }
 
 DreamPassMaterialPool:Instances {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassMaterialPool:Instances
     src   "Instances"
+    text  "实例"
+    state machine
 }
 
 DreamPassSubsystem {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem
     src   "Dream Pass Subsystem"
+    text  "Dream Pass 子系统"
+    state machine
 }
 
 DreamPassSubsystem:AddPipeline {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddPipeline
     src   "Add Pipeline"
+    text  "添加管线"
+    state machine
 }
 
 DreamPassSubsystem:AddPipeline:Overrides {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddPipeline:Overrides
     src   "Overrides"
+    text  "覆盖"
+    state machine
 }
 
 DreamPassSubsystem:AddPipeline:Pipeline {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddPipeline:Pipeline
     src   "Pipeline"
+    text  "管线"
+    state machine
 }
 
 DreamPassSubsystem:AddPipeline:PlayerIndex {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddPipeline:PlayerIndex
     src   "Player Index"
+    text  "玩家索引"
+    state machine
 }
 
 DreamPassSubsystem:AddPipeline:Priority {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddPipeline:Priority
     src   "Priority"
+    text  "优先级"
+    state machine
 }
 
 DreamPassSubsystem:AddPipeline:ReturnValue {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddPipeline:ReturnValue
     src   "Return Value"
+    text  "返回值"
+    state machine
 }
 
 DreamPassSubsystem:AddToList {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddToList
     src   "Add to List"
+    text  "加入列表"
+    state machine
 }
 
 DreamPassSubsystem:AddToList:List {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddToList:List
     src   "List"
+    text  "列表"
+    state machine
 }
 
 DreamPassSubsystem:AddToList:Primitive {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:AddToList:Primitive
     src   "Primitive"
+    text  "图元"
+    state machine
 }
 
 DreamPassSubsystem:ApiActivations {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:ApiActivations
     src   "Api Activations"
+    text  "API 激活"
+    state machine
 }
 
 DreamPassSubsystem:ClearList {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:ClearList
     src   "Clear List"
+    text  "清空列表"
+    state machine
 }
 
 DreamPassSubsystem:ClearList:List {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:ClearList:List
     src   "List"
+    text  "列表"
+    state machine
 }
 
 DreamPassSubsystem:GlobalPipelines {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:GlobalPipelines
     src   "Global Pipelines"
+    text  "全局管线"
+    state machine
 }
 
 DreamPassSubsystem:IsActive {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:IsActive
     src   "Is Active"
+    text  "是否激活"
+    state machine
 }
 
 DreamPassSubsystem:IsActive:Handle {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:IsActive:Handle
     src   "Handle"
+    text  "句柄"
+    state machine
 }
 
 DreamPassSubsystem:IsActive:ReturnValue {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:IsActive:ReturnValue
     src   "Return Value"
+    text  "返回值"
+    state machine
 }
 
 DreamPassSubsystem:MaterialPools {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:MaterialPools
     src   "Material Pools"
+    text  "材质池"
+    state machine
 }
 
 DreamPassSubsystem:RemoveFromList {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:RemoveFromList
     src   "Remove from List"
+    text  "从列表移除"
+    state machine
 }
 
 DreamPassSubsystem:RemoveFromList:List {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:RemoveFromList:List
     src   "List"
+    text  "列表"
+    state machine
 }
 
 DreamPassSubsystem:RemoveFromList:Primitive {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:RemoveFromList:Primitive
     src   "Primitive"
+    text  "图元"
+    state machine
 }
 
 DreamPassSubsystem:RemovePipeline {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:RemovePipeline
     src   "Remove Pipeline"
+    text  "移除管线"
+    state machine
 }
 
 DreamPassSubsystem:RemovePipeline:Handle {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:RemovePipeline:Handle
     src   "Handle"
+    text  "句柄"
+    state machine
 }
 
 DreamPassSubsystem:RemovePipeline:ReturnValue {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:RemovePipeline:ReturnValue
     src   "Return Value"
+    text  "返回值"
+    state machine
 }
 
 DreamPassSubsystem:SetParameter {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetParameter
     src   "Set Parameter"
+    text  "设置参数"
+    state machine
 }
 
 DreamPassSubsystem:SetParameter:Handle {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetParameter:Handle
     src   "Handle"
+    text  "句柄"
+    state machine
 }
 
 DreamPassSubsystem:SetParameter:Name {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetParameter:Name
     src   "Name"
+    text  "名称"
+    state machine
 }
 
 DreamPassSubsystem:SetParameter:ReturnValue {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetParameter:ReturnValue
     src   "Return Value"
+    text  "返回值"
+    state machine
 }
 
 DreamPassSubsystem:SetParameter:Value {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetParameter:Value
     src   "Value"
+    text  "值"
+    state machine
 }
 
 DreamPassSubsystem:SetWeight {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetWeight
     src   "Set Weight"
+    text  "设置权重"
+    state machine
 }
 
 DreamPassSubsystem:SetWeight:Handle {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetWeight:Handle
     src   "Handle"
+    text  "句柄"
+    state machine
 }
 
 DreamPassSubsystem:SetWeight:ReturnValue {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetWeight:ReturnValue
     src   "Return Value"
+    text  "返回值"
+    state machine
 }
 
 DreamPassSubsystem:SetWeight:Weight {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassSubsystem:SetWeight:Weight
     src   "Weight"
+    text  "权重"
+    state machine
 }
 
 namespace UObjectToolTips
@@ -227,11 +315,15 @@ namespace UObjectToolTips
 DreamPassApiActivation {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassApiActivation
     src   "A pipeline activated through UDreamPassSubsystem::AddPipeline."
+    text  "通过 UDreamPassSubsystem::AddPipeline 激活的管线。"
+    state machine
 }
 
 DreamPassHandle {
     at    Source/DreamShaderPass/Public/DreamPassSubsystem.h#DreamPassHandle
     src   "A handle to a pipeline activated through the API."
+    text  "通过 API 激活的管线句柄。"
+    state machine
 }
 
 DreamPassMaterialPool {

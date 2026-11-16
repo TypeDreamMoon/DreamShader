@@ -5,26 +5,36 @@ namespace UObjectDisplayNames
 MaterialExpressionDreamPassOutput {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassOutput.h#MaterialExpressionDreamPassOutput
     src   "Material Expression Dream Pass Output"
+    text  "材质表达式 Dream Pass 输出"
+    state machine
 }
 
 MaterialExpressionDreamPassOutput:Output0 {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassOutput.h#MaterialExpressionDreamPassOutput:Output0
     src   "Output 0"
+    text  "输出 0"
+    state machine
 }
 
 MaterialExpressionDreamPassOutput:Output1 {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassOutput.h#MaterialExpressionDreamPassOutput:Output1
     src   "Output 1"
+    text  "输出 1"
+    state machine
 }
 
 MaterialExpressionDreamPassOutput:Output2 {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassOutput.h#MaterialExpressionDreamPassOutput:Output2
     src   "Output 2"
+    text  "输出 2"
+    state machine
 }
 
 MaterialExpressionDreamPassOutput:Output3 {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassOutput.h#MaterialExpressionDreamPassOutput:Output3
     src   "Output 3"
+    text  "输出 3"
+    state machine
 }
 
 namespace UObjectToolTips

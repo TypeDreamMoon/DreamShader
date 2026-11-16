@@ -5,26 +5,36 @@ namespace UObjectDisplayNames
 MaterialExpressionDreamPassBuffer {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer
     src   "Material Expression Dream Pass Buffer"
+    text  "材质表达式 Dream Pass 缓冲"
+    state machine
 }
 
 MaterialExpressionDreamPassBuffer:Buffer {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Buffer
     src   "Buffer"
+    text  "缓冲"
+    state machine
 }
 
 MaterialExpressionDreamPassBuffer:Coordinates {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Coordinates
     src   "Coordinates"
+    text  "坐标"
+    state machine
 }
 
 MaterialExpressionDreamPassBuffer:Pipeline {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Pipeline
     src   "Pipeline"
+    text  "管线"
+    state machine
 }
 
 MaterialExpressionDreamPassBuffer:SamplerSource {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:SamplerSource
     src   "Sampler Source"
+    text  "采样器来源"
+    state machine
 }
 
 namespace UObjectToolTips
@@ -37,6 +47,8 @@ MaterialExpressionDreamPassBuffer {
 MaterialExpressionDreamPassBuffer:Buffer {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Buffer
     src   "A buffer of Pipeline declared with `Export = true`."
+    text  "以 `Export = true` 声明的 Pipeline 缓冲。"
+    state machine
 }
 
 MaterialExpressionDreamPassBuffer:Coordinates {
@@ -59,4 +71,6 @@ namespace UObjectCategory
 "Dream Pass Buffer" {
     at    Source/DreamShaderPass/Public/Materials/MaterialExpressionDreamPassBuffer.h#MaterialExpressionDreamPassBuffer:Pipeline
     src   "Dream Pass Buffer"
+    text  "Dream Pass 缓冲"
+    state machine
 }

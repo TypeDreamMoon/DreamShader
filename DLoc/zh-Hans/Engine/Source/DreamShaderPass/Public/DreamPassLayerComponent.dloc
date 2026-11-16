@@ -5,46 +5,64 @@ namespace UObjectDisplayNames
 DreamPassLayerComponent {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent
     src   "Dream Pass Layers"
+    text  "Dream Pass 图层"
+    state machine
 }
 
 DreamPassLayerComponent:bAllPrimitives {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:bAllPrimitives
     src   "All Primitives"
+    text  "所有图元"
+    state machine
 }
 
 DreamPassLayerComponent:ComponentTag {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:ComponentTag
     src   "Component Tag"
+    text  "组件标签"
+    state machine
 }
 
 DreamPassLayerComponent:GetLayerNameOptions {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:GetLayerNameOptions
     src   "Get Layer Name Options"
+    text  "获取图层名称选项"
+    state machine
 }
 
 DreamPassLayerComponent:GetLayerNameOptions:ReturnValue {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:GetLayerNameOptions:ReturnValue
     src   "Return Value"
+    text  "返回值"
+    state machine
 }
 
 DreamPassLayerComponent:Layers {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:Layers
     src   "Layers"
+    text  "图层"
+    state machine
 }
 
 DreamPassLayerComponent:Refresh {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:Refresh
     src   "Refresh"
+    text  "刷新"
+    state machine
 }
 
 DreamPassLayerComponent:SetLayers {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:SetLayers
     src   "Set Layers"
+    text  "设置图层"
+    state machine
 }
 
 DreamPassLayerComponent:SetLayers:NewLayers {
     at    Source/DreamShaderPass/Public/DreamPassLayerComponent.h#DreamPassLayerComponent:SetLayers:NewLayers
     src   "New Layers"
+    text  "新图层"
+    state machine
 }
 
 namespace UObjectToolTips

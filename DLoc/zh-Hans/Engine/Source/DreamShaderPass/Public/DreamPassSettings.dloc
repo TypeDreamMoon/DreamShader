@@ -5,46 +5,64 @@ namespace UObjectDisplayNames
 DreamPassGlobalPipeline {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline
     src   "Dream Pass Global Pipeline"
+    text  "Dream Pass 全局管线"
+    state machine
 }
 
 DreamPassGlobalPipeline:bEnabled {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:bEnabled
     src   "Enabled"
+    text  "已启用"
+    state machine
 }
 
 DreamPassGlobalPipeline:Overrides {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Overrides
     src   "Overrides"
+    text  "覆盖"
+    state machine
 }
 
 DreamPassGlobalPipeline:Pipeline {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Pipeline
     src   "Pipeline"
+    text  "管线"
+    state machine
 }
 
 DreamPassGlobalPipeline:Priority {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Priority
     src   "Priority"
+    text  "优先级"
+    state machine
 }
 
 DreamPassSettings {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings
     src   "DreamShader Custom Pass"
+    text  "DreamShader 自定义 Pass"
+    state machine
 }
 
 DreamPassSettings:bEnabled {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:bEnabled
     src   "Enabled"
+    text  "已启用"
+    state machine
 }
 
 DreamPassSettings:GlobalPipelines {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:GlobalPipelines
     src   "Global Pipelines"
+    text  "全局管线"
+    state machine
 }
 
 DreamPassSettings:LayerNames {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:LayerNames
     src   "Layer Names"
+    text  "图层名称"
+    state machine
 }
 
 namespace UObjectToolTips
@@ -52,6 +70,8 @@ namespace UObjectToolTips
 DreamPassGlobalPipeline {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline
     src   "A pipeline that applies to every view of every world, with the parameter values it applies with."
+    text  "一条对所有世界的所有视图都生效的管线，连同它生效时使用的参数值。"
+    state machine
 }
 
 DreamPassGlobalPipeline:Priority {
@@ -84,21 +104,29 @@ namespace UObjectCategory
 Pipeline {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Pipeline
     src   "Pipeline"
+    text  "管线"
+    state machine
 }
 
 Runtime {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:bEnabled
     src   "Runtime"
+    text  "运行时"
+    state machine
 }
 
 Pipelines {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:GlobalPipelines
     src   "Pipelines"
+    text  "管线"
+    state machine
 }
 
 Layers {
     at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:LayerNames
     src   "Layers"
+    text  "图层"
+    state machine
 }
 
 namespace DreamShader.Pass.Settings
