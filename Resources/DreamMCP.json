@@ -10,9 +10,11 @@
   "extensions": [".dss", ".dsi", ".dsp", ".dsh", ".dsm", ".dsf"],
   "sourceRoots": ["DShader"],
   "reference": [
+    { "title": "Cheat sheet: the 2.0 language on one page (read first)", "path": "Docs/cheatsheet.md" },
     { "title": "DreamShaderLang 2.0: .dss, .dsi and .dsh sources", "path": ".skill/reference/dss.md" },
     { "title": "Custom Pass pipelines: .dsp sources", "path": ".skill/reference/dsp.md" },
-    { "title": "The 1.x language: .dsm and .dsf sources", "path": ".skill/reference/legacy.md" }
+    { "title": "The 1.x language: .dsm and .dsf sources", "path": ".skill/reference/legacy.md" },
+    { "title": "Diagnostics as JSON: every DSHnnnn with its severity, stage, meaning, fix and doc link", "path": "Docs/diagnostics/codes.json" }
   ],
   "actions": [
     {

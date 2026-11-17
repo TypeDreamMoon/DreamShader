@@ -1,0 +1,17 @@
+// DShader/CheatSheet/M_CheatSheetPanel.dss -- a translucent UI panel: a soft vertical gradient and a scrolling band
+#pragma material(Domain = UI, BlendMode = Translucent, ShadingModel = Unlit)
+
+/// @group Panel   @sort 10   @desc Base colour; alpha scales the opacity
+uniform float4 Tint = float4(0.12, 0.16, 0.2, 0.85);
+
+/// @group Panel   @sort 20   @slider 0 2   @desc Band travel, panels per second
+uniform float ScrollSpeed = 0.25;
+
+export void M_CheatSheetPanel(inout material m)
+{
+    float2 UV = UE.TexCoord(Index = 0);
+    float Band = frac(UV.y - UE.Time() * ScrollSpeed);
+    float Glow = pow(saturate(1.0 - abs(Band - 0.5) * 4.0), 3.0);
+    m.EmissiveColor = Tint.rgb * lerp(1.15, 0.85, UV.y) + Glow * 0.08;
+    m.Opacity = Tint.a;
+}

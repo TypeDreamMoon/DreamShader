@@ -1,0 +1,10 @@
+// DShader/CheatSheet/MF_CheatSheetTiling.dss -- a material function: tiled UV plus the cell index
+/// @library CheatSheet|UV
+/// @param UV       The coordinates to tile.
+/// @param Scale    Tiles per UV unit.
+export float2 MF_CheatSheetTiling(float2 UV, float Scale = 4.0, out float2 Cell)
+{
+    float2 T = UV * Scale;
+    Cell = floor(T);
+    return frac(T);
+}

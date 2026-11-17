@@ -1,0 +1,41 @@
+// DShader/CheatSheet/M_CheatSheetSurface.dss -- a lit, textured surface with an optional pulsing edge glow
+#pragma material(Domain = Surface, BlendMode = Opaque, ShadingModel = DefaultLit)
+
+/// @group Surface   @sort 10   @default /Engine/EngineResources/WhiteSquareTexture
+uniform Texture2D Albedo;
+
+/// @group Surface   @sort 20   @desc Multiplies the texture
+uniform float4 Tint = float4(0.8, 0.75, 0.7, 1.0);
+
+/// @group Surface   @sort 30   @slider 0 1
+uniform float SurfaceRoughness = 0.6;
+
+/// @static
+/// @group Glow   @sort 40
+uniform bool UseGlow = true;
+
+/// @group Glow   @sort 50   @slider 0 10
+uniform float GlowStrength = 2.0;
+
+float EdgeMask(float2 UV, float Width)              // a helper: inlined at each call
+{
+    float2 D = min(UV, 1.0 - UV);
+    return 1.0 - saturate(min(D.x, D.y) / Width);
+}
+
+export void M_CheatSheetSurface(inout material m)   // the entry: this signature makes a material
+{
+    float2 UV = UE.TexCoord(Index = 0);
+    float4 Texel = Albedo.Sample(UV);
+    m.BaseColor = Texel.rgb * Tint.rgb;
+    m.Roughness = SurfaceRoughness;
+    m.Metallic = 0.0;
+
+    float3 Glow = float3(0, 0, 0);
+    if (UseGlow)                                     // a static bool: a StaticSwitch, not a branch
+    {
+        float Pulse = 0.5 + 0.5 * sin(UE.Time() * 0.5);   // sin takes cycles: one pulse every 2 s
+        Glow = Tint.rgb * EdgeMask(UV, 0.08) * Pulse * GlowStrength;
+    }
+    m.EmissiveColor = Glow;
+}

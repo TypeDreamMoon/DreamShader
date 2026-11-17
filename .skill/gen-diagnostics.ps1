@@ -62,8 +62,17 @@ $ranges = [ordered]@{
 
 $found = @{}
 
-foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -Include '*.cpp', '*.h' -File -Recurse) {
-    if ($file.FullName -match '\\Tests\\') { continue }
+# Sorted by path, ordinally and ignoring case: the order a code's sites are met in decides its severity when it is
+# raised through both helpers, and Linux lists a directory in no particular order.
+$sourceFiles = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
+foreach ($item in Get-ChildItem -LiteralPath $sourceRoot -Include '*.cpp', '*.h' -File -Recurse) { $sourceFiles.Add($item) }
+$sourceFiles.Sort([System.Comparison[System.IO.FileInfo]] {
+    param($left, $right)
+    [string]::CompareOrdinal($left.FullName.ToUpperInvariant().Replace('\', '/'), $right.FullName.ToUpperInvariant().Replace('\', '/'))
+})
+foreach ($file in $sourceFiles) {
+    # Either separator: CI runs this on Linux, where a backslash-only match would count the tests' codes.
+    if ($file.FullName -match '[\\/]Tests[\\/]') { continue }
     $text = [System.IO.File]::ReadAllText($file.FullName)
 
     # After the code comes the message, in whichever dialect the site uses:
