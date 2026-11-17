@@ -1,0 +1,24 @@
+name: Check generated knowledge files
+
+# The diagnostics pages, Docs/diagnostics/codes.json, Docs/cheatsheet.md and the cheat sheet's compiled
+# examples are all generated. This fails when a change forgot to regenerate them. No engine is needed.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Diagnostics pages match the source
+        shell: pwsh
+        run: ./.skill/gen-diagnostics.ps1 -Check
+      - name: Diagnostics JSON, cheat sheet and its examples match their sources
+        shell: pwsh
+        run: ./.skill/gen-knowledge.ps1 -Check
