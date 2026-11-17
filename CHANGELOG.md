@@ -4,6 +4,13 @@
 
 ### Added
 
+- **A one-page cheat sheet and the diagnostics as JSON.** `Docs/cheatsheet.md` puts the 2.0 language on one page —
+  the file kinds, a material, a UI material, parameters, `#pragma material`, expressions, functions, instances, a
+  `.dsp` — and ends with the codes that cost authors the most time. Its complete sources are compiled by the test
+  suite. `Docs/diagnostics/codes.json` holds every `DSHnnnn` with its severity, stage, message, meaning, fix and
+  documentation link. Both are generated (`.skill/gen-knowledge.ps1`), checked by CI, and listed first and last
+  in `Resources/DreamMCP.json`'s reference documents.
+
 - **`dsc.ps1 info` prints what a bug report needs.** The plugin version and commit, the engine version and whether
   it is an installed or a source build, the OS, the UI language and the PowerShell version, one `key : value` line
   each. It starts no engine, prints no path, and writes `unknown` for what it cannot find, so it also runs from a
