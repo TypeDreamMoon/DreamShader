@@ -17,18 +17,18 @@ copy from its examples, and do not guess syntax from other shader languages.
 
 Paths in this section are relative to the game project root. The plugin is at `Plugins/DreamShader/`.
 
-1. Read: `Plugins/DreamShader/.skill/reference/dss.md` (`.dss`, `.dsi`), `Plugins/DreamShader/.skill/reference/dsp.md`
+1. Read: `Plugins/DreamShader/Docs/cheatsheet.md` (the language on one page) first, then
+   `Plugins/DreamShader/.skill/reference/dss.md` (`.dss`, `.dsi`), `Plugins/DreamShader/.skill/reference/dsp.md`
    (`.dsp`), `Plugins/DreamShader/.skill/reference/legacy.md` (`.dsm`, `.dsf`, `.dsh` in 1.x).
 2. Look up what exists: `Plugins/DreamShader/Docs/builtins/index.md` lists the builtin calls. For the exact
-   node catalog of this engine, run
-   `pwsh -File Plugins/DreamShader/.skill/dsc.ps1 export-catalog`; it writes
+   node catalog of this engine, run `pwsh -File Plugins/DreamShader/.skill/dsc.ps1 export-catalog`; it writes
    `Saved/DreamShader/Bridge/dreamshader-builtin-catalog.json`.
 3. Write the source under `DShader/`. The asset path follows the file: `DShader/UI/M_Panel.dss` builds `/Game/UI/M_Panel`.
 4. Build it. First the fast check, which writes nothing, then the real compile:
    `pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/UI/M_Panel.dss`
    `pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/UI/M_Panel.dss -Force -CleanNew`
-5. Read the diagnostics. Every message has a code `DSHnnnn`; look it up in
-   `Plugins/DreamShader/Docs/diagnostics/README.md`. Fix, and repeat until both commands print `dsc: OK (exit 0)`.
+5. Read the diagnostics. Every message has a code `DSHnnnn`; look it up in `Plugins/DreamShader/Docs/diagnostics/codes.json`
+   (or `README.md` beside it). Fix, and repeat until both commands print `dsc: OK (exit 0)`.
 
 If you have the `dream_shader` tool, a DreamMCP server is connected. Prefer it to `dsc.ps1` for steps 2 to 5:
 `check`, `compile`, `diagnostics`, `lookup` and `preview` answer in the user's editor or a background engine,
@@ -112,7 +112,8 @@ Presets, filters and the RHI gate: `Docs/contributing/testing.md`.
 ### Rules
 
 - Added, renamed or removed a `DSHnnnn` diagnostic: run `pwsh -File .skill/gen-diagnostics.ps1`. It rewrites only
-  the generated half of `Docs/diagnostics/DSH*.md`. `-Check` reports drift without writing.
+  the generated half of `Docs/diagnostics/DSH*.md`. Then `pwsh -File .skill/gen-knowledge.ps1`: it writes
+  `Docs/diagnostics/codes.json`, and `Docs/cheatsheet.md` with its compiled examples from `.skill/cheatsheet/`. CI runs both with `-Check`.
 - Changed user-facing C++ text: run `pwsh -File Tools/Localization/localization_lint.ps1`. Text that reaches the
   bridge or `diagnostics.json` goes through `ToInvariantWireString()`.
 - Version-dependent C++ uses the macros in `Source/DreamShader/Public/DreamShaderVersionCompat.h`, never raw
