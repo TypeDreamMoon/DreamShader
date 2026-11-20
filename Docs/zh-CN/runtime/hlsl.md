@@ -199,6 +199,8 @@ pass Blur : compute
 
 `View` 在每个注入点都存在，包括 `BeginView` —— 计算 pass 可以自行读取相机，无需从蓝图传入参数。在 `BeginView` 处，渲染器尚未创建视图自身的 uniform 缓冲区，因此运行时绑定一个由相机生成的缓冲区：变换（`TranslatedWorldToClip`、`ViewToClip`、`ClipToTranslatedWorld` 及其余部分）、相机的位置与方向、视图矩形、时间与帧计数器。只有渲染器稍后才填充的内容不在其中 —— 天空、大气、灯光、曝光：`View.PreExposure` 为 1，且上一帧的变换（`View.Prev*`）与本帧相同。`BeginView` 处的场景纹理是占位符。
 
+`View` 的成员就是引擎 `FViewUniformShaderParameters`（`SceneView.h`）的成员。使用大世界坐标时，世界空间中的位置并不属于这些成员：缓冲区中的位置是平移世界空间位置（`View.TranslatedWorldCameraOrigin`），而世界空间位置以双精度浮点数形式存在于 `PrimaryView` 上——`DFHackToFloat(PrimaryView.WorldCameraOrigin)` 是相机的世界位置。引擎会在着色器编译器读取代码之前，把 `View.Member` 转换为缓冲区中该成员自己的名称，因此缓冲区没有的成员会以 `View` 本身的形式到达编译器：`undeclared identifier 'View'`。预检查会指出它是哪个成员，以及名称相似的成员（DSH8322）。
+
 <a id="how-the-hlsl-gets-into-the-engine"></a>
 
 ## HLSL 如何进入引擎
