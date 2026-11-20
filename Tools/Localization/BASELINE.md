@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-2153
+2159
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -1444,14 +1444,20 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pass.Slots | PixelSlotWord | pixel |
 | DreamShader.Pass.Slots | PixelTypeWord | pixel |
 | DreamShader.Pass.Slots | PixelWord | Pixel |
+| DreamShader.Pass.Slots | PrecheckErrorExplained | [{0}] pass '{1}' does not compile in its HLSL slot: {3}\nThe shader compiler said: {2} |
 | DreamShader.Pass.Slots | PrecheckErrorInFile | [{0}] pass '{1}' does not compile in its HLSL slot: {2} |
 | DreamShader.Pass.Slots | PrecheckErrorInSharedHlsl | [{0}] the file's 'hlsl' block does not compile in the HLSL slots of {1}: {2} |
+| DreamShader.Pass.Slots | PrecheckErrorInSharedHlslExplained | [{0}] the file's 'hlsl' block does not compile in the HLSL slots of {1}: {3}\nThe shader compiler said: {2} |
 | DreamShader.Pass.Slots | PrecheckErrorInSlot | [{0}] pass '{1}' does not compile in its HLSL slot: {2} (a name this pass binds may clash with one the slot shader or the snapshot uses) |
 | DreamShader.Pass.Slots | PrecheckFormatUnavailable | The project targets the shader format {0}, which this machine has no shader compiler for, so the HLSL slots were not pre-checked for it; a cook for that platform compiles them unchecked. |
 | DreamShader.Pass.Slots | PrecheckNoCustomPass | HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to compile them for. |
 | DreamShader.Pass.Slots | PrecheckNoFormat | There is no shader format to pre-check the HLSL slots with: no active feature level and no target platform has a shader compiler on this machine. Nothing was written, because a slot that never compiled must not reach the global shaders. |
 | DreamShader.Pass.Slots | PrecheckNoShaderType | The {0} slot shader cannot be pre-checked: the global shader type {1} is not registered, or its source no longer includes '{2}'. The DreamShaderPass module is out of step with this compiler; nothing was written. |
 | DreamShader.Pass.Slots | PrecheckRequestedFormatUnavailable | The shader format {0} was asked for, and this machine has no shader compiler for it, so the HLSL slots were not pre-checked for it. |
+| DreamShader.Pass.Slots | PrecheckUniformBufferNoMember | '{0}' has no member '{1}' in this engine, and the shader compiler reports a member a uniform buffer does not have as the buffer itself being undeclared. |
+| DreamShader.Pass.Slots | PrecheckUniformBufferSimilarMembers | Its members with a similar name: {0}. |
+| DreamShader.Pass.Slots | PrecheckUniformBufferUnknownMember | '{0}' is a uniform buffer, and a member it does not have is reported as '{0}' being undeclared: check the names read from it. |
+| DreamShader.Pass.Slots | PrecheckViewWorldPosition | A position in world space, such as the camera's, is on PrimaryView as a double-float: DFHackToFloat(PrimaryView.WorldCameraOrigin). |
 | DreamShader.Pass.Slots | RegistryNotWritable | '{0}' cannot be written or deleted, so nothing of the slot registry was changed: no snapshot written, no slot deleted, no registry file rewritten. The registry and its snapshots are committed files; a file that is read-only because it is not checked out is the usual reason. Check out the whole .dreampass folder and try again. |
 | DreamShader.Pass.Slots | RegistryUnreadable | The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose every slot it records; fix the file, or run 'dsc pass-registry -Rebuild'. |
 | DreamShader.Pass.Slots | RegistryWriteFailed | '{0}' could not be written. The slot registry is a committed file: a file that is read-only because it is not checked out is the usual reason. |

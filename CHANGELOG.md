@@ -50,6 +50,16 @@
 
 ### Fixed
 
+- **A pass that reads a member `View` does not have is told so.** `View.WorldCameraOrigin` in a pass's HLSL failed
+  the pre-check with `undeclared identifier 'View'` and the note that a binding name may clash, which read as the
+  view being missing. The view is there; the member is not: the engine turns `View.Member` into the buffer's own
+  name for that member, so an unknown one reaches the shader compiler as `View` itself, and with large world
+  coordinates the camera's world position is on `PrimaryView` (`DFHackToFloat(PrimaryView.WorldCameraOrigin)`).
+  DSH8322 now names the member, lists the buffer's members with a similar name, and for `View` says where the
+  world-space values are. The same holds for any uniform buffer a pass reads. Two more things that made the report
+  hard to read are gone: an FXC error that names a column range (`(12,30-33)`) is said at its line instead of at the
+  pass, and a compile that failed no longer lists its warnings as errors beside the real one.
+
 - **Two Dream plugins in one DreamMCP host no longer cap each other's jobs.** A host caps its frame rate at 15
   while idle and lifts the cap while a job runs; each plugin decided from its own endpoint alone, so when one went
   idle it capped the other's running job, which then stepped 15 times a second. Every Dream plugin's endpoint now

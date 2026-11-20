@@ -14,8 +14,8 @@
 //                    line), a pipeline without HLSL passes (DSH8339); nothing written         [NonNullRHI]
 //   RegistryPrecheckInline
 //                    the same for HLSL in the `.dsp` (DreamShader_Plan/10): every form compiles, an error at its
-//                    `.dsp` line, one in the shared code said once for every pass, the view at BeginView compiles
-//                                                                                              [NonNullRHI]
+//                    `.dsp` line, one in the shared code said once for every pass, the view at BeginView compiles,
+//                    a member the view does not have named as that (#99)                      [NonNullRHI]
 //   Registry         a compile that commits slots: the section text, slot stability across an edit, the slot freed,
 //                    the garbage of a deleted pipeline, an unreadable Registry.json           [NonNullRHI]
 //
@@ -1488,16 +1488,37 @@ bool FDreamShaderCompilerPipelineInlinePrecheckTest::RunTest(const FString& Para
 		"        Result[Id.xy] = PL2Exposure() * View.ViewSizeAndInvSize.z;\n"
 		"    }\n"
 		"}\n");
+	// A member the view does not have: the engine rewrites `View.Member` to the buffer's own names, so the compiler sees
+	// `View` undeclared. Large world coordinates took the camera's world position out of the buffer and put it on
+	// PrimaryView, as a double-float.
+	const FString CameraFixed = TEXT(
+		"buffer CamCell : RGBA32F(Size = int2(4, 1), Clear = 0);\n"
+		"\n"
+		"pass CamCellWrite : compute\n"
+		"{\n"
+		"    Injection = BeforeBasePass;\n"
+		"    write OutCam = CamCell;\n"
+		"\n"
+		"    hlsl\n"
+		"    {\n"
+		"        OutCam[int2(Id.xy)] = float4(DFHackToFloat(PrimaryView.WorldCameraOrigin).xy, 0.0, 0.0);\n"
+		"    }\n"
+		"}\n");
+	const FString Camera = CameraFixed.Replace(TEXT("DFHackToFloat(PrimaryView.WorldCameraOrigin).xy"), TEXT("View.WorldCameraOrigin.xy"));
 
 	FString Written;
 	FString BrokenPath;
 	FString SharedPath;
 	FString EarlyPath;
+	FString CameraPath;
+	FString CameraFixedPath;
 	if (!Fixture.WriteSource(*this, Good)
 		|| !Fixture.WriteSiblingSource(*this, TEXT("PL2InlineCommon.ush"), TEXT("float PL2Weight(int i)\n{\n    return exp(-float(i * i) * 0.5);\n}\n"), Written)
 		|| !Fixture.WriteSiblingSource(*this, TEXT("CP_PL2InlineBroken.dsp"), Broken, BrokenPath)
 		|| !Fixture.WriteSiblingSource(*this, TEXT("CP_PL2InlineShared.dsp"), SharedBroken, SharedPath)
-		|| !Fixture.WriteSiblingSource(*this, TEXT("CP_PL2InlineEarly.dsp"), Early, EarlyPath))
+		|| !Fixture.WriteSiblingSource(*this, TEXT("CP_PL2InlineEarly.dsp"), Early, EarlyPath)
+		|| !Fixture.WriteSiblingSource(*this, TEXT("CP_PL2InlineCamera.dsp"), Camera, CameraPath)
+		|| !Fixture.WriteSiblingSource(*this, TEXT("CP_PL2InlineCameraFixed.dsp"), CameraFixed, CameraFixedPath))
 	{
 		return false;
 	}
@@ -1563,6 +1584,39 @@ bool FDreamShaderCompilerPipelineInlinePrecheckTest::RunTest(const FString& Para
 		int32 Checked = 0;
 		TestTrue(FString::Printf(TEXT("a BeginView pass that reads View passes the pre-check (%s)"), *Describe(Diagnostics)),
 			Compiler::CheckDreamShaderPipelineSlots(EarlyPath, TArray<FName>(), Diagnostics, Checked));
+		TestEqual(TEXT("its one HLSL pass checked"), Checked, 1);
+	}
+
+	// ---- a member the view does not have: said as that, at its line, with the names it might have meant
+	{
+		Lang::FLangDiagnosticSink Diagnostics;
+		int32 Checked = 0;
+		TestFalse(TEXT("a pass that reads a member View does not have fails the pre-check"),
+			Compiler::CheckDreamShaderPipelineSlots(CameraPath, TArray<FName>(), Diagnostics, Checked));
+		const int32 Line = InlineLineOf(Camera, TEXT("View.WorldCameraOrigin"));
+		int32 Explained = 0;
+		int32 Guessed = 0;
+		for (const Lang::FLangDiagnostic& Diagnostic : Diagnostics.GetDiagnostics())
+		{
+			// Names, not words: the words are translated.
+			const FString Message = Diagnostic.Message.ToString();
+			Guessed += Message.Contains(TEXT("clash"), ESearchCase::CaseSensitive) ? 1 : 0;
+			if (Diagnostic.Code.Equals(TEXT("DSH8322"), ESearchCase::CaseSensitive) && Diagnostic.Span.Line == Line
+				&& FPaths::GetCleanFilename(Diagnostic.FilePath).Equals(TEXT("CP_PL2InlineCamera.dsp"), ESearchCase::IgnoreCase))
+			{
+				Explained += Message.Contains(TEXT("'WorldCameraOrigin'"), ESearchCase::CaseSensitive)
+					&& Message.Contains(TEXT("TranslatedWorldCameraOrigin"), ESearchCase::CaseSensitive)
+					&& Message.Contains(TEXT("DFHackToFloat(PrimaryView.WorldCameraOrigin)"), ESearchCase::CaseSensitive) ? 1 : 0;
+			}
+		}
+		TestTrue(FString::Printf(TEXT("DSH8322 at CP_PL2InlineCamera.dsp:%d names the member, the ones like it and PrimaryView (%s)"), Line, *Describe(Diagnostics)), Explained >= 1);
+		TestEqual(FString::Printf(TEXT("none of it guesses at a name clash (%s)"), *Describe(Diagnostics)), Guessed, 0);
+	}
+	{
+		Lang::FLangDiagnosticSink Diagnostics;
+		int32 Checked = 0;
+		TestTrue(FString::Printf(TEXT("the camera's world position read from PrimaryView passes the pre-check (%s)"), *Describe(Diagnostics)),
+			Compiler::CheckDreamShaderPipelineSlots(CameraFixedPath, TArray<FName>(), Diagnostics, Checked));
 		TestEqual(TEXT("its one HLSL pass checked"), Checked, 1);
 	}
 

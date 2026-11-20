@@ -68,6 +68,7 @@
 #if DREAMSHADER_WITH_CUSTOM_PASS
 #include "GlobalShader.h"
 #include "Interfaces/IShaderFormat.h"
+#include "Internationalization/Regex.h"
 #include "RenderingThread.h"
 #include "RHIGlobals.h"
 #include "RHIStrings.h"
@@ -76,6 +77,8 @@
 #include "ShaderCompilerCore.h"
 #include "ShaderCompilerJobTypes.h"
 #include "ShaderCore.h"
+#include "ShaderParameterMacros.h"
+#include "ShaderParameterMetadata.h"
 #endif
 
 #define LOCTEXT_NAMESPACE "DreamShader.Pass.Slots"
@@ -527,7 +530,129 @@ namespace UE::DreamShader::Editor::Compiler
 			bool bInUserFile = false;
 			/** Inline: in the shared code of the `.dsp`'s file block, which every inline pass compiles. */
 			bool bShared = false;
+			/** What the compiler's message means, when it says less than it seems to (ExplainUndeclaredUniformBuffer). */
+			FText Explanation;
 		};
+
+		/** The names `Buffer.Name` reads: the members, an included struct's among them, as the engine declares them. */
+		void CollectUniformBufferMemberNames(const FShaderParametersMetadata& Struct, TArray<FString>& OutNames)
+		{
+			for (const FShaderParametersMetadata::FMember& Member : Struct.GetMembers())
+			{
+				if (Member.GetBaseType() == UBMT_INCLUDED_STRUCT && Member.GetStructMetadata() != nullptr)
+				{
+					CollectUniformBufferMemberNames(*Member.GetStructMetadata(), OutNames);
+					continue;
+				}
+				OutNames.Add(Member.GetName());
+			}
+		}
+
+		/** Line InLine (1-based) of InText; empty past its end. */
+		FString GetTextLine(const FString& InText, const int32 InLine)
+		{
+			TArray<FString> Lines;
+			InText.ParseIntoArray(Lines, TEXT("\n"), /*InCullEmpty*/ false);
+			return Lines.IsValidIndex(InLine - 1) ? Lines[InLine - 1] : FString();
+		}
+
+		/**
+		 * What "undeclared identifier" means when the identifier is a uniform buffer. The engine declares a uniform buffer
+		 * as one name per member and turns `Buffer.Member` into that name before the shader compiler reads the code
+		 * (CreateHLSLUniformBufferDeclaration), so a member the buffer does not have is left as `Buffer.Member`, and the
+		 * compiler says the buffer itself is undeclared -- `View.WorldCameraOrigin`, which large world coordinates moved to
+		 * PrimaryView, reads as "undeclared identifier 'View'". InLineText is the line the compiler named, as it compiled
+		 * it. Empty when the message is about something else, or when that line reads only members the buffer has.
+		 */
+		FText ExplainUndeclaredUniformBuffer(const FString& InMessage, const FString& InLineText)
+		{
+			const FRegexPattern UndeclaredPattern(TEXT("undeclared identifier '([A-Za-z_][A-Za-z0-9_]*)'"));
+			FRegexMatcher Undeclared(UndeclaredPattern, InMessage);
+			if (!Undeclared.FindNext())
+			{
+				return FText::GetEmpty();
+			}
+			const FString BufferName = Undeclared.GetCaptureGroup(1);
+			const FShaderParametersMetadata* Buffer = FindUniformBufferStructByName(*BufferName);
+			if (Buffer == nullptr)
+			{
+				return FText::GetEmpty();
+			}
+
+			TArray<FString> Members;
+			CollectUniformBufferMemberNames(*Buffer, Members);
+			auto IsMember = [&Members](const FString& Name)
+			{
+				return Members.ContainsByPredicate([&Name](const FString& Member) { return Member.Equals(Name, ESearchCase::CaseSensitive); });
+			};
+
+			TArray<FString> Unknown;
+			bool bReadsMember = false;
+			const FRegexPattern AccessPattern(FString::Printf(TEXT("\\b%s\\s*\\.\\s*([A-Za-z_][A-Za-z0-9_]*)"), *BufferName));
+			FRegexMatcher Access(AccessPattern, InLineText);
+			while (Access.FindNext())
+			{
+				const FString Member = Access.GetCaptureGroup(1);
+				if (IsMember(Member))
+				{
+					bReadsMember = true;
+				}
+				else
+				{
+					Unknown.AddUnique(Member);
+				}
+			}
+
+			if (Unknown.IsEmpty())
+			{
+				// The line reads only real members (or the buffer is not declared at all): the compiler's message stands.
+				// No read on the line: the member is behind a macro or a function the line calls.
+				return bReadsMember ? FText::GetEmpty() : FText::Format(LOCTEXT("PrecheckUniformBufferUnknownMember",
+					"'{0}' is a uniform buffer, and a member it does not have is reported as '{0}' being undeclared: check the names read from it."),
+					FText::FromString(BufferName));
+			}
+
+			const FString& Asked = Unknown[0];
+			TArray<FString> Similar;
+			for (const FString& Member : Members)
+			{
+				if (Member.Contains(Asked, ESearchCase::IgnoreCase))
+				{
+					Similar.AddUnique(Member);
+				}
+			}
+			// This frame's before the previous frame's, then the shortest, then by name.
+			Similar.Sort([](const FString& A, const FString& B)
+			{
+				const bool bPreviousA = A.StartsWith(TEXT("Prev"), ESearchCase::CaseSensitive);
+				const bool bPreviousB = B.StartsWith(TEXT("Prev"), ESearchCase::CaseSensitive);
+				if (bPreviousA != bPreviousB)
+				{
+					return !bPreviousA;
+				}
+				return A.Len() != B.Len() ? A.Len() < B.Len() : A.Compare(B, ESearchCase::CaseSensitive) < 0;
+			});
+			if (Similar.Num() > 3)
+			{
+				Similar.SetNum(3);
+			}
+
+			TArray<FText> Sentences;
+			Sentences.Add(FText::Format(LOCTEXT("PrecheckUniformBufferNoMember",
+				"'{0}' has no member '{1}' in this engine, and the shader compiler reports a member a uniform buffer does not have as the buffer itself being undeclared."),
+				FText::FromString(BufferName), FText::FromString(Asked)));
+			if (!Similar.IsEmpty())
+			{
+				Sentences.Add(FText::Format(LOCTEXT("PrecheckUniformBufferSimilarMembers", "Its members with a similar name: {0}."),
+					FText::FromString(FString::Join(Similar, TEXT(", ")))));
+			}
+			if (BufferName.Equals(TEXT("View"), ESearchCase::CaseSensitive))
+			{
+				Sentences.Add(LOCTEXT("PrecheckViewWorldPosition",
+					"A position in world space, such as the camera's, is on PrimaryView as a double-float: DFHackToFloat(PrimaryView.WorldCameraOrigin)."));
+			}
+			return FText::Join(FText::FromString(TEXT(" ")), Sentences);
+		}
 
 		/**
 		 * Compiles one candidate for one shader platform. False with OutErrors when it did not compile; true, possibly with
@@ -608,6 +733,19 @@ namespace UE::DreamShader::Editor::Compiler
 				{
 					Error.ExtractSourceLocation();
 				}
+				if (Error.ErrorVirtualFilePath.IsEmpty())
+				{
+					// FXC names a column range, `path(12,30-33): error X3004: ...`, which ExtractSourceLocation leaves whole;
+					// unread, the error would be said at the pass instead of at its line.
+					const FRegexPattern RangePattern(TEXT("^(/[^()\\r\\n]+)\\((\\d+),(\\d+)-\\d+\\)\\s*:\\s*([\\s\\S]*)$"));
+					FRegexMatcher Range(RangePattern, Error.StrippedErrorMessage);
+					if (Range.FindNext())
+					{
+						Error.ErrorVirtualFilePath = Range.GetCaptureGroup(1);
+						Error.ErrorLineString = Range.GetCaptureGroup(2) + TEXT(",") + Range.GetCaptureGroup(3);
+						Error.StrippedErrorMessage = Range.GetCaptureGroup(4);
+					}
+				}
 
 				FPrecheckError& Out = OutErrors.AddDefaulted_GetRef();
 				Out.Message = Error.StrippedErrorMessage.TrimStartAndEnd();
@@ -615,6 +753,19 @@ namespace UE::DreamShader::Editor::Compiler
 
 				FString ErrorPath = Error.ErrorVirtualFilePath;
 				ErrorPath.ReplaceInline(TEXT("\\"), TEXT("/"));
+
+				// Before the line is mapped to the user's file: it is the compiler's, in the text it compiled.
+				FString LineText;
+				for (const TPair<FString, FString>& File : InMemory)
+				{
+					if (!ErrorPath.IsEmpty() && File.Key.Equals(ErrorPath, ESearchCase::IgnoreCase))
+					{
+						LineText = GetTextLine(File.Value, Out.Line);
+						break;
+					}
+				}
+				Out.Explanation = ExplainUndeclaredUniformBuffer(Out.Message, LineText);
+
 				if (ErrorPath.StartsWith(SlotDirectory + TEXT("/"), ESearchCase::IgnoreCase))
 				{
 					const FString Relative = ErrorPath.RightChop(SlotDirectory.Len() + 1);
@@ -1219,6 +1370,7 @@ namespace UE::DreamShader::Editor::Compiler
 			int32 Line = 1;
 			int32 Column = 1;
 			FString Message;
+			FText Explanation;
 			TArray<FString> Formats;
 			TArray<FString> Passes;
 		};
@@ -1283,8 +1435,19 @@ namespace UE::DreamShader::Editor::Compiler
 						FPrecheckError& Unexplained = Errors.AddDefaulted_GetRef();
 						Unexplained.Message = TEXT("the shader compiler failed without an error message"); /* I18N-EXEMPT: wrapped by DSH8322 */
 					}
+					// A compile that failed lists its warnings too; beside a real error they are noise said as errors -- DXC's
+					// note about a define the engine makes, with the guess at a clashing name a message from the slot gets.
+					auto IsWarning = [](const FPrecheckError& Error)
+					{
+						return Error.Message.StartsWith(TEXT("warning"), ESearchCase::IgnoreCase) || Error.Message.Contains(TEXT("): warning"), ESearchCase::IgnoreCase);
+					};
+					const bool bHasError = Errors.ContainsByPredicate([&IsWarning](const FPrecheckError& Error) { return !IsWarning(Error); });
 					for (const FPrecheckError& Error : Errors)
 					{
+						if (bHasError && IsWarning(Error))
+						{
+							continue;
+						}
 						if (Error.bShared)
 						{
 							FSharedError* Same = SharedErrors.FindByPredicate([&Error](const FSharedError& Known)
@@ -1297,17 +1460,25 @@ namespace UE::DreamShader::Editor::Compiler
 								Same->Line = Error.Line;
 								Same->Column = Error.Column;
 								Same->Message = Error.Message;
+								Same->Explanation = Error.Explanation;
 							}
 							Same->Formats.AddUnique(Format.ToString());
 							Same->Passes.AddUnique(Candidate.PassName);
 							continue;
 						}
+						// An explained message says what is wrong, so it replaces the guess a message from the slot gets.
+						const FText Explained = Error.Explanation.IsEmpty() ? FText::GetEmpty() : FText::Format(
+							LOCTEXT("PrecheckErrorExplained", "[{0}] pass '{1}' does not compile in its HLSL slot: {3}\nThe shader compiler said: {2}"),
+							FText::FromName(Format),
+							FText::FromString(Candidate.PassName),
+							FText::FromString(Error.Message),
+							Error.Explanation);
 						if (Error.bInUserFile)
 						{
 							Lang::FLangSpan Span;
 							Span.Line = Error.Line;
 							Span.Column = Error.Column;
-							Diagnostics.Error(TEXT("DSH8322"), Error.File, Span, FText::Format(
+							Diagnostics.Error(TEXT("DSH8322"), Error.File, Span, !Explained.IsEmpty() ? Explained : FText::Format(
 								LOCTEXT("PrecheckErrorInFile", "[{0}] pass '{1}' does not compile in its HLSL slot: {2}"),
 								FText::FromName(Format),
 								FText::FromString(Candidate.PassName),
@@ -1315,7 +1486,7 @@ namespace UE::DreamShader::Editor::Compiler
 						}
 						else
 						{
-							Diagnostics.Error(TEXT("DSH8322"), Candidate.Span, FText::Format(
+							Diagnostics.Error(TEXT("DSH8322"), Candidate.Span, !Explained.IsEmpty() ? Explained : FText::Format(
 								LOCTEXT("PrecheckErrorInSlot", "[{0}] pass '{1}' does not compile in its HLSL slot: {2} (a name this pass binds may clash with one the slot shader or the snapshot uses)"),
 								FText::FromName(Format),
 								FText::FromString(Candidate.PassName),
@@ -1341,11 +1512,18 @@ namespace UE::DreamShader::Editor::Compiler
 			Lang::FLangSpan Span;
 			Span.Line = Error.Line;
 			Span.Column = Error.Column;
-			Diagnostics.Error(TEXT("DSH8322"), Plan.PipelineSourceFile, Span, FText::Format(
-				LOCTEXT("PrecheckErrorInSharedHlsl", "[{0}] the file's 'hlsl' block does not compile in the HLSL slots of {1}: {2}"),
-				FText::FromString(FString::Join(Error.Formats, TEXT(", "))),
-				FText::FromString(FString::Join(Error.Passes, TEXT(", "))),
-				FText::FromString(Error.Message)));
+			Diagnostics.Error(TEXT("DSH8322"), Plan.PipelineSourceFile, Span, Error.Explanation.IsEmpty()
+				? FText::Format(
+					LOCTEXT("PrecheckErrorInSharedHlsl", "[{0}] the file's 'hlsl' block does not compile in the HLSL slots of {1}: {2}"),
+					FText::FromString(FString::Join(Error.Formats, TEXT(", "))),
+					FText::FromString(FString::Join(Error.Passes, TEXT(", "))),
+					FText::FromString(Error.Message))
+				: FText::Format(
+					LOCTEXT("PrecheckErrorInSharedHlslExplained", "[{0}] the file's 'hlsl' block does not compile in the HLSL slots of {1}: {3}\nThe shader compiler said: {2}"),
+					FText::FromString(FString::Join(Error.Formats, TEXT(", "))),
+					FText::FromString(FString::Join(Error.Passes, TEXT(", "))),
+					FText::FromString(Error.Message),
+					Error.Explanation));
 		}
 		return bOk;
 #else

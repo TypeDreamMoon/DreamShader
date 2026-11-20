@@ -212,6 +212,14 @@ the times and the frame counters. What only the renderer fills later is not in i
 atmosphere, lights, exposure: `View.PreExposure` is 1, and the previous frame's transforms (`View.Prev*`)
 equal this frame's. The scene textures at `BeginView` are placeholders.
 
+`View`'s members are those of the engine's `FViewUniformShaderParameters` (`SceneView.h`). With large world
+coordinates a position in world space is not one of them: positions in the buffer are translated world
+(`View.TranslatedWorldCameraOrigin`), and the world ones are on `PrimaryView` as double-floats —
+`DFHackToFloat(PrimaryView.WorldCameraOrigin)` is the camera's world position. The engine turns `View.Member`
+into the buffer's own name for that member before the shader compiler reads the code, so a member the buffer
+does not have reaches the compiler as `View` itself: `undeclared identifier 'View'`. The pre-check says which
+member it was, and the members with a similar name (DSH8322).
+
 ## How the HLSL gets into the engine
 
 A pass cannot have a global shader type of its own: shader types register when the plugin loads. Every HLSL
