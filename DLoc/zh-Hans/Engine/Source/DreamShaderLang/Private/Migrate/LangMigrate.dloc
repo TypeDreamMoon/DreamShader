@@ -1,0 +1,52 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderLangMigrate
+
+RootKept {
+    at    Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp
+    src   "'{0}' keeps its '/// @root', the 1.x spelling of where its asset goes, because the place the new file would put it could not be worked out; check the asset path the first build reports."
+    text  "'{0}' 保留了它的 '/// @root'（1.x 中指定资产去向的写法），因为无法推算出新文件会把资产放到哪里；请核对首次构建时报告的资产路径。"
+    state machine
+}
+
+OptionalWithoutDefault {
+    at    Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp
+    src   "'{0}' of '{1}' was an optional input, and a {2} has no default the language can write; it is a required input in the migrated file."
+    text  "'{1}' 的 '{0}' 原本是可选输入，而 {2} 没有语言可以写出的默认值；在迁移后的文件中它是必需输入。"
+    state machine
+}
+
+RootQualifiedImport {
+    at    Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp
+    src   "'{0}' names a source root in front of the path, which '#include' cannot; write the path from the root's own folder (a leading '/') or relative to this file, then migrate again."
+    text  "'{0}' 在路径前面指定了源根，而 '#include' 做不到；请把路径写成从该根自己的文件夹出发（以 '/' 开头）或相对于此文件，然后重新迁移。"
+    state machine
+}
+
+DocLineBreaksLost {
+    at    Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp
+    src   "'@{0}' held a text of several lines, which one '///' line cannot; it is written on one line, its line breaks as blanks."
+    text  "'@{0}' 带有多行文本，而一行 '///' 写不下；它被写在一行上，换行变成了空格。"
+    state machine
+}
+
+IncludedLegacyReturns {
+    at    Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp
+    src   "'{0}' is a 1.x function of '{1}', which returns its first 'out', '{2}', once that file is migrated; this call is written for it as it is now. Migrate '{1}' first, in place, and then this file."
+    text  "'{0}' 是 '{1}' 中的 1.x 函数，那个文件迁移后它返回第一个 'out' 参数 '{2}'；这次调用是按它现在的样子写的。请先就地迁移 '{1}'，再迁移本文件。"
+    state machine
+}
+
+IncludedLegacyKeepsOuts {
+    at    Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp
+    src   "'{0}' is a 1.x function of '{1}', which keeps its 'out' parameters once that file is migrated, so this call will have no value to read; pass a variable for '{2}' too, as the 1.x text may, before either file is migrated."
+    text  "'{0}' 是 '{1}' 中的 1.x 函数，那个文件迁移后它仍保留 'out' 参数，这次调用届时将没有值可读；请在迁移任一文件之前，像 1.x 文本允许的那样也为 '{2}' 传入一个变量。"
+    state machine
+}
+
+SelectedOutputMissing {
+    at    Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp
+    src   "This reads output {0} of '{1}', which has no variable to be read from; the expression is replaced by '0.0'."
+    text  "这里读取的是 '{1}' 的输出 {0}，而它没有可供读取的变量；该表达式被替换为 '0.0'。"
+    state machine
+}

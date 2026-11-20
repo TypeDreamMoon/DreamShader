@@ -1,0 +1,269 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Decompiler.GraphImport
+
+DescribeNoExpression {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "an expression"
+    text  "某个表达式"
+    state machine
+}
+
+DescribeExpression {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "'{0}' ({1}) of '{2}'"
+    text  "'{2}' 的 '{0}'（{1}）"
+    state machine
+}
+
+RerouteUsageWithoutDeclaration {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "The named reroute {0} has no declaration; the pin that reads it is treated as unconnected."
+    text  "具名 Reroute {0} 没有声明；读取它的引脚按未连接处理。"
+    state machine
+}
+
+RerouteCycle {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "The reroute {0} feeds itself; the pin that reads it is treated as unconnected."
+    text  "Reroute {0} 的输入来自它自己；读取它的引脚按未连接处理。"
+    state machine
+}
+
+RerouteDangling {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "The reroute {0} has nothing wired into it; the pin that reads it is treated as unconnected."
+    text  "Reroute {0} 没有任何输入连线；读取它的引脚按未连接处理。"
+    state machine
+}
+
+GraphCycle {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} reads {1}, which reads it back; the graph has a cycle, and a zero stands in for that read."
+    text  "{0} 读取 {1}，而后者又读回它；图中存在环，这次读取以零代替。"
+    state machine
+}
+
+AttributeOutputUnknown {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} is read through its output {1}, which is no material attribute the catalog knows; a zero stands in for that read."
+    text  "{0} 通过输出 {1} 被读取，而它不是目录已知的材质属性；这次读取以零代替。"
+    state machine
+}
+
+OutputPastCatalog {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} is read through its output {1}, which the node has no slot for; its first output is read instead."
+    text  "{0} 通过输出 {1} 被读取，而节点没有这个槽位；改为读取它的第一个输出。"
+    state machine
+}
+
+OutputOfStatement {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} is read through its output {1}, and the catalog lists no output for its class; a zero stands in for that read."
+    text  "{0} 通过输出 {1} 被读取，而目录没有为它的类列出任何输出；这次读取以零代替。"
+    state machine
+}
+
+ParameterPropertySkipped {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} changes '{1}', which a '///' directive cannot carry; the rebuilt parameter has the default."
+    text  "{0} 改动了 '{1}'，而 '///' 指令无法承载它；重建后的参数使用默认值。"
+    state machine
+}
+
+StaticSwitchParameterSplit {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} is a StaticSwitchParameter, which the language writes as a '/// @static' uniform and a static branch; the rebuilt graph has those two nodes in its place."
+    text  "{0} 是 StaticSwitchParameter，语言把它写成一个 '/// @static' uniform 加一个静态分支；重建后的图用这两个节点取代它。"
+    state machine
+}
+
+TextureSampleParameterSplit {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} is a texture sample parameter, which the language writes as a texture uniform and a sample of it; the rebuilt graph has a TextureObjectParameter and a TextureSample in its place."
+    text  "{0} 是纹理采样参数，语言把它写成一个纹理 uniform 加一次对它的采样；重建后的图用一个 TextureObjectParameter 和一个 TextureSample 取代它。"
+    state machine
+}
+
+BoolFunctionInput {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "The input '{0}' of '{1}' is a dynamic bool pin, which the language has no parameter for; it is written as 'bool' and rebuilds as a scalar pin."
+    text  "'{1}' 的输入 '{0}' 是动态 bool 引脚，语言中没有对应的参数；它被写成 'bool'，重建后是一个标量引脚。"
+    state machine
+}
+
+PreviewPinConnected {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "The input '{0}' of '{1}' has its Preview pin wired. Source says that as a default that is an expression ('float {0} = UE.TexCoord(Index = 1).r'), which the decompiler does not write yet; the rebuilt input previews its number."
+    text  "'{1}' 的输入 '{0}' 的 Preview 引脚连了线。源文件中的写法是一个表达式形式的默认值（'float {0} = UE.TexCoord(Index = 1).r'），反编译器目前还不会写出；重建后的输入预览的是它的数值。"
+    state machine
+}
+
+CallWithoutFunction {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} calls a material function that is missing; a zero stands in for every value read from it."
+    text  "{0} 调用的材质函数已丢失；从它读取的每个值都以零代替。"
+    state machine
+}
+
+CustomDefinesDropped {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} carries {1} additional define(s), which a '/// @custom' function cannot declare; the rebuilt node has none. Move them into the body as '#define' lines."
+    text  "{0} 带有 {1} 个附加 define，而 '/// @custom' 函数无法声明它们；重建后的节点没有这些 define。请把它们改成函数体里的 '#define' 行。"
+    state machine
+}
+
+MakeAttributeUnknown {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} sets '{1}', which is no material attribute the catalog knows; the connection is dropped."
+    text  "{0} 设置了 '{1}'，而它不是目录已知的材质属性；该连接已被丢弃。"
+    state machine
+}
+
+SetAttributeUnknown {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} sets '{1}', which is no material attribute the catalog knows; the connection is dropped."
+    text  "{0} 设置了 '{1}'，而它不是目录已知的材质属性；该连接已被丢弃。"
+    state machine
+}
+
+BreakWithoutMaterial {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} reads the attributes of no material; a zero stands in for every value read from it."
+    text  "{0} 读取的属性不属于任何材质；从它读取的每个值都以零代替。"
+    state machine
+}
+
+GetAttributesAsBreak {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} is a GetMaterialAttributes node; reading a material's attributes always rebuilds as a BreakMaterialAttributes."
+    text  "{0} 是 GetMaterialAttributes 节点；读取材质属性在重建时总是生成 BreakMaterialAttributes。"
+    state machine
+}
+
+StaticSwitchFolded {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} has nothing wired to Value, so it is its {1} branch and nothing else; the rebuilt graph has no switch there."
+    text  "{0} 的 Value 没有连线，所以它只等同于自己的 {1} 分支；重建后的图在那里没有开关。"
+    state machine
+}
+
+StaticSwitchFalseBranch {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "False"
+    text  "False"
+    state machine
+}
+
+StaticSwitchTrueBranch {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "True"
+    text  "True"
+    state machine
+}
+
+ConvertMappingUnknown {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} maps channel {1} of its input {2} onto channel {3} of its output {4}, and the node has no such pin or channel; the engine refuses the mapping, and it is left out."
+    text  "{0} 把输入 {2} 的通道 {1} 映射到输出 {4} 的通道 {3}，而节点没有这样的引脚或通道；引擎拒绝这个映射，这里将它略去。"
+    state machine
+}
+
+ConvertChannelPastValue {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} reads channel {1} of its input {2}, which carries a {3}; the new translator reads zero there and the classic one refuses the node, so a zero stands in."
+    text  "{0} 读取输入 {2} 的通道 {1}，而这个输入接入的是 {3}；新的材质翻译器在那里读到零，经典翻译器则拒绝这个节点，所以以零代替。"
+    state machine
+}
+
+ConvertAsChannels {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} is a Convert node, whose pins no call can name; each of its outputs is written as the channels it is made of ('v.xy', 'float3(a, b, 0.0)'), and the rebuilt graph has ComponentMask and AppendVector nodes in its place."
+    text  "{0} 是 Convert 节点，它的引脚无法用调用来命名；它的每个输出都写成组成它的通道（'v.xy'、'float3(a, b, 0.0)'），重建后的图用 ComponentMask 和 AppendVector 节点取代它。"
+    state machine
+}
+
+SwitchWithoutCases {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} has no input besides its default, which is what it hands on; the rebuilt graph has no switch there."
+    text  "{0} 除了默认值之外没有别的输入，传出的就是默认值；重建后的图在那里没有开关。"
+    state machine
+}
+
+SwitchFolded {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} has nothing wired to SwitchValue, so its value {1} picks {2} and nothing else; the rebuilt graph has no switch there."
+    text  "{0} 的 SwitchValue 没有连线，所以它的值 {1} 只会选中{2}；重建后的图在那里没有开关。"
+    state machine
+}
+
+SwitchFoldedCase {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "the input '{0}'"
+    text  "输入 '{0}'"
+    state machine
+}
+
+SwitchFoldedDefault {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "the default"
+    text  "默认值"
+    state machine
+}
+
+SwitchAsBranches {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} is a Switch node with a case that has no name a call can use; it is written as the branches the engine makes of it ('0.0 == floor(s) ? a : ...'), and the rebuilt graph has Floor and If nodes in its place. Name its cases (InputName) to keep the Switch."
+    text  "{0} 是 Switch 节点，其中有输入没有可供调用使用的名称；它被写成引擎为它生成的分支链（'0.0 == floor(s) ? a : ...'），重建后的图用 Floor 和 If 节点取代它。给它的各个输入命名（InputName）即可保留 Switch 节点。"
+    state machine
+}
+
+ClassNotInCatalog {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} is of a class the builtin catalog does not list (abstract, deprecated, or from a module loaded after the catalog was built); a zero stands in for every value read from it."
+    text  "{0} 的类不在内置目录中（抽象类、已弃用，或来自目录建好之后才加载的模块）；从它读取的每个值都以零代替。"
+    state machine
+}
+
+DynamicPinsDropped {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} has {1} wired input(s) the class does not declare as named pins, so a call cannot connect them; the rebuilt node leaves them unconnected."
+    text  "{0} 有 {1} 个已连线的输入没有被它的类声明为具名引脚，调用无法连接它们；重建后的节点上这些输入保持未连接。"
+    state machine
+}
+
+PropertyKindSkipped {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} changes '{1}', a property of a kind a call argument cannot carry (an array, a map, a delegate); the rebuilt node has the default."
+    text  "{0} 改动了 '{1}'，这种属性（数组、映射、委托）无法用调用实参承载；重建后的节点使用默认值。"
+    state machine
+}
+
+UnreachableExpressions {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "{0} expression(s) of '{1}' feed no output and are not part of the source; a build would prune them all the same."
+    text  "'{1}' 有 {0} 个表达式不通向任何输出，不属于源文件；构建时同样会把它们剪掉。"
+    state machine
+}
+
+PinsIgnoredUnderAttributes {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "'{0}' reads its attributes as one set, so the {1} individual pin(s) that are also wired are ignored, by the engine and here."
+    text  "'{0}' 把它的属性作为一个整体读取，所以同时连线的 {1} 个单独引脚会被忽略，引擎如此，这里也如此。"
+    state machine
+}
+
+CaptionDropped {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "'{0}' has the caption '{1}', which source has no directive for; the rebuilt function has none."
+    text  "'{0}' 带有标题 '{1}'，而源文件没有对应的指令；重建后的函数没有标题。"
+    state machine
+}
+
+UnsupportedAsset {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp
+    src   "'{0}' is neither a material nor a material function, so it has no graph to read. A material instance decompiles to a '.dsi'."
+    text  "'{0}' 既不是材质也不是材质函数，没有可读取的图。材质实例会反编译为 '.dsi'。"
+    state machine
+}

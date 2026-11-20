@@ -1,0 +1,24 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderMaterialBrowser
+
+AssetPathUnresolved {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderGeneratedAssetPath.cpp
+    src   "{0}: the source could not be resolved to the assets it builds."
+    text  "{0}：无法从该源文件解析出它构建的资产。"
+    state machine
+}
+
+AssetPathNoMaterial {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderGeneratedAssetPath.cpp
+    src   "{0}: this file builds no material or material instance."
+    text  "{0}：此文件不构建任何材质或材质实例。"
+    state machine
+}
+
+AssetPathNoProduct {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderGeneratedAssetPath.cpp
+    src   "{0}: this file declares no material, instance or exported function."
+    text  "{0}：此文件没有声明任何材质、实例或导出函数。"
+    state machine
+}

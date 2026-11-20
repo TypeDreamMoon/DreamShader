@@ -1,0 +1,360 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Emitter
+
+BadNodeIndex {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "The topological order of '{0}' names node {1}, which the graph does not have."
+    text  "'{0}' 的拓扑顺序中列出了节点 {1}，但图中没有这个节点。"
+    state machine
+}
+
+UnhandledOp {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "The emitter has no rule for the IR operation '{0}'."
+    text  "发射器没有针对 IR 操作 '{0}' 的规则。"
+    state machine
+}
+
+ConstantNoValue {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "A Constant node carries no Value property."
+    text  "Constant 节点没有 Value 属性。"
+    state machine
+}
+
+ConstantFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create a Constant node."
+    text  "无法创建 Constant 节点。"
+    state machine
+}
+
+Constant2Failed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create a Constant2Vector node."
+    text  "无法创建 Constant2Vector 节点。"
+    state machine
+}
+
+Constant3Failed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create a Constant3Vector node."
+    text  "无法创建 Constant3Vector 节点。"
+    state machine
+}
+
+Constant4Failed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create a Constant4Vector node."
+    text  "无法创建 Constant4Vector 节点。"
+    state machine
+}
+
+UnknownExpressionClass {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "'{0}' is not a material expression class this engine has."
+    text  "'{0}' 不是此引擎中存在的材质表达式类。"
+    state machine
+}
+
+ReflectedFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create a '{0}' node."
+    text  "无法创建 '{0}' 节点。"
+    state machine
+}
+
+CollectionParameterMissing {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "The material parameter collection '{0}' has no parameter called '{1}'."
+    text  "材质参数集 '{0}' 中没有名为 '{1}' 的参数。"
+    state machine
+}
+
+CoreOpClassMissing {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "The core operation '{0}' maps to expression class '{1}', which this engine does not have."
+    text  "核心运算 '{0}' 对应表达式类 '{1}'，但此引擎中没有这个类。"
+    state machine
+}
+
+CoreOpFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create a '{0}' node."
+    text  "无法创建 '{0}' 节点。"
+    state machine
+}
+
+CoreOpTooManyOperands {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "The core operation '{0}' was given {1} operands, but its table names only {2} pins."
+    text  "核心运算 '{0}' 收到了 {1} 个操作数，但它的表中只列出了 {2} 个引脚。"
+    state machine
+}
+
+RoundFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create the Custom node a nearest-even round lowers to."
+    text  "无法创建最近偶数舍入所降级成的 Custom 节点。"
+    state machine
+}
+
+NegateFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create the Multiply node a negation lowers to."
+    text  "无法创建取负运算降级得到的 Multiply 节点。"
+    state machine
+}
+
+NotFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create the Subtract node a logical not lowers to."
+    text  "无法创建逻辑非降级得到的 Subtract 节点。"
+    state machine
+}
+
+AndFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create the Multiply node a logical and lowers to."
+    text  "无法创建逻辑与降级得到的 Multiply 节点。"
+    state machine
+}
+
+OrFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create the Max node a logical or lowers to."
+    text  "无法创建逻辑或降级得到的 Max 节点。"
+    state machine
+}
+
+CompareLowerFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create the If node a comparison lowers to."
+    text  "无法创建比较运算降级得到的 If 节点。"
+    state machine
+}
+
+RcpFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create the Divide node a reciprocal lowers to."
+    text  "无法创建倒数运算降级得到的 Divide 节点。"
+    state machine
+}
+
+RsqrtFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create the nodes an inverse square root lowers to."
+    text  "无法创建平方根倒数降级得到的节点。"
+    state machine
+}
+
+FwidthFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create the nodes fwidth lowers to."
+    text  "无法创建 fwidth 降级得到的节点。"
+    state machine
+}
+
+ReflectFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create the nodes reflect lowers to."
+    text  "无法创建 reflect 降级得到的节点。"
+    state machine
+}
+
+RefractFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create the nodes refract lowers to."
+    text  "无法创建 refract 降级得到的节点。"
+    state machine
+}
+
+NoLowering {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "The core operation '{0}' has no engine expression class and no lowering in the emitter."
+    text  "核心运算 '{0}' 既没有对应的引擎表达式类，发射器中也没有它的降级规则。"
+    state machine
+}
+
+SwizzleNoMask {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "A Swizzle node carries no Mask property."
+    text  "Swizzle 节点没有 Mask 属性。"
+    state machine
+}
+
+SwizzleBadMask {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "'{0}' is not a canonical swizzle mask; the emitter expects a subset of xyzw in order."
+    text  "'{0}' 不是规范的 swizzle 掩码；发射器要求按顺序排列的 xyzw 子集。"
+    state machine
+}
+
+SwizzleFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create a ComponentMask node."
+    text  "无法创建 ComponentMask 节点。"
+    state machine
+}
+
+AppendArity {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "An Append node takes two operands; this one has {0}. Three or more parts are chained by the IR builder, not here."
+    text  "Append 节点接受两个操作数；这个节点有 {0} 个。三个及以上的部分由 IR 构建器串联，而不是在这里处理。"
+    state machine
+}
+
+AppendFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create an AppendVector node."
+    text  "无法创建 AppendVector 节点。"
+    state machine
+}
+
+SelectArity {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "A Select node takes three operands (condition, then, else); this one has {0}."
+    text  "Select 节点接受三个操作数（条件、then、else）；这个节点有 {0} 个。"
+    state machine
+}
+
+SelectFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create the If node a select lowers to."
+    text  "无法创建 select 降级得到的 If 节点。"
+    state machine
+}
+
+CompareArity {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "A Compare node takes five operands (A, B, greater, equal, less); this one has {0}."
+    text  "Compare 节点接受五个操作数（A、B、大于、等于、小于）；这个节点有 {0} 个。"
+    state machine
+}
+
+CompareFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create an If node."
+    text  "无法创建 If 节点。"
+    state machine
+}
+
+StaticSwitchArity {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "A StaticSwitch node takes three operands (condition, then, else); this one has {0}."
+    text  "StaticSwitch 节点接受三个操作数（条件、then、else）；这个节点有 {0} 个。"
+    state machine
+}
+
+StaticSwitchFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create a StaticSwitch node."
+    text  "无法创建 StaticSwitch 节点。"
+    state machine
+}
+
+TextureSampleArity {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "A TextureSample node needs a texture in operand 0 and a UV in operand 1; one of them is not set."
+    text  "TextureSample 节点需要操作数 0 是纹理、操作数 1 是 UV；其中有一个没有设置。"
+    state machine
+}
+
+TextureSampleFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create a TextureSample node."
+    text  "无法创建 TextureSample 节点。"
+    state machine
+}
+
+CustomFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Failed to create a Custom node."
+    text  "无法创建 Custom 节点。"
+    state machine
+}
+
+CustomBadOutputType {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "'{0}' is not a Custom node output type; expected Float1 through Float4 or MaterialAttributes."
+    text  "'{0}' 不是 Custom 节点的输出类型；应为 Float1 到 Float4 或 MaterialAttributes。"
+    state machine
+}
+
+CustomBadAdditionalOutput {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "'{0}' is not a Custom node additional output; the emitter expects Name:Type."
+    text  "'{0}' 不是 Custom 节点的附加输出；发射器要求的格式是 Name:Type。"
+    state machine
+}
+
+CustomBadAdditionalOutputType {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "'{0}' is not a Custom node output type; expected Float1 through Float4 or MaterialAttributes."
+    text  "'{0}' 不是 Custom 节点的输出类型；应为 Float1 到 Float4 或 MaterialAttributes。"
+    state machine
+}
+
+ValueNotEmitted {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "This node reads node {0}, which has not been emitted; the graph's topological order is inconsistent."
+    text  "这个节点读取了节点 {0}，但该节点尚未生成；图的拓扑顺序不一致。"
+    state machine
+}
+
+BreakAttributesSlotNotPublished {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "BreakMaterialAttributes does not publish the attribute '{0}', so it cannot be read from a material that came through a pin."
+    text  "BreakMaterialAttributes 不提供属性 '{0}'，因此无法从经引脚传入的材质中读取它。"
+    state machine
+}
+
+MissingOperand {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "This node needs operand {0}, but it has only {1}."
+    text  "这个节点需要操作数 {0}，但它只有 {1} 个操作数。"
+    state machine
+}
+
+ConnectNoExpression {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "Cannot connect an input on an expression that was not created."
+    text  "无法在一个没有创建出来的表达式上连接输入。"
+    state machine
+}
+
+UnknownPin {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "'{0}' has no input pin named '{1}'."
+    text  "'{0}' 没有名为 '{1}' 的输入引脚。"
+    state machine
+}
+
+PropertyNotReflected {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "'{0}' has no property named '{1}', so that value was not written."
+    text  "'{0}' 没有名为 '{1}' 的属性，因此没有写入该值。"
+    state machine
+}
+
+PropertyMissing {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "'{0}' has no property named '{1}'."
+    text  "'{0}' 没有名为 '{1}' 的属性。"
+    state machine
+}
+
+PropertyWriteFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "'{0}' could not take '{1}' for its '{2}' property. {3}"
+    text  "'{0}' 的 '{2}' 属性无法接受 '{1}'。{3}"
+    state machine
+}
+
+UnknownAttribute {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp
+    src   "'{0}' is not a material attribute this engine has."
+    text  "'{0}' 不是此引擎中存在的材质属性。"
+    state machine
+}

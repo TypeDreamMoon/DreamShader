@@ -1,0 +1,66 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.PackageAssets
+
+ReasonExport {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp
+    src   "an 'export' function already builds an asset of its own"
+    text  "'export' 函数本身已经会构建一个资产"
+    state machine
+}
+
+ReasonExtern {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp
+    src   "an 'extern' prototype names an asset that exists, and has no body to generate from"
+    text  "'extern' 原型指向一个已存在的资产，没有可供生成的函数体"
+    state machine
+}
+
+ReasonNoBody {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp
+    src   "it has no body"
+    text  "它没有函数体"
+    state machine
+}
+
+ReasonArray {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp
+    src   "its parameter '{0}' is an array, and a material function has no array pins"
+    text  "其参数 '{0}' 是数组，而材质函数没有数组引脚"
+    state machine
+}
+
+PragmaGenerateKey {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp
+    src   "'{0}' is not a key of '#pragma generate', and was ignored; it takes Functions, Library and Desc."
+    text  "'{0}' 不是 '#pragma generate' 的键，已被忽略；它接受 Functions、Library 和 Desc。"
+    state machine
+}
+
+GeneratePlaceholder {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp
+    src   "'{0}' holds a placeholder other than '`{Name`}', the only one a generate template has."
+    text  "'{0}' 含有 '`{Name`}' 以外的占位符；生成模板只有这一个占位符。"
+    state machine
+}
+
+GenerateNotPossible {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp
+    src   "'{0}' cannot be generated as the material function '{1}': {2}."
+    text  "'{0}' 无法生成为材质函数 '{1}'：{2}。"
+    state machine
+}
+
+GenerateTwice {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp
+    src   "'{0}' is generated a second time here; the line {1} already generates it from another function."
+    text  "'{0}' 在此处被第二次生成；第 {1} 行已从另一个函数生成了它。"
+    state machine
+}
+
+HeaderPreprocessFailed {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp
+    src   "'{0}' failed conditional compilation: {1}: {2}"
+    text  "'{0}' 条件编译失败：{1}：{2}"
+    state machine
+}

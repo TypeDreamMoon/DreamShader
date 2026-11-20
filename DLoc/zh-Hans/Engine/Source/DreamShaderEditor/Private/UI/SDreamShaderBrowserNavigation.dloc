@@ -1,0 +1,129 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderMaterialBrowser
+
+QuickFilters {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Quick filters"
+    text  "快速筛选"
+    state machine
+}
+
+QFErrors {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Errors"
+    text  "错误"
+    state machine
+}
+
+QFErrorsTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Sources whose last compile failed, or that could not be read."
+    text  "上次编译失败、或无法读取的源文件。"
+    state machine
+}
+
+QFStale {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Stale"
+    text  "过期"
+    state machine
+}
+
+QFStaleTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Sources that changed since their asset was last generated."
+    text  "自上次生成资产以来有改动的源文件。"
+    state machine
+}
+
+QFDiverged {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Edited by hand"
+    text  "手动编辑过"
+    state machine
+}
+
+QFDivergedTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Generated assets that no longer match what DreamShader last wrote into them."
+    text  "内容已不再与 DreamShader 上次写入一致的生成资产。"
+    state machine
+}
+
+QFEphemeral {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Ephemeral"
+    text  "临时态"
+    state machine
+}
+
+QFEphemeralTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Materials that have not been written to disk."
+    text  "只显示尚未写入磁盘的材质。"
+    state machine
+}
+
+QFHideLibraries {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Hide functions"
+    text  "隐藏函数"
+    state machine
+}
+
+QFHideLibrariesTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Drop every .dsf and .dsh from the list."
+    text  "从列表中去掉所有 .dsf 和 .dsh。"
+    state machine
+}
+
+QFHidePipelines {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Hide pipelines"
+    text  "隐藏管线"
+    state machine
+}
+
+QFHidePipelinesTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Drop every .dsp, the Custom Pass pipelines, from the list."
+    text  "从列表中去掉所有 .dsp，即 Custom Pass 管线。"
+    state machine
+}
+
+QFHideUnmanaged {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Hide unmanaged"
+    text  "隐藏未接管"
+    state machine
+}
+
+QFHideUnmanagedTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Drop the materials DreamShader does not manage from the list."
+    text  "从列表中去掉 DreamShader 不管理的材质。"
+    state machine
+}
+
+NavSources {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Sources"
+    text  "源文件"
+    state machine
+}
+
+NavUnmanaged {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Not managed by DreamShader"
+    text  "未由 DreamShader 管理"
+    state machine
+}
+
+NavContent {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderBrowserNavigation.cpp
+    src   "Content"
+    text  "内容"
+    state machine
+}

@@ -1,0 +1,262 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.PassEditor.PipelineDetails
+
+ComputeSlotKind {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "compute shader slot"
+    text  "Compute 着色器槽位"
+    state machine
+}
+
+PixelSlotKind {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "pixel shader slot"
+    text  "像素着色器槽位"
+    state machine
+}
+
+SlotNone {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "no {0} yet: compile the source to give the pass one"
+    text  "{0}：尚未分配，编译源文件即可为该 Pass 分配一个"
+    state machine
+}
+
+SlotOutOfRange {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "{0} {1}, which this build does not have (it has {2})"
+    text  "{0} {1}，当前构建中没有这个槽位（只有 {2} 个）"
+    state machine
+}
+
+SlotReady {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "{0} {1}"
+    text  "{0} {1}"
+    state machine
+}
+
+SlotNoSnapshot {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "{0} {1}, whose snapshot is missing: compile the source"
+    text  "{0} {1}，快照缺失：请编译源文件"
+    state machine
+}
+
+OverviewCategory {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Pipeline Overview"
+    text  "管线概览"
+    state machine
+}
+
+SourceNone {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "not built from a .dsp"
+    text  "并非由 .dsp 构建"
+    state machine
+}
+
+SourceRowFilter {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Source"
+    text  "源文件"
+    state machine
+}
+
+SourceRowName {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Source"
+    text  "源文件"
+    state machine
+}
+
+OpenSourceButton {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Open Source"
+    text  "打开源码"
+    state machine
+}
+
+OpenSourceTip {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Open the .dsp this pipeline is built from in your preferred editor."
+    text  "用你偏好的编辑器打开构建此管线的 .dsp。"
+    state machine
+}
+
+RevertButton {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Revert to Source"
+    text  "还原到源文件"
+    state machine
+}
+
+RevertTip {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Rebuild this pipeline from its .dsp, discarding every edit made here. The source file is not modified."
+    text  "从 .dsp 重建此管线，丢弃在这里所做的所有编辑。源文件不会被修改。"
+    state machine
+}
+
+AdoptButton {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Adopt Into Source"
+    text  "采纳到源文件"
+    state machine
+}
+
+AdoptTip {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Write the edits made here back into the .dsp: only the declarations and keys whose values changed are rewritten, so its comments and order are kept. The file is backed up first."
+    text  "把在这里所做的编辑写回 .dsp：只有值发生变化的声明和键才会被重写，因此其中的注释和顺序都会保留。文件会先备份。"
+    state machine
+}
+
+AdoptReadOnlyTip {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "This pipeline's source ships with a plugin and is read-only, or it is not found; adopt is not available."
+    text  "此管线的源文件随插件发布而只读，或者找不到它；无法采纳。"
+    state machine
+}
+
+SummaryRowFilter {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Runs"
+    text  "运行方式"
+    state machine
+}
+
+SummaryRowName {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Runs"
+    text  "运行方式"
+    state machine
+}
+
+SummaryFormat {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Order {0}, in views {1}, requiring {2}: {3} pass(es), {4} buffer(s), {5} parameter(s)."
+    text  "Order {0}；视图：{1}；需要：{2}；{3} 个 Pass、{4} 个缓冲、{5} 个参数。"
+    state machine
+}
+
+ProblemsRowFilter {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Problems"
+    text  "问题"
+    state machine
+}
+
+ProblemsRowName {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Problems"
+    text  "问题"
+    state machine
+}
+
+EngineRowFilter {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Engine"
+    text  "引擎"
+    state machine
+}
+
+EngineTooOld {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Custom Pass runs on Unreal Engine 5.8 and later. This engine loads and saves the pipeline, and runs none of it."
+    text  "Custom Pass 需要 Unreal Engine 5.8 或更高版本。当前引擎可以加载和保存该管线，但不会运行其中任何部分。"
+    state machine
+}
+
+FrameCategory {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Passes in Frame Order"
+    text  "按帧内顺序排列的 Pass"
+    state machine
+}
+
+NoPassesFilter {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Passes"
+    text  "Pass"
+    state machine
+}
+
+NoPasses {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "This pipeline has no pass."
+    text  "此管线没有任何 Pass。"
+    state machine
+}
+
+InjectionGroup {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "{0} ({1})"
+    text  "{0} ({1})"
+    state machine
+}
+
+OpenShader {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Open {0}"
+    text  "打开 {0}"
+    state machine
+}
+
+OpenInlineHlsl {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Open {0} at line {1}"
+    text  "打开 {0} 的第 {1} 行"
+    state machine
+}
+
+PassSkipped {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "The runtime skips this pass: see Problems above."
+    text  "运行时会跳过这个 Pass：见上方的“问题”。"
+    state machine
+}
+
+BuffersCategory {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Buffers"
+    text  "缓冲"
+    state machine
+}
+
+NoBuffersFilter {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "Buffers"
+    text  "缓冲"
+    state machine
+}
+
+NoBuffers {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "This pipeline declares no buffer: its passes use the built-in ones only."
+    text  "此管线没有声明任何缓冲：它的 Pass 只使用内置缓冲。"
+    state machine
+}
+
+ExportTarget {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "exported to {0}"
+    text  "已导出到 {0}"
+    state machine
+}
+
+ExportTargetTip {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "{0}: show it in the Content Browser."
+    text  "{0}：在内容浏览器中显示它。"
+    state machine
+}
+
+ExportTargetMissing {
+    at    Source/DreamShaderEditor/Private/Pass/DreamPassPipelineCustomization.cpp
+    src   "exported, but its render target does not exist yet: compile the source"
+    text  "已导出，但它的渲染目标尚不存在：请编译源文件"
+    state machine
+}

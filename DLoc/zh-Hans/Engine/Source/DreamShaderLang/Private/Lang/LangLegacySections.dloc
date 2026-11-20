@@ -1,0 +1,486 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Lang.LegacySections
+
+MetadataUnclosed {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected ']' to close the metadata block, found {0}."
+    text  "期望用 ']' 闭合元数据块，但遇到了 {0}。"
+    state machine
+}
+
+MetadataExpectedKey {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a metadata key such as 'Group', found {0}."
+    text  "期望一个元数据键，例如 'Group'，但遇到了 {0}。"
+    state machine
+}
+
+SliderMalformed {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected 'Slider(min, max)' with two numbers, found '{0}'."
+    text  "期望 'Slider(min, max)' 带两个数，但遇到了 '{0}'。"
+    state machine
+}
+
+MetadataExpectedEquals {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected '=' after the metadata key '{0}', found {1}."
+    text  "期望元数据键 '{0}' 之后是 '='，但遇到了 {1}。"
+    state machine
+}
+
+MetadataExpectedValue {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a value after '{0} =', found none."
+    text  "期望 '{0} =' 之后是一个值，但什么都没有。"
+    state machine
+}
+
+SliderRepeated {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected the slider range once, found 'Slider(...)' together with another slider bound."
+    text  "期望滑块范围只给出一次，但 'Slider(...)' 与另一个滑块边界同时出现了。"
+    state machine
+}
+
+MetadataRepeated {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected the metadata key '{0}' once, found it again."
+    text  "期望元数据键 '{0}' 只出现一次，但又遇到了它。"
+    state machine
+}
+
+SortNotInteger {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected 'SortPriority' to be a whole number, found '{0}'."
+    text  "期望 'SortPriority' 是整数，但遇到了 '{0}'。"
+    state machine
+}
+
+WhileProperties {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "a Properties section"
+    text  "Properties 段"
+    state machine
+}
+
+GroupEmptyName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a name inside 'Group(\"...\")', found an empty string."
+    text  "期望 'Group(\"...\")' 中有一个名称，但遇到了空字符串。"
+    state machine
+}
+
+WhileGroup {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "a Group block"
+    text  "Group 块"
+    state machine
+}
+
+ConstWithoutType {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a property type after 'const', found {0}."
+    text  "期望 'const' 之后是属性类型，但遇到了 {0}。"
+    state machine
+}
+
+BuiltinUnclosed {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected ')' to close the arguments of 'UE.{0}', found {1}."
+    text  "期望用 ')' 闭合 'UE.{0}' 的实参，但遇到了 {1}。"
+    state machine
+}
+
+PropertyExpectedType {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a property type and a name, found {0}."
+    text  "期望属性类型和名称，但遇到了 {0}。"
+    state machine
+}
+
+PropertyExpectedName {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a property name after the type '{0}', found {1}."
+    text  "期望类型 '{0}' 之后是属性名，但遇到了 {1}。"
+    state machine
+}
+
+DefaultMissing {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a default value after '{0} =', found {1}."
+    text  "期望 '{0} =' 之后是默认值，但遇到了 {1}。"
+    state machine
+}
+
+PropertyExpectedEnd {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected ';' after the property '{0}', found {1}."
+    text  "期望属性 '{0}' 之后是 ';'，但遇到了 {1}。"
+    state machine
+}
+
+BuiltinWithDefault {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected the arguments of 'UE.{0}' inside its parentheses, found a default value after '{1}'."
+    text  "期望 'UE.{0}' 的实参写在它的括号之内，但在 '{1}' 之后遇到了默认值。"
+    state machine
+}
+
+PropertyUnknownType {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a property type such as 'float', 'float4', 'Texture2D' or 'ScalarParameter', found '{0}'."
+    text  "期望一个属性类型，例如 'float'、'float4'、'Texture2D' 或 'ScalarParameter'，但遇到了 '{0}'。"
+    state machine
+}
+
+PropertyNoForm {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a property type with a 2.0 spelling, found '{0}{1}', which has none; move this material to a .dss file and write the node with UE.Expression."
+    text  "期望一个有 2.0 写法的属性类型，但遇到了 '{0}{1}'，它没有；请把这个材质移到 .dss 文件，并用 UE.Expression 写这个节点。"
+    state machine
+}
+
+SwitchDefault {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected 'true' or 'false' as the default of the static switch '{0}', found '{1}'."
+    text  "期望静态开关 '{0}' 的默认值是 'true' 或 'false'，但遇到了 '{1}'。"
+    state machine
+}
+
+ScalarDefault {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a number as the default of '{0}', found '{1}'."
+    text  "期望 '{0}' 的默认值是一个数，但遇到了 '{1}'。"
+    state machine
+}
+
+VectorDefault {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a vector literal such as 'float4(1, 0, 0, 1)' as the default of '{0}', found '{1}'."
+    text  "期望 '{0}' 的默认值是向量字面量，例如 'float4(1, 0, 0, 1)'，但遇到了 '{1}'。"
+    state machine
+}
+
+PropertiesOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "'{' to open the Properties section"
+    text  "用于开启 Properties 段的 '{'"
+    state machine
+}
+
+WhilePropertiesEnd {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "a Properties section"
+    text  "Properties 段"
+    state machine
+}
+
+SettingsOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "'{' to open the Settings section"
+    text  "用于开启 Settings 段的 '{'"
+    state machine
+}
+
+WhileSettings {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "a Settings section"
+    text  "Settings 段"
+    state machine
+}
+
+SettingExpectedKey {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a setting name such as 'BlendMode', found {0}."
+    text  "期望一个设置项名称，例如 'BlendMode'，但遇到了 {0}。"
+    state machine
+}
+
+SettingExpectedEquals {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected '=' after the setting '{0}', found {1}."
+    text  "期望设置项 '{0}' 之后是 '='，但遇到了 {1}。"
+    state machine
+}
+
+SettingExpectedValue {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a value after '{0} =', found {1}."
+    text  "期望 '{0} =' 之后是一个值，但遇到了 {1}。"
+    state machine
+}
+
+SettingRepeated {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "The setting '{0}' is written twice; the later value wins, as it did in 1.x."
+    text  "设置项 '{0}' 写了两次；与 1.x 一样，以后写的值为准。"
+    state machine
+}
+
+OutputsOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "'{' to open the Outputs section"
+    text  "用于开启 Outputs 段的 '{'"
+    state machine
+}
+
+PinBindingShape {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected 'Pin[<index>] = <source>' for an Expression(...) output target, found {0}."
+    text  "期望 Expression(...) 输出目标之后是 'Pin[<index>] = <source>'，但遇到了 {0}。"
+    state machine
+}
+
+PinSourceMissing {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a source after 'Pin[{0}] =', found none."
+    text  "期望 'Pin[{0}] =' 之后是一个来源，但什么都没有。"
+    state machine
+}
+
+WhileOutputs {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "an Outputs section"
+    text  "Outputs 段"
+    state machine
+}
+
+OutputInitializerMissing {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected an initializer after '{0} =', found none."
+    text  "期望 '{0} =' 之后是初始化器，但什么都没有。"
+    state machine
+}
+
+OutputDeclarationEnd {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected ';' after the output declaration '{0}', found {1}."
+    text  "期望输出声明 '{0}' 之后是 ';'，但遇到了 {1}。"
+    state machine
+}
+
+BindingSourceMissing {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a source after 'Base.{0} =', found none."
+    text  "期望 'Base.{0} =' 之后是一个来源，但什么都没有。"
+    state machine
+}
+
+TargetArgumentShape {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected 'Key = Value' inside the output target Expression(...), found {0}."
+    text  "期望输出目标 Expression(...) 中是 'Key = Value'，但遇到了 {0}。"
+    state machine
+}
+
+TargetArgumentEquals {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected '=' after '{0}' inside the output target Expression(...), found {1}."
+    text  "期望输出目标 Expression(...) 中 '{0}' 之后是 '='，但遇到了 {1}。"
+    state machine
+}
+
+TargetArgumentValue {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a value after '{0} =' inside the output target Expression(...), found {1}."
+    text  "期望输出目标 Expression(...) 中 '{0} =' 之后是一个值，但遇到了 {1}。"
+    state machine
+}
+
+TargetArgumentRepeated {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected the argument '{0}' once in the output target Expression(...), found it again."
+    text  "期望实参 '{0}' 在输出目标 Expression(...) 中只出现一次，但又遇到了它。"
+    state machine
+}
+
+TargetClose {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected ')' to close the output target Expression(...), found {0}."
+    text  "期望用 ')' 闭合输出目标 Expression(...)，但遇到了 {0}。"
+    state machine
+}
+
+TargetWithoutClass {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected 'Class = \"...\"' in the output target Expression(...), found no class."
+    text  "期望输出目标 Expression(...) 中有 'Class = \"...\"'，但没有找到类。"
+    state machine
+}
+
+WhileTargetBlock {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "an Expression(...) block in Outputs"
+    text  "Outputs 中的 Expression(...) 块"
+    state machine
+}
+
+TargetBlockEmpty {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected at least one 'Pin[<index>] = <source>;' in the Expression(...) block, found none."
+    text  "期望 Expression(...) 块中至少有一条 'Pin[<index>] = <source>;'，但一条也没有。"
+    state machine
+}
+
+TargetNeedsPin {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected '.Pin[<index>] = <source>' or a block of pin bindings after the output target Expression(...), found {0}."
+    text  "期望输出目标 Expression(...) 之后是 '.Pin[<index>] = <source>' 或一个引脚绑定块，但遇到了 {0}。"
+    state machine
+}
+
+PinBoundTwice {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected each pin of Expression(Class = \"{0}\") to be bound once, found Pin[{1}] bound again."
+    text  "期望 Expression(Class = \"{0}\") 的每个引脚只绑定一次，但 Pin[{1}] 又被绑定了一次。"
+    state machine
+}
+
+OutputsStatementShape {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected an output declaration, 'Base.<Attribute> = <source>;' or 'Expression(...).Pin[<index>] = <source>;', found {0}."
+    text  "期望一条输出声明、'Base.<Attribute> = <source>;' 或 'Expression(...).Pin[<index>] = <source>;'，但遇到了 {0}。"
+    state machine
+}
+
+ParamsOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "'{' to open the parameter section"
+    text  "用于开启参数段的 '{'"
+    state machine
+}
+
+WhileParams {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "a parameter section"
+    text  "参数段"
+    state machine
+}
+
+ParamShape {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a parameter type and name such as 'float Amount', found {0}."
+    text  "期望参数类型和名称，例如 'float Amount'，但遇到了 {0}。"
+    state machine
+}
+
+ParamDefaultMissing {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a default value after '{0} =', found {1}."
+    text  "期望 '{0} =' 之后是默认值，但遇到了 {1}。"
+    state machine
+}
+
+ParamEnd {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected ';' after the parameter '{0}', found {1}."
+    text  "期望参数 '{0}' 之后是 ';'，但遇到了 {1}。"
+    state machine
+}
+
+OptOnOutput {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "'opt' on the output '{0}' means nothing; 1.x ignored it and so does this front end."
+    text  "输出 '{0}' 上的 'opt' 没有意义；1.x 会忽略它，此前端也一样。"
+    state machine
+}
+
+DefaultOnOutput {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "A default on the output '{0}' means nothing; 1.x ignored it, so it is dropped."
+    text  "输出 '{0}' 上的默认值没有意义；1.x 会忽略它，所以它被丢弃。"
+    state machine
+}
+
+ParamSortNotInteger {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected 'SortPriority' to be a whole number, found '{0}'."
+    text  "期望 'SortPriority' 是整数，但遇到了 '{0}'。"
+    state machine
+}
+
+LayoutOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "'{' to open the Layout section"
+    text  "用于开启 Layout 段的 '{'"
+    state machine
+}
+
+WhileLayout {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "a Layout section"
+    text  "Layout 段"
+    state machine
+}
+
+LayoutShape {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected 'Node(...)' or 'Comment(...)' in the Layout section, found {0}."
+    text  "期望 Layout 段中是 'Node(...)' 或 'Comment(...)'，但遇到了 {0}。"
+    state machine
+}
+
+LayoutArgumentShape {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected 'Key = Value' inside '{0}(...)', found {1}."
+    text  "期望 '{0}(...)' 中是 'Key = Value'，但遇到了 {1}。"
+    state machine
+}
+
+LayoutArgumentEquals {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected '=' after '{0}' inside '{1}(...)', found {2}."
+    text  "期望 '{1}(...)' 中 '{0}' 之后是 '='，但遇到了 {2}。"
+    state machine
+}
+
+LayoutArgumentValue {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected a value after '{0} =' inside '{1}(...)', found {2}."
+    text  "期望 '{1}(...)' 中 '{0} =' 之后是一个值，但遇到了 {2}。"
+    state machine
+}
+
+LayoutArgumentRepeated {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected the Layout argument '{0}' once, found it again."
+    text  "期望 Layout 实参 '{0}' 只出现一次，但又遇到了它。"
+    state machine
+}
+
+LayoutClose {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected ')' to close '{0}(...)', found {1}."
+    text  "期望用 ')' 闭合 '{0}(...)'，但遇到了 {1}。"
+    state machine
+}
+
+LayoutUnknown {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected 'Node' or 'Comment' in the Layout section, found '{0}'."
+    text  "期望 Layout 段中是 'Node' 或 'Comment'，但遇到了 '{0}'。"
+    state machine
+}
+
+LayoutMissingArgument {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected the argument '{0}' in '{1}(...)', found none."
+    text  "期望 '{1}(...)' 中有实参 '{0}'，但没有找到。"
+    state machine
+}
+
+LayoutNotInteger {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected the Layout argument '{0}' to be a whole number, found '{1}'."
+    text  "期望 Layout 实参 '{0}' 是整数，但遇到了 '{1}'。"
+    state machine
+}
+
+LayoutColor {
+    at    Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp
+    src   "Expected 'Color' to be a vector literal such as '(0.1, 0.16, 0.22, 0.35)', found '{0}'."
+    text  "期望 'Color' 是向量字面量，例如 '(0.1, 0.16, 0.22, 0.35)'，但遇到了 '{0}'。"
+    state machine
+}

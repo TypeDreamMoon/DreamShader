@@ -1,0 +1,73 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Binder.Legacy
+
+LegacyCaseFallback {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp
+    src   "'{0}' matches '{1}' only in case; a 1.x source is read ignoring case, so this is '{1}', and a '.dss' needs the exact spelling."
+    text  "'{0}' 与 '{1}' 只有大小写不同；1.x 源文件按忽略大小写读取，所以这里按 '{1}' 处理，而 '.dss' 需要精确的拼写。"
+    state machine
+}
+
+LegacyCatalogCaseFallback {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp
+    src   "'{0}' matches the engine name '{1}' only in case; 1.x matched engine names ignoring case, so this is '{1}', and a '.dss' needs the exact spelling."
+    text  "'{0}' 与引擎名称 '{1}' 只有大小写不同；1.x 匹配引擎名称时忽略大小写，所以这里按 '{1}' 处理，而 '.dss' 需要精确的拼写。"
+    state machine
+}
+
+LegacySelectNoOutputs {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp
+    src   "'{0}' has no output to select, and this call selects '{1}'."
+    text  "'{0}' 没有可供选择的输出，而这次调用选择了 '{1}'。"
+    state machine
+}
+
+LegacySelectUnknownOutput {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp
+    src   "'{0}' has no output called '{1}'; its outputs are {2}."
+    text  "'{0}' 没有名为 '{1}' 的输出；它的输出是 {2}。"
+    state machine
+}
+
+LegacySelectOrdinalRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp
+    src   "'{0}' has {1} output(s), counted from 0 with the return value first, and this call selects output {2}."
+    text  "'{0}' 有 {1} 个输出（从 0 计数，返回值排在最前），而这次调用选择的是输出 {2}。"
+    state machine
+}
+
+LegacyImplicitOutLocal {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp
+    src   "'{0}' is not declared, and as in 1.x it is declared here as a local of type {1} receiving '{2}' of '{3}'."
+    text  "'{0}' 没有声明，与 1.x 一样，它在这里被声明为类型为 {1} 的局部变量，用来接收 '{3}' 的 '{2}'。"
+    state machine
+}
+
+HoistedCallsNotCustom {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp
+    src   "'{0}' carries 'UE.' calls lifted out of its body, and only a '@custom' function with a verbatim body lifts calls into its node's inputs."
+    text  "'{0}' 带有从函数体中提升出来的 'UE.' 调用，而只有函数体按原文保留的 '@custom' 函数才会把调用提升为其节点的输入。"
+    state machine
+}
+
+HoistedCallNoInputValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp
+    src   "'{0}' lifts the call behind its input '{1}', and that call makes {2}, which no custom node input carries."
+    text  "'{0}' 把它的输入 '{1}' 背后的调用提升了出来，而该调用产生的是 {2}，Custom 节点的输入无法承载它。"
+    state machine
+}
+
+HoistedCallReadsCallerLocal {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp
+    src   "'{0}' lifts a 'UE.' call out of its body that reads '{1}', which 1.x took from the caller's scope and 2.0 does not; pass '{1}' to '{0}' as a parameter."
+    text  "'{0}' 从函数体中提升出一个读取了 '{1}' 的 'UE.' 调用；1.x 会从调用方的作用域取它，2.0 不会；请把 '{1}' 作为参数传给 '{0}'。"
+    state machine
+}
+
+HoistedCallUnknownName {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp
+    src   "'{0}' lifts a 'UE.' call out of its body that reads '{1}', which is neither a parameter of '{0}' nor declared at file scope."
+    text  "'{0}' 从函数体中提升出一个读取了 '{1}' 的 'UE.' 调用，而 '{1}' 既不是 '{0}' 的参数，也没有在文件作用域声明。"
+    state machine
+}

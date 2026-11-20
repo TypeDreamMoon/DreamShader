@@ -1,0 +1,38 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Pipeline
+
+IncludeUnresolved {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp
+    src   "'{0}', included from '{1}', could not be resolved: {2}."
+    text  "从 '{1}' 包含的 '{0}' 无法定位：{2}。"
+    state machine
+}
+
+IncludeWrongKind {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp
+    src   "'{0}' is not a DreamShader header; an include names a '.dsh' (or a '.dss'), not a '{1}' file."
+    text  "'{0}' 不是 DreamShader 头文件；include 指向的应是 '.dsh'（或 '.dss'），而不是 '{1}' 文件。"
+    state machine
+}
+
+IncludeUnreadable {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp
+    src   "'{0}', included from '{1}', resolved but could not be read."
+    text  "从 '{1}' 包含的 '{0}' 已定位到，但无法读取。"
+    state machine
+}
+
+IncludePreprocessFailed {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp
+    src   "'{0}' failed conditional compilation: {1}: {2}"
+    text  "'{0}' 条件编译失败：{1}: {2}"
+    state machine
+}
+
+IncludeUnparsable {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp
+    src   "'{0}', included from '{1}', could not be parsed; its own errors are above."
+    text  "从 '{1}' 包含的 '{0}' 无法解析；它自身的错误列在上方。"
+    state machine
+}

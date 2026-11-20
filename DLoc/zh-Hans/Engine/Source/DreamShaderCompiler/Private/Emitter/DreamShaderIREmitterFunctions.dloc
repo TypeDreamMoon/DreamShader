@@ -1,0 +1,94 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Emitter
+
+FunctionInputFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp
+    src   "Failed to create a FunctionInput node."
+    text  "无法创建 FunctionInput 节点。"
+    state machine
+}
+
+BadFunctionInputType {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp
+    src   "'{0}' is not a material function input type; write one of Scalar, Vector2, Vector3, Vector4, Texture2D, TextureCube, Texture2DArray, VolumeTexture, StaticBool, Bool, MaterialAttributes or Substrate."
+    text  "'{0}' 不是材质函数输入类型；请写 Scalar、Vector2、Vector3、Vector4、Texture2D、TextureCube、Texture2DArray、VolumeTexture、StaticBool、Bool、MaterialAttributes 或 Substrate 之一。"
+    state machine
+}
+
+StaticBoolDefaultFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp
+    src   "Failed to create the StaticBool node that holds a static bool input's default."
+    text  "无法创建用于保存静态 bool 输入默认值的 StaticBool 节点。"
+    state machine
+}
+
+FunctionOutputFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp
+    src   "Failed to create a FunctionOutput node."
+    text  "无法创建 FunctionOutput 节点。"
+    state machine
+}
+
+FunctionOutputArity {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp
+    src   "Function output '{0}' has {1} operands; it needs exactly the one value it returns."
+    text  "函数输出 '{0}' 有 {1} 个操作数；它恰好需要一个，即它返回的那个值。"
+    state machine
+}
+
+LocalFunctionNotEmitted {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp
+    src   "This call targets product {0} of the same file, but that product has not been emitted yet; the pipeline must compile products in dependency order."
+    text  "这个调用的目标是同一文件中的产物 {0}，但该产物尚未生成；管线必须按依赖顺序编译产物。"
+    state machine
+}
+
+FunctionCallNoPath {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp
+    src   "This function call names no material function asset."
+    text  "这个函数调用没有指定材质函数资产。"
+    state machine
+}
+
+FunctionReferenceUnresolved {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp
+    src   "The function reference '{0}' does not resolve to an asset path. {1}"
+    text  "函数引用 '{0}' 无法解析为资产路径。{1}"
+    state machine
+}
+
+FunctionCallLoadFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp
+    src   "The material function asset '{0}' could not be loaded."
+    text  "无法加载材质函数资产 '{0}'。"
+    state machine
+}
+
+FunctionCallFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp
+    src   "Failed to create a MaterialFunctionCall node."
+    text  "无法创建 MaterialFunctionCall 节点。"
+    state machine
+}
+
+FunctionCallAssignFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp
+    src   "'{0}' could not be assigned to the generated call node; a material function cannot call itself, directly or through another function."
+    text  "无法把 '{0}' 指定给生成的调用节点；材质函数不能直接或经由其他函数调用自身。"
+    state machine
+}
+
+FunctionCallUnknownInput {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp
+    src   "'{0}' has no input named '{1}'."
+    text  "'{0}' 没有名为 '{1}' 的输入。"
+    state machine
+}
+
+FunctionCallUnknownOutput {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp
+    src   "'{0}' has no output named '{1}'."
+    text  "'{0}' 没有名为 '{1}' 的输出。"
+    state machine
+}

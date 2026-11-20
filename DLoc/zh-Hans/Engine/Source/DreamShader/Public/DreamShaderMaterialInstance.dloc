@@ -1,0 +1,56 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamShaderMaterialInstance {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance
+    src   "Dream Shader Material Instance"
+    text  "DreamShader 材质实例"
+    state machine
+}
+
+DreamShaderMaterialInstance:SourceFilePath {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance:SourceFilePath
+    src   "Source File Path"
+    text  "源文件路径"
+    state machine
+}
+
+DreamShaderMaterialInstance:SourceHash {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance:SourceHash
+    src   "Source Hash"
+    text  "源码哈希"
+    state machine
+}
+
+namespace UObjectToolTips
+
+DreamShaderMaterialInstance {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance
+    src   "The DreamShader-generated material asset: a lightweight constant instance of a hidden per-material\nbase UMaterial that carries the real node graph (the ThinCustom chain). The instance is the\naddressable asset -- it hides from the Content Browser while memory-only (IsAsset) and owns its own\nstatic-permutation shader map as the ROOT of its inheritance chain (HasOverridenBaseProperties),\nso parameter/color child instances off it share one compiled map. Everything else -- parameters,\nsettings, domains, scene reads -- lives on the base as ordinary nodes and properties, enumerated\nnatively by the engine."
+    text  "DreamShader 生成的材质资产：一个隐藏的每材质基 UMaterial 的轻量常量实例，真正的节点图表（ThinCustom 链路）挂在那个基 UMaterial 上。可寻址的资产是这个实例——仅存在于内存时（IsAsset）它对内容浏览器隐藏，并作为继承链的根（HasOverridenBaseProperties）持有自己的静态组合着色器映射，因此由它派生的参数/颜色子实例共用同一份已编译映射。其余一切——参数、设置、域、场景读取——都作为普通节点与属性存在于基材质上，由引擎原生枚举。"
+    state machine
+}
+
+DreamShaderMaterialInstance:SourceFilePath {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance:SourceFilePath
+    src   "DreamShader source file this instance was generated from."
+    text  "生成本实例所用的 DreamShader 源文件。"
+    state machine
+}
+
+DreamShaderMaterialInstance:SourceHash {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance:SourceHash
+    src   "Hash of the source text (the regeneration skip check compares against it)."
+    text  "源文本的哈希（重新生成时的跳过检查用它比对）。"
+    state machine
+}
+
+namespace UObjectCategory
+
+DreamShader {
+    at    Source/DreamShader/Public/DreamShaderMaterialInstance.h#DreamShaderMaterialInstance:SourceFilePath
+    src   "DreamShader"
+    text  "DreamShader"
+    state machine
+}

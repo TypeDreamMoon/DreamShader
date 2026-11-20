@@ -1,0 +1,45 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Lang.Lexer
+
+UnterminatedBlockComment {
+    at    Source/DreamShaderLang/Private/Lang/LangLexer.cpp
+    src   "Unterminated block comment; expected a closing '*/'."
+    text  "块注释未终止;缺少闭合的 '*/'。"
+    state machine
+}
+
+HashNotAtLineStart {
+    at    Source/DreamShaderLang/Private/Lang/LangLexer.cpp
+    src   "A '#' directive must be the first thing on its line."
+    text  "'#' 指令必须位于所在行的最前面。"
+    state machine
+}
+
+UnknownStringEscape {
+    at    Source/DreamShaderLang/Private/Lang/LangLexer.cpp
+    src   "Unknown escape sequence '\\{0}' in a string literal."
+    text  "字符串字面量中出现未知的转义序列 '\\{0}'。"
+    state machine
+}
+
+UnterminatedStringLiteral {
+    at    Source/DreamShaderLang/Private/Lang/LangLexer.cpp
+    src   "Unterminated string literal; expected a closing '\"'."
+    text  "字符串字面量未终止;缺少闭合的 '\"'。"
+    state machine
+}
+
+MalformedNumber {
+    at    Source/DreamShaderLang/Private/Lang/LangLexer.cpp
+    src   "Malformed number literal '{0}'."
+    text  "数字字面量 '{0}' 格式不正确。"
+    state machine
+}
+
+UnknownCharacter {
+    at    Source/DreamShaderLang/Private/Lang/LangLexer.cpp
+    src   "Unexpected character '{0}' in source."
+    text  "源码中出现意外的字符 '{0}'。"
+    state machine
+}

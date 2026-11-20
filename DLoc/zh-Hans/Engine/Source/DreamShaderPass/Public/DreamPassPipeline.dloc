@@ -1,0 +1,224 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamPassPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline
+    src   "Dream Pass Pipeline"
+    text  "Dream Pass 管线"
+    state machine
+}
+
+DreamPassPipeline:bHasSharedHlsl {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:bHasSharedHlsl
+    src   "Has Shared Hlsl"
+    text  "含共享 HLSL"
+    state machine
+}
+
+DreamPassPipeline:Buffers {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Buffers
+    src   "Buffers"
+    text  "缓冲"
+    state machine
+}
+
+DreamPassPipeline:DefaultInjection {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:DefaultInjection
+    src   "Default Injection"
+    text  "默认注入"
+    state machine
+}
+
+DreamPassPipeline:EnabledParameter {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:EnabledParameter
+    src   "Enabled Parameter"
+    text  "启用的参数"
+    state machine
+}
+
+DreamPassPipeline:ExportTargets {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:ExportTargets
+    src   "Export Targets"
+    text  "导出目标"
+    state machine
+}
+
+DreamPassPipeline:GetExportTarget {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:GetExportTarget
+    src   "Get Export Target"
+    text  "获取导出目标"
+    state machine
+}
+
+DreamPassPipeline:GetExportTarget:Buffer {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:GetExportTarget:Buffer
+    src   "Buffer"
+    text  "缓冲"
+    state machine
+}
+
+DreamPassPipeline:GetExportTarget:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:GetExportTarget:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassPipeline:Order {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Order
+    src   "Order"
+    text  "顺序"
+    state machine
+}
+
+DreamPassPipeline:Parameters {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Parameters
+    src   "Parameters"
+    text  "参数"
+    state machine
+}
+
+DreamPassPipeline:Passes {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Passes
+    src   "Passes"
+    text  "Pass"
+    state machine
+}
+
+DreamPassPipeline:Requires {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Requires
+    src   "Requires"
+    text  "需要"
+    state machine
+}
+
+DreamPassPipeline:SharedHlsl {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SharedHlsl
+    src   "Shared Hlsl"
+    text  "共享 HLSL"
+    state machine
+}
+
+DreamPassPipeline:SharedHlslLine {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SharedHlslLine
+    src   "Shared Hlsl Line"
+    text  "共享 HLSL 行"
+    state machine
+}
+
+DreamPassPipeline:SourceFilePath {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SourceFilePath
+    src   "Source File Path"
+    text  "源文件路径"
+    state machine
+}
+
+DreamPassPipeline:SourceHash {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SourceHash
+    src   "Source Hash"
+    text  "源码哈希"
+    state machine
+}
+
+DreamPassPipeline:Views {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Views
+    src   "Views"
+    text  "视图"
+    state machine
+}
+
+namespace UObjectToolTips
+
+DreamPassPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline
+    src   "A Custom Pass pipeline: named buffers, an ordered list of passes each with its own injection point, and the\nparameters an activation can override. What a `.dsp` source compiles to, and what it decompiles from.\n\nPlain data. Nothing here runs: UDreamPassSubsystem decides which pipelines apply to a view and with what\nparameter values, and the scene view extension runs their passes. Editing the asset in the details panel\ntakes effect on the next frame; Adopt Into Source writes the edit back to the `.dsp`."
+    text  "一段 Custom Pass 管线：具名缓冲、有序的 Pass 列表（每个 Pass 各有注入点），以及\n激活时可以覆盖的参数。`.dsp` 源码编译成它，也从它反编译。\n\n纯数据。这里不执行任何东西：由 UDreamPassSubsystem 决定哪些管线在哪个视图生效、用哪些\n参数值，场景视图扩展执行它们的 Pass。在细节面板修改资产会在下一帧\n生效；Adopt Into Source 会把改动写回 `.dsp`。"
+    state machine
+}
+
+DreamPassPipeline:bHasSharedHlsl {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:bHasSharedHlsl
+    src   "The `.dsp` has a file-level `hlsl { }` block (it may be empty)."
+    text  "该 `.dsp` 有一个文件级 `hlsl { }` 块（可以为空）。"
+    state machine
+}
+
+DreamPassPipeline:DefaultInjection {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:DefaultInjection
+    src   "The injection point of a pass that does not name one. Informational once compiled: every pass carries its own."
+    text  "未指定注入点的 Pass 所使用的注入点。编译后仅供查看：每个 Pass 都带有自己的注入点。"
+    state machine
+}
+
+DreamPassPipeline:EnabledParameter {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:EnabledParameter
+    src   "A Bool parameter; the whole pipeline is off in a view where it is false. None: always on."
+    text  "一个布尔参数；在它为假的视图里整条管线关闭。None：始终开启。"
+    state machine
+}
+
+DreamPassPipeline:ExportTargets {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:ExportTargets
+    src   "The render target asset of every exported buffer, made by the compiler next to this asset."
+    text  "每个导出缓冲的渲染目标资产，由编译器生成在该资产旁边。"
+    state machine
+}
+
+DreamPassPipeline:Order {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Order
+    src   "Pipelines that have passes at the same injection point run in ascending Order, then by asset path."
+    text  "在同一注入点上有 Pass 的管线按 Order 升序执行，Order 相同则按资产路径。"
+    state machine
+}
+
+DreamPassPipeline:Passes {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Passes
+    src   "In declaration order, which is execution order within an injection point."
+    text  "按声明顺序，也就是注入点内的执行顺序。"
+    state machine
+}
+
+DreamPassPipeline:Requires {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Requires
+    src   "EDreamPassRequirementFlags: what a view must offer for the pipeline to run in it at all."
+    text  "EDreamPassRequirementFlags：视图必须提供什么，管线才会在其中运行。"
+    state machine
+}
+
+DreamPassPipeline:SharedHlsl {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SharedHlsl
+    src   "That block: the text between its braces, verbatim. Its shared functions are compiled with every inline pass, its\nentries with the passes that name them (EDreamPassHlslSource::Shared). Kept for the way back to text; what runs is\neach slot's snapshot."
+    text  "该块：两花括号之间的文本，逐字保留。它的共享函数会随每个内联 Pass 一起编译，其条目随引用它们的 Pass 编译（EDreamPassHlslSource::Shared）。保留它是为了回写文本；真正执行的是各槽位的快照。"
+    state machine
+}
+
+DreamPassPipeline:SharedHlslLine {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SharedHlslLine
+    src   "The line of the block's `{` in the `.dsp`."
+    text  "该块的 `{` 在 `.dsp` 中的行号。"
+    state machine
+}
+
+DreamPassPipeline:SourceFilePath {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SourceFilePath
+    src   "The `.dsp` this asset was compiled from, project-relative. Also in the package's DreamShader.SourceFile metadata."
+    text  "该资产编译自哪个 `.dsp`（相对项目）。也记录在包的 DreamShader.SourceFile 元数据里。"
+    state machine
+}
+
+DreamPassPipeline:Views {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:Views
+    src   "EDreamPassViewFlags: which kinds of view the pipeline runs in."
+    text  "EDreamPassViewFlags：管线在哪些类型的视图里运行。"
+    state machine
+}
+
+namespace UObjectCategory
+
+Source {
+    at    Source/DreamShaderPass/Public/DreamPassPipeline.h#DreamPassPipeline:SourceFilePath
+    src   "Source"
+    text  "源码"
+    state machine
+}

@@ -1,0 +1,24 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderMaterialBrowser
+
+MaterializeNoSource {
+    at    Source/DreamShaderCompiler/Private/DreamShaderCompilerService.cpp
+    src   "This material is memory-only and has no DreamShader source file to materialize from."
+    text  "此材质仅存在于内存,没有可物化的 DreamShader 源文件。"
+    state machine
+}
+
+FactoryMaterializeFailed {
+    at    Source/DreamShaderCompiler/Private/DreamShaderCompilerService.cpp
+    src   "Failed to materialize the material to disk: {0}"
+    text  "将材质物化到磁盘失败: {0}"
+    state machine
+}
+
+FactoryReloadFailed {
+    at    Source/DreamShaderCompiler/Private/DreamShaderCompilerService.cpp
+    src   "Materialized the material but could not reload it at {0}."
+    text  "材质已物化,但无法在 {0} 重新加载。"
+    state machine
+}

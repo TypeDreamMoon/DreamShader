@@ -1,0 +1,156 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamPassGlobalPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline
+    src   "Dream Pass Global Pipeline"
+    text  "Dream Pass 全局管线"
+    state machine
+}
+
+DreamPassGlobalPipeline:bEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:bEnabled
+    src   "Enabled"
+    text  "已启用"
+    state machine
+}
+
+DreamPassGlobalPipeline:Overrides {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Overrides
+    src   "Overrides"
+    text  "覆盖"
+    state machine
+}
+
+DreamPassGlobalPipeline:Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Pipeline
+    src   "Pipeline"
+    text  "管线"
+    state machine
+}
+
+DreamPassGlobalPipeline:Priority {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Priority
+    src   "Priority"
+    text  "优先级"
+    state machine
+}
+
+DreamPassSettings {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings
+    src   "DreamShader Custom Pass"
+    text  "DreamShader 自定义 Pass"
+    state machine
+}
+
+DreamPassSettings:bEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:bEnabled
+    src   "Enabled"
+    text  "已启用"
+    state machine
+}
+
+DreamPassSettings:GlobalPipelines {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:GlobalPipelines
+    src   "Global Pipelines"
+    text  "全局管线"
+    state machine
+}
+
+DreamPassSettings:LayerNames {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:LayerNames
+    src   "Layer Names"
+    text  "图层名称"
+    state machine
+}
+
+namespace UObjectToolTips
+
+DreamPassGlobalPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline
+    src   "A pipeline that applies to every view of every world, with the parameter values it applies with."
+    text  "一条对所有世界的所有视图都生效的管线，连同它生效时使用的参数值。"
+    state machine
+}
+
+DreamPassGlobalPipeline:Priority {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Priority
+    src   "Where its parameter overrides sit among every other activation of the same pipeline: higher wins."
+    text  "它的参数覆盖在同一管线的所有激活中的位置：数值高者胜。"
+    state machine
+}
+
+DreamPassSettings {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings
+    src   "Project Settings ▸ DreamPlugin ▸ DreamShader Custom Pass."
+    text  "项目设置 ▸ DreamPlugin ▸ DreamShader Custom Pass。"
+    state machine
+}
+
+DreamPassSettings:bEnabled {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:bEnabled
+    src   "Off: no pipeline runs anywhere, whatever activates it. r.DreamPass.Enable turns it off for a session."
+    text  "关闭：任何地方都不运行管线，无论谁激活它。r.DreamPass.Enable 可对当次会话关闭它。"
+    state machine
+}
+
+DreamPassSettings:GlobalPipelines {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:GlobalPipelines
+    src   "Pipelines that apply to every view of every world."
+    text  "对所有世界的所有视图都生效的管线。"
+    state machine
+}
+
+DreamPassSettings:LayerNames {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:LayerNames
+    src   "The pass layers, at most 32: a UDreamPassLayerComponent gives primitives some of them, and a mesh pass's\n`Filter = Layer(Name)` selects the primitives that have one. The order is the bit order; renaming one is safe,\nmoving one re-targets every compiled pipeline that names it until those are compiled again."
+    text  "Pass 图层，最多 32 个：UDreamPassLayerComponent 给图元分配其中一些，网格 Pass 的 `Filter = Layer(Name)` 选中拥有该图层的图元。顺序即位序；重命名某个图层是安全的，移动某个图层会让引用它的每个已编译管线重新指向，直到它们重新编译。"
+    state machine
+}
+
+namespace UObjectCategory
+
+Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassGlobalPipeline:Pipeline
+    src   "Pipeline"
+    text  "管线"
+    state machine
+}
+
+Runtime {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:bEnabled
+    src   "Runtime"
+    text  "运行时"
+    state machine
+}
+
+Pipelines {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:GlobalPipelines
+    src   "Pipelines"
+    text  "管线"
+    state machine
+}
+
+Layers {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h#DreamPassSettings:LayerNames
+    src   "Layers"
+    text  "图层"
+    state machine
+}
+
+namespace DreamShader.Pass.Settings
+
+SectionText {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h
+    src   "DreamShader Custom Pass"
+    text  "DreamShader Custom Pass"
+    state machine
+}
+
+SectionDescription {
+    at    Source/DreamShaderPass/Public/DreamPassSettings.h
+    src   "Pipelines that run in every world, and the names of the layers mesh passes select by."
+    text  "在每个世界中运行的管线，以及网格 Pass 用来筛选的层名称。"
+    state machine
+}

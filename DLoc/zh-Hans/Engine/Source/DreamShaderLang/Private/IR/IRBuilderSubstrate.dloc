@@ -1,0 +1,45 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.IRBuilder.Substrate
+
+IRBuilderSubstrateBuilderGone {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp
+    src   "'{0}' is not the Substrate value being built any more when a loop comes round to '{0}.{1}': an earlier trip assigned it. Declare the value inside the loop, or finish it before the loop."
+    text  "循环绕回到 '{0}.{1}' 时，'{0}' 已经不再是那个正在构建的 Substrate 值了：前一趟循环给它整体赋过值。请把该值声明在循环内部，或者在循环之前把它写完。"
+    state machine
+}
+
+IRBuilderSubstrateBuilderUnset {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp
+    src   "'{0}.{1}' has no value where it is read: the line that writes it did not run on the way here. Give it a value on every path first."
+    text  "'{0}.{1}' 在读取处没有值：到这里的路径上，写它的那一行没有执行。请先在每条路径上都给它一个值。"
+    state machine
+}
+
+IRBuilderSubstrateBuilderTaken {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp
+    src   "The Substrate value '{0}' has been used by the time a loop comes round to this write of '{0}.{1}', and its node is what it was then. Declare the value inside the loop, or finish it before the loop."
+    text  "循环绕回到对 '{0}.{1}' 的这次写入时，Substrate 值 '{0}' 已经被使用过，节点就是当时的样子。请把该值声明在循环内部，或者在循环之前把它写完。"
+    state machine
+}
+
+IRBuilderSubstrateBuilderUnsetWrite {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp
+    src   "'{0}.{1}' has no value for this operator to start from: the line that writes it did not run on the way here. Give it a value on every path first."
+    text  "'{0}.{1}' 没有可供这个运算符起算的值：到这里的路径上，写它的那一行没有执行。请先在每条路径上都给它一个值。"
+    state machine
+}
+
+IRBuilderSubstrateNativeOff {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp
+    src   "This material drives FrontMaterial and says 'Substrate = Native', and Substrate is off in this project; the engine could not compile the asset. Turn Substrate on, or write 'Substrate = Bridge' and the legacy attributes."
+    text  "这个材质驱动了 FrontMaterial 并声明 'Substrate = Native'，而本工程没有开启 Substrate；引擎无法编译这个资产。请开启 Substrate，或者写 'Substrate = Bridge' 并使用旧属性。"
+    state machine
+}
+
+IRBuilderSubstrateConversionMissing {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderSubstrate.cpp
+    src   "'{0}' is converted by the node 'Substrate.{1}', and this engine has no such node; give the pins it feeds directly."
+    text  "'{0}' 要由节点 'Substrate.{1}' 来转换，而当前引擎没有这个节点；请直接给出它所驱动的那些引脚。"
+    state machine
+}

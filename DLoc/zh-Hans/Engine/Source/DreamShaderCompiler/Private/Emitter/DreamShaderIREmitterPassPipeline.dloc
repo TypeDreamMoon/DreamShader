@@ -1,0 +1,234 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Emitter.PassPipeline
+
+ExportTargetDeleted {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "'{0}' was deleted: its buffer is no longer exported."
+    text  "已删除 '{0}'：它的缓冲已不再导出。"
+    state machine
+}
+
+ExportTargetKept {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "'{0}' was left in place although its buffer is no longer exported: {1}. Delete it by hand once nothing reads it."
+    text  "'{0}' 被保留在原处，尽管它的缓冲已不再导出：{1}。等没有任何东西读取它之后，请手动删除它。"
+    state machine
+}
+
+ExportTargetKeptNoDelete {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "it could not be deleted here"
+    text  "这里无法删除它"
+    state machine
+}
+
+ExportTargetKeptReferenced {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "it is still referenced by {0}"
+    text  "它仍被 {0} 引用"
+    state machine
+}
+
+PayloadUnmapped {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "'{1}' is not a {0} the Custom Pass runtime knows; the pipeline was not built. This is a compiler gap: the binder should have refused it."
+    text  "{0} '{1}' 不是 Custom Pass 运行时认识的取值，因此没有构建管线。这是编译器的疏漏：绑定器本应拒绝它。"
+    state machine
+}
+
+WhatInjection {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "injection point"
+    text  "注入点"
+    state machine
+}
+
+WhatView {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "view kind"
+    text  "视图种类"
+    state machine
+}
+
+WhatRequirement {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "requirement"
+    text  "需求项"
+    state machine
+}
+
+WhatParameterType {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "parameter type"
+    text  "参数类型"
+    state machine
+}
+
+ParameterDefaultFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "The default of '{0}' could not be applied: {1}."
+    text  "无法应用 '{0}' 的默认值：{1}。"
+    state machine
+}
+
+WhatFormat {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "buffer format"
+    text  "缓冲格式"
+    state machine
+}
+
+WhatResolution {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "buffer resolution"
+    text  "缓冲分辨率"
+    state machine
+}
+
+ExportFormatRefused {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "Buffer '{0}' is {1} and cannot be exported: materials, Blueprints and UMG read an exported buffer as a float texture, which an integer or a depth buffer cannot be. Export a float or normalized buffer, or drop Export."
+    text  "缓冲 '{0}' 是 {1}，不能导出：材质、蓝图和 UMG 会把导出的缓冲当作浮点纹理读取，而整数缓冲或深度缓冲做不到这一点。请导出浮点或归一化缓冲，或去掉 Export。"
+    state machine
+}
+
+WhatKind {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "pass kind"
+    text  "Pass 种类"
+    state machine
+}
+
+WhatPassInjection {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "injection point"
+    text  "注入点"
+    state machine
+}
+
+WhatParamSource {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "param source"
+    text  "param 来源"
+    state machine
+}
+
+WhatConstantType {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "param constant type"
+    text  "param 常量类型"
+    state machine
+}
+
+PassMaterialMissing {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "The material '{0}' of pass '{1}' does not load; compile the source that builds it, or correct the Material key."
+    text  "Pass '{1}' 的材质 '{0}' 无法加载；请编译构建它的源文件，或修正 Material 键。"
+    state machine
+}
+
+WhatDispatch {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "dispatch mode"
+    text  "派发模式"
+    state machine
+}
+
+WhatFilter {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "filter term"
+    text  "筛选项"
+    state machine
+}
+
+LayerUnknown {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "Pass '{0}' selects the layer '{1}', which is not one of the project's pass layers (Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names)."
+    text  "Pass '{0}' 选择了层 '{1}'，但它不是本项目的 Pass 层（项目设置 > DreamPlugin > DreamShader Custom Pass > Layer Names）。"
+    state machine
+}
+
+WhatMeshMode {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "mesh mode"
+    text  "网格模式"
+    state machine
+}
+
+WhatDepth {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "depth mode"
+    text  "深度模式"
+    state machine
+}
+
+WhatCull {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "cull mode"
+    text  "剔除模式"
+    state machine
+}
+
+WhatBlend {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "blend mode"
+    text  "混合模式"
+    state machine
+}
+
+WhatUsage {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "mesh usage"
+    text  "网格用途"
+    state machine
+}
+
+WhatNanite {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "Nanite policy"
+    text  "Nanite 策略"
+    state machine
+}
+
+NeedsCustomPass {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "'{0}' is a Custom Pass pipeline, which needs Unreal Engine 5.8 or later; this engine has the DreamShaderPass asset types but no runtime to run them, so nothing was built."
+    text  "'{0}' 是 Custom Pass 管线，需要 Unreal Engine 5.8 或更高版本；当前引擎有 DreamShaderPass 的资产类型，但没有运行它们的运行时，因此没有构建任何内容。"
+    state machine
+}
+
+PipelineDestinationFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "'{0}' does not resolve to a valid asset path. {1}"
+    text  "'{0}' 无法解析为有效的资产路径。{1}"
+    state machine
+}
+
+CreatePipelineFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "The pass pipeline for '{0}' could not be created or reused. {1}"
+    text  "无法为 '{0}' 创建或复用 Pass 管线。{1}"
+    state machine
+}
+
+ExportTargetFailed {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "The render target of the exported buffer '{0}' could not be created or reused. {1}"
+    text  "无法创建或复用导出缓冲 '{0}' 的渲染目标。{1}"
+    state machine
+}
+
+PipelineEmitCancelled {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "Building '{0}' was cancelled; the pipeline, its slots and its render targets are as they were before this compile."
+    text  "'{0}' 的构建已取消；管线、它的槽位和渲染目标都保持这次编译之前的状态。"
+    state machine
+}
+
+SavePipelineFailedRetry {
+    at    Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp
+    src   "'{0}' was built but could not be saved with its render targets; its slots are already in the registry. Make the packages writable and compile the source again to retry saving. {1}"
+    text  "'{0}' 已构建，但无法与其渲染目标一起保存；它的槽位已在注册表中。请让这些包可写，然后重新编译源文件以重试保存。{1}"
+    state machine
+}

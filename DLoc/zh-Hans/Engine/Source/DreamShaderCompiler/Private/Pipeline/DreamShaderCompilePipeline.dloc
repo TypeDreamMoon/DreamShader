@@ -1,0 +1,185 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Pipeline
+
+InstanceChainCycle {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "'{0}' is its own ancestor: following Parent from it comes back to it ({1})."
+    text  "'{0}' 是它自己的祖先：从它沿 Parent 一路追溯又回到了它自己（{1}）。"
+    state machine
+}
+
+InstanceChainTooDeep {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "The Parent chain above '{0}' is more than {1} instances deep; a chain that long is almost always a mistake in a Parent key."
+    text  "'{0}' 之上的 Parent 链深度超过了 {1} 层实例；这么长的链几乎总是某个 Parent 键写错了。"
+    state machine
+}
+
+ParentCompileFailed {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "The parent source '{0}' failed to compile, so this instance has no parent to build against. {1}"
+    text  "父材质的源文件 '{0}' 编译失败，因此这个实例没有可供构建的父材质。{1}"
+    state machine
+}
+
+ParentSourceDoesNotBuild {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "The parent '{0}' comes from '{1}', which does not compile, so the parameters this instance overrides cannot be checked; compile that source to see why."
+    text  "父材质 '{0}' 来自 '{1}'，而它无法编译，因此无法检查此实例所覆盖的参数；请编译那个源文件查看原因。"
+    state machine
+}
+
+NoGenerationParentMissing {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is nothing to build this instance against. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`."
+    text  "父项 '{0}' 来自 '{1}'，后者将它标记为 NoGeneration，且它从未被构建过，因此没有可用来构建此实例的父项。请按名称编译一次 '{1}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。"
+    state machine
+}
+
+ParentCompiledFirst {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "'{0}' was missing or older than its source, so '{1}' was compiled first."
+    text  "'{0}' 不存在或比它的源文件旧，因此先编译了 '{1}'。"
+    state machine
+}
+
+NotACompilableSource {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "'{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it, unless it is a package's asset header."
+    text  "'{0}' 不是编译器可以单独构建的源文件；编译器构建 '.dss'、'.dsi'、'.dsp'、'.dsm' 和 '.dsf' 文件，'.dsh' 头文件只能通过包含它的源文件来构建，除非它是包的资产头文件。"
+    state machine
+}
+
+CompilingLang2Source {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "Compiling DreamShader source '{0}'..."
+    text  "正在编译 DreamShader 源码 '{0}'..."
+    state machine
+}
+
+CompileCancelled {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "Compiling '{0}' was cancelled; nothing was written."
+    text  "'{0}' 的编译已取消；没有写入任何内容。"
+    state machine
+}
+
+Lang2Reading {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "Reading '{0}'..."
+    text  "正在读取 '{0}'..."
+    state machine
+}
+
+SourceUnreadable {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "'{0}' could not be read."
+    text  "无法读取 '{0}'。"
+    state machine
+}
+
+DisableListEmpty {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "A 'disable_warning' or 'disable_error' list names no code, and disables nothing; write the codes after it, such as 'DSH7224'."
+    text  "一个 'disable_warning' 或 'disable_error' 列表没有写任何代码，因此不屏蔽任何东西；请在其后写上代码，例如 'DSH7224'。"
+    state machine
+}
+
+DisableListMalformed {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "'{0}' is not a diagnostic code, and was ignored; a 'disable_warning' or 'disable_error' list takes codes such as 'DSH7224'."
+    text  "'{0}' 不是诊断代码，已被忽略；'disable_warning' 或 'disable_error' 列表接受的是 'DSH7224' 这样的代码。"
+    state machine
+}
+
+SourcePreprocessFailed {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "'{0}' failed conditional compilation: {1}: {2}"
+    text  "'{0}' 条件编译失败：{1}: {2}"
+    state machine
+}
+
+Lang2Parsing {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "Parsing '{0}'..."
+    text  "正在解析 '{0}'..."
+    state machine
+}
+
+Lang2Binding {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "Resolving names in '{0}'..."
+    text  "正在解析 '{0}' 中的名称..."
+    state machine
+}
+
+CatalogEmpty {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded."
+    text  "内建表达式目录是空的，因此任何写到 'UE.*' 节点的内容都无法绑定。反射没有找到任何 UMaterialExpression 类，这通常意味着 Engine 模块没有加载。"
+    state machine
+}
+
+Lang2Lowering {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "Lowering '{0}' to IR..."
+    text  "正在把 '{0}' 降级为 IR..."
+    state machine
+}
+
+Lang2Validating {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "Validating the IR of '{0}'..."
+    text  "正在验证 '{0}' 的 IR..."
+    state machine
+}
+
+RequiredParentProductMissing {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "The parent source '{0}' no longer builds a material or instance at '{1}'; refresh its source reference."
+    text  "父源文件 '{0}' 已不再在 '{1}' 构建材质或实例；请刷新其源引用。"
+    state machine
+}
+
+Lang2Emitting {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "Building the graph for '{0}'..."
+    text  "正在为 '{0}' 构建图..."
+    state machine
+}
+
+ProductCycle {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "The exported functions {0} call one another in a cycle, so there is no order in which they can be built; an exported function may call another only in one direction."
+    text  "导出函数 {0} 相互循环调用，因此不存在可以构建它们的顺序；导出函数之间只能单向调用。"
+    state machine
+}
+
+NoGenerationLeftAlone {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "'{0}' was left alone: '{1}' marks it NoGeneration, and only a compile that names the file builds it."
+    text  "'{0}' 保持原样：'{1}' 将它标记为 NoGeneration，只有按名称编译该文件时才会构建它。"
+    state machine
+}
+
+NoGenerationNeverBuilt {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "'{0}' has never been built: '{1}' marks it NoGeneration, so only a compile that names the file builds it, and none has. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`."
+    text  "'{0}' 从未被构建过：'{1}' 将它标记为 NoGeneration，只有按名称编译该文件时才会构建它，而至今没有这样的编译。请按名称编译一次 '{1}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。"
+    state machine
+}
+
+NoGenerationCalleeMissing {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "'{0}' calls '{1}', which '{2}' marks NoGeneration and which has never been built, so there is nothing to call. Compile '{2}' by name once: Compile in the Material Content Browser, or `compile -Source`."
+    text  "'{0}' 调用了 '{1}'，而 '{2}' 将它标记为 NoGeneration，且它从未被构建过，因此没有可调用的资产。请按名称编译一次 '{2}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。"
+    state machine
+}
+
+ResolveDestinationFailed {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp
+    src   "'{0}' does not resolve to a valid asset path. {1}"
+    text  "'{0}' 无法解析为有效的资产路径。{1}"
+    state machine
+}

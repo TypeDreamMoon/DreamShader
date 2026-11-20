@@ -1,0 +1,59 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Decompiler.IR
+
+InstanceNeedsDsi {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderIRDecompiler.cpp
+    src   "'{0}' is a material instance, which decompiles to a '.dsi', and '{1}' is not one."
+    text  "'{0}' 是材质实例，会反编译为 '.dsi'，而 '{1}' 不是 '.dsi'。"
+    state machine
+}
+
+PipelineNeedsDsp {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderIRDecompiler.cpp
+    src   "'{0}' is a pass pipeline, which decompiles to a '.dsp', and '{1}' is not one."
+    text  "'{0}' 是 Pass 管线，会反编译为 '.dsp'，而 '{1}' 不是 '.dsp'。"
+    state machine
+}
+
+SourceProductsUnresolved {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderIRDecompiler.cpp
+    src   "'{0}' does not resolve to the assets it builds, so there is nothing to decompile for it."
+    text  "无法从 '{0}' 解析出它构建的资产，因此没有可反编译的内容。"
+    state machine
+}
+
+SourceProductMissingAny {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderIRDecompiler.cpp
+    src   "'{0}' builds '{1}', and that asset does not exist or is of no kind a decompile reads; build the source first."
+    text  "'{0}' 会构建 '{1}'，而该资产不存在，或者不属于反编译能读取的任何种类；请先构建这个源文件。"
+    state machine
+}
+
+UnsupportedAssetClassWithPipeline {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderIRDecompiler.cpp
+    src   "'{0}' is a {1}, which no DreamShader source describes; a decompile takes a material, a material function, layer or blend, a material instance, or a pass pipeline."
+    text  "'{0}' 是 {1}，没有任何 DreamShader 源文件能描述它；反编译接受材质、材质函数、层或混合、材质实例，以及 Pass 管线。"
+    state machine
+}
+
+ImportedModuleInvalid {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderIRDecompiler.cpp
+    src   "The graph of '{0}' did not read into a valid module; the errors above say where. This is a defect of the decompiler, not of the asset."
+    text  "'{0}' 的图没有读成一个有效的模块；上方的错误指出了位置。这是反编译器的缺陷，而不是资产的问题。"
+    state machine
+}
+
+PrintedTextDoesNotParse {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderIRDecompiler.cpp
+    src   "The decompiled text does not parse back: {0}: {1}. It is written as it is; this is a defect of the decompiler."
+    text  "反编译出的文本无法重新解析：{0}: {1}。文本按原样写出；这是反编译器的缺陷。"
+    state machine
+}
+
+PrintedTextNoReason {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderIRDecompiler.cpp
+    src   "the parser gave no reason"
+    text  "解析器没有给出原因"
+    state machine
+}

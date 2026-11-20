@@ -1,0 +1,52 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Preview
+
+PreviewSourceMissing {
+    at    Source/DreamShaderEditor/Private/Preview/DreamShaderPreviewRenderer.cpp
+    src   "DreamShader source '{0}' does not exist."
+    text  "DreamShader 源码 '{0}' 不存在。"
+    state machine
+}
+
+PreviewSupportsOnlyMaterialSources {
+    at    Source/DreamShaderEditor/Private/Preview/DreamShaderPreviewRenderer.cpp
+    src   "DreamShader preview renders a material or a material instance, so it takes a .dss, .dsi or .dsm source: '{0}'."
+    text  "DreamShader 预览渲染的是材质或材质实例，因此只接受 .dss、.dsi 或 .dsm 源文件：'{0}'。"
+    state machine
+}
+
+PreviewCompilerUnavailable {
+    at    Source/DreamShaderEditor/Private/Preview/DreamShaderPreviewRenderer.cpp
+    src   "The DreamShader compiler module is not available, so '{0}' could not be compiled for preview."
+    text  "DreamShader 编译器模块不可用，因此无法为预览编译 '{0}'。"
+    state machine
+}
+
+GeneratedMaterialCouldNotBeLoaded {
+    at    Source/DreamShaderEditor/Private/Preview/DreamShaderPreviewRenderer.cpp
+    src   "Generated material '{0}' could not be loaded."
+    text  "无法加载生成的材质 '{0}'。"
+    state machine
+}
+
+CompiledPreviewMaterial {
+    at    Source/DreamShaderEditor/Private/Preview/DreamShaderPreviewRenderer.cpp
+    src   "Compiled preview material for {0}."
+    text  "已为 {0} 编译预览材质。"
+    state machine
+}
+
+CompiledPreviewMaterialWithDetails {
+    at    Source/DreamShaderEditor/Private/Preview/DreamShaderPreviewRenderer.cpp
+    src   "Compiled preview material for {0}. {1}"
+    text  "已为 {0} 编译预览材质。{1}"
+    state machine
+}
+
+RenderedPreview {
+    at    Source/DreamShaderEditor/Private/Preview/DreamShaderPreviewRenderer.cpp
+    src   "Rendered preview for {0}."
+    text  "已为 {0} 渲染预览。"
+    state machine
+}

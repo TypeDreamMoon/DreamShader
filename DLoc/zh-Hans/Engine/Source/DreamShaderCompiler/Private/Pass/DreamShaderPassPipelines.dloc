@@ -1,0 +1,66 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Pass.Pipelines
+
+RegistryUnreadableForTool {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp
+    src   "The Custom Pass slot registry cannot be read: {0}. Nothing was changed; 'dsc pass-registry -Rebuild' replaces a registry that does not parse."
+    text  "无法读取 Custom Pass 槽位注册表：{0}。没有做任何更改；'dsc pass-registry -Rebuild' 可以替换无法解析的注册表。"
+    state machine
+}
+
+RegistryMoveAsideFailed {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp
+    src   "The Custom Pass slot registry cannot be read ({0}) and could not be moved aside to '{1}', so nothing was reset. Another process holding one of the two files open is the usual reason; a read-only one is reported before this."
+    text  "无法读取 Custom Pass 槽位注册表（{0}），也无法把它移到 '{1}'，因此没有重置任何内容。通常是另一个进程打开了这两个文件之一；只读文件会在此之前单独报告。"
+    state machine
+}
+
+SnapshotMissingReserved {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp
+    src   "{0} slot {1} ({2}, pass '{3}') names snapshot files that are not on disk, so it is now reserved and compiles to the empty stub: a registry that includes a missing file fails the global shader compile. Compile '{4}' to give the pass its snapshot back, and commit the Slots folder with the registry."
+    text  "{0} 槽位 {1}（{2}，Pass '{3}'）指向的快照文件不在磁盘上，因此它现在被保留，并编译为空桩：注册表若包含缺失的文件，全局着色器编译就会失败。请编译 '{4}' 以恢复该 Pass 的快照，并把 Slots 文件夹与注册表一起提交。"
+    state machine
+}
+
+ComputeSlotWord {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp
+    src   "Compute"
+    text  "Compute"
+    state machine
+}
+
+PixelSlotWord {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp
+    src   "Pixel"
+    text  "Pixel"
+    state machine
+}
+
+SlotCheckNeedsCustomPass {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp
+    src   "HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to pre-check them for."
+    text  "HLSL 槽位需要 Unreal Engine 5.8 或更高版本；当前引擎没有可用来预检它们的 Custom Pass 运行时。"
+    state machine
+}
+
+SlotCheckNoIR {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp
+    src   "'{0}' did not get as far as its pipeline, so its HLSL slots could not be pre-checked."
+    text  "'{0}' 的编译没有进行到管线这一步，因此无法预检它的 HLSL 槽位。"
+    state machine
+}
+
+SlotCheckNoDestination {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp
+    src   "'{0}' does not resolve to an asset path ({1}), so its HLSL slots could not be pre-checked."
+    text  "'{0}' 无法解析为资产路径（{1}），因此无法预检它的 HLSL 槽位。"
+    state machine
+}
+
+SlotCheckNothing {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp
+    src   "'{0}' has no HLSL pass, so there is no slot to pre-check; its materials are checked by the sources that build them."
+    text  "'{0}' 没有 HLSL Pass，因此没有需要预检的槽位；它的材质由构建它们的源文件来检查。"
+    state machine
+}

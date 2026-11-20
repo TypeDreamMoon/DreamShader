@@ -1,0 +1,171 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Lang.Statements
+
+WhileParsingStatement {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "a statement"
+    text  "语句"
+    state machine
+}
+
+DirectiveInsideBody {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "Unsupported statement: the preprocessor line '#{0}' cannot appear inside a function body; mark the function /// @custom to hand its body to the shader compiler."
+    text  "不支持的语句:预处理行 '#{0}' 不能出现在函数体内;给该函数标注 /// @custom,把函数体交给着色器编译器处理。"
+    state machine
+}
+
+IfLeftParen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "'(' after 'if'"
+    text  "'if' 之后的 '('"
+    state machine
+}
+
+IfRightParen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "')' to close the 'if' condition"
+    text  "用于闭合 'if' 条件的 ')'"
+    state machine
+}
+
+ForLeftParen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "'(' after 'for'"
+    text  "'for' 之后的 '('"
+    state machine
+}
+
+ForInitSemicolon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "';' after the 'for' initializer"
+    text  "'for' 初始化语句之后的 ';'"
+    state machine
+}
+
+ForConditionSemicolon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "';' after the 'for' condition"
+    text  "'for' 条件之后的 ';'"
+    state machine
+}
+
+ForRightParen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "')' to close the 'for' header"
+    text  "用于闭合 'for' 头部的 ')'"
+    state machine
+}
+
+WhileLeftParen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "'(' after 'while'"
+    text  "'while' 之后的 '('"
+    state machine
+}
+
+WhileRightParen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "')' to close the 'while' condition"
+    text  "用于闭合 'while' 条件的 ')'"
+    state machine
+}
+
+ExpectedWhileAfterDo {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "Expected 'while' after the body of a 'do' statement, found {0}."
+    text  "期望 'do' 语句体之后是 'while',但遇到了 {0}。"
+    state machine
+}
+
+DoWhileLeftParen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "'(' after 'while'"
+    text  "'while' 之后的 '('"
+    state machine
+}
+
+DoWhileRightParen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "')' to close the 'while' condition"
+    text  "用于闭合 'while' 条件的 ')'"
+    state machine
+}
+
+DoWhileSemicolon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "';' after a 'do ... while' statement"
+    text  "'do ... while' 语句之后的 ';'"
+    state machine
+}
+
+ReturnSemicolon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "';' after a 'return' statement"
+    text  "'return' 语句之后的 ';'"
+    state machine
+}
+
+BreakSemicolon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "';' after 'break'"
+    text  "'break' 之后的 ';'"
+    state machine
+}
+
+ContinueSemicolon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "';' after 'continue'"
+    text  "'continue' 之后的 ';'"
+    state machine
+}
+
+DiscardSemicolon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "';' after 'discard'"
+    text  "'discard' 之后的 ';'"
+    state machine
+}
+
+SwitchNotSupported {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "Unsupported statement '{0}': DreamShaderLang 2.0 has no switch statement, write if / else if instead."
+    text  "不支持的语句 '{0}':DreamShaderLang 2.0 没有 switch 语句,请改写成 if / else if。"
+    state machine
+}
+
+ExpressionSemicolon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "';' after an expression statement"
+    text  "表达式语句之后的 ';'"
+    state machine
+}
+
+BlockLeftBrace {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "'{' to open a block"
+    text  "用于开启代码块的 '{'"
+    state machine
+}
+
+WhileParsingBlock {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "a block"
+    text  "代码块"
+    state machine
+}
+
+ExpectedVariableName {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "a variable name"
+    text  "变量名"
+    state machine
+}
+
+VarDeclSemicolon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp
+    src   "';' after a variable declaration"
+    text  "变量声明之后的 ';'"
+    state machine
+}

@@ -1,0 +1,52 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderMaterialBrowser
+
+FunctionUsedBy {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
+    src   "function · used by {0} material(s)"
+    text  "函数 · 被 {0} 个材质使用"
+    state machine
+}
+
+PipelineState {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
+    src   "pass pipeline · {0}"
+    text  "Pass 管线 · {0}"
+    state machine
+}
+
+PipelineBadgeTip {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
+    src   "A Custom Pass pipeline source (.dsp)."
+    text  "Custom Pass 管线源文件（.dsp）。"
+    state machine
+}
+
+ColumnName {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
+    src   "Name"
+    text  "名称"
+    state machine
+}
+
+ColumnRoot {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
+    src   "Root"
+    text  "根"
+    state machine
+}
+
+ColumnState {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
+    src   "Status"
+    text  "状态"
+    state machine
+}
+
+ColumnAsset {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderSourcesView.cpp
+    src   "Asset"
+    text  "资产"
+    state machine
+}

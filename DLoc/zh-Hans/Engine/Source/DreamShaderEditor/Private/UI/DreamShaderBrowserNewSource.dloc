@@ -1,0 +1,227 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderMaterialBrowser
+
+TemplateMissing {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "The template '{0}' is missing from the plugin."
+    text  "插件里缺少模板 '{0}'。"
+    state machine
+}
+
+NewSourceBadName {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "The name must be an identifier: letters, digits and underscores, not starting with a digit."
+    text  "名称必须是标识符:字母、数字和下划线,且不能以数字开头。"
+    state machine
+}
+
+NewSourceNeedsParent {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "An instance needs a parent: the asset path of a material, or the name of a product under the same source root."
+    text  "实例需要一个父材质：材质的资产路径，或同一源根下某个产物的名字。"
+    state machine
+}
+
+NewSourceReadOnly {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "Choose a folder under the project's DShader root. A plugin's sources are read-only."
+    text  "请选择项目 DShader 根目录下的文件夹。插件的源文件是只读的。"
+    state machine
+}
+
+NewSourceExists {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "'{0}' already exists."
+    text  "'{0}' 已存在。"
+    state machine
+}
+
+NewSourceCompanionExists {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "'{0}' already exists, and the template writes it for '{1}'; choose another name."
+    text  "'{0}' 已存在，而模板要为 '{1}' 写出这个文件；请换一个名称。"
+    state machine
+}
+
+NewSourceWriteFailed {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "Could not write '{0}'."
+    text  "无法写入 '{0}'。"
+    state machine
+}
+
+NewPipelineMeshMaskTitle {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "New mesh mask chain (.dsp)"
+    text  "新建网格遮罩链 (.dsp)"
+    state machine
+}
+
+NewPipelineComputeTitle {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "New compute chain (.dsp)"
+    text  "新建 Compute 链 (.dsp)"
+    state machine
+}
+
+NewPipelinePostProcessTitle {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "New fullscreen post-process chain (.dsp)"
+    text  "新建全屏后处理链 (.dsp)"
+    state machine
+}
+
+NewFunctionDssTitle {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "New material function (.dss)"
+    text  "新建材质函数 (.dss)"
+    state machine
+}
+
+NewFunctionTitle {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "New material function (.dsf)"
+    text  "新建材质函数 (.dsf)"
+    state machine
+}
+
+NewHeaderTitle {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "New header (.dsh)"
+    text  "新建头文件 (.dsh)"
+    state machine
+}
+
+NewInstanceTitle {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "New material instance (.dsi)"
+    text  "新建材质实例 (.dsi)"
+    state machine
+}
+
+NewMaterialDssTitle {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "New material (.dss)"
+    text  "新建材质 (.dss)"
+    state machine
+}
+
+NewMaterialTitle {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "New material (.dsm)"
+    text  "新建材质 (.dsm)"
+    state machine
+}
+
+NewPipelineMeshMaskHint {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "Written with M_<name>Mask.dss and PP_<name>Composite.dss next to it, the two materials its passes draw (<name> is the name without CP_). The objects it outlines are those added to the list of that name (UDreamPassSubsystem::AddToList)."
+    text  "会在它旁边一并写出 M_<name>Mask.dss 和 PP_<name>Composite.dss，即它的 Pass 绘制所用的两个材质（<name> 是去掉 CP_ 前缀的名称）。它描边的对象，是被加入同名列表的那些对象（UDreamPassSubsystem::AddToList）。"
+    state machine
+}
+
+NewPipelineComputeHint {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "One file: the compute shader its pass runs is written in the pass's hlsl block. The field it writes is exported as a render target any material can read."
+    text  "只有一个文件：它的 Pass 运行的 Compute 着色器写在 Pass 的 hlsl 块里。它写入的数据场会导出为任何材质都能读取的渲染目标。"
+    state machine
+}
+
+NewPipelinePostProcessHint {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "Written with PP_<name>.dss next to it, the Post Process material its fullscreen pass draws (<name> is the name without CP_)."
+    text  "会在它旁边一并写出 PP_<name>.dss，即它的全屏 Pass 绘制的后处理材质（<name> 是去掉 CP_ 前缀的名称）。"
+    state machine
+}
+
+NewSourceNameLabel {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "Name"
+    text  "名称"
+    state machine
+}
+
+NewSourceFolderLabel {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "Folder"
+    text  "文件夹"
+    state machine
+}
+
+NewSourceBrowse {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "Browse..."
+    text  "浏览..."
+    state machine
+}
+
+NewSourcePickFolder {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "Choose a source folder"
+    text  "选择源文件夹"
+    state machine
+}
+
+NewSourceParentLabel {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "Parent"
+    text  "父材质"
+    state machine
+}
+
+NewSourceParentHint {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "/Game/Materials/M_Base, or the name of a product"
+    text  "/Game/Materials/M_Base，或某个产物的名字"
+    state machine
+}
+
+NewSourcePipelineHint {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "The file is written from the plugin's template and compiled by the watcher on save. Its pipeline lands at the folder's /Game path, and runs where something activates it: the global pipelines of Project Settings > DreamShader Custom Pass, or a Dream Pass Volume."
+    text  "文件按插件的模板写出，保存时由监视器编译。它的管线落在该文件夹对应的 /Game 路径下，并在被激活的地方运行：项目设置 > DreamShader Custom Pass 中的全局管线，或 Dream Pass Volume。"
+    state machine
+}
+
+NewSourceInstanceHint {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "The file is written from the plugin's template and compiled by the watcher on save. Its asset lands at the folder's /Game path; add one uniform per parameter to override."
+    text  "文件按插件的模板写出，保存时由监视器编译。它的资产落在该文件夹对应的 /Game 路径下；每个要覆盖的参数加一个 uniform。"
+    state machine
+}
+
+NewSourceDssHint {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "The file is written from the plugin's template and compiled by the watcher on save. The name is the export's, and so the asset's; the folder decides where under /Game it lands."
+    text  "文件按插件的模板写出，保存时由监视器编译。名称就是 export 的名字，也就是资产名；文件夹决定它落在 /Game 下的哪里。"
+    state machine
+}
+
+NewSourceHint {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "The file is written from the plugin's template and compiled by the watcher on save."
+    text  "文件由插件模板写出,保存后由监视器编译。"
+    state machine
+}
+
+NewSourceCancel {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "Cancel"
+    text  "取消"
+    state machine
+}
+
+NewSourceCreate {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "Create"
+    text  "创建"
+    state machine
+}
+
+NewSourceCreated {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderBrowserNewSource.cpp
+    src   "Created {0}"
+    text  "已创建 {0}"
+    state machine
+}

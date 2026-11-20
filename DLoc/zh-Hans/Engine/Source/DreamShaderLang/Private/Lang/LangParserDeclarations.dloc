@@ -1,0 +1,318 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Lang.Declarations
+
+ExpectedTypeName {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "Expected a type name, found {0}."
+    text  "期望一个类型名,但遇到了 {0}。"
+    state machine
+}
+
+ExpectedArrayClose {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "']' to close the array dimension"
+    text  "用于闭合数组维度的 ']'"
+    state machine
+}
+
+MalformedDocDirective {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "A '@' in a '///' line must be followed by a directive name; the text is kept as description."
+    text  "'///' 行里的 '@' 后面必须跟指令名;这段文本已作为描述保留。"
+    state machine
+}
+
+MalformedInclude {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "'#include' needs a quoted path: #include \"/Game/Shared/Common.dsh\"."
+    text  "'#include' 需要带引号的路径:#include \"/Game/Shared/Common.dsh\"。"
+    state machine
+}
+
+StrayDirective {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' belong here, and '#if' / '#define' lines must be resolved by the preprocessor first."
+    text  "预处理指令 '#{0}' 传到了解析器;这里只接受 '#pragma' 和 '#include','#if' / '#define' 行必须先由预处理器处理。"
+    state machine
+}
+
+PragmaWithoutNameWithPipeline {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "'#pragma' needs a name: material, instance, pipeline, layout, region or endregion."
+    text  "'#pragma' 需要一个名称：material、instance、pipeline、layout、region 或 endregion。"
+    state machine
+}
+
+NoGenerationArguments {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "'#pragma nogeneration' takes no arguments, and '{0}' was ignored: the file is still marked. Remove the line to have it built automatically again."
+    text  "'#pragma nogeneration' 不接受参数，'{0}' 已被忽略：文件仍然被标记。删除这一行才能让它重新被自动构建。"
+    state machine
+}
+
+MalformedPragma {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "Malformed '#pragma {0}': {1}"
+    text  "'#pragma {0}' 格式不正确:{1}"
+    state machine
+}
+
+PragmaExpectedOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "expected '(' after the pragma name."
+    text  "期望 pragma 名之后是 '('。"
+    state machine
+}
+
+PragmaExpectedKey {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "expected a key or a value."
+    text  "期望一个键或一个值。"
+    state machine
+}
+
+PragmaQuotedKey {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "a key cannot be a quoted string."
+    text  "键不能是带引号的字符串。"
+    state machine
+}
+
+PragmaExpectedValue {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "expected a value after '{0} ='."
+    text  "期望 '{0} =' 之后有一个值。"
+    state machine
+}
+
+PragmaPipelineValueTail {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "the value of '{0}' has a '.' or a '|' with no name after it; write 'Views = Game | Editor' or 'Injection = PostProcess.AfterDOF'."
+    text  "'{0}' 的值中有 '.' 或 '|' 后面没有跟名称；请写成 'Views = Game | Editor' 或 'Injection = PostProcess.AfterDOF'。"
+    state machine
+}
+
+PragmaPositionalInMaterial {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "'{0}' needs a value: write '{0} = ...'."
+    text  "'{0}' 需要一个值:请写成 '{0} = ...'。"
+    state machine
+}
+
+PragmaExpectedSeparator {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "expected ',' or ')'."
+    text  "期望 ',' 或 ')'。"
+    state machine
+}
+
+PragmaTrailingText {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "unexpected text after ')'."
+    text  "')' 之后出现了意外的文本。"
+    state machine
+}
+
+ImportNeedsPath {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "Expected a quoted path after 'import', found {0}."
+    text  "期望 'import' 之后是带引号的路径,但遇到了 {0}。"
+    state machine
+}
+
+ExpectedSemicolonAfterImport {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "';' after the import path"
+    text  "import 路径之后的 ';'"
+    state machine
+}
+
+ExpectedStructName {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "a name after 'struct'"
+    text  "'struct' 之后的名称"
+    state machine
+}
+
+ExpectedStructOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "'{' after the struct name"
+    text  "结构体名之后的 '{'"
+    state machine
+}
+
+WhileParsingStruct {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "struct '{0}'"
+    text  "结构体 '{0}'"
+    state machine
+}
+
+OrphanDocBlockInStruct {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "This '///' block is not followed by a field and is ignored."
+    text  "这个 '///' 块后面没有字段,已被忽略。"
+    state machine
+}
+
+ExpectedFieldName {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "a field name"
+    text  "字段名"
+    state machine
+}
+
+ExpectedSemicolonAfterField {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "';' after the field"
+    text  "字段之后的 ';'"
+    state machine
+}
+
+ExpectedSemicolonAfterStruct {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "';' after the closing '}' of the struct"
+    text  "结构体的收尾 '}' 之后的 ';'"
+    state machine
+}
+
+ExpectedParameterName {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "a parameter name"
+    text  "参数名"
+    state machine
+}
+
+DefaultOnOutParameter {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "Parameter '{0}' is 'out' and cannot have a default value; only inputs are optional."
+    text  "参数 '{0}' 是 'out',不能有默认值;只有输入参数才可以是可选的。"
+    state machine
+}
+
+ExpectedParameterListClose {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "')' to close the parameter list"
+    text  "用于闭合参数列表的 ')'"
+    state machine
+}
+
+ExpectedHlslBlockOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "'{' after 'hlsl' to open a block of HLSL"
+    text  "'hlsl' 之后用于开启 HLSL 块的 '{'"
+    state machine
+}
+
+ExpectedBodyOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "'{' to open the function body"
+    text  "用于开启函数体的 '{'"
+    state machine
+}
+
+WhileParsingHlslBlock {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "the 'hlsl' block opened on line {0}, which nothing closes"
+    text  "第 {0} 行开启、却没有闭合的 'hlsl' 块"
+    state machine
+}
+
+WhileParsingRawBody {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "a function body"
+    text  "函数体"
+    state machine
+}
+
+BadStorageCombination {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "'{0}' cannot be combined with the keywords before it; a declaration is 'uniform', 'static const', 'static', 'const', 'extern' or 'export', not a mix."
+    text  "'{0}' 不能与它前面的关键字组合;一个声明只能是 'uniform'、'static const'、'static'、'const'、'extern' 或 'export',不能混用。"
+    state machine
+}
+
+LegacyDeclarationInTwoPointZeroFile {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "Expected a 2.0 declaration, found the 1.x declaration '{0}'; 1.x declarations belong in a .dsh header or in a .dsm or .dsf file."
+    text  "期望 2.0 声明，但遇到了 1.x 声明 '{0}'；1.x 声明应放在 .dsh 头文件或 .dsm、.dsf 文件中。"
+    state machine
+}
+
+ExpectedDeclarationName {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "a declaration name"
+    text  "声明名称"
+    state machine
+}
+
+StorageOnFunction {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "'{0}' is a function; 'uniform', 'static' and 'const' apply to variables only."
+    text  "'{0}' 是函数;'uniform'、'static' 和 'const' 只适用于变量。"
+    state machine
+}
+
+ExternWithBody {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "'{0}' is 'extern' and binds to an existing asset, so it cannot have a body; write a prototype ending in ';'."
+    text  "'{0}' 是 'extern',绑定到已有资产,因此不能带函数体;请写成以 ';' 结尾的原型。"
+    state machine
+}
+
+FunctionWithoutBody {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "'{0}' has no body. Only an 'extern' prototype may end in ';'; a function you define needs '`{...`}'."
+    text  "'{0}' 没有函数体。只有 'extern' 原型才能以 ';' 结尾;你自己定义的函数需要 '`{...`}'。"
+    state machine
+}
+
+ExpectedBodyOrSemicolon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "Expected '`{' or ';' after the parameter list of '{0}', found {1}."
+    text  "期望 '{0}' 的参数列表之后是 '`{' 或 ';',但遇到了 {1}。"
+    state machine
+}
+
+LinkageOnVariable {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "'{0}' is a variable; 'extern' and 'export' apply to functions only."
+    text  "'{0}' 是变量;'extern' 和 'export' 只适用于函数。"
+    state machine
+}
+
+ExpectedSemicolonAfterVariable {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "';' after the declaration"
+    text  "声明之后的 ';'"
+    state machine
+}
+
+ExpectedNextDeclarator {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "another name after ','"
+    text  "',' 之后的又一个名称"
+    state machine
+}
+
+ExpectedSemicolonAfterDeclarators {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "';' after the declaration"
+    text  "声明之后的 ';'"
+    state machine
+}
+
+OrphanDocBlock {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "This '///' block is not followed by a declaration and is ignored."
+    text  "这个 '///' 块后面没有声明,已被忽略。"
+    state machine
+}
+
+UnexpectedAtFileScope {
+    at    Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp
+    src   "Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or 'import'."
+    text  "文件作用域出现意外的 {0};此处应为声明、'#pragma'、'#include' 或 'import'。"
+    state machine
+}

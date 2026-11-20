@@ -1,0 +1,10 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderMaterialBrowser
+
+EmptyContentScope {
+    at    Source/DreamShaderEditor/Private/UI/SDreamShaderAssetsView.cpp
+    src   "No materials here."
+    text  "这里没有材质。"
+    state machine
+}

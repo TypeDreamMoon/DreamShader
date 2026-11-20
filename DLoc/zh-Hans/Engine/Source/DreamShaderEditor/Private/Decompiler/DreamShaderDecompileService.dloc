@@ -1,0 +1,101 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Decompiler.Service
+
+DecompileDidNotProduceSourceText {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "Decompile did not produce source text."
+    text  "反编译未产生源码文本。"
+    state machine
+}
+
+FailedToResolveOutputFilePath {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "DreamShader failed to resolve an output file path."
+    text  "DreamShader 无法解析输出文件路径。"
+    state machine
+}
+
+FailedToCreateOutputDirectory {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "DreamShader failed to create output directory '{0}'."
+    text  "DreamShader 无法创建输出目录 '{0}'。"
+    state machine
+}
+
+FailedToWriteDecompiledSource {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "DreamShader failed to write decompiled source '{0}'."
+    text  "DreamShader 无法写入反编译源码 '{0}'。"
+    state machine
+}
+
+NoAssetProvided {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "No asset was provided."
+    text  "未提供资产。"
+    state machine
+}
+
+DecompileFormatContradictsExtension {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "'{0}' ends in '.{1}', which is read as {2} source, and the decompile was asked for {3} text; name the file after the text, or leave the format to the extension."
+    text  "'{0}' 以 '.{1}' 结尾，会被当作 {2} 源文件读取，而这次反编译要求的是 {3} 文本；请按文本类型命名文件，或让扩展名决定格式。"
+    state machine
+}
+
+DecompileDssLanguage {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "2.0"
+    text  "2.0"
+    state machine
+}
+
+DecompileLegacyLanguage {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "1.x"
+    text  "1.x"
+    state machine
+}
+
+DecompileDssText {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "2.0"
+    text  "2.0"
+    state machine
+}
+
+DecompileLegacyText {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "1.x"
+    text  "1.x"
+    state machine
+}
+
+DecompilerCannotWriteDss {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "The decompile was asked for 2.0 text and was handed the 1.x decompiler, which writes '.dsm' and '.dsf' only; build the service with GetIRDecompiler() for Format = Dss."
+    text  "这次反编译要求输出 2.0 文本，拿到的却是 1.x 反编译器，它只会写 '.dsm' 和 '.dsf'；Format = Dss 时请用 GetIRDecompiler() 构建服务。"
+    state machine
+}
+
+DecompileDidNotSayWhy {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "The decompile failed without reporting why."
+    text  "反编译失败，但没有报告原因。"
+    state machine
+}
+
+LegacyDecompileNeedsAsset {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "The 1.x decompiler takes one asset at a time; name the asset rather than its source."
+    text  "1.x 反编译器一次只处理一个资产；请指定资产，而不是它的源文件。"
+    state machine
+}
+
+UnsupportedAssetType {
+    at    Source/DreamShaderEditor/Private/Decompiler/DreamShaderDecompileService.cpp
+    src   "DreamShader decompile supports Material and MaterialFunction assets only: {0}"
+    text  "DreamShader 反编译仅支持材质与材质函数资产: {0}"
+    state machine
+}

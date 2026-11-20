@@ -1,0 +1,45 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderIRToAstStatements
+
+LocalRenamed {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp
+    src   "The variable '{0}' of '{1}' is written as '{2}': the name is taken or is not one the language allows."
+    text  "'{1}' 的变量 '{0}' 被写成 '{2}'：原名已被占用，或不是语言允许的名字。"
+    state machine
+}
+
+GroupAttributeUnnamed {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp
+    src   "{0} writes an attribute '{1}' that is not a name the language has; the write is dropped."
+    text  "{0} 写入了属性 '{1}'，而它不是语言中已有的名字；这次写入已被丢弃。"
+    state machine
+}
+
+InOutInputUnconnected {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp
+    src   "{0} leaves the 'inout' input '{1}' of '{2}' unconnected; the variable passed for it starts at zero."
+    text  "{0} 没有连接 '{2}' 的 'inout' 输入 '{1}'；传给它的变量从零开始。"
+    state machine
+}
+
+WriteAttributeUnnamed {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp
+    src   "{0} writes an attribute '{1}' that is not a name the language has; the write is dropped."
+    text  "{0} 写入了属性 '{1}'，而它不是语言中已有的名字；这次写入已被丢弃。"
+    state machine
+}
+
+SinkAttributeUnnamed {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp
+    src   "'{0}' wires a material attribute '{1}' that is not a name the language has; the connection is dropped."
+    text  "'{0}' 连接了材质属性 '{1}'，而它不是语言中已有的名字；该连接已被丢弃。"
+    state machine
+}
+
+RegionTitleChanged {
+    at    Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp
+    src   "A region of '{0}' is titled '{1}', which does not fit on a '#pragma region' line; it is written as '{2}'."
+    text  "'{0}' 的一个区域标题为 '{1}'，它无法写在一行 '#pragma region' 上；它被写成 '{2}'。"
+    state machine
+}

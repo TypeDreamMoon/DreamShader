@@ -1,0 +1,672 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamPassBlueprintLibrary {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary
+    src   "Dream Pass Blueprint Library"
+    text  "Dream Pass 蓝图库"
+    state machine
+}
+
+DreamPassBlueprintLibrary:AddPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline
+    src   "Add Pipeline"
+    text  "添加管线"
+    state machine
+}
+
+DreamPassBlueprintLibrary:AddPipeline:Overrides {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline:Overrides
+    src   "Overrides"
+    text  "覆盖"
+    state machine
+}
+
+DreamPassBlueprintLibrary:AddPipeline:Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline:Pipeline
+    src   "Pipeline"
+    text  "管线"
+    state machine
+}
+
+DreamPassBlueprintLibrary:AddPipeline:PlayerIndex {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline:PlayerIndex
+    src   "Player Index"
+    text  "玩家索引"
+    state machine
+}
+
+DreamPassBlueprintLibrary:AddPipeline:Priority {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline:Priority
+    src   "Priority"
+    text  "优先级"
+    state machine
+}
+
+DreamPassBlueprintLibrary:AddPipeline:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:AddPipeline:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline:WorldContextObject
+    src   "World Context Object"
+    text  "世界上下文对象"
+    state machine
+}
+
+DreamPassBlueprintLibrary:AddToList {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddToList
+    src   "Add to List"
+    text  "加入列表"
+    state machine
+}
+
+DreamPassBlueprintLibrary:AddToList:List {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddToList:List
+    src   "List"
+    text  "列表"
+    state machine
+}
+
+DreamPassBlueprintLibrary:AddToList:Primitive {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddToList:Primitive
+    src   "Primitive"
+    text  "图元"
+    state machine
+}
+
+DreamPassBlueprintLibrary:AddToList:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddToList:WorldContextObject
+    src   "World Context Object"
+    text  "世界上下文对象"
+    state machine
+}
+
+DreamPassBlueprintLibrary:ClearList {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:ClearList
+    src   "Clear List"
+    text  "清空列表"
+    state machine
+}
+
+DreamPassBlueprintLibrary:ClearList:List {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:ClearList:List
+    src   "List"
+    text  "列表"
+    state machine
+}
+
+DreamPassBlueprintLibrary:ClearList:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:ClearList:WorldContextObject
+    src   "World Context Object"
+    text  "世界上下文对象"
+    state machine
+}
+
+DreamPassBlueprintLibrary:GetExportTarget {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:GetExportTarget
+    src   "Get Export Target"
+    text  "获取导出目标"
+    state machine
+}
+
+DreamPassBlueprintLibrary:GetExportTarget:Buffer {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:GetExportTarget:Buffer
+    src   "Buffer"
+    text  "缓冲"
+    state machine
+}
+
+DreamPassBlueprintLibrary:GetExportTarget:Pipeline {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:GetExportTarget:Pipeline
+    src   "Pipeline"
+    text  "管线"
+    state machine
+}
+
+DreamPassBlueprintLibrary:GetExportTarget:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:GetExportTarget:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeBoolValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeBoolValue
+    src   "Make Bool Value"
+    text  "构造布尔值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeBoolValue:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeBoolValue:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeBoolValue:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeBoolValue:Value
+    src   "Value"
+    text  "值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeColorValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeColorValue
+    src   "Make Color Value"
+    text  "构造颜色值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeColorValue:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeColorValue:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeColorValue:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeColorValue:Value
+    src   "Value"
+    text  "值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeFloatValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeFloatValue
+    src   "Make Float Value"
+    text  "构造浮点值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeFloatValue:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeFloatValue:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeFloatValue:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeFloatValue:Value
+    src   "Value"
+    text  "值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeIntValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeIntValue
+    src   "Make Int Value"
+    text  "构造整数值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeIntValue:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeIntValue:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeIntValue:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeIntValue:Value
+    src   "Value"
+    text  "值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeTextureValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeTextureValue
+    src   "Make Texture Value"
+    text  "构造纹理值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeTextureValue:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeTextureValue:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeTextureValue:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeTextureValue:Value
+    src   "Value"
+    text  "值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeVector2Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeVector2Value
+    src   "Make Vector 2Value"
+    text  "构造二维向量"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeVector2Value:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeVector2Value:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeVector2Value:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeVector2Value:Value
+    src   "Value"
+    text  "值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeVector3Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeVector3Value
+    src   "Make Vector 3Value"
+    text  "构造三维向量"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeVector3Value:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeVector3Value:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:MakeVector3Value:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeVector3Value:Value
+    src   "Value"
+    text  "值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:RemoveFromList {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemoveFromList
+    src   "Remove from List"
+    text  "从列表移除"
+    state machine
+}
+
+DreamPassBlueprintLibrary:RemoveFromList:List {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemoveFromList:List
+    src   "List"
+    text  "列表"
+    state machine
+}
+
+DreamPassBlueprintLibrary:RemoveFromList:Primitive {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemoveFromList:Primitive
+    src   "Primitive"
+    text  "图元"
+    state machine
+}
+
+DreamPassBlueprintLibrary:RemoveFromList:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemoveFromList:WorldContextObject
+    src   "World Context Object"
+    text  "世界上下文对象"
+    state machine
+}
+
+DreamPassBlueprintLibrary:RemovePipeline {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemovePipeline
+    src   "Remove Pipeline"
+    text  "移除管线"
+    state machine
+}
+
+DreamPassBlueprintLibrary:RemovePipeline:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemovePipeline:Handle
+    src   "Handle"
+    text  "句柄"
+    state machine
+}
+
+DreamPassBlueprintLibrary:RemovePipeline:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemovePipeline:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:RemovePipeline:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:RemovePipeline:WorldContextObject
+    src   "World Context Object"
+    text  "世界上下文对象"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetBoolParameter {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetBoolParameter
+    src   "Set Bool Parameter"
+    text  "设置布尔参数"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetBoolParameter:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetBoolParameter:Handle
+    src   "Handle"
+    text  "句柄"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetBoolParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetBoolParameter:Name
+    src   "Name"
+    text  "名称"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetBoolParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetBoolParameter:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetBoolParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetBoolParameter:Value
+    src   "Value"
+    text  "值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetBoolParameter:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetBoolParameter:WorldContextObject
+    src   "World Context Object"
+    text  "世界上下文对象"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetColorParameter {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetColorParameter
+    src   "Set Color Parameter"
+    text  "设置颜色参数"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetColorParameter:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetColorParameter:Handle
+    src   "Handle"
+    text  "句柄"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetColorParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetColorParameter:Name
+    src   "Name"
+    text  "名称"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetColorParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetColorParameter:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetColorParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetColorParameter:Value
+    src   "Value"
+    text  "值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetColorParameter:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetColorParameter:WorldContextObject
+    src   "World Context Object"
+    text  "世界上下文对象"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetFloatParameter {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetFloatParameter
+    src   "Set Float Parameter"
+    text  "设置浮点参数"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetFloatParameter:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetFloatParameter:Handle
+    src   "Handle"
+    text  "句柄"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetFloatParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetFloatParameter:Name
+    src   "Name"
+    text  "名称"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetFloatParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetFloatParameter:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetFloatParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetFloatParameter:Value
+    src   "Value"
+    text  "值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetFloatParameter:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetFloatParameter:WorldContextObject
+    src   "World Context Object"
+    text  "世界上下文对象"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetIntParameter {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetIntParameter
+    src   "Set Int Parameter"
+    text  "设置整数参数"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetIntParameter:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetIntParameter:Handle
+    src   "Handle"
+    text  "句柄"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetIntParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetIntParameter:Name
+    src   "Name"
+    text  "名称"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetIntParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetIntParameter:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetIntParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetIntParameter:Value
+    src   "Value"
+    text  "值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetIntParameter:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetIntParameter:WorldContextObject
+    src   "World Context Object"
+    text  "世界上下文对象"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetParameter {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetParameter
+    src   "Set Parameter"
+    text  "设置参数"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetParameter:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetParameter:Handle
+    src   "Handle"
+    text  "句柄"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetParameter:Name
+    src   "Name"
+    text  "名称"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetParameter:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetParameter:Value
+    src   "Value"
+    text  "值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetParameter:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetParameter:WorldContextObject
+    src   "World Context Object"
+    text  "世界上下文对象"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetPipelineWeight {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetPipelineWeight
+    src   "Set Pipeline Weight"
+    text  "设置管线权重"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetPipelineWeight:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetPipelineWeight:Handle
+    src   "Handle"
+    text  "句柄"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetPipelineWeight:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetPipelineWeight:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetPipelineWeight:Weight {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetPipelineWeight:Weight
+    src   "Weight"
+    text  "权重"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetPipelineWeight:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetPipelineWeight:WorldContextObject
+    src   "World Context Object"
+    text  "世界上下文对象"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetTextureParameter {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetTextureParameter
+    src   "Set Texture Parameter"
+    text  "设置纹理参数"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetTextureParameter:Handle {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetTextureParameter:Handle
+    src   "Handle"
+    text  "句柄"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetTextureParameter:Name {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetTextureParameter:Name
+    src   "Name"
+    text  "名称"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetTextureParameter:ReturnValue {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetTextureParameter:ReturnValue
+    src   "Return Value"
+    text  "返回值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetTextureParameter:Value {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetTextureParameter:Value
+    src   "Value"
+    text  "值"
+    state machine
+}
+
+DreamPassBlueprintLibrary:SetTextureParameter:WorldContextObject {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:SetTextureParameter:WorldContextObject
+    src   "World Context Object"
+    text  "世界上下文对象"
+    state machine
+}
+
+namespace UObjectToolTips
+
+DreamPassBlueprintLibrary {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary
+    src   "Blueprint access to UDreamPassSubsystem: activating pipelines, setting their parameters, filling mesh pass lists."
+    text  "从蓝图访问 UDreamPassSubsystem：激活管线、设置其参数、填充网格 Pass 列表。"
+    state machine
+}
+
+DreamPassBlueprintLibrary:AddPipeline {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline
+    src   "Runs Pipeline in the world's views -- every view, or PlayerIndex's only -- until RemovePipeline."
+    text  "在世界的视图里运行 Pipeline——所有视图，或仅 PlayerIndex 的视图——直到 RemovePipeline。"
+    state machine
+}
+
+DreamPassBlueprintLibrary:AddToList {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddToList
+    src   "Puts a primitive in a named list, which a mesh pass selects with `Filter = List(Name)`."
+    text  "把图元放进一个具名列表，网格 Pass 可用 `Filter = List(Name)` 选择它。"
+    state machine
+}
+
+DreamPassBlueprintLibrary:GetExportTarget {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:GetExportTarget
+    src   "The render target an exported buffer is copied into, for UMG, Niagara or a material parameter."
+    text  "导出的缓冲被复制进去的渲染目标，供 UMG、Niagara 或材质参数读取。"
+    state machine
+}
+
+namespace UObjectCategory
+
+"DreamShader|Custom Pass" {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:AddPipeline
+    src   "DreamShader|Custom Pass"
+    text  "DreamShader|自定义 Pass"
+    state machine
+}
+
+"DreamShader|Custom Pass|Values" {
+    at    Source/DreamShaderPass/Public/DreamPassBlueprintLibrary.h#DreamPassBlueprintLibrary:MakeBoolValue
+    src   "DreamShader|Custom Pass|Values"
+    text  "DreamShader|自定义 Pass|取值"
+    state machine
+}

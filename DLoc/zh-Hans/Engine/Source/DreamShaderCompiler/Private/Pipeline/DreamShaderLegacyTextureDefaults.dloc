@@ -1,0 +1,17 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.LegacyTextureDefaults
+
+TextureReferenceClassWrongDimension {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderLegacyTextureDefaults.cpp
+    src   "Asset reference is written as '{0}', but this property is declared as {1}."
+    text  "资产引用写成了 '{0}'，但此属性被声明为 {1}。"
+    state machine
+}
+
+TextureReferenceClassNotATexture {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderLegacyTextureDefaults.cpp
+    src   "Asset reference is written as '{0}', which is not a texture class; a texture default requires {1}."
+    text  "资产引用写成了 '{0}'，这不是纹理类；纹理默认值需要 {1}。"
+    state machine
+}

@@ -1,0 +1,157 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Pipeline.References
+
+NoGenerationReferenceMissing {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "'{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is nothing to check this reference against. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`."
+    text  "'{0}' 来自 '{1}'，后者将它标记为 NoGeneration，且它从未被构建过，因此没有可用来检查此引用的资产。请按名称编译一次 '{1}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。"
+    state machine
+}
+
+MaterialCompiledFirst {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "'{0}' was missing or older than its source, so '{1}' was compiled first."
+    text  "'{0}' 不存在或比它的源文件旧，因此先编译了 '{1}'。"
+    state machine
+}
+
+PipelineCompiledFirst {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The pipeline '{0}' was missing or older than its source, so '{1}' was compiled first."
+    text  "管线 '{0}' 不存在或比它的源文件旧，因此先编译了 '{1}'。"
+    state machine
+}
+
+MaterialCompileFailed {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The material '{0}' comes from '{1}', which failed to compile, so this pipeline has no material to check its pass against. {2}"
+    text  "材质 '{0}' 来自 '{1}'，而后者编译失败，因此此管线没有可用来检查其 Pass 的材质。{2}"
+    state machine
+}
+
+PipelineCompileFailed {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The pipeline '{0}' comes from '{1}', which failed to compile, so the buffer this material reads cannot be checked. {2}"
+    text  "管线 '{0}' 来自 '{1}'，而后者编译失败，因此无法检查此材质读取的缓冲。{2}"
+    state machine
+}
+
+MaterialReferenceMalformed {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The material '{0}' does not resolve to an asset path. {1}"
+    text  "材质 '{0}' 无法解析为资产路径。{1}"
+    state machine
+}
+
+MaterialReferenceAmbiguous {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "'{0}' names more than one material under this source root ({1}); write the material's asset path instead."
+    text  "'{0}' 在此源根下对应不止一个材质（{1}）；请改写材质的资产路径。"
+    state machine
+}
+
+MaterialReferenceCycleError {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "'{0}' is built by '{1}', which reads this pipeline's exported buffer through UE.DreamPassBuffer (directly, or through a pipeline that needs this one), and a pipeline and its pass material that need each other can be built in no order. Inside its own pipeline a pass binds the buffer with 'read' -- a fullscreen material reads it as a UserSceneTexture input -- rather than the exported copy; a mesh pass's material cannot read its own pipeline's buffers."
+    text  "'{0}' 由 '{1}' 构建，而后者通过 UE.DreamPassBuffer 读取此管线的导出缓冲（直接读取，或经由一个依赖此管线的管线读取），相互依赖的管线和 Pass 材质无论按什么顺序都无法构建。在自己的管线内，Pass 应当用 'read' 绑定该缓冲——全屏材质会把它作为 UserSceneTexture 输入读取——而不是读取导出的副本；网格 Pass 的材质不能读取自身管线的缓冲。"
+    state machine
+}
+
+MaterialReferenceNotMaterial {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "'{0}' is a {1}, not a material or a material instance."
+    text  "'{0}' 是 {1}，不是材质或材质实例。"
+    state machine
+}
+
+MaterialSourceDoesNotCompile {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The material '{0}' comes from '{1}', which does not compile, so this pipeline has no material to check its pass against. {2}"
+    text  "材质 '{0}' 来自 '{1}'，而后者无法编译，因此此管线没有可用来检查其 Pass 的材质。{2}"
+    state machine
+}
+
+PassBufferNoPipeline {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "UE.DreamPassBuffer names no Pipeline: write the name of the '.dsp' (Pipeline = \"CP_Highlight\") or the pipeline asset's path."
+    text  "UE.DreamPassBuffer 没有指定 Pipeline：请写出 '.dsp' 的名称（Pipeline = \"CP_Highlight\"）或管线资产的路径。"
+    state machine
+}
+
+PassBufferNoBuffer {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "UE.DreamPassBuffer names no Buffer of '{0}': write the exported buffer's name (Buffer = \"Blurred\")."
+    text  "UE.DreamPassBuffer 没有指定 '{0}' 的 Buffer：请写出导出缓冲的名称（Buffer = \"Blurred\"）。"
+    state machine
+}
+
+PassBufferPipelineMalformed {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The pipeline '{0}' does not resolve to an asset path. {1}"
+    text  "管线 '{0}' 无法解析为资产路径。{1}"
+    state machine
+}
+
+PassBufferPipelineNotFound {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "No pipeline named '{0}' is built by a .dsp under '{1}'; write the pipeline asset's path, or check the name."
+    text  "'{1}' 下没有任何 .dsp 构建名为 '{0}' 的管线；请写管线资产的路径，或检查这个名称。"
+    state machine
+}
+
+PassBufferPipelineAmbiguous {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "'{0}' names more than one pipeline under this source root ({1}); write the pipeline asset's path instead."
+    text  "'{0}' 在此源根下对应不止一个管线（{1}）；请改写管线资产的路径。"
+    state machine
+}
+
+PassBufferPipelineCycleError {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The pipeline '{0}' needs this material to be built -- it is one of its pass materials, or the material of a pipeline that one needs -- so this material cannot read its exported buffer: the two can be built in no order. Inside its own pipeline a pass binds the buffer with 'read' -- a fullscreen material reads it as a UserSceneTexture input -- rather than the exported copy; a mesh pass's material cannot read its own pipeline's buffers."
+    text  "管线 '{0}' 需要先构建此材质——此材质是它的 Pass 材质之一，或是它所依赖的某个管线的材质——因此此材质不能读取它的导出缓冲：两者无论按什么顺序都无法构建。在自己的管线内，Pass 应当用 'read' 绑定该缓冲——全屏材质会把它作为 UserSceneTexture 输入读取——而不是读取导出的副本；网格 Pass 的材质不能读取自身管线的缓冲。"
+    state machine
+}
+
+PassBufferNotPipeline {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "'{0}' is a {1}, not a DreamShader pass pipeline."
+    text  "'{0}' 是 {1}，不是 DreamShader Pass 管线。"
+    state machine
+}
+
+PipelineSourceDoesNotCompile {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The pipeline '{0}' comes from '{1}', which does not compile, so the buffer this material reads cannot be checked. {2}"
+    text  "管线 '{0}' 来自 '{1}'，而后者无法编译，因此无法检查此材质读取的缓冲。{2}"
+    state machine
+}
+
+PassBufferPipelineMissing {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The pipeline '{0}' names nothing: no pipeline asset exists at '{1}', and no .dsp under the source roots builds it."
+    text  "管线 '{0}' 不指向任何东西：'{1}' 处没有管线资产，源根下也没有 .dsp 构建它。"
+    state machine
+}
+
+PassBufferUnknownInSource {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "The pipeline '{0}' declares no buffer '{1}'."
+    text  "管线 '{0}' 没有声明缓冲 '{1}'。"
+    state machine
+}
+
+PassBufferNotExportedInSource {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "Buffer '{1}' of the pipeline '{0}' is not exported. Declare it with Export = true in the .dsp."
+    text  "管线 '{0}' 的缓冲 '{1}' 没有导出。请在 .dsp 中用 Export = true 声明它。"
+    state machine
+}
+
+PassBufferNotSampleable {
+    at    Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp
+    src   "Buffer '{1}' of the pipeline '{0}' is {2}, which a material cannot sample. Export a float or normalized buffer instead."
+    text  "管线 '{0}' 的缓冲 '{1}' 是 {2}，材质无法采样。请改为导出浮点或归一化缓冲。"
+    state machine
+}

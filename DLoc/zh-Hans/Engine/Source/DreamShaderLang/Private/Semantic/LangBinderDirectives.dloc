@@ -1,0 +1,318 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Binder.Directives
+
+DirectiveRepeated {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'@{0}' is written twice in this block; the last one wins."
+    text  "'@{0}' 在这个块中写了两次；以最后一个为准。"
+    state machine
+}
+
+DirectiveWrongTarget {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'@{0}' means nothing here; it belongs on {1}."
+    text  "'@{0}' 放在这里没有意义；它应该用在 {1} 上。"
+    state machine
+}
+
+DirectiveNeedsValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'@{0}' needs a value after it."
+    text  "'@{0}' 后面需要一个值。"
+    state machine
+}
+
+TargetUniform {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "a 'uniform'"
+    text  "'uniform'"
+    state machine
+}
+
+TargetUniform2 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "a 'uniform'"
+    text  "'uniform'"
+    state machine
+}
+
+SliderMalformed {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'@slider' takes two numbers, a minimum and a maximum; '{0}' is not that."
+    text  "'@slider' 接受两个数：一个最小值和一个最大值；'{0}' 不符合。"
+    state machine
+}
+
+SliderRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'@slider' needs its minimum below its maximum."
+    text  "'@slider' 的最小值必须小于最大值。"
+    state machine
+}
+
+SliderNotScalar {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "A slider range ('@slider', or 'Slider(min, max)' in a 1.x property) is for a scalar parameter; this one is '{0}', which has no slider, so the range is ignored."
+    text  "滑条范围（'@slider'，或 1.x 属性里的 'Slider(min, max)'）只用于标量参数；这个参数是 '{0}'，没有滑条，所以忽略这个范围。"
+    state machine
+}
+
+TargetUniform3 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "a 'uniform'"
+    text  "'uniform'"
+    state machine
+}
+
+SortMalformed {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'@sort' takes one whole number; '{0}' is not that."
+    text  "'@sort' 接受一个整数；'{0}' 不符合。"
+    state machine
+}
+
+TargetUniformOrFunction {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "a 'uniform' or an exported function"
+    text  "'uniform' 或导出函数"
+    state machine
+}
+
+TargetTextureUniform {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "a texture 'uniform'"
+    text  "纹理 'uniform'"
+    state machine
+}
+
+SamplerEmpty {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'@sampler' needs a sampler type after it, such as 'Color', 'Normal' or 'LinearColor'."
+    text  "'@sampler' 后面需要一个采样器类型，例如 'Color'、'Normal' 或 'LinearColor'。"
+    state machine
+}
+
+TargetTextureUniform2 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "a texture 'uniform'"
+    text  "纹理 'uniform'"
+    state machine
+}
+
+StaticNeedsParam {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'@static' on a function is written '@static <ParameterName>'."
+    text  "函数上的 '@static' 写作 '@static <参数名>'。"
+    state machine
+}
+
+TargetFunction {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "an exported function"
+    text  "导出函数"
+    state machine
+}
+
+TargetFunctionGenerate {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "a function"
+    text  "一个函数"
+    state machine
+}
+
+TargetFunction2 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "a function"
+    text  "函数"
+    state machine
+}
+
+ParamNeedsName {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'@param' is written '@param <ParameterName> <description>'."
+    text  "'@param' 的写法是 '@param <ParameterName> <description>'。"
+    state machine
+}
+
+TargetFunctionPin {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "a function"
+    text  "函数"
+    state machine
+}
+
+PinNeedsNames {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'@pin' is written '@pin <ParameterName> <engine pin name>'."
+    text  "'@pin' 的写法是 '@pin <参数名> <引擎引脚名>'。"
+    state machine
+}
+
+TargetExtern {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "an 'extern' prototype"
+    text  "'extern' 原型"
+    state machine
+}
+
+TargetFunctionRoot {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "an exported function"
+    text  "导出函数"
+    state machine
+}
+
+TargetFunctionNoGeneration {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "an exported function"
+    text  "一个导出函数"
+    state machine
+}
+
+TargetFunction3 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "a function"
+    text  "函数"
+    state machine
+}
+
+CustomModifier {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'@custom {0}' is not a modifier this language knows; the only one is 'selfcontained'."
+    text  "'@custom {0}' 不是本语言认识的修饰符；唯一的修饰符是 'selfcontained'。"
+    state machine
+}
+
+TargetFunction4 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "an exported function"
+    text  "导出函数"
+    state machine
+}
+
+TargetFunction5 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "an exported function"
+    text  "导出函数"
+    state machine
+}
+
+LayerAndLayerBlend {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'@layer' and '@layerblend' make two different assets; a function is one or the other."
+    text  "'@layer' 和 '@layerblend' 生成两种不同的资产；一个函数只能是其中之一。"
+    state machine
+}
+
+MaterialPragmaPositional {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'#pragma material' takes 'Key = Value' pairs; '{0}' has no key."
+    text  "'#pragma material' 接受 'Key = Value' 键值对；'{0}' 没有键。"
+    state machine
+}
+
+MaterialPragmaDuplicate {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'{0}' is set twice by '#pragma material'; it was already set on line {1}."
+    text  "'#pragma material' 设置了两次 '{0}'；它已在第 {1} 行设置过。"
+    state machine
+}
+
+BackendEmpty {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'Backend' has no value; write 'Backend = Graph' or 'Backend = ThinCustom'. An empty value meant Graph in 1.x and means nothing now."
+    text  "'Backend' 没有值；请写 'Backend = Graph' 或 'Backend = ThinCustom'。空值在 1.x 中表示 Graph，现在没有任何含义。"
+    state machine
+}
+
+BackendInstance {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'Backend = Instance' is the old spelling of 'Backend = ThinCustom'; write the new one."
+    text  "'Backend = Instance' 是 'Backend = ThinCustom' 的旧写法；请改用新写法。"
+    state machine
+}
+
+BackendUnknown {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'Backend = {0}' is not a backend; the backends are 'Graph' and 'ThinCustom'."
+    text  "'Backend = {0}' 不是后端；可用的后端是 'Graph' 和 'ThinCustom'。"
+    state machine
+}
+
+SubstrateModeUnknown {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'Substrate = {0}' is not a Substrate mode; the modes are 'Legacy', 'Bridge' and 'Native'."
+    text  "'Substrate = {0}' 不是 Substrate 模式；可用的模式是 'Legacy'、'Bridge' 和 'Native'。"
+    state machine
+}
+
+LayoutBadValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'#pragma layout' expects a whole number for '{0}'; '{1}' was ignored."
+    text  "'#pragma layout' 要求 '{0}' 为整数；'{1}' 已被忽略。"
+    state machine
+}
+
+LayoutExtraPositional {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'#pragma layout' takes one positional selector; '{0}' was ignored."
+    text  "'#pragma layout' 只接受一个位置选择器；'{0}' 已被忽略。"
+    state machine
+}
+
+LayoutBadColor {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'#pragma layout' expects 'Color' as three or four numbers in quotes, such as \"0.1 0.16 0.22 0.35\"; '{0}' was ignored."
+    text  "'#pragma layout' 期望 'Color' 是写在引号里的三个或四个数，例如 \"0.1 0.16 0.22 0.35\"；'{0}' 已被忽略。"
+    state machine
+}
+
+LayoutUnknownKey {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'#pragma layout' has no '{0}' key; it was ignored."
+    text  "'#pragma layout' 没有 '{0}' 键；已忽略。"
+    state machine
+}
+
+LayoutNoKind {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'#pragma layout' starts with 'Node' or 'Comment'; the line was ignored."
+    text  "'#pragma layout' 应以 'Node' 或 'Comment' 开头；该行已被忽略。"
+    state machine
+}
+
+LayoutUnknownKind {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'#pragma layout({0}, ...)' is neither 'Node' nor 'Comment'; the line was ignored."
+    text  "'#pragma layout({0}, ...)' 既不是 'Node' 也不是 'Comment'；该行已被忽略。"
+    state machine
+}
+
+LayoutColorOnNode {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'#pragma layout(Node, ...)' places a node, and 'Color' colours only a comment box; the colour was ignored."
+    text  "'#pragma layout(Node, ...)' 用于摆放节点，而 'Color' 只给注释框上色；该颜色已被忽略。"
+    state machine
+}
+
+EndRegionWithoutRegion {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'#pragma endregion' closes a box that was never opened."
+    text  "'#pragma endregion' 要关闭的框从未打开过。"
+    state machine
+}
+
+RegionNotClosedUnnamed {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "This '#pragma region' is never closed; add a '#pragma endregion'."
+    text  "这个 '#pragma region' 从未关闭；请添加 '#pragma endregion'。"
+    state machine
+}
+
+RegionNotClosed {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp
+    src   "'#pragma region {0}' is never closed; add a '#pragma endregion'."
+    text  "'#pragma region {0}' 从未关闭；请添加 '#pragma endregion'。"
+    state machine
+}

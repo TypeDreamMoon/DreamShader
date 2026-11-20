@@ -1,0 +1,178 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Lang.Pipeline
+
+BufferOutsideDsp {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "'buffer {0}' declares a buffer of a Custom Pass pipeline, which only a '.dsp' file holds; move it into the pipeline's '.dsp'."
+    text  "'buffer {0}' 声明的是 Custom Pass 管线的缓冲，只有 '.dsp' 文件才能包含它；请把它移到该管线的 '.dsp' 中。"
+    state machine
+}
+
+PassOutsideDsp {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "'pass {0}' declares a pass of a Custom Pass pipeline, which only a '.dsp' file holds; move it into the pipeline's '.dsp'."
+    text  "'pass {0}' 声明的是 Custom Pass 管线的 Pass，只有 '.dsp' 文件才能包含它；请把它移到该管线的 '.dsp' 中。"
+    state machine
+}
+
+ExpectedBufferName {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "the buffer's name after 'buffer'"
+    text  "'buffer' 之后的缓冲名称"
+    state machine
+}
+
+ExpectedBufferColon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "':' and a format after 'buffer {0}'"
+    text  "'buffer {0}' 之后的 ':' 和格式"
+    state machine
+}
+
+ExpectedBufferFormat {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "a buffer format such as 'R8' or 'RGBA16F'"
+    text  "'R8' 或 'RGBA16F' 这样的缓冲格式"
+    state machine
+}
+
+ExpectedBufferKey {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "a key such as 'Scale' in the arguments of buffer '{0}'"
+    text  "缓冲 '{0}' 参数中 'Scale' 这样的键"
+    state machine
+}
+
+ExpectedBufferKeyAssign {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "'=' after '{0}'"
+    text  "'{0}' 之后的 '='"
+    state machine
+}
+
+ExpectedBufferArgumentSeparator {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "Expected ',' or ')' in the arguments of buffer '{0}', found {1}."
+    text  "期望缓冲 '{0}' 的参数中出现 ',' 或 ')'，但遇到了 {1}。"
+    state machine
+}
+
+ExpectedBufferSemicolon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "';' after the declaration of buffer '{0}'"
+    text  "缓冲 '{0}' 声明之后的 ';'"
+    state machine
+}
+
+ExpectedPassName {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "the pass's name after 'pass'"
+    text  "'pass' 之后的 Pass 名称"
+    state machine
+}
+
+ExpectedPassColon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "':' and a pass kind after 'pass {0}'"
+    text  "'pass {0}' 之后的 ':' 和 Pass 种类"
+    state machine
+}
+
+ExpectedPassKind {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "a pass kind: fullscreen, compute, mesh, clear or copy"
+    text  "Pass 种类：fullscreen、compute、mesh、clear 或 copy"
+    state machine
+}
+
+ExpectedPassOpen {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "'`{' to open the block of pass '{0}'"
+    text  "用于开启 Pass '{0}' 代码块的 '`{'"
+    state machine
+}
+
+PassMissingClose {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "Expected '`}' to close pass '{0}' before the next declaration, found {1}."
+    text  "期望在下一个声明之前用 '`}' 关闭 Pass '{0}'，但遇到了 {1}。"
+    state machine
+}
+
+WhileParsingPass {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "pass '{0}'"
+    text  "Pass '{0}'"
+    state machine
+}
+
+DirectiveInsidePass {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "The line '#{0}' cannot appear inside a pass block; a pass holds settings, 'read', 'write' and 'param' lines and an 'hlsl' block, where HLSL's own '#' lines go."
+    text  "'#{0}' 这一行不能出现在 Pass 块中；Pass 中只能有设置、'read'、'write'、'param' 行和一个 'hlsl' 块，HLSL 自己的 '#' 行请写在 'hlsl' 块里。"
+    state machine
+}
+
+ExpectedPassStatement {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "Expected a setting ('Key = Value;'), a 'read', 'write' or 'param' line or an 'hlsl' block in a pass block, found {0}."
+    text  "期望 Pass 块中出现设置（'Key = Value;'）、'read'、'write'、'param' 行或 'hlsl' 块，但遇到了 {0}。"
+    state machine
+}
+
+ExpectedBindingBuffer {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "a buffer after '{0}'"
+    text  "'{0}' 之后的缓冲"
+    state machine
+}
+
+ExpectedBindingBufferAfterSlot {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "a buffer after '{0} {1} ='"
+    text  "'{0} {1} =' 之后的缓冲"
+    state machine
+}
+
+ExpectedPrevious {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "'Previous' after '.'"
+    text  "'.' 之后的 'Previous'"
+    state machine
+}
+
+OnlyPrevious {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "'{0}.{1}': the one thing a buffer has after '.' is 'Previous', last frame's contents of a 'History = true' buffer."
+    text  "'{0}.{1}'：缓冲在 '.' 之后只能跟 'Previous'，即 'History = true' 缓冲上一帧的内容。"
+    state machine
+}
+
+ExpectedParamName {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "a parameter name after 'param'"
+    text  "'param' 之后的参数名"
+    state machine
+}
+
+ExpectedParamAssign {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "'=' after 'param {0}'"
+    text  "'param {0}' 之后的 '='"
+    state machine
+}
+
+ExpectedSettingAssign {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "'=' after the key '{0}'"
+    text  "键 '{0}' 之后的 '='"
+    state machine
+}
+
+ExpectedPassStatementSemicolon {
+    at    Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp
+    src   "';' at the end of the pass statement"
+    text  "Pass 语句末尾的 ';'"
+    state machine
+}

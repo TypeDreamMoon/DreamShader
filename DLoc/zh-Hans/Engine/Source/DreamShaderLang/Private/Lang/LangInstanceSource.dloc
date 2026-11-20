@@ -1,0 +1,45 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Lang.InstanceSource
+
+SharedStatement {
+    at    Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp
+    src   "Expected '{0}' to be declared alone to rewrite its value, found it in a declaration shared with other names; split the declaration first."
+    text  "期望 '{0}' 是单独声明的，这样才能改写它的值，但它与其他名称共用一条声明；请先拆开这条声明。"
+    state machine
+}
+
+OverlappingEdits {
+    at    Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp
+    src   "Expected every change to this file to touch its own stretch of text, found an edit at line {0} that overlaps another or runs past the end; the file was left unchanged."
+    text  "期望对此文件的每处修改都只涉及各自的一段文本，但第 {0} 行的一处修改与另一处重叠或超出了文件末尾；文件保持不变。"
+    state machine
+}
+
+NoInstancePragma {
+    at    Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp
+    src   "Expected a '#pragma instance(...)' line in this .dsi file, found none; the file was left unchanged."
+    text  "期望此 .dsi 文件中有一行 '#pragma instance(...)'，但没有找到；文件保持不变。"
+    state machine
+}
+
+NoUniformForDefault {
+    at    Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp
+    src   "Expected a uniform whose parameter name is '{0}' declared in this file, found none; no default was written."
+    text  "期望此文件中声明了参数名为 '{0}' 的 uniform，但没有找到；没有写入默认值。"
+    state machine
+}
+
+UniformScalarValueNeedsTypeChange {
+    at    Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp
+    src   "The scalar value for '{0}' cannot be stated by its declared type; changing a .dss uniform's type can change its callers, so no default was written. Change the source type explicitly or extract the tweak to a .dsi."
+    text  "'{0}' 的标量值无法用其声明的类型表示；修改 .dss uniform 的类型可能影响其调用方，因此没有写入默认值。请显式修改源码中的类型，或将该调整提取到 .dsi。"
+    state machine
+}
+
+UniformKindMismatch {
+    at    Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp
+    src   "Expected '{0}' to be declared as a {1} parameter to take this default, found a declaration of another kind; no default was written."
+    text  "期望 '{0}' 被声明为 {1} 参数才能接受这个默认值，但它是另一种声明；没有写入默认值。"
+    state machine
+}

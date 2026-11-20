@@ -1,0 +1,80 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.IRBuilder
+
+IRBuilderDefaultCycle {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp
+    src   "The default value of '{0}' in '{1}' depends on itself; pass an explicit value for a parameter in the cycle."
+    text  "'{1}' 中 '{0}' 的默认值依赖于它自身；请为循环中的某个参数传入显式值。"
+    state machine
+}
+
+IRBuilderDefaultHasNoValue {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp
+    src   "The default value of '{0}' in '{1}' reads a parameter that has no value; pass that input explicitly or initialize its default."
+    text  "'{1}' 中 '{0}' 的默认值读取了一个没有值的参数；请显式传入该输入或为其默认值赋初值。"
+    state machine
+}
+
+IRBuilderOutArgNotLValue {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp
+    src   "'{0}' is an '{1}' parameter of {2}, so the argument has to be something that can be assigned to; this expression cannot."
+    text  "'{0}' 是 {2} 的 '{1}' 参数，因此实参必须是可以被赋值的东西；这个表达式不行。"
+    state machine
+}
+
+IRBuilderDefaultCallCycle {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp
+    src   "Resolving the defaults of '{0}' calls that function with omitted arguments again; pass explicit values to break the default call cycle."
+    text  "解析 '{0}' 的默认值时会再次以省略的实参调用该函数；请传入显式值以打破默认值调用循环。"
+    state machine
+}
+
+IRBuilderDefaultDepth {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp
+    src   "Resolving the defaults of '{0}' would go {1} calls deep, past the limit of {2}; pass explicit values or flatten the default call chain."
+    text  "解析 '{0}' 的默认值将深入 {1} 层调用，超过了 {2} 的上限；请传入显式值或展平默认值的调用链。"
+    state machine
+}
+
+IRBuilderCustomDefaultOut {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp
+    src   "A default of '{0}' initializes its 'out' parameter '{1}', but a Custom output has no input pin to carry that value; pass the initial value through a separate input and assign the output in the body."
+    text  "'{0}' 的默认值初始化了它的 'out' 参数 '{1}'，但 Custom 输出没有可承载该值的输入引脚；请通过单独的输入传入初始值，并在函数体中为输出赋值。"
+    state machine
+}
+
+IRBuilderCallEntry {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp
+    src   "'{0}' is this file's material entry and is called by the engine, not by the shader."
+    text  "'{0}' 是这个文件的材质入口，由引擎调用，而不是由着色器调用。"
+    state machine
+}
+
+IRBuilderRecursion {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp
+    src   "'{0}' calls itself, and an inlined function has no stack to recurse on; rewrite it as a loop with a constant trip count, or as a '/// @custom' function."
+    text  "'{0}' 调用了自身，而内联函数没有可供递归的栈；请把它改写成迭代次数固定的循环，或改写成 '/// @custom' 函数。"
+    state machine
+}
+
+IRBuilderRecursionCycle {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp
+    src   "'{0}' is already being inlined further up this call chain; an inlined function cannot call back into itself."
+    text  "'{0}' 已经在这条调用链的上游被内联；内联函数不能回过头来调用自身。"
+    state machine
+}
+
+IRBuilderInlineDepth {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp
+    src   "Inlining '{0}' would go {1} calls deep, past the limit of {2}; flatten the call chain or move part of it into a '/// @custom' function."
+    text  "内联 '{0}' 会使调用深度达到 {1} 层，超过上限 {2}；请压平调用链，或把其中一部分移到 '/// @custom' 函数中。"
+    state machine
+}
+
+IRBuilderNoBody {
+    at    Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp
+    src   "'{0}' has no body to inline; give it one, mark it 'extern' with '/// @asset', or '/// @custom'."
+    text  "'{0}' 没有可内联的函数体；请给它加上函数体，或用 '/// @asset' 把它标记为 'extern'，或标记为 '/// @custom'。"
+    state machine
+}

@@ -1,0 +1,52 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Format
+
+FormatPreprocessor {
+    at    Source/DreamShaderLang/Private/Lang/LangFormat.cpp
+    src   "'{0}' uses the preprocessor outside a custom body; 'fmt' reads the file as it is on disk and would have to drop one side of every '#if', so it leaves the file as it is."
+    text  "'{0}' 在 custom 函数体之外使用了预处理器；'fmt' 按磁盘上的原样读取文件，那样就得丢掉每个 '#if' 的一侧，所以它保持该文件原样。"
+    state machine
+}
+
+FormatLegacy {
+    at    Source/DreamShaderLang/Private/Lang/LangFormat.cpp
+    src   "'{0}' has 1.x declarations, and what the printer writes for those is 2.0 text; rewriting 1.x as 2.0 is 'dsc migrate', so 'fmt' leaves the file as it is."
+    text  "'{0}' 里有 1.x 声明，而打印器为这些声明写出的是 2.0 文本；把 1.x 改写成 2.0 是 'dsc migrate' 的事，所以 'fmt' 保持该文件原样。"
+    state machine
+}
+
+FormatCheckFailed {
+    at    Source/DreamShaderLang/Private/Lang/LangFormat.cpp
+    src   "The formatted text of '{0}' failed its own check -- {1} -- so nothing was written. This is a fault of the formatter, not of the file."
+    text  "'{0}' 格式化后的文本没有通过自检 —— {1} —— 所以什么也没有写入。这是格式化器的问题，不是文件的问题。"
+    state machine
+}
+
+FormatCheckParse {
+    at    Source/DreamShaderLang/Private/Lang/LangFormat.cpp
+    src   "it does not parse ({0})"
+    text  "它无法解析（{0}）"
+    state machine
+}
+
+FormatCheckTree {
+    at    Source/DreamShaderLang/Private/Lang/LangFormat.cpp
+    src   "it parses to other declarations than the file does"
+    text  "它解析出的声明与原文件不同"
+    state machine
+}
+
+FormatCheckComment {
+    at    Source/DreamShaderLang/Private/Lang/LangFormat.cpp
+    src   "the comment '{0}' is not in it"
+    text  "其中没有注释 '{0}'"
+    state machine
+}
+
+FormatCheckStable {
+    at    Source/DreamShaderLang/Private/Lang/LangFormat.cpp
+    src   "formatting it again gives another text"
+    text  "再格式化一次会得到另一份文本"
+    state machine
+}

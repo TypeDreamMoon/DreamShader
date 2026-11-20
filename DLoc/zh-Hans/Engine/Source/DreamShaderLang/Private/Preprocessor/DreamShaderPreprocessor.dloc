@@ -1,0 +1,101 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Preprocessor
+
+UnknownDirectiveSuggestImport {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "'#include' is HLSL: it is recognized inside a Function body and nowhere else. At the declaration level, use import \"...\" instead."
+    text  "'#include' 属于 HLSL:只在 Function 体内被识别,其他地方一律不认。声明层请改用 import \"...\"。"
+    state machine
+}
+
+UnknownDirectiveSuggestCase {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "Preprocessor directives are lowercase: write '#{0}'."
+    text  "预处理指令是小写的:请写成 '#{0}'。"
+    state machine
+}
+
+UnknownDirectiveSuggestNearest {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "Did you mean '#{0}'?"
+    text  "是不是想写 '#{0}'?"
+    state machine
+}
+
+UnknownDirectiveSuggestList {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "A '#' line must be #if, #ifdef, #ifndef, #elif, #else, #endif, #define or #undef, or one of the parser's #Region / #EndRegion."
+    text  "以 '#' 开头的行必须是 #if、#ifdef、#ifndef、#elif、#else、#endif、#define 或 #undef,或者解析器的 #Region / #EndRegion。"
+    state machine
+}
+
+UnknownPreprocessorDirective {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "{0}({1}): unknown preprocessor directive '#{2}'. {3}"
+    text  "{0}({1}): 未知的预处理指令 '#{2}'。{3}"
+    state machine
+}
+
+ConditionalNestingTooDeep {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "{0}({1}): '#{2}' nesting is deeper than the limit of {3}."
+    text  "{0}({1}): '#{2}' 的嵌套深度超过了上限 {3}。"
+    state machine
+}
+
+MissingDefineNameOperand {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "{0}({1}): '#{2}' requires a define name."
+    text  "{0}({1}): '#{2}' 需要一个 define 名字。"
+    state machine
+}
+
+InvalidDefineName {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "{0}({1}): '#{2}' needs a name made of letters, digits and underscores and not starting with a digit; got '{3}'."
+    text  "{0}({1}): '#{2}' 需要一个由字母、数字和下划线组成且不以数字开头的名字;实际得到 '{3}'。"
+    state machine
+}
+
+StrayConditionalBranch {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "{0}({1}): '#{2}' without a matching '#if'."
+    text  "{0}({1}): '#{2}' 没有与之匹配的 '#if'。"
+    state machine
+}
+
+BranchAfterElse {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "{0}({1}): '#{2}' after the '#else' on line {3}, which already closed this chain."
+    text  "{0}({1}): '#{2}' 出现在第 {3} 行的 '#else' 之后,而该 '#else' 已经关闭了这条链。"
+    state machine
+}
+
+StrayEndif {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "{0}({1}): '#endif' without a matching '#if'."
+    text  "{0}({1}): '#endif' 没有与之匹配的 '#if'。"
+    state machine
+}
+
+InvalidDefineNameOnDefinition {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "{0}({1}): '#{2}' needs a name made of letters, digits and underscores and not starting with a digit; got '{3}'."
+    text  "{0}({1}): '#{2}' 需要一个由字母、数字和下划线组成且不以数字开头的名字;实际得到 '{3}'。"
+    state machine
+}
+
+ReservedDefineName {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "{0}({1}): '{3}' is a read-only built-in constant, so '#{2}' cannot change it. The 'DS_' prefix is reserved by DreamShader."
+    text  "{0}({1}): '{3}' 是只读的内置常量,'#{2}' 不能改动它。'DS_' 前缀由 DreamShader 保留。"
+    state machine
+}
+
+UnterminatedConditional {
+    at    Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp
+    src   "{0}({1}): this '#if' is never closed; the file ends with {2} conditional block(s) still open."
+    text  "{0}({1}): 这个 '#if' 从未被关闭;文件结束时仍有 {2} 个条件块未闭合。"
+    state machine
+}

@@ -1,0 +1,59 @@
+dloc 1
+culture zh-Hans
+namespace DreamShaderMaterialBrowser
+
+CBShowInBrowser {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderMaterialBrowser.cpp
+    src   "Show in Material Content Browser"
+    text  "在材质内容浏览器中显示"
+    state machine
+}
+
+CBShowInBrowserTip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderMaterialBrowser.cpp
+    src   "Open the DreamShader Material Content Browser on this asset: its source, compile status, provenance and inheritance."
+    text  "在 DreamShader 材质内容浏览器中打开此资产:它的源文件、编译状态、来源和继承关系。"
+    state machine
+}
+
+CBCreateInstance {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderMaterialBrowser.cpp
+    src   "Create DreamShader instance"
+    text  "创建 DreamShader 实例"
+    state machine
+}
+
+CBCreateInstanceTipDsi {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderMaterialBrowser.cpp
+    src   "Create a material instance of this material: a .dsi source file compiled into the instance when DreamShader generated the material, an ordinary instance asset otherwise."
+    text  "为此材质创建一个材质实例：如果该材质由 DreamShader 生成，则写一个 .dsi 源文件并编译成实例；否则创建普通的实例资产。"
+    state machine
+}
+
+TabTitle {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderMaterialBrowser.cpp
+    src   "Material Content Browser"
+    text  "材质内容浏览器"
+    state machine
+}
+
+TabTooltip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderMaterialBrowser.cpp
+    src   "Browse, manage, and create instances of project and DreamShader-generated materials."
+    text  "浏览、管理项目与 DreamShader 生成材质,并创建其实例。"
+    state machine
+}
+
+OpenTabLabel {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderMaterialBrowser.cpp
+    src   "Material Content Browser"
+    text  "材质内容浏览器"
+    state machine
+}
+
+OpenTabTooltip {
+    at    Source/DreamShaderEditor/Private/UI/DreamShaderMaterialBrowser.cpp
+    src   "Open the DreamShader Material Content Browser."
+    text  "打开 DreamShader Material Content Browser。"
+    state machine
+}

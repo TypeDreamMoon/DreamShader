@@ -1,0 +1,10 @@
+dloc 1
+culture zh-Hans
+namespace UObjectDisplayNames
+
+DreamShaderHostCommandlet {
+    at    Source/DreamShaderEditor/Private/MCP/DreamShaderHostCommandlet.h#DreamShaderHostCommandlet
+    src   "Dream Shader Host Commandlet"
+    text  "DreamShader 宿主命令台"
+    state machine
+}

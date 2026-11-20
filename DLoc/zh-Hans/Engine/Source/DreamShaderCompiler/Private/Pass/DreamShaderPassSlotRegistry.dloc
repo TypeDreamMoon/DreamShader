@@ -1,0 +1,213 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Pass.Slots
+
+SlotNameInvalid {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "'{0}' cannot name something in an HLSL slot: a slot name has to be an identifier, and one starting with DP_ would hide one of the slot's fixed parameters."
+    text  "'{0}' 不能用作 HLSL 槽位中的名称：槽位中的名称必须是标识符，而以 DP_ 开头的名称会遮蔽槽位的某个固定参数。"
+    state machine
+}
+
+SlotNameTwice {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "'{0}' would be defined twice in the pass's HLSL slot: every read, write and param needs its own name, and the slot also names a read's size and UV rect <Name>Size and <Name>UVRect, and a write's size <Name>Size, which must not meet another name either."
+    text  "'{0}' 会在该 Pass 的 HLSL 槽位中被定义两次：每个 read、write 和 param 都需要自己的名称；此外，槽位还会把 read 的尺寸和 UV 矩形命名为 <Name>Size 和 <Name>UVRect，把 write 的尺寸命名为 <Name>Size，这些名称同样不能与其他名称重复。"
+    state machine
+}
+
+SlotTooManyReads {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "The pass reads {0} buffers; an HLSL slot has {1} inputs."
+    text  "该 Pass 读取 {0} 个缓冲，而 HLSL 槽位只有 {1} 个输入。"
+    state machine
+}
+
+SlotTooManyWrites {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "The pass writes {0} buffers; an HLSL slot has {1} outputs."
+    text  "该 Pass 写入 {0} 个缓冲，而 HLSL 槽位只有 {1} 个输出。"
+    state machine
+}
+
+SlotParamLayout {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "The pass's params do not fit an HLSL slot: {0} float4 vectors hold every param, a float4 takes one of its own, and a texture cannot be a param of a slot."
+    text  "该 Pass 的 param 放不进 HLSL 槽位：所有 param 共用 {0} 个 float4 向量，float4 独占一个，而纹理不能作为槽位的 param。"
+    state machine
+}
+
+RegistryUnreadable {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose every slot it records; fix the file, or run 'dsc pass-registry -Rebuild'."
+    text  "无法读取 Custom Pass 槽位注册表：{0}。没有写入任何内容，因为覆盖它会丢失其中记录的所有槽位；请修复该文件，或运行 'dsc pass-registry -Rebuild'。"
+    state machine
+}
+
+SlotsUsedUp {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "Pass '{0}' needs a {1} slot and all {2} are taken. Merge passes, run 'dsc pass-registry -Gc' to free the slots of pipelines whose source is gone, or raise {3} in the project's Target.cs."
+    text  "Pass '{0}' 需要一个 {1} 槽位，而全部 {2} 个都已被占用。请合并 Pass、运行 'dsc pass-registry -Gc' 释放源文件已不存在的管线所占的槽位，或在项目的 Target.cs 中调大 {3}。"
+    state machine
+}
+
+ComputeSlotWord {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "compute"
+    text  "Compute"
+    state machine
+}
+
+PixelSlotWord {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "pixel"
+    text  "Pixel"
+    state machine
+}
+
+SnapshotInlineRootMissing {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slot (its entry is not in the file's 'hlsl' block); there is nothing to snapshot."
+    text  "无法为 Pass '{0}' 拼出它写在 '.dsp' 中的 HLSL（它的入口不在文件级 'hlsl' 块中），因此没有可存入其槽位快照的内容。"
+    state machine
+}
+
+SnapshotRootUnreadable {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "The shader '{0}' of pass '{1}' could not be read, so there is nothing to snapshot into its slot."
+    text  "无法读取 Pass '{1}' 的着色器 '{0}'，因此没有可存入其槽位快照的内容。"
+    state machine
+}
+
+SnapshotIncludeMissing {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "'{0}' is included by a relative path and names no file, so the snapshot of pass '{1}' cannot be built."
+    text  "'{0}' 是按相对路径 include 的，但找不到对应的文件，因此无法构建 Pass '{1}' 的快照。"
+    state machine
+}
+
+SnapshotLiveIncludeNotEngine {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "'{0}' is included by a virtual path outside /Engine/, /Plugin/ and /ThirdParty/, so the snapshot of pass '{1}' keeps including the live file: an edit of it later reaches the global shaders without a pre-check. Include it by a relative path to have it copied into the snapshot."
+    text  "'{0}' 是按 /Engine/、/Plugin/ 和 /ThirdParty/ 之外的虚拟路径 include 的，因此 Pass '{1}' 的快照会继续 include 原文件本身：之后对它的修改会未经预检就进入全局着色器。请改用相对路径 include 它，这样它会被复制进快照。"
+    state machine
+}
+
+SlotSectionFailed {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "Pass '{0}' cannot be mapped onto its HLSL slot: {1}"
+    text  "Pass '{0}' 无法映射到它的 HLSL 槽位：{1}"
+    state machine
+}
+
+PrecheckFormatUnavailable {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "The project targets the shader format {0}, which this machine has no shader compiler for, so the HLSL slots were not pre-checked for it; a cook for that platform compiles them unchecked."
+    text  "项目以着色器格式 {0} 为目标，而这台机器上没有它的着色器编译器，因此没有针对它预检 HLSL 槽位；为该平台烘焙时会在未经检查的情况下编译它们。"
+    state machine
+}
+
+PrecheckNoFormat {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "There is no shader format to pre-check the HLSL slots with: no active feature level and no target platform has a shader compiler on this machine. Nothing was written, because a slot that never compiled must not reach the global shaders."
+    text  "没有可用于预检 HLSL 槽位的着色器格式：在这台机器上，没有任何活动的功能级别或目标平台有着色器编译器。没有写入任何内容，因为从未编译通过的槽位不能进入全局着色器。"
+    state machine
+}
+
+PrecheckRequestedFormatUnavailable {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "The shader format {0} was asked for, and this machine has no shader compiler for it, so the HLSL slots were not pre-checked for it."
+    text  "请求了着色器格式 {0}，而这台机器上没有它的着色器编译器，因此没有针对它预检 HLSL 槽位。"
+    state machine
+}
+
+PrecheckNoShaderType {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "The {0} slot shader cannot be pre-checked: the global shader type {1} is not registered, or its source no longer includes '{2}'. The DreamShaderPass module is out of step with this compiler; nothing was written."
+    text  "无法预检 {0} 槽位着色器：全局着色器类型 {1} 没有注册，或者它的源码已不再包含 '{2}'。DreamShaderPass 模块与此编译器的版本不一致；没有写入任何内容。"
+    state machine
+}
+
+ComputeTypeWord {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "compute"
+    text  "Compute"
+    state machine
+}
+
+PixelTypeWord {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "pixel"
+    text  "Pixel"
+    state machine
+}
+
+PrecheckErrorInFile {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "[{0}] pass '{1}' does not compile in its HLSL slot: {2}"
+    text  "[{0}] Pass '{1}' 在其 HLSL 槽位中编译失败：{2}"
+    state machine
+}
+
+PrecheckErrorInSlot {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "[{0}] pass '{1}' does not compile in its HLSL slot: {2} (a name this pass binds may clash with one the slot shader or the snapshot uses)"
+    text  "[{0}] Pass '{1}' 在其 HLSL 槽位中编译失败：{2}（这个 Pass 绑定的某个名称可能与槽位着色器或快照使用的名称冲突）"
+    state machine
+}
+
+PrecheckErrorInSharedHlsl {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "[{0}] the file's 'hlsl' block does not compile in the HLSL slots of {1}: {2}"
+    text  "[{0}] 文件级 'hlsl' 块在 {1} 的 HLSL 槽位中编译失败：{2}"
+    state machine
+}
+
+PrecheckNoCustomPass {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to compile them for."
+    text  "HLSL 槽位需要 Unreal Engine 5.8 或更高版本；当前引擎没有可为其编译的 Custom Pass 运行时。"
+    state machine
+}
+
+RegistryNotWritable {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "'{0}' cannot be written or deleted, so nothing of the slot registry was changed: no snapshot written, no slot deleted, no registry file rewritten. The registry and its snapshots are committed files; a file that is read-only because it is not checked out is the usual reason. Check out the whole .dreampass folder and try again."
+    text  "无法写入或删除 '{0}'，因此槽位注册表没有任何改动：没有写入快照，没有删除槽位，也没有重写注册表文件。注册表及其快照都是需要提交的文件；常见原因是文件尚未检出，因而是只读的。请检出整个 .dreampass 文件夹后重试。"
+    state machine
+}
+
+SlotWriteFailed {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "'{0}' could not be written. The slot registry and its snapshots are committed files: a file that is read-only because it is not checked out is the usual reason."
+    text  "无法写入 '{0}'。槽位注册表及其快照都是需要提交的文件：常见原因是文件尚未检出，因而是只读的。"
+    state machine
+}
+
+SlotFreed {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "{0} slot {1} of pass '{2}' was freed: the pipeline no longer runs that pass in HLSL there."
+    text  "Pass '{2}' 的 {0} 槽位 {1} 已释放：管线不再在该槽位中以 HLSL 运行这个 Pass。"
+    state machine
+}
+
+ComputeWord {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "Compute"
+    text  "Compute"
+    state machine
+}
+
+PixelWord {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "Pixel"
+    text  "Pixel"
+    state machine
+}
+
+RegistryWriteFailed {
+    at    Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp
+    src   "'{0}' could not be written. The slot registry is a committed file: a file that is read-only because it is not checked out is the usual reason."
+    text  "无法写入 '{0}'。槽位注册表是需要提交的文件：常见原因是文件尚未检出，因而是只读的。"
+    state machine
+}

@@ -1,0 +1,1060 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.Binder.Expressions
+
+TypeAsValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is a type, not a value; write '{0}(...)' to construct one."
+    text  "'{0}' 是类型，不是值；请写 '{0}(...)' 来构造一个值。"
+    state machine
+}
+
+StringInExpression {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A string has no value in an expression; it is only ever the value of a reflected property, as in 'UE.Expression(Class = \"...\")'."
+    text  "字符串在表达式中没有值；它只会作为反射属性的值出现，例如 'UE.Expression(Class = \"...\")'。"
+    state machine
+}
+
+NamespaceAsValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is a namespace, not a value; write '{0}.SomeNode(...)'."
+    text  "'{0}' 是命名空间，不是值；请写成 '{0}.SomeNode(...)'。"
+    state machine
+}
+
+UnknownNameDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is not declared; did you mean '{1}'? Names are case-sensitive."
+    text  "'{0}' 未声明；你是不是想写 '{1}'？名称区分大小写。"
+    state machine
+}
+
+UnknownName {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is not declared in this scope."
+    text  "'{0}' 在此作用域中未声明。"
+    state machine
+}
+
+ReflectedNotCalled {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' is a node and has to be called: write '{0}.{1}(...)'."
+    text  "'{0}.{1}' 是节点，必须调用：请写成 '{0}.{1}(...)'。"
+    state machine
+}
+
+UnknownAttributeDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A material has no '{0}' pin; did you mean '{1}'? Attribute names are case-sensitive."
+    text  "材质没有 '{0}' 引脚；你是不是想写 '{1}'？属性名区分大小写。"
+    state machine
+}
+
+UnknownAttribute {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A material has no '{0}' pin."
+    text  "材质没有 '{0}' 引脚。"
+    state machine
+}
+
+UnknownField {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' has no field called '{1}'."
+    text  "'{0}' 没有名为 '{1}' 的字段。"
+    state machine
+}
+
+UnknownFieldDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' has no field called '{1}'; did you mean '{2}'?"
+    text  "'{0}' 没有名为 '{1}' 的字段；你是不是想写 '{2}'？"
+    state machine
+}
+
+UnknownCustomCallOutput {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "This Custom node declares no output called '{0}'; its outputs are '{1}'. An output is declared by 'AdditionalOutputs'."
+    text  "这个 Custom 节点没有声明名为 '{0}' 的输出；它的输出是 '{1}'。输出通过 'AdditionalOutputs' 声明。"
+    state machine
+}
+
+UnknownOutput {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' has no output called '{2}'."
+    text  "'{0}.{1}' 没有名为 '{2}' 的输出。"
+    state machine
+}
+
+UnknownOutputListed {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' has no output called '{2}'; its outputs are {3}."
+    text  "'{0}.{1}' 没有名为 '{2}' 的输出；它的输出有：{3}。"
+    state machine
+}
+
+UnknownOutputDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' has no output called '{2}'; did you mean '{3}'?"
+    text  "'{0}.{1}' 没有名为 '{2}' 的输出；你是不是想写 '{3}'？"
+    state machine
+}
+
+TextureMethodNotCalled {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' on a texture is a call: write 'Tex.{0}(UV)'."
+    text  "纹理上的 '{0}' 是调用：请写成 'Tex.{0}(UV)'。"
+    state machine
+}
+
+NoSuchMember {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A value of type {0} has no member '{1}'."
+    text  "类型为 {0} 的值没有成员 '{1}'。"
+    state machine
+}
+
+SwizzleLength {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'.{0}' is not a swizzle; a swizzle is one to four of 'xyzw' or 'rgba'."
+    text  "'.{0}' 不是 swizzle；swizzle 由 1 到 4 个 'xyzw' 或 'rgba' 中的字母组成。"
+    state machine
+}
+
+SwizzleLetter {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'.{0}' is not a swizzle; '{1}' is not one of 'xyzw' or 'rgba'."
+    text  "'.{0}' 不是 swizzle；'{1}' 不属于 'xyzw' 或 'rgba'。"
+    state machine
+}
+
+SwizzleOutOfRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'.{0}' reads component {1} of a value that has {2}."
+    text  "'.{0}' 读取的是分量 {1}，而这个值有 {2} 个分量。"
+    state machine
+}
+
+SwizzleMixedSets {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'.{0}' mixes 'xyzw' with 'rgba'; a swizzle picks one family."
+    text  "'.{0}' 混用了 'xyzw' 和 'rgba'；一个 swizzle 只能使用其中一组。"
+    state machine
+}
+
+ChannelViewAcrossOutputs {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' publishes the channels of '.{2}' on different outputs; read them one output at a time from {3}."
+    text  "'{0}.{1}' 的 '.{2}' 所含通道位于不同的输出上；请从 {3} 中每次读取一个输出。"
+    state machine
+}
+
+LegacySelectOrdinalNotConstant {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "An output is selected by a whole number the compiler knows, and this index is computed."
+    text  "输出要用编译器已知的整数来选择，而这个下标是计算出来的。"
+    state machine
+}
+
+NodeOutputIndexNotConstant {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "An output is selected by a whole number the compiler knows, and this index is computed."
+    text  "输出要用编译器已知的整数来选择，而这个下标是计算出来的。"
+    state machine
+}
+
+CustomCallOutputIndexRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "This Custom node declares {0} output(s), counted from 0, and this selects output {1}."
+    text  "这个 Custom 节点声明了 {0} 个输出（从 0 计数），而这里选择的是输出 {1}。"
+    state machine
+}
+
+NodeOutputIndexRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' has {2} output(s), counted from 0, and this selects output {3}."
+    text  "'{0}.{1}' 有 {2} 个输出（从 0 计数），而这里选择的是输出 {3}。"
+    state machine
+}
+
+ArrayIndexNotConstant {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "An array index must be a compile-time constant: the graph has no arrays, so every element is read at compile time."
+    text  "数组下标必须是编译期常量：图中没有数组，所以每个元素都在编译期读取。"
+    state machine
+}
+
+ArrayIndexOutOfRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "Element {0} is out of range for an array of {1}."
+    text  "元素 {0} 超出了长度为 {1} 的数组的范围。"
+    state machine
+}
+
+ArrayNotFolded {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "This array is not a compile-time constant, and the graph has no arrays; declare it 'static const' with a constant initializer."
+    text  "这个数组不是编译期常量，而图中没有数组；请把它声明为 'static const'，并使用常量初始化器。"
+    state machine
+}
+
+MatrixIndex {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A matrix row cannot be read: the graph has no matrices. Move the code into a '/// @custom' function, where the matrix is an input."
+    text  "无法读取矩阵的行：图中没有矩阵。请把这段代码移到 '/// @custom' 函数中，在那里矩阵是一个输入。"
+    state machine
+}
+
+VectorIndexNotConstant {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A component index must be a compile-time constant; write a swizzle such as '.z', or select with 'lerp'."
+    text  "分量下标必须是编译期常量；请写成 '.z' 这样的 swizzle，或用 'lerp' 进行选择。"
+    state machine
+}
+
+VectorIndexOutOfRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "Component {0} is out of range for a value that has {1}."
+    text  "对于有 {1} 个分量的值，分量 {0} 超出了范围。"
+    state machine
+}
+
+CannotIndex {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A value of type {0} cannot be indexed."
+    text  "类型为 {0} 的值不能使用下标。"
+    state machine
+}
+
+LegacyDefaultOutput {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' has more than one output and is read as its first, '{1}', which is what 1.x did; a '.dss' names the output."
+    text  "'{0}' 有多个输出，这里按它的第一个输出 '{1}' 读取，这是 1.x 的做法；'.dss' 中要写明输出名。"
+    state machine
+}
+
+NodeNeedsOutput {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "{0} expects {1}, and this node has more than one output; name the one you mean."
+    text  "{0} 需要 {1}，而这个节点有多个输出；请指明你要的是哪一个。"
+    state machine
+}
+
+NodeNeedsNamedOutput {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "{0} expects {1}, and '{2}' has more than one output; name the one you mean: {3}."
+    text  "{0} 需要 {1}，而 '{2}' 有多个输出；请指明你要的是哪一个：{3}。"
+    state machine
+}
+
+LegacyTruncation {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "{0} expects {1}, and this is {2}: its leading components are taken, which is what 1.x did; a '.dss' writes the swizzle."
+    text  "{0} 期望 {1}，而这里是 {2}：取其前面的分量，这是 1.x 的做法；'.dss' 中要写出 swizzle。"
+    state machine
+}
+
+NoConversion {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "{0} expects {1}, and this is {2}."
+    text  "{0} 需要 {1}，而这里是 {2}。"
+    state machine
+}
+
+OperandNotNumeric {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' works on numbers, and this is {1}."
+    text  "'{0}' 作用于数值，而这里是 {1}。"
+    state machine
+}
+
+IntegerDivide {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "Both sides of this '/' are integers, and the material graph has no integer division; write 'float(a) / b' for the fraction, or 'floor(float(a) / b)' for the whole part."
+    text  "这个 '/' 的两侧都是整数，而材质图没有整数除法；要小数结果请写 'float(a) / b'，要整数部分请写 'floor(float(a) / b)'。"
+    state machine
+}
+
+OpNotCallable {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is not an operation this language spells as a call."
+    text  "'{0}' 不是本语言中以调用形式书写的运算。"
+    state machine
+}
+
+OperandOf {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}'"
+    text  "'{0}'"
+    state machine
+}
+
+BitwiseNotUnsupported {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'~' has no graph form; the graph has no integers to complement. Move the code into a '/// @custom' function."
+    text  "'~' 在图中没有对应形式；图中没有可以按位取反的整数。请把这段代码移到 '/// @custom' 函数中。"
+    state machine
+}
+
+IncrementNeedsLValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'++' and '--' write back into what they read, so they need a variable."
+    text  "'++' 和 '--' 会写回它们读取的对象，因此需要一个变量。"
+    state machine
+}
+
+UnaryUnsupported {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "This operator has no graph form."
+    text  "这个运算符在图中没有对应形式。"
+    state machine
+}
+
+BitwiseUnsupported {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' has no graph form; the graph carries floats, not bit patterns. Move the code into a '/// @custom' function."
+    text  "'{0}' 在图中没有对应形式；图中传递的是浮点数，而不是位模式。请把这段代码移到 '/// @custom' 函数中。"
+    state machine
+}
+
+LegacyImplicitLocal {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is not declared, and as in 1.x this assignment declares it, as a local of type {1}."
+    text  "'{0}' 没有声明，与 1.x 一样，这次赋值就声明了它：一个类型为 {1} 的局部变量。"
+    state machine
+}
+
+SubstrateCompoundAssign {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A Substrate value has no compound assignment; write 'S = S + T' (Substrate.Add) or 'S = S * w' (Substrate.Weight)."
+    text  "Substrate 值没有复合赋值；请写 'S = S + T'（Substrate.Add）或 'S = S * w'（Substrate.Weight）。"
+    state machine
+}
+
+AssignToGlobal {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A 'uniform' is an input and a 'static const' is a constant; neither can be assigned to. Copy it into a local first."
+    text  "'uniform' 是输入，'static const' 是常量；两者都不能被赋值。请先把它复制到局部变量中。"
+    state machine
+}
+
+AssignToInParam {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "An 'in' parameter is a function input pin and cannot be written to; declare it 'out' or 'inout', or copy it into a local."
+    text  "'in' 参数是函数输入引脚，不能写入；请把它声明为 'out' 或 'inout'，或把它复制到局部变量中。"
+    state machine
+}
+
+SwizzleRepeatTarget {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'.{0}' names one component twice, so this assignment would write it twice with no order between the two; assign each component on its own line."
+    text  "'.{0}' 把同一个分量写了两次，因此这次赋值会对它写入两次，且两次写入之间没有先后顺序；请把每个分量分别写成单独一行赋值。"
+    state machine
+}
+
+AssignToBuilderPinComponent {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A member of a Substrate value is a pin, and a pin is connected whole; build the vector first and assign that."
+    text  "Substrate 值的成员是一个引脚，而引脚只能整体连接；请先构造好向量，再整体赋值。"
+    state machine
+}
+
+AssignToNonLValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The left of '=' has to be a variable, a struct field, a material pin or a swizzle of one."
+    text  "'=' 的左边必须是变量、结构体字段、材质引脚，或其中之一的 swizzle。"
+    state machine
+}
+
+BitwiseAssignUnsupported {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}=' has no graph form; the graph carries floats, not bit patterns."
+    text  "'{0}=' 在图中没有对应形式；图中传递的是浮点数，而不是位模式。"
+    state machine
+}
+
+AssignmentTarget {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "This assignment"
+    text  "这次赋值"
+    state machine
+}
+
+ConditionalCondition {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The condition of '?:' has to be a single true-or-false value, and this is {0}."
+    text  "'?:' 的条件必须是单个真/假值，而这里是 {0}。"
+    state machine
+}
+
+ConditionalConditionWhat {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The condition of '?:'"
+    text  "'?:' 的条件"
+    state machine
+}
+
+ConditionalBranches {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The two halves of '?:' are {0} and {1}; they have to make one value."
+    text  "'?:' 的两个分支分别是 {0} 和 {1}；两者必须能统一成一个值。"
+    state machine
+}
+
+ConditionalTrue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The 'then' half of '?:'"
+    text  "'?:' 的 'then' 分支"
+    state machine
+}
+
+ConditionalFalse {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The 'else' half of '?:'"
+    text  "'?:' 的 'else' 分支"
+    state machine
+}
+
+CastToNonNumeric {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A cast to {0} has no meaning here; only numbers and bools can be cast."
+    text  "在这里转换为 {0} 没有意义；只有数值和 bool 才能进行类型转换。"
+    state machine
+}
+
+CastFromNonNumeric {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A value of type {0} cannot be cast to {1}."
+    text  "类型为 {0} 的值不能转换为 {1}。"
+    state machine
+}
+
+CastNarrows {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A cast from {0} to {1} drops components; write the swizzle that says which, such as '.xyz'."
+    text  "从 {0} 到 {1} 的类型转换会丢弃分量；请写出表明保留哪些分量的 swizzle，例如 '.xyz'。"
+    state machine
+}
+
+CastOperand {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "This cast"
+    text  "这个类型转换"
+    state machine
+}
+
+InitializerListNoTarget {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "An initializer list only has a meaning against a declared type; it cannot stand on its own."
+    text  "初始化列表只有对照已声明的类型才有意义；它不能单独出现。"
+    state machine
+}
+
+StructInitializerCount {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' has {1} fields and this list has {2}."
+    text  "'{0}' 有 {1} 个字段，而这个列表有 {2} 个。"
+    state machine
+}
+
+StructField2 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "This struct field"
+    text  "这个结构体字段"
+    state machine
+}
+
+InitializerListBadTarget {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A value of type {0} cannot be written as an initializer list."
+    text  "类型为 {0} 的值不能写成初始化列表。"
+    state machine
+}
+
+InitializerElement {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "This initializer element"
+    text  "这个初始化元素"
+    state machine
+}
+
+InitializerListCount {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "{0} needs {1} components and this list supplies {2}."
+    text  "{0} 需要 {1} 个分量，而这个列表提供了 {2} 个。"
+    state machine
+}
+
+ArrayNeedsList {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "An array is initialised with a list, as in '= { 1.0, 2.0 }'."
+    text  "数组要用列表初始化，写法如 '= { 1.0, 2.0 }'。"
+    state machine
+}
+
+ArrayInitializerCount {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "This array has {0} elements and its initializer has {1}."
+    text  "这个数组有 {0} 个元素，而它的初始化器有 {1} 个。"
+    state machine
+}
+
+ArrayElement {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "This array element"
+    text  "这个数组元素"
+    state machine
+}
+
+PinArgumentNotReflectedCall {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'Pin[{0}] = ...' connects a node's input pin by its engine index, and only a 'UE.' or 'Substrate.' node call has one; pass this argument by name or by position."
+    text  "'Pin[{0}] = ...' 按引擎下标连接节点的输入引脚，只有 'UE.' 或 'Substrate.' 节点调用才有这种下标；请按名称或按位置传入这个实参。"
+    state machine
+}
+
+NoSuchMethod {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A value of type {0} has no method '{1}'."
+    text  "类型为 {0} 的值没有方法 '{1}'。"
+    state machine
+}
+
+LegacyGlslAlias {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is the GLSL spelling of '{1}'; a 1.x source may use it and it is read as '{1}', and a '.dss' writes '{1}'."
+    text  "'{0}' 是 '{1}' 的 GLSL 拼写；1.x 源文件可以使用它并按 '{1}' 读取，'.dss' 中要写 '{1}'。"
+    state machine
+}
+
+GlslAlias {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is the GLSL spelling; this language is HLSL, so write '{1}'."
+    text  "'{0}' 是 GLSL 的写法；本语言是 HLSL，请写 '{1}'。"
+    state machine
+}
+
+UnknownCallee {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is not a function, a builtin or a struct."
+    text  "'{0}' 不是函数、内置函数或结构体。"
+    state machine
+}
+
+UnknownCalleeDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is not declared; did you mean '{1}'? Names are case-sensitive."
+    text  "'{0}' 未声明；你是不是想写 '{1}'？名称区分大小写。"
+    state machine
+}
+
+CalleeNotCallable {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "This is not something that can be called; a call names a function, a builtin, a type or 'UE.'/'Substrate.' followed by a node."
+    text  "这不是可以调用的东西；调用的对象必须是函数、内置函数、类型，或 'UE.'/'Substrate.' 后接节点名。"
+    state machine
+}
+
+NotConstructible {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A value of type {0} cannot be constructed; it comes from a declaration or a node."
+    text  "类型为 {0} 的值不能构造；它来自声明或节点。"
+    state machine
+}
+
+ConstructorNamedArguments {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A constructor takes its components in order; named arguments belong on 'UE.' nodes and on function calls."
+    text  "构造函数按顺序接受分量；命名实参只用于 'UE.' 节点和函数调用。"
+    state machine
+}
+
+ConstructorNoArguments {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "{0}() has no components; write the value, as in 'float3(0.0)'."
+    text  "{0}() 没有任何分量；请写出值，例如 'float3(0.0)'。"
+    state machine
+}
+
+ConstructorArgumentType {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A constructor takes numbers, and this is {0}."
+    text  "构造函数接受数值，而这里是 {0}。"
+    state machine
+}
+
+ConstructorMatrixArgument {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A matrix cannot be a constructor component."
+    text  "矩阵不能作为构造分量。"
+    state machine
+}
+
+ConstructorCount {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "{0} needs {1} components and these arguments supply {2}."
+    text  "{0} 需要 {1} 个分量，而这些实参提供了 {2} 个。"
+    state machine
+}
+
+ConstructorComponent {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "This constructor component"
+    text  "这个构造分量"
+    state machine
+}
+
+StructConstructorCount {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' has {1} fields and this call supplies {2}."
+    text  "'{0}' 有 {1} 个字段，而这次调用提供了 {2} 个。"
+    state machine
+}
+
+StructFieldArgument {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "This struct field"
+    text  "这个结构体字段"
+    state machine
+}
+
+HyperbolicUnsupported {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it in a '/// @custom' body, where the shader compiler has it."
+    text  "材质图中没有双曲函数节点，因此 '{0}' 无法降级；请把它写在 '/// @custom' 函数体中，着色器编译器在那里提供它。"
+    state machine
+}
+
+CoreOpNoPins {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' takes its arguments in order and has no argument called '{1}'."
+    text  "'{0}' 按顺序接受实参，没有名为 '{1}' 的实参。"
+    state machine
+}
+
+CoreOpNoSuchPin {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' has no argument called '{1}'; its arguments are {2}."
+    text  "'{0}' 没有名为 '{1}' 的实参；它的实参是 {2}。"
+    state machine
+}
+
+CoreOpTooManyArguments {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' takes at most {1} arguments."
+    text  "'{0}' 最多接受 {1} 个实参。"
+    state machine
+}
+
+CoreOpArgumentTwice {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The '{0}' argument of '{1}' is given twice."
+    text  "'{1}' 的 '{0}' 实参给出了两次。"
+    state machine
+}
+
+CoreOpMissingArgument {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is missing its '{1}' argument."
+    text  "'{0}' 缺少 '{1}' 实参。"
+    state machine
+}
+
+CoreOpArityExact {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' takes {1} arguments and {2} were given."
+    text  "'{0}' 接受 {1} 个实参，但给出了 {2} 个。"
+    state machine
+}
+
+CoreOpArityRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' takes between {1} and {2} arguments, and {3} were given."
+    text  "'{0}' 接受 {1} 到 {2} 个实参，但给出了 {3} 个。"
+    state machine
+}
+
+CallToProduct {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is a {1} asset, not a function this file may call."
+    text  "'{0}' 是 {1} 资产，不是这个文件可以调用的函数。"
+    state machine
+}
+
+TooManyArguments {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' takes {1} arguments and more were given."
+    text  "'{0}' 接受 {1} 个实参，但给出的实参比这更多。"
+    state machine
+}
+
+NoSuchParameter {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' has no parameter called '{1}'."
+    text  "'{0}' 没有名为 '{1}' 的参数。"
+    state machine
+}
+
+NoSuchParameterDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' has no parameter called '{1}'; did you mean '{2}'?"
+    text  "'{0}' 没有名为 '{1}' 的参数；你是不是想写 '{2}'？"
+    state machine
+}
+
+ArgumentTwice {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is given twice in this call to '{1}'."
+    text  "在这次对 '{1}' 的调用中，'{0}' 给出了两次。"
+    state machine
+}
+
+MissingArgument {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' needs an argument for '{1}'."
+    text  "'{0}' 需要为 '{1}' 提供实参。"
+    state machine
+}
+
+ArgumentOf {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The '{0}' argument of '{1}'"
+    text  "'{1}' 的 '{0}' 实参"
+    state machine
+}
+
+OutArgumentNotLValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is an out parameter of '{1}', so its argument has to be a variable."
+    text  "'{0}' 是 '{1}' 的 out 参数，因此它的实参必须是变量。"
+    state machine
+}
+
+OutArgumentType {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' writes back {1}, and this variable is {2}; an out argument has to match exactly."
+    text  "'{0}' 写回的是 {1}，而这个变量是 {2}；out 实参必须完全匹配。"
+    state machine
+}
+
+ResultReceiverNotLValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' hands its return value to the argument in this place, so the argument has to be a variable."
+    text  "'{0}' 会把返回值交给这个位置上的实参，所以该实参必须是一个变量。"
+    state machine
+}
+
+ResultReceiverType {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' returns {1}, and the variable receiving it is {2}; a receiver has to match exactly."
+    text  "'{0}' 返回 {1}，而接收它的变量是 {2}；接收变量的类型必须完全一致。"
+    state machine
+}
+
+VoidCallAsValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' returns nothing, so its call has no value; its results come back through its out parameters."
+    text  "'{0}' 不返回任何值，因此对它的调用没有值；它的结果通过 out 参数传回。"
+    state machine
+}
+
+EnumNotSpelling {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is an enumerated property; write one of its values, as in 'SamplerType = Normal'."
+    text  "'{0}' 是枚举属性；请写出它的某个取值，例如 'SamplerType = Normal'。"
+    state machine
+}
+
+LegacyEnumerator {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is not spelled like a value of '{1}', and 1.x matched enumerators loosely, so this is '{2}'; a '.dss' writes '{2}'."
+    text  "'{0}' 的拼写不是 '{1}' 的某个取值，而 1.x 对枚举值是宽松匹配的，所以这里按 '{2}' 处理；'.dss' 中要写 '{2}'。"
+    state machine
+}
+
+UnknownEnumerator {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is not a value of '{1}' on '{2}'."
+    text  "'{0}' 不是 '{2}' 上 '{1}' 的取值。"
+    state machine
+}
+
+UnknownEnumeratorDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is not a value of '{1}'; did you mean '{2}'?"
+    text  "'{0}' 不是 '{1}' 的取值；你是不是想写 '{2}'？"
+    state machine
+}
+
+PropertyNotSpelling {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' takes a name or an asset path; write it as a quoted string."
+    text  "'{0}' 接受名称或资产路径；请写成带引号的字符串。"
+    state machine
+}
+
+PropertyNotConstant {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is written into the node itself, not connected to it, so its value has to be known at compile time."
+    text  "'{0}' 是写入节点本身的，而不是连接到节点上的，因此它的值必须在编译期确定。"
+    state machine
+}
+
+SubstrateClass {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'Substrate.' already names the node, so it takes no 'Class' argument."
+    text  "'Substrate.' 已经指明了节点，因此不接受 'Class' 实参。"
+    state machine
+}
+
+ClassNotLiteral {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'Class' takes the expression class as a quoted string."
+    text  "'Class' 需要以带引号的字符串给出表达式类。"
+    state machine
+}
+
+UnknownClass {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is not a material expression class this engine has."
+    text  "'{0}' 不是此引擎中存在的材质表达式类。"
+    state machine
+}
+
+ExpressionNeedsClass {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'UE.Expression' reaches a node this language has no name for, so it needs 'Class = \"MaterialExpressionName\"'."
+    text  "'UE.Expression' 用来访问本语言没有命名的节点，因此需要 'Class = \"MaterialExpressionName\"'。"
+    state machine
+}
+
+SubstrateNodeNeedsNewerEngine {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'Substrate.{0}' is a node Unreal Engine has from {1} on; this engine does not have it."
+    text  "'Substrate.{0}' 是 Unreal Engine 从 {1} 起才有的节点；当前引擎没有它。"
+    state machine
+}
+
+UENodeNeedsNewerEngine {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'UE.{0}' needs {1}, and this engine's node catalog does not have it."
+    text  "'UE.{0}' 需要 {1}，而当前引擎的节点目录中没有它。"
+    state machine
+}
+
+UnknownReflectedDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' is not a node; did you mean '{0}.{2}'? Node names are case-sensitive."
+    text  "'{0}.{1}' 不是节点；你是不是想写 '{0}.{2}'？节点名区分大小写。"
+    state machine
+}
+
+UnknownReflected {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' is not a node this engine has; 'UE.Expression(Class = \"...\")' reaches one the language has no name for."
+    text  "'{0}.{1}' 不是此引擎中存在的节点；本语言没有命名的节点可以通过 'UE.Expression(Class = \"...\")' 访问。"
+    state machine
+}
+
+AbstractClass {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is abstract and cannot be made into a node."
+    text  "'{0}' 是抽象类，不能创建为节点。"
+    state machine
+}
+
+PinIndexOutOfRange {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' has {2} input pin(s), counted from 0, and this argument connects pin {3}."
+    text  "'{0}.{1}' 有 {2} 个输入引脚（从 0 计数），而这个实参连接的是引脚 {3}。"
+    state machine
+}
+
+NamedOnly {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' takes named arguments: write 'Pin = value'."
+    text  "'{0}.{1}' 接受命名实参：请写成 'Pin = value'。"
+    state machine
+}
+
+TooManyPositional {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' takes {2} arguments in order; name the rest."
+    text  "'{0}.{1}' 按顺序接受 {2} 个实参；其余实参请写明名称。"
+    state machine
+}
+
+PinTwice {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is connected twice in this call."
+    text  "'{0}' 在这次调用中连接了两次。"
+    state machine
+}
+
+PinOf {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The '{0}' pin of '{1}.{2}'"
+    text  "'{1}.{2}' 的 '{0}' 引脚"
+    state machine
+}
+
+PropertyTwice {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is set twice in this call."
+    text  "'{0}' 在这次调用中设置了两次。"
+    state machine
+}
+
+DynamicInputTwice {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' is connected twice in this call."
+    text  "'{0}' 在这次调用中被连接了两次。"
+    state machine
+}
+
+DynamicInputType {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}' becomes an input of the custom node, which carries a number or a texture, and this argument is {1}."
+    text  "'{0}' 会成为 Custom 节点的一个输入，它只能承载数值或纹理，而这个实参是 {1}。"
+    state machine
+}
+
+LegacyDefaultDropped {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' has no 'DefaultValue', so the default written for this parameter is dropped, as 1.x dropped it."
+    text  "'{0}.{1}' 没有 'DefaultValue'，因此为该参数写的默认值被丢弃，与 1.x 的做法一致。"
+    state machine
+}
+
+LegacyLateBoundPin {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' lists no pin called '{2}'; it is connected by that name once the node exists, because a node may name its pins after its properties."
+    text  "'{0}.{1}' 没有列出名为 '{2}' 的引脚；节点创建后再按这个名字连接，因为节点可能以自身属性来命名引脚。"
+    state machine
+}
+
+NoSuchPinOrProperty {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' has no pin or property called '{2}'."
+    text  "'{0}.{1}' 没有名为 '{2}' 的引脚或属性。"
+    state machine
+}
+
+NoSuchPinOrPropertyDidYouMean {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' has no pin or property called '{2}'; did you mean '{3}'?"
+    text  "'{0}.{1}' 没有名为 '{2}' 的引脚或属性；你是不是想写 '{3}'？"
+    state machine
+}
+
+LegacyRequiredPin {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' leaves its required '{2}' pin unconnected, which 1.x allowed and the engine reports when the material compiles."
+    text  "'{0}.{1}' 的必需引脚 '{2}' 没有连接；1.x 允许这样做，引擎会在材质编译时报告。"
+    state machine
+}
+
+RequiredPin {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' leaves its required '{2}' pin unconnected; unless the node reads a default for it, the engine reports it when the material compiles."
+    text  "'{0}.{1}' 的必需引脚 '{2}' 没有连接；除非该节点会为它读取默认值，否则引擎会在材质编译时报告。"
+    state machine
+}
+
+RequiredPinOrConst {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' leaves its required '{2}' pin unconnected and '{3}' unset; unless the node reads a default for it, the engine reports it when the material compiles."
+    text  "'{0}.{1}' 的必需引脚 '{2}' 没有连接，'{3}' 也没有设置；除非该节点会为它读取默认值，否则引擎会在材质编译时报告。"
+    state machine
+}
+
+CustomOutputAsValue {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'{0}.{1}' is an output node, not a value: write it as a statement on a line of its own."
+    text  "'{0}.{1}' 是输出节点，不是值：请把它作为语句单独写一行。"
+    state machine
+}
+
+NoSuchTextureMethod {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A texture has no '{0}' method; it has 'Sample' and 'SampleLevel'."
+    text  "纹理没有 '{0}' 方法；它有 'Sample' 和 'SampleLevel'。"
+    state machine
+}
+
+SampleNamedArguments {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "A texture sample takes its arguments in order: an optional sampler, the coordinates, and for 'SampleLevel' the mip level."
+    text  "纹理采样按顺序接受实参：可选的采样器、坐标，以及 'SampleLevel' 需要的 mip 级别。"
+    state machine
+}
+
+SampleLevelArity {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'SampleLevel' is written 'Tex.SampleLevel(UV, Level)' or 'Tex.SampleLevel(Sampler, UV, Level)'."
+    text  "'SampleLevel' 的写法是 'Tex.SampleLevel(UV, Level)' 或 'Tex.SampleLevel(Sampler, UV, Level)'。"
+    state machine
+}
+
+SampleArity {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'Sample' is written 'Tex.Sample(UV)' or 'Tex.Sample(Sampler, UV)'."
+    text  "'Sample' 的写法是 'Tex.Sample(UV)' 或 'Tex.Sample(Sampler, UV)'。"
+    state machine
+}
+
+SampleUV {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The coordinates of a texture sample"
+    text  "纹理采样的坐标"
+    state machine
+}
+
+SampleLevelArgument {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The mip level of a texture sample"
+    text  "纹理采样的 mip 级别"
+    state machine
+}
+
+Texture2DSampleLevelArity {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'Texture2DSampleLevel' is written 'Texture2DSampleLevel(Tex, TexSampler, UV, Level)'."
+    text  "'Texture2DSampleLevel' 的写法是 'Texture2DSampleLevel(Tex, TexSampler, UV, Level)'。"
+    state machine
+}
+
+Texture2DSampleArity {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "'Texture2DSample' is written 'Texture2DSample(Tex, TexSampler, UV)'."
+    text  "'Texture2DSample' 的写法是 'Texture2DSample(Tex, TexSampler, UV)'。"
+    state machine
+}
+
+SampleNotTexture {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The first argument of a texture sample is the texture, and this is {0}."
+    text  "纹理采样的第一个实参是纹理，而这里是 {0}。"
+    state machine
+}
+
+SampleNotSampler {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The second argument of 'Texture2DSample' is the sampler, and this is {0}."
+    text  "'Texture2DSample' 的第二个实参是采样器，而这里是 {0}。"
+    state machine
+}
+
+SampleUV2 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The coordinates of a texture sample"
+    text  "纹理采样的坐标"
+    state machine
+}
+
+SampleLevelArgument2 {
+    at    Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp
+    src   "The mip level of a texture sample"
+    text  "纹理采样的 mip 级别"
+    state machine
+}

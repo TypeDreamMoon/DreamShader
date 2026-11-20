@@ -1,0 +1,17 @@
+dloc 1
+culture zh-Hans
+namespace DreamShader.CommandletRunner
+
+FlagValueNotBoolean {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandletRunner.cpp
+    src   "'-{0}={1}' is neither on nor off. A flag takes true, 1, yes or on, or false, 0, no or off, and '-{0}' alone is on; the command did nothing."
+    text  "'-{0}={1}' 既不表示开也不表示关。开关参数接受 true、1、yes 或 on，以及 false、0、no 或 off，单独写 '-{0}' 即为开；命令未执行任何操作。"
+    state machine
+}
+
+DecompileDiagnosticsOutFailed {
+    at    Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandletRunner.cpp
+    src   "The diagnostics JSON could not be written: {0}."
+    text  "无法写入诊断 JSON：{0}。"
+    state machine
+}
