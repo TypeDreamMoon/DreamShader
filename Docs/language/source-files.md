@@ -10,7 +10,7 @@ top-level blocks each may contain.
 | Declared in | — |
 | Kind | translation unit |
 | Extensions | `.dsm` material · `.dsf` function *(since 1.3.5)* · `.dsh` header |
-| Discovered under | `<Project>/DShader` by default, plus every enabled plugin's `DShader`; configurable |
+| Discovered under | `<Project>/DreamSource/Shader` by default, plus every enabled plugin's `DreamSource/Shader`; configurable — legacy `DShader` folders are still read, see [DreamSource layout](../settings/project.md#dreamsource-layout) |
 | Enforced by | the legacy front end (what a `.dsh` may hold, one `Shader` per file) and the binder (one kind of product per file) *(since 2.0.0)* |
 
 ## Synopsis
@@ -90,8 +90,8 @@ Discovery runs over a list of **source roots**, not a single directory.
 
 | Root | Directory | Writable | Contributed when |
 | :-- | :-- | :-- | :-- |
-| Project | *Source Directory*, `<Project>/DShader` by default | yes | always |
-| *(one per plugin)* | `<Plugin>/DShader` | no | the plugin is enabled, the folder exists, and *Scan Plugin Source Directories* is on |
+| Project | *Source Directory*, `<Project>/DreamSource/Shader` by default (or the legacy `<Project>/DShader` while only that exists) | yes | always |
+| *(one per plugin)* | `<Plugin>/DreamSource/Shader`, else a legacy `<Plugin>/DShader` | no | the plugin is enabled, the folder exists, and *Scan Plugin Source Directories* is on |
 
 Each root owns a `Packages` folder of its own at `<Root>/Packages`. A root is the unit of import
 resolution: an import specifier is resolved against the bases of the root that owns the importing
@@ -103,7 +103,7 @@ sync](../tools/virtual-function-tools.md) skips them, and every editor action th
 file targets the project root.
 
 > [!NOTE]
-> A plugin `DShader` folder that overlaps an existing root is ignored, with a warning naming both.
+> A plugin source folder that overlaps an existing root is ignored, with a warning naming both.
 > This happens when *Source Directory* is pointed at a plugin folder, or at a directory containing
 > one; without the check the same file would belong to two roots and its imports would resolve by
 > scan order.
@@ -112,13 +112,13 @@ The source-directory watcher registers one watch per root, so *Auto Compile On S
 plugin's sources exactly as it does for the project's.
 
 > [!NOTE]
-> The root list is cached. A `DShader` folder created while the editor is open appears when
+> The root list is cached. A plugin source folder created while the editor is open appears when
 > **Refresh** (`F5`) is pressed in the [Material Content Browser](../tools/material-browser.md); its
 > **watch**, registered once at startup, attaches on the next editor start, so that root's *Auto
 > Compile On Save* begins working then.
 
 A file under a plugin root that declares no `Root=` defaults to **that plugin's mount point** rather
-than to `/Game` — a `.dsm` in `Plugins/MoonToon/DShader` generates into `/MoonToon` with no attribute
+than to `/Game` — a `.dsm` in `Plugins/MoonToon/DreamSource/Shader` generates into `/MoonToon` with no attribute
 at all. Write `Root="/"` to opt back into `/Game`. See
 [Asset paths](../generation/asset-paths.md#the-plugin-source-root-default).
 
@@ -135,7 +135,7 @@ result is normalized to a full path.
 > [!NOTE]
 > The two exclusions are not symmetric. The all-sources scan drops **every** file under a packages
 > directory; the generatable scan drops only package **`.dsm`** files. A `.dsf` shipped inside
-> `DShader/Packages` is therefore still picked up as a generatable file and will produce function
+> `DreamSource/Shader/Packages` is therefore still picked up as a generatable file and will produce function
 > assets on a generate-all — and on the 2.0 line so is a `.dss`, a `.dsi` or a `.dsp` there.
 
 *(since 2.0.0)* The command-line verbs that name their files with `-All` use scans of their own:
@@ -152,15 +152,15 @@ The 2.0 kinds are described under [DreamShaderLang 2.0](../language-v2/index.md)
 
 | Directory | Default | Project setting |
 | :-- | :-- | :-- |
-| Source | `<Project>/DShader` | *Source Directory* |
+| Source | `<Project>/DreamSource/Shader` | *Source Directory* (*Project Settings ▸ Dream Source ▸ Shader*) |
 | Packages | `<Source>/Packages` | derived from *Source Directory*; not separately configurable |
-| Plugin source | `<Plugin>/DShader` | *Scan Plugin Source Directories* (on/off only; the path is fixed) |
-| Plugin packages | `<Plugin>/DShader/Packages` | derived; not separately configurable |
-| Generated shaders | `<Project>/Intermediate/DreamShader/GeneratedShaders` | *Generated Shader Directory* |
+| Plugin source | `<Plugin>/DreamSource/Shader` (legacy `<Plugin>/DShader`) | *Scan Plugin Source Directories* (on/off only; the path is fixed) |
+| Plugin packages | `<Plugin>/DreamSource/Shader/Packages` | derived; not separately configurable |
+| Generated shaders | `<Project>/Intermediate/DreamSource/Shader/GeneratedShaders` | *Generated Shader Directory* |
 
 A configured path that is relative is resolved against the project directory. The project's source,
-packages and generated-shader directories are created at module startup; a plugin's `DShader` folder
-is never created, only discovered. See [Project settings](../settings/project.md) and
+packages and generated-shader directories are created at module startup; a plugin's source folder
+is never created, only discovered. See [DreamSource layout](../settings/project.md#dreamsource-layout) and
 [Packages](../tools/packages.md).
 
 ## What each kind generates
@@ -183,7 +183,7 @@ a header holds no asset block.
   since 2.0.0 a header is read on its own and cannot hold a `Shader` at all, so an import never adds
   one.
 - A `.dsh` is the natural home for `VirtualFunction` declarations; the editor's *Create Virtual
-  Function* action writes one under `DShader/VirtualFunctions`. See
+  Function* action writes one under `DreamSource/Shader/VirtualFunctions`. See
   [VirtualFunction tools](../tools/virtual-function-tools.md).
 - Only a `.dsh` can be imported *(since 2.0.0)*. An `import` of a `.dsf` or a `.dsm` is
   [`DSH2252`](../diagnostics/DSH2xxx.md#dsh2252): a material or function file is compiled on its own,
@@ -208,7 +208,7 @@ The codes of an `import` that cannot be resolved, read or parsed, and of a cycle
 ## Example
 
 ```text
-<Project>/DShader/
+<Project>/DreamSource/Shader/
 ├── Materials/
 │   └── M_Water.dsm
 ├── Functions/
@@ -223,7 +223,7 @@ The codes of an `import` that cannot be resolved, read or parsed, and of a cycle
 ```
 
 ```c
-// DShader/Shared/Common.dsh — header: helpers only
+// DreamSource/Shader/Shared/Common.dsh — header: helpers only
 Namespace(Name="Common")
 {
     Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
@@ -233,7 +233,7 @@ Namespace(Name="Common")
 ```
 
 ```c
-// DShader/Functions/F_Tint.dsf — function file: declares ShaderFunction blocks
+// DreamSource/Shader/Functions/F_Tint.dsf — function file: declares ShaderFunction blocks
 import "Shared/Common.dsh";
 
 ShaderFunction(Name="Functions/F_Tint")
@@ -254,7 +254,7 @@ ShaderFunction(Name="Functions/F_Tint")
 ```
 
 ```c
-// DShader/Materials/M_Water.dsm — material file: one Shader block
+// DreamSource/Shader/Materials/M_Water.dsm — material file: one Shader block
 import "Shared/Common.dsh";
 
 Shader(Name="Materials/M_Water")
@@ -285,7 +285,7 @@ Common.dsh    ->  (nothing)
 - [ShaderFunction](shader-function.md) — the block a `.dsf` normally holds
 - [VirtualFunction](virtual-function.md) — declaring an existing asset from a `.dsh`
 - [Lexical elements](lexical.md) — comments and strings
-- [Packages](../tools/packages.md) — `DShader/Packages` and the `@scope/name` layout
+- [Packages](../tools/packages.md) — `DreamSource/Shader/Packages` and the `@scope/name` layout
 - [Project settings](../settings/project.md) — *Source Directory* and *Generated Shader Directory*
 - [Commandlet](../tools/commandlet.md) — compiling files headlessly
 - [Testing](../contributing/testing.md) — the `Tests/Corpus` fixture format

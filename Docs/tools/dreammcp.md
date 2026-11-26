@@ -171,9 +171,9 @@ The last 64 finished jobs stay readable; a job does not survive the process.
   "ok": false,
   "outcome": "source-error",
   "reason": null,
-  "summary": "Checked DShader/MCPProbe/M_McpBroken.dss: 1 error(s), 0 warning(s).",
+  "summary": "Checked DreamSource/Shader/MCPProbe/M_McpBroken.dss: 1 error(s), 0 warning(s).",
   "diagnostics": [
-    { "code": "DSH4200", "severity": "error", "file": "DShader/MCPProbe/M_McpBroken.dss", "line": 4, "column": 23,
+    { "code": "DSH4200", "severity": "error", "file": "DreamSource/Shader/MCPProbe/M_McpBroken.dss", "line": 4, "column": 23,
       "length": 13, "message": "'UndefinedTint' is not declared in this scope.", "stage": "bind",
       "doc": "https://shader.toolchain.64hz.cn/en/docs/plugin/diagnostics/dsh4xxx/#dsh4200" }
   ],
@@ -311,7 +311,7 @@ is described by its first frame, as one image, and says that nothing animates.
 ```bash
 T=$(jq -r .token Saved/DreamMCP/shader.json); P=$(jq -r .port Saved/DreamMCP/shader.json)
 curl -s -H "X-Dream-Token: $T" http://127.0.0.1:$P/dream/shader/hello
-curl -s -H "X-Dream-Token: $T" -d '{"id":"1","action":"check","args":{"file":"DShader/M_Rock.dss"}}' \
+curl -s -H "X-Dream-Token: $T" -d '{"id":"1","action":"check","args":{"file":"DreamSource/Shader/M_Rock.dss"}}' \
   http://127.0.0.1:$P/dream/shader/call
 # {"id":"1","job":"3f9c0a1d2b-1","state":"queued"}
 curl -s -H "X-Dream-Token: $T" http://127.0.0.1:$P/dream/shader/jobs/3f9c0a1d2b-1

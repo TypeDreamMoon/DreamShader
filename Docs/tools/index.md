@@ -27,17 +27,17 @@ module is editor-only, and the runtime `DreamShader` module carries no UI.
 | [Migrate](migrate.md) | `dsc migrate`: 1.x sources rewritten as `.dss`, each rewrite proved before it is written *(2.0)* |
 | [VirtualFunction tools](virtual-function-tools.md) | the conditional VirtualFunction context menu and the startup sync service |
 | [Asset rename sync](asset-rename-sync.md) | following a renamed or moved asset into the `.dsm` / `.dsf` / `.dsh` files that reference it *(since 1.9.0)* |
-| [Workspace](workspace.md) | the generated `DreamShader.code-workspace`, VSCode discovery and launch, the exported manifests — `pass-keys.json` among them *(2.1.0)* |
-| [Packages](packages.md) | `DShader/Packages`: what the plugin implements and what it does not |
+| [Workspace](workspace.md) | the generated `DreamShader.code-workspace`, VSCode discovery and launch, the exported `shader.db` documents — `pass-keys` among them *(2.1.0)* |
+| [Packages](packages.md) | `<SourceDirectory>/Packages`: what the plugin implements and what it does not |
 | [Commandlet](commandlet.md) | `-run=DreamShader` — headless compile, decompile, migrate, check and the IR tools; the Custom Pass slot registry, `pass-registry` *(2.1.0)* |
-| [Bridge](bridge.md) | request files, the diagnostics sinks, `bridge.db`, the WebSocket protocol; the watches on Custom Pass shader files *(2.1.0)* |
+| [Bridge](bridge.md) | request files, `shader.db` (diagnostics, documents, symbol index), the WebSocket protocol; the watches on Custom Pass shader files *(2.1.0)* |
 | [AI agents](ai-agents.md) | `AGENTS.md`, the six skills and publishing them with `sync-skills.ps1`, the optional MCP server, the write–check–fix loop |
 | [DreamMCP endpoint](dreammcp.md) | the HTTP endpoint an AI agent's MCP server drives: check, compile, preview, diagnostics, node lookup, decompile; the editor and the two host processes *(after 2.2.0)* |
 
 ## Which side implements what
 
 DreamShader ships as two independent products that talk through files in
-`<Project>/Saved/DreamShader/Bridge/` and one loopback WebSocket. This manual documents the Unreal
+`<Project>/Intermediate/DreamSource/` (the `shader.db` database and `Shader/Bridge/`) and one loopback WebSocket. This manual documents the Unreal
 plugin. Editor-extension behaviour is named only where the plugin's contract depends on it, and is
 labelled as such.
 
@@ -48,11 +48,11 @@ labelled as such.
 | Preview rendering (PNG frames) | Unreal plugin | the renderer, the mesh set and the clamps are plugin-side — [Preview](preview.md) |
 | Preview camera control, pitch clamping, frame acknowledgement | editor extension | the plugin applies no pitch clamp of its own |
 | Decompiler | Unreal plugin | [Decompiler](decompiler.md) |
-| `.dss` / `.dsi` / `.dsm` / `.dsh` / `.dsf` syntax highlighting, completion, hovers | editor extension | fed by the manifests the plugin exports — [Workspace](workspace.md) |
-| `.dsp` highlighting and completion | editor extension | the plugin exports `pass-keys.json` and the symbol index for it — [Workspace](workspace.md#pass-keysjson) *(2.1.0)* |
+| `.dss` / `.dsi` / `.dsm` / `.dsh` / `.dsf` syntax highlighting, completion, hovers | editor extension | fed by the `shader.db` documents the plugin exports — [Workspace](workspace.md) |
+| `.dsp` highlighting and completion | editor extension | the plugin exports the `pass-keys` document and the symbol index for it — [Workspace](workspace.md#pass-keys) *(2.1.0)* |
 | `DreamShader.code-workspace` file | Unreal plugin | rewritten on every *Open Dream Shader Workspace* |
 | Package manifest (`dreamshader.package.json`), lock file, install/update commands | editor extension | **no plugin C++ reads either file** — [Packages](packages.md) |
-| `DShader/Packages` directory creation, import resolution, auto-compile exclusion | Unreal plugin | [Packages](packages.md) |
+| `<SourceDirectory>/Packages` directory creation, import resolution, auto-compile exclusion | Unreal plugin | [Packages](packages.md) |
 
 The editor extension is published separately as `TypeDreamMoon/dreamshader-language-support`; its
 settings, commands and package store are outside the scope of this manual.
@@ -76,8 +76,8 @@ A process started with `-DreamMCPHost` is a DreamMCP host, not an editor anyone 
 endpoint and skips steps 2–6 — no bridge, no browser tab, no menus. A commandlet whose `-run=` is `Dream…Host`
 starts the endpoint at step 1. See [DreamMCP endpoint](dreammcp.md#which-process-serves-it).
 
-The bridge's own startup then resets `bridge.db`, exports the manifests (`pass-keys.json` with
-`settings.json` *(since 2.1.0)*), runs the
+The bridge's own startup then empties the session tables of `shader.db`, exports the documents (`pass-keys` with
+`settings` *(since 2.1.0)*), runs the
 [VirtualFunction sync service](virtual-function-tools.md#startup-sync-service), queues a full scan,
 opens the [preview WebSocket server](preview.md#streaming-preview) on port `17864`, registers the
 source-directory watcher, and installs the menus.

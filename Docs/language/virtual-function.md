@@ -187,7 +187,7 @@ argument rules, including the `default` sentinel for `opt` inputs, are in
   `VirtualFunction` blocks is accepted and produces nothing.
 - A `VirtualFunction` is normally kept in a `.dsh` and imported where it is needed, which is what the
   editor's *Create VirtualFunction* action does — it writes a declaration under
-  `DShader/VirtualFunctions`. See [VirtualFunction tools](../tools/virtual-function-tools.md).
+  `DreamSource/Shader/VirtualFunctions`. See [VirtualFunction tools](../tools/virtual-function-tools.md).
 - The header `Asset=` attribute wins over `Options.Asset`; the `Options` entry is only consulted when
   the attribute is missing or blank after trimming.
 - A header is parsed on its own and its declarations are declared into the importing file, so a
@@ -250,7 +250,7 @@ The complete cross-stage list lives in the [diagnostics index](../diagnostics/in
 
 ## Example
 
-`DShader/VirtualFunctions/VF_BufferWriter.dsh`:
+`DreamSource/Shader/VirtualFunctions/VF_BufferWriter.dsh`:
 
 ```c
 VirtualFunction(Name="BufferWriter")
@@ -273,7 +273,7 @@ VirtualFunction(Name="BufferWriter")
 }
 ```
 
-`DShader/M_Buffered.dsm`:
+`DreamSource/Shader/M_Buffered.dsm`:
 
 ```c
 import "VirtualFunctions/VF_BufferWriter.dsh";

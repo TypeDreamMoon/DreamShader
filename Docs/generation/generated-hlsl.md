@@ -38,7 +38,8 @@ derived from the source the [build key](caching.md) hashes, so an unchanged sour
 everything else.
 
 The virtual directory `/DreamShaderGenerated` is still mapped to the **Generated Shader Directory**
-project setting (category `Paths`, default `Intermediate/DreamShader/GeneratedShaders`) when the module
+project setting (category `Paths`, default `Intermediate/DreamSource/Shader/GeneratedShaders`; `Intermediate/DreamShader/GeneratedShaders`
+before the [DreamSource layout](../settings/project.md#dreamsource-layout), and that old default still reads as the new one) when the module
 starts, and *Tools ▸ DreamShader ▸ Clean Generated Shaders* still deletes every `*.ush` under it —
 recursively, one file at a time, never the directory itself — and queues a full forced recompile. No
 compile writes there any more; a file found there was written by a 1.x build. A material saved by a
@@ -212,7 +213,7 @@ A call in a body to a name that is no function of the file is left for the shade
 ## Example
 
 ```c
-// DShader/M_Ramp.dsm
+// DreamSource/Shader/M_Ramp.dsm
 Namespace(Name="Common")
 {
     Function float3 ApplyTint(in float3 color, in float3 tint) { return color * tint; }
@@ -239,21 +240,21 @@ The `Remap01` call becomes a Custom node with input `value` and primary output `
 
 ```hlsl
 float result = (float)0;
-// Begin DreamShader source: DShader/M_Ramp.dsm
+// Begin DreamShader source: DreamSource/Shader/M_Ramp.dsm
 // DreamShader custom: Remap01 line 7
 
     result = saturate(value * 0.5 + 0.5);
-// End DreamShader source: DShader/M_Ramp.dsm
+// End DreamShader source: DreamSource/Shader/M_Ramp.dsm
 return result;
 ```
 
 The `Common::ApplyTint` call becomes a Custom node with inputs `color` and `tint`; its body returns:
 
 ```hlsl
-// Begin DreamShader source: DShader/M_Ramp.dsm
+// Begin DreamShader source: DreamSource/Shader/M_Ramp.dsm
 // DreamShader custom: Common_ApplyTint line 4
  return color * tint; 
-// End DreamShader source: DShader/M_Ramp.dsm
+// End DreamShader source: DreamSource/Shader/M_Ramp.dsm
 ```
 
 Neither body calls another `Function`, so neither node has a wrapper and neither includes anything.
@@ -269,19 +270,19 @@ struct generated_wrapper_Desaturate_1A2B3C4D
 {
 	float DreamShaderFn_Luma(float3 c)
 	{
-// Begin DreamShader source: DShader/M_Gray.dsm
+// Begin DreamShader source: DreamSource/Shader/M_Gray.dsm
 // DreamShader custom: Luma line 1
  return dot(c, float3(0.299, 0.587, 0.114)); 
-// End DreamShader source: DShader/M_Gray.dsm
+// End DreamShader source: DreamSource/Shader/M_Gray.dsm
 	}
 
 };
 generated_wrapper_Desaturate_1A2B3C4D __ds_wrapper_1A2B3C4D;
 
-// Begin DreamShader source: DShader/M_Gray.dsm
+// Begin DreamShader source: DreamSource/Shader/M_Gray.dsm
 // DreamShader custom: Desaturate line 2
  float l = __ds_wrapper_1A2B3C4D.DreamShaderFn_Luma(c); return lerp(c, float3(l, l, l), amount); 
-// End DreamShader source: DShader/M_Gray.dsm
+// End DreamShader source: DreamSource/Shader/M_Gray.dsm
 ```
 
 ## See also

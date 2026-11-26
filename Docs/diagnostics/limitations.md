@@ -81,8 +81,8 @@ See [DreamShaderLang 2.0 ▸ What it does not have](../language-v2/index.md#what
 Every diagnostic has a code, a severity and its own line and column (since 2.1.0), and a stage reports all of its
 errors. The remaining edges are elsewhere:
 
-- The bridge does not run inside a commandlet or a cook, so a headless run produces no `diagnostics.json`, no shards and
-  no `bridge.db` rows — only log lines, and a `-DiagnosticsOut` file. See [Commandlet](../tools/commandlet.md).
+- The bridge does not run inside a commandlet or a cook, so a headless run produces no `diagnostics` rows in
+  `shader.db` — only log lines, and a `-DiagnosticsOut` file. See [Commandlet](../tools/commandlet.md).
 - The VirtualFunction sync service's messages have no `DSHnnnn` code (except `DSH9001`, for a source that uses `#if`);
   they are stored with `code = virtual-function-sync`.
 - The site has no page per code; each code's messages, cause and fix are in the plugin repository's
@@ -190,7 +190,7 @@ warning `DSH7204`.
 | One `Shader` per file | `DSH2250`; per file now, not across the import closure |
 | Only a `.dsh` can be imported | importing a `.dsf` / `.dsm` is `DSH2252`; a function another file generates is called through a `VirtualFunction` / `extern` prototype |
 | A `.dsh` holds functions and `VirtualFunction`s | decided per declaration, `DSH2249` — `Shader(` in a comment is fine |
-| Sources under `DShader/Packages` | `Library/*.dsh` is never compiled directly and can be imported; `Examples/*.dsm` is never compiled on any path; the rest is on [Packages](../tools/packages.md#source-file-enumeration) |
+| Sources under `DreamSource/Shader/Packages` | `Library/*.dsh` is never compiled directly and can be imported; `Examples/*.dsm` is never compiled on any path; the rest is on [Packages](../tools/packages.md#source-file-enumeration) |
 | Resolution is root-relative | absolute machine paths do not travel; keep imports relative to the file, the source root or a package |
 
 ## Custom Pass boundaries

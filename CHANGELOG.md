@@ -38,6 +38,32 @@
 
 ### Changed
 
+- **Sources move to `DreamSource/Shader/`, and the source directory is a setting of its own.** Every Dream plugin
+  now keeps its sources side by side under one project folder, `DreamSource/`. The project's DreamShader sources
+  default to `DreamSource/Shader/` — with their `Packages/`, `.dreampass/`, `dreamshader.lock.json` and
+  `DreamShader.code-workspace` — set in *Project Settings ▸ Dream Source ▸ Shader* (`Config/DefaultDreamSource.ini`,
+  `[/Script/DreamShader.DreamShaderSourceSettings] SourceDirectory`); a change takes effect after an editor
+  restart. A plugin ships its sources in `<Plugin>/DreamSource/Shader/`. The old setting is shown as *Source
+  Directory (Deprecated)* and is still read while the new one is left at its default, unless it holds the old
+  default `DShader`. Nothing breaks: a project or plugin with only a `DShader/` folder keeps using it, with a
+  deprecation warning in the log; when both exist, `DShader/` is ignored with a warning to merge it. The editor
+  that owns the bridge offers to move `DShader/` — **Migrate** moves the folder, rebases the workspace file's
+  folder paths and deletes the old bridge state, then asks for a restart; **Don't show again** silences it on this
+  machine. The generated shader directory defaults to `Intermediate/DreamSource/Shader/GeneratedShaders`, and the
+  old default reads as the new one. See
+  [DreamSource layout](Docs/settings/project.md#dreamsource-layout).
+- **What the editor tells editor extensions is one SQLite file, `Intermediate/DreamSource/shader.db`.** It replaces
+  `Saved/DreamShader/Bridge/bridge.db`, the JSON manifests beside it (`material-expressions`, `settings`,
+  `pass-keys`, `substrate-builtins`, `preprocessor-defines`, the builtin catalog, `preview`), `diagnostics.json` with
+  its `diagnostics/` shards, and the symbol indices under `Saved/DreamShader/Index/`: the manifests are rows of a
+  `documents` table, the diagnostics one row per file, the symbol index one row per source in `source_index`, and a
+  `meta` table carries a revision per part so a reader reloads only what changed. The file is never deleted — a
+  language server may hold it open; a new bridge owner empties the previous session's diagnostics and preview
+  result, and closing the editor leaves the last diagnostics in place, as `diagnostics.json` did. Request files,
+  `status.json` and `owner.lock` move to `Intermediate/DreamSource/Shader/Bridge/`, preview images to
+  `Intermediate/DreamSource/Shader/Preview/`. `dsc index` and `dsc export-catalog` write the database too, and
+  files only with `-Out`. An editor extension from before this reads the old folder and sees nothing new; update it
+  with the plugin. See [Bridge](Docs/tools/bridge.md#shaderdb).
 - **An HLSL pass at `BeginView` can read `View`.** The renderer makes a view's uniform buffer only after
   `BeginView`, so a `compute` pass or a `fullscreen` pass with HLSL could not use `View` there: a use was a compile
   error at its line, or `DSH8318` when it came through the file's `hlsl` block, and a pass that needed the camera had

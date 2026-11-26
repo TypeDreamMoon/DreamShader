@@ -246,7 +246,7 @@ DreamShader cook asset generation complete.
 > `[Cook] Failed` line comes after the successes.
 
 One exception, and it is why the count in that entry says *this project's*: a source that lives under
-an engine or marketplace plugin's `DShader` folder. That plugin's products are its own — gate 3 refuses
+an engine or marketplace plugin's `DreamSource/Shader` folder. That plugin's products are its own — gate 3 refuses
 to generate into its mount ([`DSH8090`](../diagnostics/DSH8xxx.md#dsh8090)) and the project may not edit
 its files either, so a failure there is logged as `[Cook] Not this project's to build (plugin
 '{Name}')` and the cook goes on; the plugin ships the assets its sources describe, and those are what

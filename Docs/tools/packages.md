@@ -2,17 +2,17 @@
 
 > [DreamShader](../index.md) » [Tools](index.md) » **Packages**
 
-`DShader/Packages` — the install root for reusable DreamShaderLang libraries, resolvable by `import`
+`DreamSource/Shader/Packages` — the install root for reusable DreamShaderLang libraries, resolvable by `import`
 in a 1.x file and by `#include` in a `.dss`. A package is somebody else's source: the plugin compiles
 it only through what includes it, except what the package asks to have built — its
 [assets](#package-assets) *(after 2.1.2)*: material functions for the Material Editor, generated into the
-package's own asset folder. Every source root has one: the project's, and `<Plugin>/DShader/Packages`
+package's own asset folder. Every source root has one: the project's, and `<Plugin>/DreamSource/Shader/Packages`
 for a plugin that ships a [source root](../language/source-files.md#source-roots).
 
 | | |
 | :-- | :-- |
 | Kind | directory convention |
-| Path | `<SourceDirectory>/Packages` — default `<Project>/DShader/Packages` |
+| Path | `<SourceDirectory>/Packages` — default `<Project>/DreamSource/Shader/Packages` |
 | Created by | the `DreamShader` runtime module at startup, unconditionally |
 | Configurable | only indirectly, through the *Source Directory* project setting |
 | Implemented by | the plugin: the import root, the enumeration rules and the package assets. Everything else: the editor extensions |
@@ -21,7 +21,7 @@ for a plugin that ships a [source root](../language/source-files.md#source-roots
 
 ```text
 <Project>/
-└─ DShader/                              <SourceDirectory>
+└─ DreamSource/Shader/                   <SourceDirectory>
    ├─ Materials/                         ordinary sources — compiled, listed, synced
    │  └─ M_Sample.dsm
    ├─ dreamshader.lock.json              written by the extension
@@ -146,7 +146,7 @@ What a feature does with the package tree:
 
 > [!WARNING]
 > `Examples/**` inside a package is never compiled by any path, and never appears in the Material
-> Content Browser. To use an example, copy it out of `DShader/Packages` into `DShader/` (or any
+> Content Browser. To use an example, copy it out of `DreamSource/Shader/Packages` into `DreamSource/Shader/` (or any
 > subdirectory of it that is not `Packages`).
 
 ## Package assets
@@ -164,9 +164,9 @@ Everything a package builds goes under its **asset root** unless the source name
 
 | Package | Asset root |
 | :-- | :-- |
-| `<Project>/DShader/Packages/@typedreammoon/dreamshader-blender` | `/Game/DreamShaderPackages/typedreammoon/dreamshader-blender` |
-| `<Project>/DShader/Packages/dream-noise` | `/Game/DreamShaderPackages/dream-noise` |
-| `<Plugin>/DShader/Packages/@scope/name` | `/<Plugin>/DreamShaderPackages/scope/name` |
+| `<Project>/DreamSource/Shader/Packages/@typedreammoon/dreamshader-blender` | `/Game/DreamShaderPackages/typedreammoon/dreamshader-blender` |
+| `<Project>/DreamSource/Shader/Packages/dream-noise` | `/Game/DreamShaderPackages/dream-noise` |
+| `<Plugin>/DreamSource/Shader/Packages/@scope/name` | `/<Plugin>/DreamShaderPackages/scope/name` |
 
 The `@` is dropped and any character a package path cannot hold becomes `_`. A source under `Assets`
 adds its folder under `Assets` (`Assets/Noise/MF_X.dss` → `<asset root>/Noise/MF_X`); a 1.x `Name=` with
@@ -338,7 +338,7 @@ Install accepts either a `owner/repo` shorthand or a full `https://github.com/ow
 
 ## Example
 
-A package installed at `DShader/Packages/@typedreammoon/dream-noise/`, consumed by a project material:
+A package installed at `DreamSource/Shader/Packages/@typedreammoon/dream-noise/`, consumed by a project material:
 
 ```c
 import "@typedreammoon/dream-noise/Library/Noise.dsh";
@@ -366,9 +366,9 @@ Resolution of the specifier:
 
 ```text
 specifier   @typedreammoon/dream-noise/Library/Noise.dsh
-candidate 1 <Project>/DShader/Materials/@typedreammoon/dream-noise/Library/Noise.dsh   missing
-candidate 2 <Project>/DShader/@typedreammoon/dream-noise/Library/Noise.dsh             missing
-candidate 3 <Project>/DShader/Packages/@typedreammoon/dream-noise/Library/Noise.dsh    resolved
+candidate 1 <Project>/DreamSource/Shader/Materials/@typedreammoon/dream-noise/Library/Noise.dsh   missing
+candidate 2 <Project>/DreamSource/Shader/@typedreammoon/dream-noise/Library/Noise.dsh             missing
+candidate 3 <Project>/DreamSource/Shader/Packages/@typedreammoon/dream-noise/Library/Noise.dsh    resolved
 ```
 
 Dropping the extension resolves identically:

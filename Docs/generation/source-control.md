@@ -6,8 +6,8 @@ What to commit, what to ignore, and how to keep a team on one answer.
 
 | | |
 | :-- | :-- |
-| Always commit | every `.dss`, `.dsi`, `.dsp`, `.dsh`, `.dsm` and `.dsf` — the sources are the material — and `DShader/.dreampass/` when a `.dsp` has an HLSL pass |
-| Never commit | `Intermediate/DreamShader/`, `Saved/DreamShader/` |
+| Always commit | every `.dss`, `.dsi`, `.dsp`, `.dsh`, `.dsm` and `.dsf` — the sources are the material — and `DreamSource/Shader/.dreampass/` when a `.dsp` has an HLSL pass |
+| Never commit | `Intermediate/DreamSource/` (with `shader.db`), `Saved/DreamShader/`, and the pre-DreamSource `Intermediate/DreamShader/` |
 | Your choice | the generated `.uasset` files — this page is about that choice |
 | Tool | [`dsc list-generated`](../tools/commandlet.md#list-generated) — every asset the sources build, without building any |
 | Since | `2.0.0` |
@@ -194,17 +194,21 @@ decide about.
 
 ## Notes
 
-- **`DShader/.dreampass/` is source, under either recipe.** It holds the snapshots of the `.usf` files
+- **`DreamSource/Shader/.dreampass/` is source, under either recipe.** It holds the snapshots of the `.usf` files
   the `.dsp` pipelines' HLSL passes use, and the slot registry the global shaders are built from
   ([HLSL passes](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)). Those shaders are compiled from
   the snapshots, never from the files being edited, so the snapshots are what a teammate's editor and
   the cook run: a checkout without them runs the empty stub of every slot until its `.dsp` files are
   compiled again. Commit the folder with the `.dsp` and `.usf` change that produced it; a conflict in
   it is resolved by taking either side and compiling the `.dsp` files again, never by hand.
-- **`Intermediate/DreamShader/GeneratedShaders/*.ush`** is what 1.x wrote for `Function` blocks; no
-  compile writes there since 2.0.0 ([Generated HLSL](generated-hlsl.md#location)). Never commit it;
-  Unreal's stock ignore rules already cover `Intermediate/`.
-- **`Saved/DreamShader/`** holds dumps, indices, backups of migrated sources and the bridge's state.
+- **`Intermediate/DreamSource/Shader/GeneratedShaders/*.ush`** (`Intermediate/DreamShader/GeneratedShaders/`
+  before the [DreamSource layout](../settings/project.md#dreamsource-layout)) is where 1.x wrote `Function`
+  blocks; no compile writes there since 2.0.0 ([Generated HLSL](generated-hlsl.md#location)). Never
+  commit it; Unreal's stock ignore rules already cover `Intermediate/`.
+- **`Intermediate/DreamSource/shader.db`** is the diagnostics, manifests and symbol index the editor
+  writes for editor extensions ([Bridge](../tools/bridge.md#shaderdb)); every editor rebuilds it.
+- **`Saved/DreamShader/`** holds dumps and backups of migrated sources (and, before the DreamSource
+  layout, the bridge's state and the symbol indices).
   Stock ignore rules cover `Saved/` too; `Saved/DreamShader/Migrated/` is the one folder worth a look
   before a clean, since it is where [`dsc migrate`](../tools/migrate.md) moves the 1.x originals.
 - **A plugin that ships DreamShader sources** has the same choice for its own `Content/`. Shipping the

@@ -8,8 +8,8 @@ you want what only a `.dss` has — real expressions and control flow, `#include
 beside the material, comments that survive tooling.
 
 ```powershell
-./dsc.ps1 migrate DShader/Materials/M_Foo.dsm -Check    # prove the rewrite, write nothing
-./dsc.ps1 migrate DShader/Materials/M_Foo.dsm           # write M_Foo.dss, move M_Foo.dsm away
+./dsc.ps1 migrate DreamSource/Shader/Materials/M_Foo.dsm -Check    # prove the rewrite, write nothing
+./dsc.ps1 migrate DreamSource/Shader/Materials/M_Foo.dsm           # write M_Foo.dss, move M_Foo.dsm away
 ./dsc.ps1 migrate -All -Check                           # every 1.x source of the writable roots
 ./dsc.ps1 migrate -Root MoonToon -Check                 # one source root, by its or its plugin's name
 ```

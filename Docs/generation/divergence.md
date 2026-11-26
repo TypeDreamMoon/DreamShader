@@ -141,7 +141,7 @@ reports [`DSH8207`](../diagnostics/DSH8xxx.md#dsh8207), whose message carries th
 
 ```text
 Asset '/Game/Materials/M_Emissive.M_Emissive' was edited by hand since DreamShader generated it from
-'DShader/Materials/M_Emissive.dsm', so it was NOT rebuilt (rebuilding would destroy those edits).
+'DreamSource/Shader/Materials/M_Emissive.dsm', so it was NOT rebuilt (rebuilding would destroy those edits).
 Use the notification, or right-click the asset > DreamShader, and choose one: Revert to Source,
 Adopt Into Source, or Detach From DreamShader.
 ```

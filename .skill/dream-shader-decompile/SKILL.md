@@ -57,14 +57,14 @@ Without `-Out` the destination is computed from the asset's package path:
 
 | Asset class | Lands in | Extension |
 | :-- | :-- | :-- |
-| `UMaterial` | `DShader/Decompiled/Materials/<package path>` | `.dss` |
-| `UMaterialFunction` | `DShader/Decompiled/Functions/<package path>` | `.dss` |
-| `UMaterialFunctionMaterialLayer` | `DShader/Decompiled/Layers/<package path>` | `.dss` |
-| `UMaterialFunctionMaterialLayerBlend` | `DShader/Decompiled/LayerBlends/<package path>` | `.dss` |
-| `UMaterialInstanceConstant` | `DShader/Decompiled/Instances/<package path>` | `.dsi` |
-| `UDreamPassPipeline` *(since 2.1.0)* | `DShader/Decompiled/Pipelines/<package path>` | `.dsp` |
+| `UMaterial` | `DreamSource/Shader/Decompiled/Materials/<package path>` | `.dss` |
+| `UMaterialFunction` | `DreamSource/Shader/Decompiled/Functions/<package path>` | `.dss` |
+| `UMaterialFunctionMaterialLayer` | `DreamSource/Shader/Decompiled/Layers/<package path>` | `.dss` |
+| `UMaterialFunctionMaterialLayerBlend` | `DreamSource/Shader/Decompiled/LayerBlends/<package path>` | `.dss` |
+| `UMaterialInstanceConstant` | `DreamSource/Shader/Decompiled/Instances/<package path>` | `.dsi` |
+| `UDreamPassPipeline` *(since 2.1.0)* | `DreamSource/Shader/Decompiled/Pipelines/<package path>` | `.dsp` |
 
-So `/Game/Materials/Metal/M_Steel` → `DShader/Decompiled/Materials/Game/Materials/Metal/M_Steel.dss`.
+So `/Game/Materials/Metal/M_Steel` → `DreamSource/Shader/Decompiled/Materials/Game/Materials/Metal/M_Steel.dss`.
 With `-Format Legacy` the same places get `.dsm` / `.dsf`, and an instance or a pipeline is refused.
 
 ## What comes out
@@ -112,7 +112,7 @@ export void M_Steel(inout material m)
    each one means and what to do about it.
 2. **Compile it as-is**, to establish that the export is at least buildable:
    ```bash
-   pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/Decompiled/Materials/…/M_Steel.dss -Force -CleanNew
+   pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DreamSource/Shader/Decompiled/Materials/…/M_Steel.dss -Force -CleanNew
    ```
    Without `-KeepAssetPath` this is safe by construction: a `.dss` builds its asset where the file
    is, so a file under `Decompiled/…` builds a *new* asset (`/Game/Decompiled/Materials/…`) and

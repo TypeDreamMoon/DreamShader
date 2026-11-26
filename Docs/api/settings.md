@@ -148,8 +148,8 @@ The panel is therefore **Project Settings ▸ DreamPlugin ▸ Dream Shader** —
 `UDreamShaderSettings::UDreamShaderSettings()` sets exactly two members:
 
 ```cpp
-SourceDirectory.Path          = TEXT("DShader");
-GeneratedShaderDirectory.Path = TEXT("Intermediate/DreamShader/GeneratedShaders");
+SourceDirectory.Path          = FString();  // deprecated key; empty means "not set"
+GeneratedShaderDirectory.Path = GetDefaultGeneratedShaderDirectory();  // Intermediate/DreamSource/Shader/GeneratedShaders
 ```
 
 > [!NOTE]
@@ -167,8 +167,8 @@ Every `UPROPERTY` is `Config, EditAnywhere`.
 | `ShadingModelMappings` | `TMap<FString, TEnumAsByte<EMaterialShadingModel>>` | `Mappings` | *empty* | — |
 | `BlendModeMappings` | `TMap<FString, TEnumAsByte<EBlendMode>>` | `Mappings` | *empty* | — |
 | `MaterialDomainMappings` | `TMap<FString, TEnumAsByte<EMaterialDomain>>` | `Mappings` | *empty* | — |
-| `SourceDirectory` | `FDirectoryPath` | `Paths` | `DShader` | `RelativeToGameDir` |
-| `GeneratedShaderDirectory` | `FDirectoryPath` | `Paths` | `Intermediate/DreamShader/GeneratedShaders` | `RelativeToGameDir` |
+| `SourceDirectory` | `FDirectoryPath` | `Paths` | *empty* | `RelativeToGameDir`, `DisplayName="Source Directory (Deprecated)"`, `ToolTip`. **Deprecated** — see [`UDreamShaderSourceSettings`](#udreamshadersourcesettings) |
+| `GeneratedShaderDirectory` | `FDirectoryPath` | `Paths` | `Intermediate/DreamSource/Shader/GeneratedShaders` | `RelativeToGameDir`, `ToolTip`. The pre-DreamSource default `Intermediate/DreamShader/GeneratedShaders` reads as the new one |
 | `bScanPluginSourceDirectories` | `bool` | `Paths` | `true` | `DisplayName="Scan Plugin Source Directories"`, `ToolTip` |
 | `DefaultBackend` | `EDreamShaderDefaultBackend` | `Compiler` | `ThinCustom` | `DisplayName="Default Compiler Backend"`, `ToolTip` |
 | `bShowEphemeralMaterials` | `bool` | `Compiler` | `false` | `DisplayName="Show Ephemeral Materials"`, `ToolTip` |
@@ -191,6 +191,40 @@ declaration.
 > materialize on an explicit action, a cook, or when a child instance is created. `Graph` materials
 > and material functions have no Ephemeral state at all. `DefaultBackend` is the single compiler
 > knob. See [Ephemeral materials](../generation/ephemeral.md).
+
+## `UDreamShaderSourceSettings`
+
+*(DreamSource layout)* Declared in its own header, `DreamShaderSourceSettings.h`, in the same module.
+
+```cpp
+UCLASS(Config=DreamSource, DefaultConfig, meta=(DisplayName="Shader"))
+class DREAMSHADER_API UDreamShaderSourceSettings : public UDeveloperSettings
+{
+public:
+    UPROPERTY(Config, EditAnywhere, Category="Source", meta=(RelativeToGameDir))
+    FDirectoryPath SourceDirectory;   // default "DreamSource/Shader"
+
+    static const TCHAR* GetDefaultSourceDirectory();
+
+    virtual FName GetContainerName() const override { return TEXT("Project"); }
+    virtual FName GetCategoryName() const override { return TEXT("Dream Source"); }
+    virtual FName GetSectionName() const override { return TEXT("Shader"); }
+};
+```
+
+| | |
+| :-- | :-- |
+| Panel | **Project Settings ▸ Dream Source ▸ Shader** |
+| File | `Config/DefaultDreamSource.ini`, section `[/Script/DreamShader.DreamShaderSourceSettings]`, key `SourceDirectory` — e.g. `SourceDirectory=(Path="DreamSource/Shader")` |
+| Takes effect | after an editor restart — the Custom Pass shader directory mapping and the source watchers are made at startup |
+
+Every Dream plugin keeps its source directory in `Config/DefaultDreamSource.ini`, one section each, so
+Project Settings shows them together under *Dream Source* and the editor extensions have one file to
+read; the section and key are a contract with the DreamShader language extension. Do not read the
+property directly: [`ResolveProjectSourceDirectory`](dreamshader-module.md#project-source-directory)
+applies the rest of the rule — the deprecated `UDreamShaderSettings::SourceDirectory` key, and the
+legacy `DShader/` directory. The rule is described on
+[DreamSource layout](../settings/project.md#dreamsource-layout).
 
 ## `NormalizeMappingKey`
 
@@ -445,4 +479,4 @@ UDreamShaderSettings::BuildDefaultBlendModeMappings(Aliases);   // 12 entries: 8
 - [`DreamShaderMaterialInstance.h`](material-instance.md) — the class whose `IsAsset()` reads `bShowEphemeralMaterials`
 - [`DreamShaderVersionCompat.h`](version-compat.md) — `DREAMSHADER_WITH_SUBSTRATE_BUILTINS`, the `Strata` gate
 - [Shader settings](../settings/material.md) — the `Settings` keys these resolvers serve
-- [Workspace](../tools/workspace.md) — the exported alias manifest and `bridge.db`
+- [Workspace](../tools/workspace.md) — the exported alias document and its `shader.db` table

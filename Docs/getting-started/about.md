@@ -33,7 +33,7 @@ part into text:
 | 1.x sources need upgrading | `dsc migrate` rewrites them as `.dss`, proving the same graph before it writes (since 2.0.0) |
 | Generated assets cannot be traced to a source | `DreamShader.SourceFile` and `DreamShader.SourceHash` are written to package metadata |
 | A rebuild silently overwrites a hand-edited asset | the output digest `DreamShader.OutputDigest` stops the rebuild and offers Revert / Adopt / Detach (since 1.8.0) |
-| A plugin wants to ship its own material sources | every enabled plugin with a `DShader` folder contributes a source root (since 1.6.0) |
+| A plugin wants to ship its own material sources | every enabled plugin with a `DreamSource/Shader` folder contributes a source root (since 1.6.0) |
 | You want real expressions and control flow in the graph | `.dss`: HLSL with declarations, one asset per `export` (since 2.0.0) |
 | Material instances are clicked together in a panel | `.dsi`: the parent and the overrides as text (since 2.0.0) |
 | You want render passes the engine does not have — outline masks, blurs, screen-space effects, compute writing data textures | `.dsp` Custom Pass pipelines, without changing the engine (since 2.1.0), on (since UE 5.8) |
@@ -92,8 +92,8 @@ See [Limitations](../diagnostics/limitations.md#engine-version-boundaries).
 
 ## Who implements what
 
-DreamShader is really two separate products that talk through files under `<Project>/Saved/DreamShader/Bridge/` and a
-local loopback WebSocket.
+DreamShader is really two separate products that talk through `<Project>/Intermediate/DreamSource/shader.db`, files under
+`<Project>/Intermediate/DreamSource/Shader/Bridge/` and a local loopback WebSocket.
 
 | Capability | Implemented by |
 | --- | --- |
@@ -101,13 +101,13 @@ local loopback WebSocket.
 | Menus, toolbar, context menus, the Material Content Browser tab | the Unreal plugin |
 | Preview rendering and PNG frames | the Unreal plugin |
 | The Custom Pass runtime | the Unreal plugin (`DreamShaderPass`) |
-| Creating `DShader/Packages`, `import` / `#include` resolution, compile exclusions | the Unreal plugin |
+| Creating `DreamSource/Shader/Packages`, `import` / `#include` resolution, compile exclusions | the Unreal plugin |
 | Highlighting, completion, hover, navigation, local diagnostics | the editor extension |
 | Preview camera controls and frame acknowledgement | the editor extension |
 | `dreamshader.package.json`, `dreamshader.lock.json`, install / update / store | the editor extension |
 
 The plugin's C++ never reads either package file. A package resolves only because its files sit under
-`DShader/Packages`.
+`DreamSource/Shader/Packages`.
 
 ## Repositories
 

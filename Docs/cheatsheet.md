@@ -19,13 +19,13 @@ GLSL or the material editor.
 | `.dsh` | shared helpers, pulled in with `#include "Path/File.dsh"` | nothing on its own |
 | `.dsm` / `.dsf` | the 1.x language; still builds, write new sources as `.dss` | as 1.x did |
 
-`DShader/Props/M_Crate.dss` with `export void M_Crate(…)` builds `/Game/Props/M_Crate`: the folder under
-`DShader/`, the name of the `export`. `/// @name Other` renames the asset.
+`DreamSource/Shader/Props/M_Crate.dss` with `export void M_Crate(…)` builds `/Game/Props/M_Crate`: the folder under
+`DreamSource/Shader/`, the name of the `export`. `/// @name Other` renames the asset.
 
 ## A material
 
 ```hlsl
-// DShader/CheatSheet/M_CheatSheetSurface.dss -- a lit, textured surface with an optional pulsing edge glow
+// DreamSource/Shader/CheatSheet/M_CheatSheetSurface.dss -- a lit, textured surface with an optional pulsing edge glow
 #pragma material(Domain = Surface, BlendMode = Opaque, ShadingModel = DefaultLit)
 
 /// @group Surface   @sort 10   @default /Engine/EngineResources/WhiteSquareTexture
@@ -77,7 +77,7 @@ export void M_CheatSheetSurface(inout material m)   // the entry: this signature
 ## A UI material
 
 ```hlsl
-// DShader/CheatSheet/M_CheatSheetPanel.dss -- a translucent UI panel: a soft vertical gradient and a scrolling band
+// DreamSource/Shader/CheatSheet/M_CheatSheetPanel.dss -- a translucent UI panel: a soft vertical gradient and a scrolling band
 #pragma material(Domain = UI, BlendMode = Translucent, ShadingModel = Unlit)
 
 /// @group Panel   @sort 10   @desc Base colour; alpha scales the opacity
@@ -153,7 +153,7 @@ Keys are `UMaterial` property names; enum values drop their prefix (`Translucent
 ## Material functions
 
 ```hlsl
-// DShader/CheatSheet/MF_CheatSheetTiling.dss -- a material function: tiled UV plus the cell index
+// DreamSource/Shader/CheatSheet/MF_CheatSheetTiling.dss -- a material function: tiled UV plus the cell index
 /// @library CheatSheet|UV
 /// @param UV       The coordinates to tile.
 /// @param Scale    Tiles per UV unit.
@@ -179,7 +179,7 @@ An entry and other `export`s cannot share a file: put a material and its functio
 ## Instances — `.dsi`
 
 ```hlsl
-// DShader/CheatSheet/MI_CheatSheetSurface_Red.dsi
+// DreamSource/Shader/CheatSheet/MI_CheatSheetSurface_Red.dsi
 #pragma instance(Parent = "M_CheatSheetSurface")
 
 uniform float4 Tint = float4(0.9, 0.2, 0.15, 1.0);
@@ -192,7 +192,7 @@ parent declares, with the parent's type; metadata belongs to the parent.
 ## Custom Pass pipelines — `.dsp` (UE 5.8+)
 
 ```hlsl
-// DShader/Passes/CP_Highlight.dsp
+// DreamSource/Shader/Passes/CP_Highlight.dsp
 #pragma pipeline(Order = 100)
 
 /// @group Look

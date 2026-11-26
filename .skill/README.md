@@ -45,8 +45,8 @@ stuck               dream-shader-diagnose
 ## Quick start
 
 ```powershell
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/UI/M_Panel.dss
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/UI/M_Panel.dss -Force -CleanNew
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DreamSource/Shader/UI/M_Panel.dss
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DreamSource/Shader/UI/M_Panel.dss -Force -CleanNew
 ```
 
 Run it from anywhere inside the project. The driver walks up for the `.uproject`, resolves the engine from its
@@ -63,7 +63,7 @@ Run it from anywhere inside the project. The driver walks up for the `.uproject`
 | `dump-layout <file>` \| `-All` | draws the IR graph layouts — `Blocks`, `SourceBands`, `Layered` — as SVG, building nothing |
 | `fmt <file>` \| `-All` | rewrites 2.0 sources in the printer's layout, refusing any file it cannot vouch for; `-Check` writes nothing |
 | `list-generated <file>` \| `-All` | names every asset the sources build, building none: `-ListAs Packages \| Files \| GitIgnore \| Json` — [`Docs/generation/source-control.md`](../Docs/generation/source-control.md) |
-| `pass-registry` | lists the Custom Pass HLSL slots in `DShader/.dreampass`; `-Gc` frees the dead ones; `-Rebuild` compiles every `.dsp` again and rewrites the registry — [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md#pass-registry) |
+| `pass-registry` | lists the Custom Pass HLSL slots in `DreamSource/Shader/.dreampass`; `-Gc` frees the dead ones; `-Rebuild` compiles every `.dsp` again and rewrites the registry — [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md#pass-registry) |
 | `info` | prints the plugin version and commit, the engine version and kind, the OS, the UI language and the shell, for a bug report. Starts no engine, prints no path; a value it cannot find is `unknown` |
 
 Every verb that takes a source takes all five compilable kinds: `.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf`. The full
@@ -79,7 +79,7 @@ flag surface: [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md); the ski
 | Whole messages | a compile's report is one multi-line log message — every `Generated` line, then `Warnings:` and the warnings, or every error — and the engine prefixes only its first line. The driver keeps each message whole, and drops the engine's end-of-run summary that repeats them |
 | Asset accounting | snapshots `.uasset` files under project and plugin Content folders, reports observed changes, and uses a commandlet save manifest to distinguish its own new assets from concurrent editor/importer writes. The manifest also includes a `.dsp`'s saved render targets and `check -Shaders`' assets |
 | Cleanup | `-CleanNew` deletes a new asset only when the current commandlet's save manifest names it and its content still matches the saved fingerprint. Pre-existing, unrelated and subsequently modified files are retained; empty generated folders are pruned |
-| Registry report | after a run that can touch them, the files under `DShader/.dreampass` that changed — sources to commit with the `.dsp` |
+| Registry report | after a run that can touch them, the files under `DreamSource/Shader/.dreampass` that changed — sources to commit with the `.dsp` |
 | Paths and lists | a relative `-Out` / `-DiagnosticsOut` is the working directory's, not the engine's Binaries folder; `-Define A=1,B` is split into one `-Define=` per item |
 
 The commandlet writes its save manifest to `<Project>/Saved/DreamShader/AssetWrites/<run-id>.json`, and the
@@ -96,7 +96,7 @@ Rebuild the plugin when updating the driver: older commandlet binaries do not pr
 
 > [!WARNING]
 > **`compile -All` overwrites assets you may not own.** It builds every source of every source root — the
-> project's and **each enabled plugin's** `DShader/` — into those `Content/` folders, and `-CleanNew` never
+> project's and **each enabled plugin's** `DreamSource/Shader/` — into those `Content/` folders, and `-CleanNew` never
 > deletes what existed before: a rewritten tracked asset is reported in red, with its restore command. Compile
 > single files while working; keep `-All` for `check`.
 
@@ -170,7 +170,7 @@ committed, everyone runs `sync-skills.ps1` once.
 - **A stage reports all of its errors at once.** The pipeline stops between stages, so a syntax error hides the
   binder's errors behind it; fixing it can bring out more.
 - **The editor bridge never runs inside a commandlet** — no watcher, no WebSocket on 17864, no
-  `diagnostics.json`. A headless run's diagnostics are in the log, which the driver prints.
+  diagnostics in `shader.db`. A headless run's diagnostics are in the log, which the driver prints.
 - **A commandlet flag is bare, or `=true` / `=false`** when calling it by hand (also `1`/`0`, `yes`/`no`,
   `on`/`off`). Any other value is `DSH9110`, and the command does nothing. The driver always writes flags bare.
 

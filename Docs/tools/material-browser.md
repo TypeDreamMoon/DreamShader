@@ -66,7 +66,7 @@ next opened.
 | Button | *(gear)* | Opens *Project Settings ▸ DreamPlugin ▸ DreamShader* |
 
 Every compile started from this tab goes through the editor bridge, so its result reaches the
-diagnostics store, `diagnostics.json` and the VSCode extension exactly as a compile-on-save does,
+diagnostics store, the `diagnostics` table of `shader.db` and the VSCode extension exactly as a compile-on-save does,
 and a success clears the file's previous error.
 
 ## Navigation
@@ -76,7 +76,7 @@ A tree of two groups. Selecting a node **scopes the list and switches the mode**
 | Node | Scope |
 | :-- | :-- |
 | **Sources** | every source under every root (Sources mode) |
-| **Sources ▸ *root*** | one root — *Project*, or a plugin that ships a `DShader` folder — with the number of sources under it |
+| **Sources ▸ *root*** | one root — *Project*, or a plugin that ships a `DreamSource/Shader` (or legacy `DShader`) folder — with the number of sources under it |
 | **Sources ▸ *root* ▸ *folder*** | that folder and everything below it |
 | **Sources ▸ Not managed by DreamShader** | every material and instance under the content roots that no scanned source generates — hand-authored ones, and orphans whose source is gone. See [Unmanaged materials](#unmanaged-materials) |
 | **Content** | `/Game` (Assets mode) |
@@ -328,11 +328,11 @@ The dialog:
 | Field | Default |
 | :-- | :-- |
 | **Name** | `M_NewMaterial` / `MF_NewFunction` (`.dss`) · `F_NewFunction` (`.dsf`) / `Common` / `MI_NewInstance` / `CP_SoftGlow`, `CP_Outline`, `CP_WindField` (the three pipeline templates) — must be an identifier |
-| **Folder** | the source folder the navigation tree points at, or the project's `DShader` root when that folder is a plugin's (plugin sources are read-only) |
+| **Folder** | the source folder the navigation tree points at, or the project's source directory when that folder is a plugin's (plugin sources are read-only) |
 
 For a pipeline the dialog also says which files the template writes besides the `.dsp`.
 
-Either way the asset lands beside its neighbours' — a file created in `DShader/Materials/` compiles to
+Either way the asset lands beside its neighbours' — a file created in `DreamSource/Shader/Materials/` compiles to
 `/Game/Materials/…`. A 1.x block says so itself: its `Name=` is the folder's path relative to its root
 plus the name. A `.dss` says nothing: the name is its `export`'s, and the folder is where the file is. A
 `.dss` is one kind of product -- one material, or any number of exported functions, each an asset of its
@@ -341,7 +341,7 @@ own -- with helpers that are not exported beside either; the two entries start t
 | Refusal | Message |
 | :-- | :-- |
 | not an identifier | `The name must be an identifier: letters, digits and underscores, not starting with a digit.` |
-| outside every writable root | `Choose a folder under the project's DShader root. A plugin's sources are read-only.` |
+| outside every writable root | `Choose a folder under the project's source directory (DreamSource/Shader). A plugin's sources are read-only.` |
 | file exists | `'{Path}' already exists.` |
 | a file a pipeline template writes besides the `.dsp` exists | `'{Path}' already exists, and the template writes it for '{Pipeline}'; choose another name.` |
 
@@ -433,14 +433,14 @@ the panel was built, so a delete or garbage collection in between cannot crash i
 A source tree and what Sources mode shows for it:
 
 ```text
-<Project>/DShader/
+<Project>/DreamSource/Shader/
     Materials/M_Emissive.dsm        ● up to date          /Game/Materials
     Materials/M_Toon.dss            ● up to date          /Game/Materials
     Materials/M_Broken.dsm          ▲ compile error       L12:9 'Tin' is not declared in this scope.
     Materials/M_New.dsm             ○ not compiled        No generated asset at /Game/Materials/M_New.M_New
     Lib/Noise.dsf                   ◆ function · used by 2 material(s)
     Lib/Common.dsh                  ◆ function · used by 3 material(s)
-    Packages/Sample/Demo.dsm        (not listed — under DShader/Packages)
+    Packages/Sample/Demo.dsm        (not listed — under DreamSource/Shader/Packages)
 ```
 
 ## See also

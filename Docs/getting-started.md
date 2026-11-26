@@ -23,17 +23,19 @@ This page takes a project from "plugin copied in" to "a material generated from 
 
 ## Create the source directory
 
-DreamShader reads source files from one directory under the project root, `DShader` by default
-(*Project Settings ▸ DreamPlugin ▸ DreamShader ▸ Paths ▸ Source Directory*).
+DreamShader reads source files from one directory under the project root, `DreamSource/Shader` by default
+(*Project Settings ▸ Dream Source ▸ Shader ▸ Source Directory*). A project from before the
+[DreamSource layout](settings/project.md#dreamsource-layout) keeps working from `DShader/` until it is moved.
 
 ```text
 MyProject/
-├─ DShader/
-│  ├─ Materials/        # .dss  — materials and material functions (DreamShaderLang 2.0)
-│  │                    # .dsm  — a 1.x material, .dsf — 1.x material function assets
-│  ├─ Instances/        # .dsi  — material instances
-│  ├─ Shared/           # .dsh  — headers, included by other sources
-│  └─ Packages/         # installed shared libraries
+├─ DreamSource/
+│  └─ Shader/
+│     ├─ Materials/     # .dss  — materials and material functions (DreamShaderLang 2.0)
+│     │                 # .dsm  — a 1.x material, .dsf — 1.x material function assets
+│     ├─ Instances/     # .dsi  — material instances
+│     ├─ Shared/        # .dsh  — headers, included by other sources
+│     └─ Packages/      # installed shared libraries
 └─ Plugins/
    └─ DreamShader/
 ```
@@ -45,7 +47,7 @@ and [DreamShaderLang 2.0](language-v2/index.md).
 
 ## Write a material
 
-`MyProject/DShader/Materials/M_Minimal.dss`:
+`MyProject/DreamSource/Shader/Materials/M_Minimal.dss`:
 
 ```hlsl
 #pragma material(Domain = UI, ShadingModel = Unlit)
@@ -80,7 +82,7 @@ it otherwise — see [Asset paths](generation/asset-paths.md).
 A project that already has `.dsm` files keeps writing them; this one builds the same material:
 
 ```c
-// MyProject/DShader/Materials/M_Minimal.dsm
+// MyProject/DreamSource/Shader/Materials/M_Minimal.dsm
 Shader(Name="Materials/M_Minimal")
 {
     Properties = {
@@ -138,7 +140,7 @@ Cooking materializes the assets automatically. See [Ephemeral materials](generat
 Every diagnostic carries a `DSHnnnn` code, and is reported at its own line and column:
 
 ```text
-I:/MyProject/DShader/Materials/M_Minimal.dss(8,24): DSH4200: 'Tnt' is not declared; did you mean 'Tint'? Names are case-sensitive.
+I:/MyProject/DreamSource/Shader/Materials/M_Minimal.dss(8,24): DSH4200: 'Tnt' is not declared; did you mean 'Tint'? Names are case-sensitive.
 ```
 
 It goes to the Output Log, to the Material Content Browser, and to the bridge files the VSCode

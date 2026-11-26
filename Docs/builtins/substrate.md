@@ -37,8 +37,8 @@ Substrate classes of the running engine, and an engine before UE 5.4 has none.
 > [One source, two kinds of project](../language-v2/substrate.md#one-source-two-kinds-of-project--substrate-).
 
 > [!NOTE]
-> The editor tooling reflects the engine. Below UE 5.4 the Bridge manifest
-> `Saved/DreamShader/Bridge/substrate-builtins.json` is written with an empty entry array,
+> The editor tooling reflects the engine. Below UE 5.4 the bridge's `substrate-builtins` document
+> (in `Intermediate/DreamSource/shader.db`) is written with an empty entry array,
 > `supported: false` and an `unsupportedReason` — so completion in the editor extensions offers
 > nothing. See [Bridge](../tools/bridge.md).
 
@@ -580,8 +580,8 @@ Graph = {
 - The [decompiler](../tools/decompiler.md) exports an existing Substrate graph back to source,
   deriving channel swizzles from each connection's write mask *(since 1.5.0)*, and writes each node
   under the name sources use — see [Decompiling](../language-v2/substrate.md#decompiling).
-- The `Substrate.*` surface is exported for editor tooling to
-  `Saved/DreamShader/Bridge/substrate-builtins.json` (schema `DreamShader.SubstrateBuiltins`,
+- The `Substrate.*` surface is exported for editor tooling as the `substrate-builtins` document of
+  `Intermediate/DreamSource/shader.db` (schema `DreamShader.SubstrateBuiltins`,
   version 1), one entry per name with its `qualifiedName`, `className`, `outputType`,
   `isSubstrateOutput` and curated `parameters`. See [Bridge](../tools/bridge.md).
 
@@ -695,6 +695,6 @@ Since 2.0.0 the same graph is
 - [Enum values](../settings/material-enums.md) — `ShadingModel = "Substrate"` / `"Strata"`
 - [Calls](../graph/calls.md) — named-argument syntax
 - [Node reuse](../graph/node-reuse.md) — identical calls and nodes
-- [Bridge](../tools/bridge.md) — `substrate-builtins.json` and the editor completion manifest
+- [Bridge](../tools/bridge.md) — the `substrate-builtins` document and the editor completion manifest
 - [Decompiler](../tools/decompiler.md) — exporting an existing Substrate graph back to source
 - [Diagnostics index](../diagnostics/index.md) — every code

@@ -22,16 +22,16 @@ A `.dss` is **HLSL with declarations**: parameters are `uniform`s, metadata ride
 | `.dsp` | `#pragma pipeline`, `buffer`s, `pass`es | one Custom Pass pipeline, UE 5.8+ — [`dsp.md`](dsp.md) |
 | `.dsh` | shared helpers, included by `#include`; may hold 2.0 and 1.x declarations | nothing on its own |
 
-**Where the asset lands:** under `/Game`, at the file's folder relative to its source root (`DShader/`), named
-after the `export` function. `DShader/UI/M_Panel.dss` with `export void M_Panel(…)` builds `/Game/UI/M_Panel`. A
-file under a plugin's `DShader/` builds under the plugin's mount point. `/// @name Other` renames the asset;
+**Where the asset lands:** under `/Game`, at the file's folder relative to its source root (`DreamSource/Shader/`), named
+after the `export` function. `DreamSource/Shader/UI/M_Panel.dss` with `export void M_Panel(…)` builds `/Game/UI/M_Panel`. A
+file under a plugin's `DreamSource/Shader/` builds under the plugin's mount point. `/// @name Other` renames the asset;
 `/// @name /Game/Some/Path/M_X` puts it at that exact path. Details:
 [Asset paths](https://shader.toolchain.64hz.cn/en/docs/generation/asset-paths/).
 
 ## 2. A material
 
 ```hlsl
-// DShader/UI/M_ScanlinePanel.dss -- scanlines and a glow band that scrolls down the panel
+// DreamSource/Shader/UI/M_ScanlinePanel.dss -- scanlines and a glow band that scrolls down the panel
 #pragma material(Domain = UI, BlendMode = Translucent, ShadingModel = Unlit)
 
 /// @group Scanline|Style   @sort 10   @desc Base panel colour; alpha scales the opacity
@@ -145,7 +145,7 @@ Two identical calls are one node, so there is no reason to store a node in a var
 ## 7. Instances — `.dsi`
 
 ```hlsl
-// DShader/UI/MI_ScanlinePanel_Red.dsi
+// DreamSource/Shader/UI/MI_ScanlinePanel_Red.dsi
 #pragma instance(Parent = "M_ScanlinePanel", BlendMode = Translucent)
 
 uniform float4 Tint = float4(1.0, 0.2, 0.15, 1.0);

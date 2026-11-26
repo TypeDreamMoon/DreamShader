@@ -363,12 +363,12 @@ UMaterialExpressionCustom  Description="WindPulse"  OutputType=CMOT_Float1
 
 ```hlsl
 float pulse = (float)0;
-// Begin DreamShader source: DShader/Lib/Motion.dsh
+// Begin DreamShader source: DreamSource/Shader/Lib/Motion.dsh
 // DreamShader custom: WindPulse line 4
 
     float t = _ds_WindPulse_UE0;
     pulse = sin(uv.x * 8.0 + t);
-// End DreamShader source: DShader/Lib/Motion.dsh
+// End DreamShader source: DreamSource/Shader/Lib/Motion.dsh
 return pulse;
 ```
 
@@ -470,7 +470,7 @@ Full argument rules, `default` and output selectors: [Calls](../graph/calls.md).
 ## Example
 
 ```c
-// DShader/Lib/Color.dsh
+// DreamSource/Shader/Lib/Color.dsh
 
 Function float Luma(in vec3 color)
 {
@@ -511,11 +511,11 @@ Shader(Name="Materials/M_Tinted")
 Each call is a `Custom` node. The `Luma` node's code — note the body's own `return`:
 
 ```hlsl
-// Begin DreamShader source: DShader/Lib/Color.dsh
+// Begin DreamShader source: DreamSource/Shader/Lib/Color.dsh
 // DreamShader custom: Luma line 4
 
     return dot(color, float3(0.299, 0.587, 0.114));
-// End DreamShader source: DShader/Lib/Color.dsh
+// End DreamShader source: DreamSource/Shader/Lib/Color.dsh
 ```
 
 ## Diagnostics

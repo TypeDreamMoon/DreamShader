@@ -34,7 +34,7 @@ canonical JSON of each asset's graph — node classes, properties, connections, 
 GUIDs. It writes no asset:
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 dump-graph DShader/Decompiled/Materials/Game/M_Steel.dss -Out Saved/Optimize/before
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 dump-graph DreamSource/Shader/Decompiled/Materials/Game/M_Steel.dss -Out Saved/Optimize/before
 ```
 
 If an asset of that path already exists on disk, `dump-graph` reads it as it stands instead of generating it
@@ -45,7 +45,7 @@ If an asset of that path already exists on disk, `dump-graph` reads it as it sta
 **4 — Prove nothing changed.**
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 dump-graph DShader/Decompiled/Materials/Game/M_Steel.dss -Out Saved/Optimize/after
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 dump-graph DreamSource/Shader/Decompiled/Materials/Game/M_Steel.dss -Out Saved/Optimize/after
 git diff --no-index -- Saved/Optimize/before Saved/Optimize/after
 ```
 

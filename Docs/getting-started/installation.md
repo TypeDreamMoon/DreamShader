@@ -48,8 +48,9 @@ and `Config/` are not in the archive.
 ### Enable it and restart
 
 Enable **DreamShader** in *Edit ▸ Plugins* and restart the editor. The plugin descriptor enables `WebSocketNetworking`
-and `SQLiteCore` automatically — the first serves the live-preview WebSocket, the second backs the editor bridge's
-`bridge.db`. Only `DreamShaderEditor` uses either.
+and `SQLiteCore` automatically — the first serves the live-preview WebSocket, the second backs
+`Intermediate/DreamSource/shader.db`, which the editor bridge writes for editor extensions. Only the editor modules use
+either.
 
 There are five modules: `DreamShaderLang`, `DreamShader` and `DreamShaderPass` (Runtime, loaded at `PostConfigInit`),
 and `DreamShaderCompiler` and `DreamShaderEditor` (Editor, at `Default`). Only the two Editor modules generate assets;
@@ -76,12 +77,14 @@ On the first editor start, the runtime modules create the working directories wh
 source file:
 
 ```text
-<Project>/DShader/                                        source root
-<Project>/DShader/Packages/                               installed shared libraries
-<Project>/Intermediate/DreamShader/GeneratedShaders/      mapped to /DreamShaderGenerated
+<Project>/DreamSource/Shader/                                    source root
+<Project>/DreamSource/Shader/Packages/                           installed shared libraries
+<Project>/Intermediate/DreamSource/Shader/GeneratedShaders/      mapped to /DreamShaderGenerated
 ```
 
-`DShader` comes from the *Source Directory* setting; `Packages` is always the literal subfolder `Packages` under it and
+`DreamSource/Shader` comes from the *Source Directory* setting (*Project Settings ▸ Dream Source ▸ Shader*); a project
+that still has a `DreamSource/Shader/` folder keeps using it until it is moved — see
+[DreamSource layout](../settings/project.md#dreamsource-layout). `Packages` is always the literal subfolder `Packages` under it and
 cannot be configured on its own. `GeneratedShaders` is still created and mapped, but (since 2.0.0) no
 compile writes there — a `Function`'s HLSL goes straight into its Custom node. On UE 5.8, `DreamShaderPass` also keeps `.dreampass/` under the source root — the
 snapshots of Custom Pass HLSL, which belong in version control next to the sources.
@@ -91,7 +94,7 @@ snapshots of Custom Pass HLSL, which belong in version control next to the sourc
 Write new sources as `.dss`:
 
 ```hlsl
-// <Project>/DShader/Materials/M_InstallCheck.dss
+// <Project>/DreamSource/Shader/Materials/M_InstallCheck.dss
 #pragma material(Domain = UI, ShadingModel = Unlit)
 
 export void M_InstallCheck(inout material m)
@@ -103,7 +106,7 @@ export void M_InstallCheck(inout material m)
 Or in 1.x syntax, which builds the same asset — keep one of the two files:
 
 ```c
-// <Project>/DShader/Materials/M_InstallCheck.dsm
+// <Project>/DreamSource/Shader/Materials/M_InstallCheck.dsm
 Shader(Name="Materials/M_InstallCheck")
 {
     Settings = {
@@ -137,10 +140,10 @@ from a template.
 | Check | Expected |
 | --- | --- |
 | The plugin loaded | *Project Settings ▸ DreamPlugin ▸ Dream Shader* exists |
-| The directories exist | `DShader/` and `DShader/Packages/` under the project root |
+| The directories exist | `DreamSource/Shader/` and `DreamSource/Shader/Packages/` under the project root |
 | A source compiles | the Output Log prints `Generated Material /Game/Materials/M_InstallCheck from …` |
 | The material really exists | in Sources mode of *Tools ▸ DreamShader ▸ Material Content Browser*, the row reads **up to date** |
-| The editor extension is wired up | `Saved/DreamShader/Bridge/` holds `status.json`, `diagnostics.json`, `material-expressions.json`, `dreamshader-builtin-catalog.json` and more |
+| The editor extension is wired up | `Intermediate/DreamSource/shader.db` exists and `Intermediate/DreamSource/Shader/Bridge/` holds `status.json` |
 | Chinese UI (optional) | with the editor language set to Simplified Chinese, DreamShader's menus and panels are translated — needs `Content/` from the archive |
 
 **Warning:**
@@ -156,8 +159,8 @@ The full panel has 17 properties; these are the ones you meet on day one. Note t
 
 | Display name | Config property | Default | Effect |
 | --- | --- | --- | --- |
-| Source Directory | `SourceDirectory` | `DShader` | The root scanned for source files. Relative paths resolve against the project directory. |
-| Generated Shader Directory | `GeneratedShaderDirectory` | `Intermediate/DreamShader/GeneratedShaders` | Where the virtual directory `/DreamShaderGenerated` is mapped. Since 2.0 no compile writes a `.ush`; a file there was left by a 1.x build. |
+| Source Directory *(Dream Source ▸ Shader)* | `SourceDirectory` in `DefaultDreamSource.ini` | `DreamSource/Shader` | The root scanned for source files. Relative paths resolve against the project directory. Takes effect after an editor restart. |
+| Generated Shader Directory | `GeneratedShaderDirectory` | `Intermediate/DreamSource/Shader/GeneratedShaders` | Where the virtual directory `/DreamShaderGenerated` is mapped. Since 2.0 no compile writes a `.ush`; a file there was left by a 1.x build. |
 | Default Compiler Backend | `DefaultBackend` | `ThinCustom` | The backend of a source that names none. |
 | Show Ephemeral Materials | `bShowEphemeralMaterials` | `false` | Makes Ephemeral materials visible in the Content Browser and asset pickers, like unsaved assets. |
 | Auto Compile On Save | `bAutoCompileOnSave` | `true` | When off, the source directory watcher ignores file changes entirely. |
@@ -174,7 +177,7 @@ Changing it mid-session does not move the output — restart the editor.
 ## Where the asset lands
 
 A `.dss` asset lands under `/Game` at the file's folder relative to the source root, named after its `export`
-function: `DShader/Materials/M_Minimal.dss` builds `/Game/Materials/M_Minimal`. A `/// @name` above the entry names it
+function: `DreamSource/Shader/Materials/M_Minimal.dss` builds `/Game/Materials/M_Minimal`. A `/// @name` above the entry names it
 otherwise.
 
 In 1.x syntax the block header decides: `Shader(Name="Materials/M_Minimal")` resolves to `/Game/Materials/M_Minimal`.
@@ -240,12 +243,12 @@ The language service is not in the plugin. For highlighting, completion, diagnos
 | VSCode | [TypeDreamMoon/dreamshader-language-support](https://github.com/TypeDreamMoon/dreamshader-language-support) — currently 2.1.0, with `.dss`, `.dsi`, `.dsp` and the 1.x sources |
 | JetBrains Rider | [tsdaer/dreamshader-language-support](https://github.com/tsdaer/dreamshader-language-support) |
 
-*Tools ▸ DreamShader ▸ Open Dream Shader Workspace (VSCode)* writes `DShader/DreamShader.code-workspace`, refreshes the
-bridge manifests and opens it in VSCode. See [VSCode and Rider](../tools/vscode.md).
+*Tools ▸ DreamShader ▸ Open Dream Shader Workspace (VSCode)* writes `DreamSource/Shader/DreamShader.code-workspace`, refreshes the
+bridge documents in `shader.db` and opens it in VSCode. See [VSCode and Rider](../tools/vscode.md).
 
 ## Next
 
 - [Your first material](first-material.md) — write one, then find it
-- [Project layout](project-layout.md) — how `DShader/` is organized
+- [Project layout](project-layout.md) — how `DreamSource/Shader/` is organized
 - [Daily workflow](workflow.md) — the save, debounce, generate loop
 - [About DreamShader](about.md) — what the plugin is made of

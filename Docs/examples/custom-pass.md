@@ -11,7 +11,7 @@ and the wind field; the post-process template is a soft glow of its own.
 | | |
 | :-- | :-- |
 | Engine | UE `5.8` and later |
-| Assumed source root | `<Project>/DShader`; each pipeline's materials next to it, in `DShader/Passes/` |
+| Assumed source root | `<Project>/DreamSource/Shader`; each pipeline's materials next to it, in `DreamSource/Shader/Passes/` |
 
 | Example | What it shows |
 | :-- | :-- |
@@ -30,7 +30,7 @@ Give the actors a `UDreamPassLayerComponent` with the layer `Highlight` (Project
 Pass ▸ Layers), and activate the pipeline from the project settings or with a volume.
 
 ```hlsl
-// DShader/Passes/CP_Highlight.dsp
+// DreamSource/Shader/Passes/CP_Highlight.dsp
 #pragma pipeline(Order = 100)
 
 /// @group Look
@@ -91,7 +91,7 @@ pass Composite : fullscreen
 ```
 
 ```hlsl
-// DShader/Passes/M_HighlightMask.dss -- the override material
+// DreamSource/Shader/Passes/M_HighlightMask.dss -- the override material
 #pragma material(ShadingModel = Unlit, bUsedWithSkeletalMesh = true, bUsedWithInstancedStaticMeshes = true)
 
 export void M_HighlightMask(inout material m)
@@ -102,7 +102,7 @@ export void M_HighlightMask(inout material m)
 ```
 
 ```hlsl
-// DShader/Passes/PP_OutlineComposite.dss
+// DreamSource/Shader/Passes/PP_OutlineComposite.dss
 #pragma material(Domain = PostProcess, BlendableLocation = SceneColorAfterDOF)
 
 uniform float4 Color = float4(1, 0.6, 0, 1);
@@ -138,7 +138,7 @@ Notes:
 The picture after tonemapping, downsampled and blurred, for a frosted-glass UMG background.
 
 ```hlsl
-// DShader/Passes/CP_UIBackdrop.dsp
+// DreamSource/Shader/Passes/CP_UIBackdrop.dsp
 #pragma pipeline(Order = 900, Views = Game, Requires = PostProcess)
 
 /// @slider 1 12
@@ -212,7 +212,7 @@ Notes:
 Enemies behind walls show as a cyan silhouette.
 
 ```hlsl
-// DShader/Passes/CP_XRay.dsp
+// DreamSource/Shader/Passes/CP_XRay.dsp
 #pragma pipeline(Order = 200)
 
 uniform float4 XRayColor = float4(0.2, 0.8, 1.0, 0.6);
@@ -241,7 +241,7 @@ pass Composite : fullscreen
 ```
 
 ```hlsl
-// DShader/Passes/M_XRayDepth.dss
+// DreamSource/Shader/Passes/M_XRayDepth.dss
 #pragma material(ShadingModel = Unlit, bUsedWithSkeletalMesh = true, bUsedWithInstancedStaticMeshes = true)
 
 export void M_XRayDepth(inout material m)
@@ -252,7 +252,7 @@ export void M_XRayDepth(inout material m)
 ```
 
 ```hlsl
-// DShader/Passes/PP_XRayComposite.dss
+// DreamSource/Shader/Passes/PP_XRayComposite.dss
 #pragma material(Domain = PostProcess, BlendableLocation = SceneColorAfterDOF)
 
 uniform float4 Tint = float4(0.2, 0.8, 1.0, 0.6);
@@ -280,7 +280,7 @@ A 256×256 wind field advanced every frame by a compute shader, for the foliage'
 Niagara.
 
 ```hlsl
-// DShader/Passes/CP_WindField.dsp
+// DreamSource/Shader/Passes/CP_WindField.dsp
 #pragma pipeline(Order = 0, Views = Game | Editor)
 
 uniform float2 WindDirection = float2(1, 0);
@@ -333,7 +333,7 @@ A ring of light sweeps out from the camera over the opaque scene every few secon
 pixel HLSL pass that reads the scene depth through the view uniform buffer.
 
 ```hlsl
-// DShader/Passes/CP_Scanner.dsp
+// DreamSource/Shader/Passes/CP_Scanner.dsp
 #pragma pipeline(Order = 300)
 
 /// @group Look
@@ -398,7 +398,7 @@ Colour fringes toward the edges, scanlines and a vignette on the tonemapped pict
 pipeline's weight.
 
 ```hlsl
-// DShader/Passes/CP_Retro.dsp
+// DreamSource/Shader/Passes/CP_Retro.dsp
 #pragma pipeline(Order = 950, Requires = PostProcess)
 
 /// @slider 0 1
@@ -461,7 +461,7 @@ Objects the game tags with custom stencil 5 glow with moving stripes that their 
 pass by stencil in `Mode = Own`, then a material composite.
 
 ```hlsl
-// DShader/Passes/CP_Tagged.dsp
+// DreamSource/Shader/Passes/CP_Tagged.dsp
 #pragma pipeline(Order = 150, Requires = CustomStencil)
 
 uniform float4 TagColor = float4(0.2, 1.0, 0.3, 1.0);
@@ -488,7 +488,7 @@ pass Composite : fullscreen
 ```
 
 ```hlsl
-// DShader/Passes/M_DemoTagged.dss
+// DreamSource/Shader/Passes/M_DemoTagged.dss
 uniform float3 BaseTint = float3(0.9, 0.7, 0.2);
 uniform float  StripeSize = 40.0;
 uniform float  StripeSpeed = 0.5;
@@ -505,7 +505,7 @@ export void M_DemoTagged(inout material m)
 ```
 
 ```hlsl
-// DShader/Passes/PP_TaggedComposite.dss
+// DreamSource/Shader/Passes/PP_TaggedComposite.dss
 #pragma material(Domain = PostProcess, BlendableLocation = SceneColorAfterDOF)
 
 uniform float4 Tint = float4(0.2, 1.0, 0.3, 1.0);

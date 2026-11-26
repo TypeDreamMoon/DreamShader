@@ -268,12 +268,12 @@ delete the generated asset.
 ## Example
 
 ```c
-// DShader/Common.dsh
+// DreamSource/Shader/Common.dsh
 Function float Remap01(in float value) { return saturate(value * 0.5 + 0.5); }
 ```
 
 ```c
-// DShader/M_Ramp.dsm
+// DreamSource/Shader/M_Ramp.dsm
 import "Common.dsh";
 
 Shader(Name="Materials/M_Ramp")
@@ -297,7 +297,7 @@ save Common.dsh      (the header builds nothing; it queues M_Ramp.dsm, whose key
 Metadata on the generated instance:
 
 ```text
-DreamShader.SourceFile   DShader/M_Ramp.dsm
+DreamShader.SourceFile   DreamSource/Shader/M_Ramp.dsm
 DreamShader.SourceHash   9f2c41ab
 ```
 

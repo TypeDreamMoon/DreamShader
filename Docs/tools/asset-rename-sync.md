@@ -83,7 +83,7 @@ resolvers accept — see [the two resolvers](../parameters/path.md#two-resolvers
 | Unquoted bare absolute paths outside `Path(…)` and outside a shelled form | accepted by the asset-reference resolver, but indistinguishable from ordinary text; write `"/Game/…"` or `Path("/Game/…")` to have it followed |
 | A reference that spans a line break | matching is per line |
 | Files under a plugin [source root](../language/source-files.md#source-roots) | a plugin ships its sources as authored; only the project root is writable |
-| `DShader/Packages` | third-party package sources, excluded from every editor-side scan |
+| `DreamSource/Shader/Packages` | third-party package sources, excluded from every editor-side scan |
 | Anything, in an editor that does not own the bridge | see the table above |
 
 > [!NOTE]
@@ -131,10 +131,10 @@ and the old → new pairs behind each change:
 
 ```text
 LogDreamShader: Display: DreamShader rewrote 2 source file(s) after 3 asset rename(s):
-  C:/Projects/MyGame/DShader/M_Cloud.dsm  (2 reference(s), backup 'C:/Projects/MyGame/DShader/M_Cloud.dsm.bak')
+  C:/Projects/MyGame/DreamSource/Shader/M_Cloud.dsm  (2 reference(s), backup 'C:/Projects/MyGame/DreamSource/Shader/M_Cloud.dsm.bak')
       Path(Game, "Texture/Volume/T_Volume_03")  ->  Path(Game, "Texture/Volume/T_Volume_Cloud")
       /Game/Curves/CV_Ramp  ->  /Game/Curves/CV_Falloff
-  C:/Projects/MyGame/DShader/MF_Fog.dsf  (1 reference(s), backup 'C:/Projects/MyGame/DShader/MF_Fog.dsf.bak')
+  C:/Projects/MyGame/DreamSource/Shader/MF_Fog.dsf  (1 reference(s), backup 'C:/Projects/MyGame/DreamSource/Shader/MF_Fog.dsf.bak')
       /Game/Textures/T_Noise.T_Noise  ->  /Game/Textures/T_Noise_01.T_Noise_01
 ```
 

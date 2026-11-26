@@ -234,7 +234,7 @@ The complete cross-stage list lives in the [diagnostics index](../diagnostics/in
 ## Example
 
 ```c
-// DShader/Lib/Motion.dsh
+// DreamSource/Shader/Lib/Motion.dsh
 
 GraphFunction WindPulse(in float2 uv, out float pulse)
 {
@@ -280,12 +280,12 @@ with `Code`:
 
 ```hlsl
 float pulse = (float)0;
-// Begin DreamShader source: DShader/Lib/Motion.dsh
+// Begin DreamShader source: DreamSource/Shader/Lib/Motion.dsh
 // DreamShader custom: WindPulse line 4
 
     float t = _ds_WindPulse_UE0;
     pulse = sin(uv.x * 8.0 + t);
-// End DreamShader source: DShader/Lib/Motion.dsh
+// End DreamShader source: DreamSource/Shader/Lib/Motion.dsh
 return pulse;
 ```
 

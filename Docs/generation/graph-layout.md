@@ -107,7 +107,7 @@ The reroutes and the repeated constants are nodes of the generated graph, as the
 Look before choosing — this draws every IR style for a source, builds nothing, and takes a second:
 
 ```powershell
-./dsc.ps1 dump-layout DShader/Materials/M_Foo.dss        # …/Saved/DreamShader/Layout/**.svg, one per product and style
+./dsc.ps1 dump-layout DreamSource/Shader/Materials/M_Foo.dss        # …/Saved/DreamShader/Layout/**.svg, one per product and style
 ./dsc.ps1 dump-layout -All -Style Blocks -Json
 ```
 

@@ -1,4 +1,4 @@
-// DShader/CheatSheet/M_CheatSheetSurface.dss -- a lit, textured surface with an optional pulsing edge glow
+// DreamSource/Shader/CheatSheet/M_CheatSheetSurface.dss -- a lit, textured surface with an optional pulsing edge glow
 #pragma material(Domain = Surface, BlendMode = Opaque, ShadingModel = DefaultLit)
 
 /// @group Surface   @sort 10   @default /Engine/EngineResources/WhiteSquareTexture

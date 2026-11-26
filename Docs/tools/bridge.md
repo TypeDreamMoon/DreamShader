@@ -3,13 +3,14 @@
 > [DreamShader](../index.md) » [Tools](index.md) » **Editor bridge**
 
 The editor-side service that exposes DreamShader to an external editor through two transports — a
-polled request-file directory and a loopback WebSocket server — and a set of generated artifacts
-under `Saved/DreamShader/Bridge/`.
+polled request-file directory and a loopback WebSocket server — and a SQLite database of generated
+artifacts, `Intermediate/DreamSource/shader.db`.
 
 | | |
 | :-- | :-- |
 | Kind | editor service — `FDreamShaderEditorBridge`, owned by the `DreamShaderEditor` module |
-| Root | `<Project>/Saved/DreamShader/Bridge/` |
+| Root | `<Project>/Intermediate/DreamSource/Shader/Bridge/` — request files, responses, status, lock *(before the DreamSource layout: `Saved/DreamShader/Bridge/`)* |
+| Database | `<Project>/Intermediate/DreamSource/shader.db` — diagnostics, manifests, symbol index, preview result |
 | Transport A | request files — `Bridge/Requests/*.json`, polled every `0.1 s`, deleted before dispatch, answered in `Bridge/Responses/<requestId>.json` |
 | Transport B | WebSocket — `ws://127.0.0.1:17864`, loopback only |
 | Liveness | `Bridge/status.json`, rewritten every `2 s` while idle, **deleted on shutdown** |
@@ -20,39 +21,43 @@ under `Saved/DreamShader/Bridge/`.
 ## Synopsis
 
 ```text
-<Project>/Saved/DreamShader/Bridge/
-├─ Requests/                   inbound  *.json, consumed and deleted
-├─ Responses/                  outbound <requestId>.json, one per request that carried an id
-├─ status.json                 outbound liveness heartbeat; absent means "not running"
-├─ diagnostics.json            outbound aggregated diagnostics
-├─ diagnostics/                outbound sharded diagnostics
-│  ├─ index.json
-│  └─ <md5-of-source-path>.json
-├─ bridge.db                   outbound SQLite (+ bridge.db-wal, bridge.db-shm)
-├─ material-expressions.json   outbound reflected UMaterialExpression catalogue
-├─ settings.json               outbound enum alias tables
-├─ substrate-builtins.json     outbound Substrate builtin catalogue
-├─ pass-keys.json              outbound the .dsp vocabulary, for completion (since 2.1.0)
-├─ dreamshader-builtin-catalog.json  outbound the 2.0 binder's node catalog (since 2.0.0)
-├─ preview.json                outbound one-shot preview result
-└─ Preview/                    outbound rendered PNGs
-   └─ <stem>-<crc32>.png
+<Project>/Intermediate/DreamSource/
+├─ shader.db                   outbound SQLite (+ shader.db-wal, shader.db-shm while a writer has it open)
+│                              diagnostics, manifests (documents), symbol index (source_index)
+└─ Shader/
+   ├─ Bridge/
+   │  ├─ Requests/             inbound  *.json, consumed and deleted
+   │  ├─ Responses/            outbound <requestId>.json, one per request that carried an id
+   │  ├─ status.json           outbound liveness heartbeat; absent means "not running"
+   │  └─ owner.lock            internal which editor serves this project
+   ├─ Preview/                 outbound rendered PNGs
+   │  └─ <stem>-<crc32>.png
+   └─ GeneratedShaders/        the generated .ush files (GeneratedShaderDirectory's default)
 ```
+
+> [!NOTE]
+> *(DreamSource layout)* Before it, all of this lived under `Saved/DreamShader/Bridge/` as one JSON file
+> per artifact (`diagnostics.json`, `diagnostics/`, `material-expressions.json`, `settings.json`,
+> `substrate-builtins.json`, `pass-keys.json`, `preprocessor-defines.json`, `dreamshader-builtin-catalog.json`,
+> `preview.json`) beside a `bridge.db` that mirrored some of them, and the symbol index under
+> `Saved/DreamShader/Index/`. None of these is written any more: every one is a table or a
+> [`documents`](#documents) row of `shader.db`, with the same JSON text. The old folders are left alone
+> until [migration](../settings/project.md#dreamsource-layout) deletes them.
 
 ## Lifecycle
 
-Startup, in order. `Bridge`, `Bridge/Requests` and `Bridge/Preview` are created first.
+Startup, in order. `Bridge/`, `Bridge/Requests/` and `Preview/` are created first.
 
 | Step | Action |
 | :-- | :-- |
-| 1 | Create `Bridge/`, `Bridge/Requests/`, `Bridge/Responses/`, `Bridge/Preview/` |
+| 1 | Create `Bridge/`, `Bridge/Requests/`, `Bridge/Responses/`, `Preview/` |
 | 1a | Delete every stale `Responses/*.json`, stamp the listening-since time, publish `status.json` |
-| 2 | Delete `bridge.db`, `bridge.db-wal`, `bridge.db-shm` and the whole `diagnostics/` directory |
-| 3 | Export `material-expressions.json`, `settings.json`, `substrate-builtins.json` (and their SQLite tables) |
+| 2 | Empty the previous session's `diagnostics` table and `preview` document in `shader.db` (the file is never deleted: a language server may hold it open) |
+| 3 | Write the `material-expressions`, `settings` (with `pass-keys`), `substrate-builtins` and `preprocessor-defines` documents and their tables |
 | 4 | Scan and refresh `VirtualFunction` declarations |
-| 5 | Register a post-engine-init handler that generates every source file in memory, and then exports `dreamshader-builtin-catalog.json` *(since 2.0.0)* — after the sweep, because the catalog is reflection over every loaded expression class and only then is every module loaded |
+| 5 | Register a post-engine-init handler that generates every source file in memory, and then writes the `builtin-catalog` document *(since 2.0.0)* — after the sweep, because the catalog is reflection over every loaded expression class and only then is every module loaded |
 | 6 | Register a project-settings property watcher |
-| 7 | Queue a full rescan and write `diagnostics.json` |
+| 7 | Queue a full rescan and write the `diagnostics` table |
 | 8 | Start the preview WebSocket server on port `17864` |
 | 9 | Register a directory watcher on `<SourceDirectory>` (including directory changes) |
 | 10 | Hook `UMaterial::OnMaterialCompilationFinished` |
@@ -64,8 +69,10 @@ Ticker B is registered separately, at a zero-second interval, because sharing ti
 every preview stream at 10 FPS regardless of the client's requested frame rate.
 
 Shutdown **deletes `status.json` first**, then removes every handle, shuts the WebSocket server
-down, clears the pending-file map and the diagnostics store, deletes the bridge database again, and
-unregisters the tool menus unless the engine is already exiting.
+down, clears the pending-file map and the in-memory diagnostics store, and unregisters the tool menus
+unless the engine is already exiting. It **does not touch `shader.db`**: the last diagnostics stay, so an
+external editor keeps showing the last verdict after the editor closes, as it did with
+`diagnostics.json`. Only the next owner's startup (step 2) empties them.
 
 ## One editor owns the bridge
 
@@ -79,7 +86,7 @@ Since `1.8.0` exactly one process serves the bridge, and says so in a lock file:
 
 | | |
 | :-- | :-- |
-| File | `<Project>/Saved/DreamShader/Bridge/owner.lock` |
+| File | `<Project>/Intermediate/DreamSource/Shader/Bridge/owner.lock` |
 | Contents | `pid` and an ISO-8601 `heartbeat`, refreshed on the ordinary heartbeat |
 | Believed while | the owning process is still running **and** its heartbeat is under 30s old |
 | Released | on editor shutdown, so the next editor takes over on its next heartbeat rather than after the stale window |
@@ -103,7 +110,7 @@ writes generated assets to disk.
 The commandlet is unaffected: it has no bridge, no lock file and no second process to negotiate
 with, and writing these assets is its entire job.
 
-Only the owner publishes or cleans shared responses, status, diagnostics, `bridge.db` and manifests.
+Only the owner publishes or cleans shared responses, status, diagnostics and manifests in `shader.db`.
 A non-owner keeps its local diagnostics and browser notifications. When it later acquires ownership,
 it starts a new listening session and publishes its own manifests and current diagnostics; closing a
 non-owner leaves the running owner's files intact.
@@ -116,7 +123,7 @@ an include still causes its consumers to report the missing file.
 
 | | |
 | :-- | :-- |
-| Directory | `<Project>/Saved/DreamShader/Bridge/Requests/` |
+| Directory | `<Project>/Intermediate/DreamSource/Shader/Bridge/Requests/` |
 | Discovery | `*.json`, files only, **non-recursive** — subdirectories are never scanned |
 | Poll interval | `0.1 s` |
 | Consumption | every discovered file is **deleted** at the end of its loop iteration |
@@ -154,7 +161,7 @@ and **rename** it into `Requests/` so it appears atomically.
 | `recompile` | `scope: "all"` | Rebuild the dependency graph and queue every source of every root — `.dsm`, `.dsf`, `.dss`, `.dsi`, `.dsp`, except a `.dsm` under a root's `Packages` — for compilation, **forced** past the build-key skip | immediately, as **queued** — see below |
 | `recompile` | `scope: "file"`, `sourceFile` | Queue one file into the debounce queue, **forced** past the source-hash skip | **when that compile finishes** |
 | `cleanGeneratedShaders` | — | Delete the generated `*.ush` includes, then queue a full rescan | immediately |
-| `previewMaterial` | `sourceFile` | Render one preview synchronously and write `preview.json` | immediately, with the render result |
+| `previewMaterial` | `sourceFile` | Render one preview synchronously and write the `preview` document | immediately, with the render result |
 | `reveal-node` | `file`, `line` | Find the node generated from that line, open its material editor and select it *(since 2.0.0)* | immediately, with the asset path and expression GUIDs |
 
 > [!IMPORTANT]
@@ -258,14 +265,14 @@ directory. Point DreamShaderSettings.GeneratedShaderDirectory back under Interme
 | `mesh` | string | `""` → `sphere` | see [Meshes](#meshes) |
 | `width` | number | `512` | rounded, clamped to `[64, 2048]` |
 | `height` | number | `512` | rounded, clamped to `[64, 2048]` |
-| `requestId` | string | *(absent)* | echoed into `preview.json` when non-empty |
+| `requestId` | string | *(absent)* | echoed into the `preview` document when non-empty |
 
 > [!NOTE]
 > The request-file variant does **not** read `orbitYaw`, `orbitPitch`, `stream` or `frameRate`. Those
 > fields exist only on the WebSocket transport. A file request always renders one frame at the
 > default camera angles.
 
-The result is written to `preview.json` with status `ready` or `error`, and logged as
+The result is written to the `preview` document with status `ready` or `error`, and logged as
 `DreamShader preview: {Message}` at `Display` on success or `Error` on failure.
 
 ### `reveal-node`
@@ -306,24 +313,29 @@ span table — rebuild with `-Force`.
 navigation matters most in a file that does not build — refreshes
 
 ```text
-<Project>/Saved/DreamShader/Index/<root>/<source path relative to that root>.index.json
+shader.db  source_index(root, path, json, updated_utc)
+           root = Project | <plugin name> | External,  path = the source path relative to that root
 ```
 
 (schema `dreamshader-symbol-index`, version `1`): the declarations of the source and of every header
 it includes — kind, name, signature, type, doc, position — every mention of a name as a span, the
 resolved include paths, and the parameter schema. `<root>` is `Project` or a plugin's name, which
-keeps two source roots that each hold a `Materials/M_Foo.dss` apart. `dsc index` writes the same file
-by the same rule, so a language service reads one place whoever compiled last; a file whose text would
-not change is not rewritten, so an unchanged compile wakes no watcher.
+keeps two source roots that each hold a `Materials/M_Foo.dss` apart. `dsc index` writes the same row
+by the same rule, so a language service reads one place whoever compiled last; a row whose text would
+not change is not rewritten, so an unchanged compile wakes no watcher. Unlike the rest of the database,
+any process may write it — a commandlet included — because a source's index is the same whoever
+computes it; an automation run does not. `dsc index -Out=<dir>` writes
+`<dir>/<root>/<relative path>.index.json` files instead, for a person or CI. *(Before the DreamSource
+layout: `Saved/DreamShader/Index/<root>/<relative path>.index.json`.)*
 
 The VS Code extension answers Go to Definition, Find References, Hover, the Outline, Signature Help and
-Rename for `.dss` sources from these files, and completes `UE.` / `Substrate.` from
-`dreamshader-builtin-catalog.json` — the binder's own table of node classes, pins, properties, aliases
+Rename for `.dss` sources from these rows, and completes `UE.` / `Substrate.` from the
+`builtin-catalog` document — the binder's own table of node classes, pins, properties, aliases
 and positional orders.
 
 The index of a `.dsp` *(since 2.1.0)* has a `pipeline` section as well: the `#pragma pipeline` values as
 bound, the uniforms, the buffers and the passes with their bindings and spans, and the injection-point and
-format spellings. The rest of the `.dsp` vocabulary is in [`pass-keys.json`](workspace.md#pass-keysjson).
+format spellings. The rest of the `.dsp` vocabulary is in the [`pass-keys`](workspace.md#pass-keys) document.
 
 ## Custom Pass shader files
 
@@ -352,7 +364,7 @@ snapshot did not change is left as it is.
 | Step | |
 | :-- | :-- |
 | 1 | **Pre-check.** The pass's slot is compiled in memory with the new snapshot, for the shader formats of the active feature levels and every format the project's active target platforms target. An error is `DSH8322` at the `.usf` line that caused it, filed like any other compile error; **nothing is written**, and the previous version of the pass keeps running |
-| 2 | **Snapshot.** The file, with everything it includes by a relative path, is copied into `<DShader>/.dreampass/Slots/<C\|P><NN>/`, and `Registry.json` and the registry file of that table are rewritten |
+| 2 | **Snapshot.** The file, with everything it includes by a relative path, is copied into `<SourceDirectory>/.dreampass/Slots/<C\|P><NN>/`, and `Registry.json` and the registry file of that table are rewritten |
 | 3 | **Hot reload.** The pipeline asset is updated, the slot shader types `FDreamPassCS` / `FDreamPassPS` are recompiled synchronously for every active feature level — the next frame runs the new code — and the asset is saved |
 
 A `.dsp` that is deleted logs `DreamShader source removed, existing generated assets were left
@@ -505,7 +517,7 @@ Unparsable JSON gets an immediate reply:
 
 On success the editor resolves and compiles the material transiently, sends a `previewResult`, sends
 a `probeState`, and installs a per-connection session that streams frames from the next tick. The
-`png` encoding additionally saves a first-frame PNG under `Bridge/Preview/`, writes `preview.json`,
+`png` encoding additionally saves a first-frame PNG under `Shader/Preview/`, writes the `preview` document,
 and sends that PNG immediately; the `raw` encoding streams its first frame from the tick loop like
 every other one. With `stream: false` or `frameRate <= 0`, raw delivers exactly one frame after the
 shader finishes compiling, without enabling streaming. On failure the connection's session is removed.
@@ -666,32 +678,95 @@ its limits are on [Preview](preview.md).
 
 ## Artifacts
 
-Everything the bridge writes, and who reads it.
+Everything the bridge writes, and who reads it. Paths are relative to `<Project>/Intermediate/DreamSource/`.
 
 | Path | Direction | Read back by the plugin? |
 | :-- | :-- | :-- |
-| `Requests/*.json` | inbound | consumed and deleted |
-| `Responses/<requestId>.json` | outbound | no — the client deletes its own |
-| `status.json` | outbound | no |
-| `owner.lock` | internal | yes — every editor reads it to find out whether it is the one serving this project |
-| `diagnostics.json` | outbound | no — the [Material Content Browser](material-browser.md) reads the same records from the bridge's diagnostics store in memory, so it never waits for a file write |
-| `diagnostics/index.json`, `diagnostics/<md5>.json` | outbound | no |
-| `bridge.db` | outbound | **no** |
-| `material-expressions.json` | outbound | no |
-| `settings.json` | outbound | no |
-| `substrate-builtins.json` | outbound | no |
-| `pass-keys.json` *(since 2.1.0)* | outbound | no — see [Workspace](workspace.md#pass-keysjson) |
-| `dreamshader-builtin-catalog.json` | outbound | no — also written by `dsc export-catalog`, and on *Open DreamShader Workspace* |
-| `preview.json` | outbound | no |
-| `../Index/<root>/<source>.index.json` | outbound | no — the [symbol index](#symbol-index) of a source, beside the bridge directory rather than in it |
-| `Preview/<stem>-<crc32>.png` | outbound | no |
+| `Shader/Bridge/Requests/*.json` | inbound | consumed and deleted |
+| `Shader/Bridge/Responses/<requestId>.json` | outbound | no — the client deletes its own |
+| `Shader/Bridge/status.json` | outbound | no |
+| `Shader/Bridge/owner.lock` | internal | yes — every editor reads it to find out whether it is the one serving this project |
+| `shader.db` `diagnostics` | outbound | no — the [Material Content Browser](material-browser.md) reads the same records from the bridge's diagnostics store in memory, so it never waits for a database write |
+| `shader.db` `documents` | outbound | no — the manifests, the builtin catalog and the preview result, see [`documents`](#documents) |
+| `shader.db` `settings_mappings`, `material_expressions`, `substrate_builtins` | outbound | no — row-per-entry copies of three manifests, for lookups |
+| `shader.db` `source_index` | outbound | no — the [symbol index](#symbol-index) |
+| `Shader/Preview/<stem>-<crc32>.png` | outbound | no |
 | `<SourceDirectory>/DreamShader.code-workspace` | outbound | no — see [Workspace](workspace.md) |
 
-### `diagnostics.json`
+### `shader.db`
+
+SQLite, opened read-write-create with `PRAGMA busy_timeout=5000`, `PRAGMA journal_mode=WAL` and
+`PRAGMA synchronous=NORMAL`. A writer opens it for one transaction and closes it again, so
+`shader.db-wal` and `shader.db-shm` exist only while a write is in progress — closing the last
+connection folds the WAL back into the file. A reader should open it read-only through real SQLite
+(the VS Code extension uses `node:sqlite`); a reader that copies the file whole can miss a commit that is
+still in the WAL.
+
+```sql
+CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+
+CREATE TABLE settings_mappings(
+    kind TEXT NOT NULL, alias TEXT NOT NULL, normalized_alias TEXT NOT NULL,
+    value INTEGER NOT NULL, name TEXT, display_name TEXT, source TEXT NOT NULL,
+    PRIMARY KEY(kind, normalized_alias));
+CREATE INDEX idx_settings_mappings_kind_alias ON settings_mappings(kind, alias);
+
+CREATE TABLE material_expressions(
+    name TEXT PRIMARY KEY, class_name TEXT NOT NULL, path_name TEXT NOT NULL,
+    default_output_type TEXT NOT NULL, json TEXT NOT NULL);
+
+CREATE TABLE substrate_builtins(
+    name TEXT PRIMARY KEY, qualified_name TEXT NOT NULL, class_name TEXT NOT NULL,
+    output_type TEXT NOT NULL, is_substrate_output INTEGER NOT NULL,
+    detail TEXT, example TEXT, snippet TEXT, json TEXT NOT NULL);
+
+CREATE TABLE diagnostics(
+    path TEXT PRIMARY KEY, json TEXT NOT NULL, updated_at_utc TEXT NOT NULL);
+
+CREATE TABLE documents(
+    name TEXT PRIMARY KEY, json TEXT NOT NULL, updated_utc TEXT NOT NULL);
+
+CREATE TABLE source_index(
+    root TEXT NOT NULL, path TEXT NOT NULL, json TEXT NOT NULL, updated_utc TEXT NOT NULL,
+    PRIMARY KEY(root, path)) WITHOUT ROWID;
+```
+
+| Table | Contents |
+| :-- | :-- |
+| `meta` | `schema` (`1`), `producer` (`DreamShader@<version>`), `revision`, and per part `<part>_revision` and `<part>_updated_utc` |
+| `settings_mappings` | Every `ShadingModel` / `BlendMode` / `MaterialDomain` alias, with its enum value and whether it came from the project settings or the built-in table |
+| `material_expressions` | One row per reflected `UMaterialExpression`, with the full manifest entry in `json` |
+| `substrate_builtins` | One row per `Substrate.*` builtin, with the full manifest entry in `json` |
+| `diagnostics` | One row per source file: `json` is that file's `{ path, diagnostics[] }` object |
+| `documents` | One row per manifest, the JSON text verbatim — see [`documents`](#documents) |
+| `source_index` | One row per source: the [symbol index](#symbol-index) |
+
+The parts are `settings_mappings`, `material_expressions`, `substrate_builtins`, `diagnostics`,
+`documents` and `index`. Every commit adds one to `revision` and to the `<part>_revision` of what it
+changed, and stamps `<part>_updated_utc`; a reader compares those to decide what to reload. A database
+whose `schema` this build does not know has its tables dropped and recreated in place.
+
+> [!WARNING]
+> The database is **write-only from the plugin's side** — apart from skipping a symbol index that would
+> not change — and is not durable state: the diagnostics and the preview result are emptied when the next
+> bridge owner starts (they outlive the editor that wrote them until then), and the manifests are rewritten
+> whole inside a transaction. Do not store client state in it.
+
+A write that fails is a warning, `DreamShader: '<path>': <what> failed: <SQLite error>; external tools
+now read stale data.` (or `...the diagnostics external editors show are now stale.`), and the transaction
+is rolled back; `DreamShader could not open '<path>': <error>` when the file cannot be opened at all.
+
+### `diagnostics`
+
+One row per source file with diagnostics. `json` is that file's object:
 
 ```json
-{ "version": 1, "updatedAtUtc": "<ISO-8601>", "files": [ { "path": "…", "diagnostics": [ … ] } ] }
+{ "path": "…", "diagnostics": [ … ] }
 ```
+
+The table is replaced in one transaction on every change, so a reader never sees half of it. A reader
+that wants the old `diagnostics.json` envelope builds it from the rows:
+`{ "version": 1, "updatedAtUtc": <meta diagnostics_updated_utc>, "files": [ <every row's json> ] }`.
 
 Diagnostic object fields. Optional fields are omitted entirely when empty.
 
@@ -738,118 +813,57 @@ message, line and column.
 > because the enumeration walks every shader platform. Below UE 5.7 it carries a feature-level name,
 > for example `SM6`.
 
-### `diagnostics/`
+### `documents`
 
-The same data sharded one file per source, so a client can re-read only what changed.
+What used to be one JSON file each, the text unchanged. A reader that knew the file reads the row
+instead.
 
-`index.json`:
-
-```json
-{ "version": 1, "updatedAtUtc": "<ISO-8601>", "files": [ { "path": "…", "file": "<md5>.json", "count": 2 } ] }
-```
-
-| Field | Type | Notes |
+| `name` | Was | Written |
 | :-- | :-- | :-- |
-| `path` | string | normalized source path |
-| `file` | string | sibling file name — the MD5 of the normalized path plus `.json` |
-| `count` | number | number of diagnostics in that shard |
+| `settings` | `settings.json` | bridge startup, workspace open |
+| `pass-keys` *(since 2.1.0)* | `pass-keys.json` | with `settings` |
+| `material-expressions` | `material-expressions.json` | bridge startup, workspace open |
+| `substrate-builtins` | `substrate-builtins.json` | bridge startup, workspace open |
+| `preprocessor-defines` | `preprocessor-defines.json` | bridge startup, workspace open, a define edit |
+| `builtin-catalog` | `dreamshader-builtin-catalog.json` | after engine init, workspace open, `dsc export-catalog` without `-Out` |
+| `preview` | `preview.json` | every one-shot preview |
 
-Each `<md5>.json` holds the same `files[]` entry shape as `diagnostics.json`. Stale shards — any
-`*.json` other than `index.json` whose name is no longer an active key — are deleted on every write.
-All three sinks (`diagnostics.json`, `diagnostics/`, the database) are rewritten together.
+Every manifest carries a `generatedAt` ISO-8601 UTC timestamp.
 
-### `bridge.db`
-
-SQLite, opened read-write-create with `PRAGMA journal_mode=WAL` and `PRAGMA synchronous=NORMAL`, so
-`bridge.db-wal` and `bridge.db-shm` appear alongside it.
-
-```sql
-CREATE TABLE IF NOT EXISTS meta(
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL);
-
-CREATE TABLE IF NOT EXISTS settings_mappings(
-    kind TEXT NOT NULL, alias TEXT NOT NULL, normalized_alias TEXT NOT NULL,
-    value INTEGER NOT NULL, name TEXT, display_name TEXT, source TEXT NOT NULL,
-    PRIMARY KEY(kind, normalized_alias));
-
-CREATE TABLE IF NOT EXISTS material_expressions(
-    name TEXT PRIMARY KEY, class_name TEXT NOT NULL, path_name TEXT NOT NULL,
-    default_output_type TEXT NOT NULL, json TEXT NOT NULL);
-
-CREATE TABLE IF NOT EXISTS substrate_builtins(
-    name TEXT PRIMARY KEY, qualified_name TEXT NOT NULL, class_name TEXT NOT NULL,
-    output_type TEXT NOT NULL, is_substrate_output INTEGER NOT NULL,
-    detail TEXT, example TEXT, snippet TEXT, json TEXT NOT NULL);
-
-CREATE TABLE IF NOT EXISTS diagnostics(
-    path TEXT PRIMARY KEY, json TEXT NOT NULL, updated_at_utc TEXT NOT NULL);
-
-CREATE INDEX IF NOT EXISTS idx_settings_mappings_kind_alias
-    ON settings_mappings(kind, alias);
-```
-
-| Table | Contents |
-| :-- | :-- |
-| `meta` | Generation timestamps, one row per producer |
-| `settings_mappings` | Every `ShadingModel` / `BlendMode` / `MaterialDomain` alias, with its enum value and whether it came from the project settings or the built-in table |
-| `material_expressions` | One row per reflected `UMaterialExpression`, with the full manifest entry in `json` |
-| `substrate_builtins` | One row per `Substrate.*` builtin, with the full manifest entry in `json` |
-| `diagnostics` | One row per source file, with that file's diagnostics array in `json` |
-
-`meta` keys: `settings.generatedAt`, `materialExpressions.generatedAt`,
-`substrateBuiltins.generatedAt`, `diagnostics.updatedAt`.
-
-> [!WARNING]
-> The database is **write-only from the plugin's side** and is not durable state. It is deleted on
-> bridge startup *and* on bridge shutdown, and every writer replaces its whole table inside a
-> transaction (`DELETE FROM` then insert) rather than updating rows. Nothing in the plugin ever reads
-> a row back. Do not store client state in it; treat it as a query-friendly mirror of the JSON
-> artifacts, valid only while the editor is running.
-
-Failure to open the database is a warning — `Failed to open DreamShader bridge database: {Path}`, or
-`Failed to open DreamShader bridge database for diagnostics: {Path}` — and the JSON sinks are still
-written. The substitution is the database path, not a reason.
-
-### Manifests
-
-All three are written at bridge startup and again whenever the workspace is opened. Every one carries
-a `generatedAt` ISO-8601 UTC timestamp.
-
-| File | `schema` | `version` | Payload |
+| Document | `schema` | `version` | Payload |
 | :-- | :-- | :-- | :-- |
-| `settings.json` | `DreamShader.Settings` | `1` | `mappings: { ShadingModel[], BlendMode[], MaterialDomain[] }` |
-| `material-expressions.json` | `DreamShader.MaterialExpressions` | `1` | `expressions[]` |
-| `substrate-builtins.json` | `DreamShader.SubstrateBuiltins` | `1` | `builtins[]`, `supported`, and `unsupportedReason` when unsupported |
+| `settings` | `DreamShader.Settings` | `1` | `mappings: { ShadingModel[], BlendMode[], MaterialDomain[] }` |
+| `material-expressions` | `DreamShader.MaterialExpressions` | `1` | `expressions[]` |
+| `substrate-builtins` | `DreamShader.SubstrateBuiltins` | `1` | `builtins[]`, `supported`, and `unsupportedReason` when unsupported |
 
-| Manifest | Entry fields |
+| Document | Entry fields |
 | :-- | :-- |
-| `settings.json` | `alias`, `value` (number), `name`, `displayName`, `source` (`user` or `builtin`) |
-| `material-expressions.json` | `name`, `className`, `pathName`, `defaultOutputType`, `properties[]` (`name`, `type`, `isInput`), `inputs[]`, `outputs[]` (`index`, `name`, `componentCount`, `outputType`) |
-| `substrate-builtins.json` | `name`, `qualifiedName`, `className`, `outputType`, `isSubstrateOutput`, `detail`, `example`, `snippet`, `parameters[]` (`qualifier` — always `in` —, `type`, `name`, optional `placeholder`) |
+| `settings` | `alias`, `value` (number), `name`, `displayName`, `source` (`user` or `builtin`) |
+| `material-expressions` | `name`, `className`, `pathName`, `defaultOutputType`, `properties[]` (`name`, `type`, `isInput`), `inputs[]`, `outputs[]` (`index`, `name`, `componentCount`, `outputType`) |
+| `substrate-builtins` | `name`, `qualifiedName`, `className`, `outputType`, `isSubstrateOutput`, `detail`, `example`, `snippet`, `parameters[]` (`qualifier` — always `in` —, `type`, `name`, optional `placeholder`) |
 
 User-defined alias entries are emitted before built-in ones, and a built-in alias whose normalized
 form a user alias already claimed is dropped. Aliases are sorted within each kind. Material
 expressions are sorted by `name`.
 
-`pass-keys.json` *(since 2.1.0)* is written right after `settings.json`, at the same moments, because the
-pass layers it lists are a project setting too. Schema `DreamShader.PassKeys`, version `1`; it has no
-`bridge.db` table. Its contents are on [Workspace](workspace.md#pass-keysjson).
+`pass-keys` is written right after `settings`, at the same moments, because the pass layers it lists
+are a project setting too. Schema `DreamShader.PassKeys`, version `1`; it has no row table. Its contents
+are on [Workspace](workspace.md#pass-keys).
 
 > [!NOTE]
-> Below UE 5.4 `substrate-builtins.json` carries an empty `builtins` array, `"supported": false` and
+> Below UE 5.4 `substrate-builtins` carries an empty `builtins` array, `"supported": false` and
 > `"unsupportedReason": "Substrate builtins require Unreal Engine 5.4 or newer."`, and the
-> `MSM_Strata` shading model is excluded from `settings.json`.
+> `MSM_Strata` shading model is excluded from `settings`.
 
 Logging: `Wrote DreamShader MaterialExpression manifest: {Path}` /
 `Failed to write DreamShader MaterialExpression manifest: {Path}`,
 `Wrote DreamShader settings manifest: {Path}` /
 `Failed to write DreamShader settings manifest: {Path}`, and
 `Wrote DreamShader Substrate builtin manifest: {Path}` /
-`Failed to write DreamShader Substrate builtin manifest: {Path}`. Unreadable settings produce
-`Failed to read DreamShader settings for Bridge manifest.` and no file.
+`Failed to write DreamShader Substrate builtin manifest: {Path}` — `{Path}` is the database. Unreadable
+settings produce `Failed to read DreamShader settings for Bridge manifest.` and no document.
 
-### `preview.json`
+#### `preview`
 
 Rewritten by every one-shot preview, whichever transport requested it.
 
@@ -866,8 +880,9 @@ Rewritten by every one-shot preview, whichever transport requested it.
 | `updatedAtUtc` | string | ISO-8601 UTC |
 
 PNG names are `<sanitized source stem>-<crc32 of the project-relative path, 8 hex digits>.png` under
-`Bridge/Preview/`; a source whose stem sanitizes to nothing becomes `DreamShaderPreview`. The same
-source therefore always maps to the same file name, and each render overwrites it.
+`Intermediate/DreamSource/Shader/Preview/`; a source whose stem sanitizes to nothing becomes
+`DreamShaderPreview`. The same source therefore always maps to the same file name, and each render
+overwrites it.
 
 ## Kill switch
 
@@ -878,7 +893,7 @@ source therefore always maps to the same file name, and each render overwrites i
 
 | Effect | Detail |
 | :-- | :-- |
-| Bridge | not created — no request polling, no WebSocket server, no directory watcher, no diagnostics writer, no manifests, no `bridge.db` |
+| Bridge | not created — no request polling, no WebSocket server, no directory watcher, no diagnostics writer, no manifests in `shader.db` |
 | Startup Ephemeral generation | does not run |
 | Material Content Browser | tab and menu entries are not registered |
 | Tools menu, toolbar, context menus | not registered |
@@ -895,8 +910,8 @@ a listening socket.
 Ask a running editor to recompile one file, from PowerShell, writing the request atomically:
 
 ```powershell
-$req = @{ action = "recompile"; scope = "file"; sourceFile = "C:/Projects/MyGame/DShader/Materials/M_Sample.dsm" }
-$dir = "C:\Projects\MyGame\Saved\DreamShader\Bridge\Requests"
+$req = @{ action = "recompile"; scope = "file"; sourceFile = "C:/Projects/MyGame/DreamSource/Shader/Materials/M_Sample.dsm" }
+$dir = "C:\Projects\MyGame\Intermediate\DreamSource\Shader\Bridge\Requests"
 $tmp = Join-Path $env:TEMP ("ds-" + [guid]::NewGuid() + ".json")
 $req | ConvertTo-Json | Set-Content -Path $tmp -Encoding utf8
 Move-Item $tmp (Join-Path $dir ([IO.Path]::GetFileName($tmp)))
@@ -907,7 +922,7 @@ Request a one-shot 512×512 preview on a cube and read the result:
 ```json
 {
   "action": "previewMaterial",
-  "sourceFile": "C:/Projects/MyGame/DShader/Materials/M_Sample.dsm",
+  "sourceFile": "C:/Projects/MyGame/DreamSource/Shader/Materials/M_Sample.dsm",
   "mesh": "cube",
   "width": 512,
   "height": 512,
@@ -915,16 +930,16 @@ Request a one-shot 512×512 preview on a cube and read the result:
 }
 ```
 
-`Saved/DreamShader/Bridge/preview.json` afterwards:
+The `preview` document of `Intermediate/DreamSource/shader.db` afterwards:
 
 ```json
 {
   "version": 1,
   "requestId": "8f3c1b",
   "status": "ready",
-  "sourceFile": "C:/Projects/MyGame/DShader/Materials/M_Sample.dsm",
+  "sourceFile": "C:/Projects/MyGame/DreamSource/Shader/Materials/M_Sample.dsm",
   "assetPath": "/Game/Materials/M_Sample.M_Sample",
-  "imagePath": "C:/Projects/MyGame/Saved/DreamShader/Bridge/Preview/M_Sample-3fa91c07.png",
+  "imagePath": "C:/Projects/MyGame/Intermediate/DreamSource/Shader/Preview/M_Sample-3fa91c07.png",
   "mesh": "cube",
   "message": "Rendered preview for /Game/Materials/M_Sample.M_Sample.",
   "updatedAtUtc": "2026-08-02T09:14:22Z"
@@ -959,7 +974,7 @@ Note the `frameRate` repeated on the control message: omitting it would drop the
 - [HLSL passes](../runtime/hlsl.md) — the pre-check, the snapshots and the slots a `.usf` save goes through
 - [Commandlet](commandlet.md#pass-registry) — `pass-registry`, for the slots of a deleted `.dsp`
 - [Project settings](../settings/project.md) — `SaveDebounceSeconds`, `bAutoCompileOnSave`, `GeneratedShaderDirectory`
-- [Material enums](../settings/material-enums.md) — the alias tables exported to `settings.json`
-- [Substrate builtins](../builtins/substrate.md) — the catalogue exported to `substrate-builtins.json`
-- [UE.Expression](../builtins/ue-expression.md) — the reflection surface `material-expressions.json` describes
+- [Material enums](../settings/material-enums.md) — the alias tables exported to the `settings` document
+- [Substrate builtins](../builtins/substrate.md) — the catalogue exported to the `substrate-builtins` document
+- [UE.Expression](../builtins/ue-expression.md) — the reflection surface the `material-expressions` document describes
 - [Diagnostics](../diagnostics/index.md) — where diagnostics appear and how to read them; [every code](../diagnostics/README.md)

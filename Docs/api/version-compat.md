@@ -181,7 +181,7 @@ threshold is the same 5.4.
 | Decompiler type naming | `MCT_Substrate` prints as `"Substrate"` | `MCT_Strata` prints as `"Substrate"` |
 | Decompiler shading-model export | `"Substrate"` is emitted for `MSM_Strata` | not emitted |
 | Decompiler binding table | `MP_FrontMaterial` is included | excluded |
-| `substrate-builtins.json` manifest | `supported: true` and a populated `builtins` array | `supported: false` with `unsupportedReason: "Substrate builtins require Unreal Engine 5.4 or newer."`, and an empty `builtins` array |
+| `substrate-builtins` manifest document | `supported: true` and a populated `builtins` array | `supported: false` with `unsupportedReason: "Substrate builtins require Unreal Engine 5.4 or newer."`, and an empty `builtins` array |
 | Bridge manifest, shading models | `MSM_Strata` offered | `MSM_Strata` added to the excluded-shading-model set |
 
 ### UE ≥ 5.5
@@ -284,7 +284,7 @@ every engine, and so does a `.dss` — what changes is what the engine side can 
 | `DreamShaderCompiler` | `dsc check -Shaders` on a `.dsp` | pre-checks its slots | [`DSH8338`](../diagnostics/DSH8xxx.md#dsh8338) |
 | `DreamShaderCompiler` | Hot reload of the slot shaders after a registry commit | in the editor, never in a commandlet | none |
 | `DreamShaderEditor` | [Pipeline details panel](../tools/editor-integration.md#pass-pipeline-details-panel) | as documented | one more row in Pipeline Overview: `Custom Pass runs on Unreal Engine 5.8 and later. This engine loads and saves the pipeline, and runs none of it.` |
-| `DreamShaderEditor` | [`pass-keys.json`](../tools/workspace.md#pass-keysjson) | `supported: true` | `supported: false` and `unsupportedReason: "Custom Pass pipelines run on Unreal Engine 5.8 and later."`; the keys, injection points and formats are written either way |
+| `DreamShaderEditor` | [`pass-keys` document](../tools/workspace.md#pass-keys) | `supported: true` | `supported: false` and `unsupportedReason: "Custom Pass pipelines run on Unreal Engine 5.8 and later."`; the keys, injection points and formats are written either way |
 | `DreamShaderEditor` | The render automation tests (`DreamShaderPassRenderTests.cpp`) | compiled in | compiled out |
 
 ## "Since UE 5.x" summary
@@ -320,7 +320,7 @@ everywhere and builds on 5.8 only.
   nodes), [`DSH7128`](../diagnostics/DSH7xxx.md#dsh7128) (`ShadingModel="Substrate"` on 5.3) and
   [`DSH8300`](../diagnostics/DSH8xxx.md#dsh8300) (a `.dsp` below 5.8); the rest say that the node,
   pin, value or attribute does not exist (`DSH5210`, `DSH5213`, `DSH5215`, `DSH5200`). The
-  `substrate-builtins.json` manifest on 5.3 still carries an `unsupportedReason`. To build one source
+  `substrate-builtins` manifest document on 5.3 still carries an `unsupportedReason`. To build one source
   on several engines, guard the newer code with `#if DS_ENGINE_MINOR >= …`.
 - `DREAMSHADER_WITH_SUBSTRATE_BUILTINS` is evaluated as a value, so it must be written
   `#if DREAMSHADER_WITH_SUBSTRATE_BUILTINS`, not `#ifdef`. It is always defined.

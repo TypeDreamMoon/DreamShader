@@ -25,7 +25,7 @@
 
 using namespace UE::DreamShader::Lang;
 
-const FLangSourceText Source(TEXT("DShader/Materials/M_Panel.dsm"), Text);   // the extension picks the front end
+const FLangSourceText Source(TEXT("DreamSource/Shader/Materials/M_Panel.dsm"), Text);   // the extension picks the front end
 const FLangParseResult Parsed = ParseDreamShaderLang(Source);
 
 if (Parsed.Succeeded() && Parsed.Legacy.IsValid())

@@ -44,7 +44,7 @@ In Claude Code, you can import the guide instead. Add this line to the project's
 | Skill | Use it when |
 | :-- | :-- |
 | `dream-shader-create` | writing a new material, function, instance or Custom Pass pipeline from a description |
-| `dream-shader-verify` | checking or compiling one source or the whole `DShader/` tree |
+| `dream-shader-verify` | checking or compiling one source or the whole `DreamSource/Shader/` tree |
 | `dream-shader-diagnose` | a build failed with a `DSHnnnn` code, or the result looks wrong |
 | `dream-shader-decompile` | turning an existing material, function, instance or pipeline asset into source |
 | `dream-shader-optimize` | making decompiled or migrated source read like hand-written source |
@@ -118,7 +118,7 @@ Every `dsc.ps1` run starts the engine and takes tens of seconds, and a run over 
 as one. So write first, then check in one run.
 
 1. Read the reference for the kind of file: `.skill/reference/dss.md`, `dsp.md` or `legacy.md`.
-2. Write the sources under `DShader/`. Mirror the folders and names the project already uses.
+2. Write the sources under `DreamSource/Shader/`. Mirror the folders and names the project already uses.
 3. Check, which writes nothing:
 
    ```powershell
@@ -129,7 +129,7 @@ as one. So write first, then check in one run.
 5. Compile each new file once, and let the run delete what it created:
 
    ```powershell
-   pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/UI/M_Panel.dss -Force -CleanNew
+   pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DreamSource/Shader/UI/M_Panel.dss -Force -CleanNew
    ```
 
 6. For a `/// @custom` body or a `.dsp` with HLSL passes, also run `check <file> -Shaders`. It is the only step

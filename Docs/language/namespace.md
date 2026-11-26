@@ -190,7 +190,7 @@ The complete cross-stage list lives in the [diagnostics index](../diagnostics/in
 ## Example
 
 ```c
-// DShader/Lib/Common.dsh
+// DreamSource/Shader/Lib/Common.dsh
 
 Namespace(Name="Common")
 {

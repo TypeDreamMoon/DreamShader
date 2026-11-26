@@ -51,7 +51,7 @@
 
 > [!TIP]
 > Keep every source file — `.dss`, `.dsi`, `.dsp`, `.dsh`, `.dsm`, `.dsf` — in version control, and with
-> Custom Pass the snapshots in `DShader/.dreampass/` too. The generated
+> Custom Pass the snapshots in `DreamSource/Shader/.dreampass/` too. The generated
 > Unreal assets can always be rebuilt from source; whether to version them as well is a choice with two
 > workable answers, and [Source control](Docs/generation/source-control.md) has both.
 
@@ -109,11 +109,12 @@ automatically, and you can materialise one by hand from the Material Content Bro
 
    ```text
    MyProject/
-   ├─ DShader/
-   │  ├─ Materials/   *.dsm   material implementations
-   │  ├─ Functions/   *.dsf   reusable material function assets
-   │  ├─ Shared/      *.dsh   headers: Function, GraphFunction, Namespace, VirtualFunction
-   │  └─ Packages/           installed shared libraries
+   ├─ DreamSource/
+   │  └─ Shader/
+   │     ├─ Materials/   *.dsm   material implementations
+   │     ├─ Functions/   *.dsf   reusable material function assets
+   │     ├─ Shared/      *.dsh   headers: Function, GraphFunction, Namespace, VirtualFunction
+   │     └─ Packages/           installed shared libraries
    └─ Plugins/
       └─ DreamShader/
    ```
@@ -121,8 +122,11 @@ automatically, and you can materialise one by hand from the Material Content Bro
 3. Save it. With *Auto Compile On Save* on — the default — the source is parsed after a short
    debounce and the asset is built.
 
-Settings live under *Project Settings ▸ DreamPlugin ▸ Dream Shader*; every key and its default is on
-[Project settings](Docs/settings/project.md). The full walkthrough is
+Settings live under *Project Settings ▸ DreamPlugin ▸ Dream Shader*, and the source directory under
+*Project Settings ▸ Dream Source ▸ Shader*; every key and its default is on
+[Project settings](Docs/settings/project.md). A project that still keeps its sources in `DShader/` goes on
+working, and the editor offers to move them — see
+[DreamSource layout](Docs/settings/project.md#dreamsource-layout). The full walkthrough is
 [Getting started](Docs/getting-started.md).
 
 ## What it generates
@@ -180,8 +184,8 @@ The documentation starts at [`Docs/README.md`](Docs/README.md), and is published
 | :-- | :-- |
 | **[Material Content Browser](Docs/tools/material-browser.md)** | *Tools ▸ DreamShader*. Your sources and the project's materials in one tab: per-file compile status, every diagnostic with a jump to the line, hand-edit detection with Revert / Adopt / Detach, imports and dependents, the inheritance chain, a live orbiting preview, instance creation, and templates for new files. Follows the watcher, so it is never stale |
 | **[Decompiler](Docs/tools/decompiler.md)** | right-click a `Material`, `Material Function` or material instance ▸ *DreamShader ▸ Export .dss* / *Export .dsi* (or `dsc decompile`, which also takes a Custom Pass pipeline). The 2.0 text is parsed again before it is written, and what it cannot state is named at the top of the file; *Export Legacy .dsm / .dsf* writes 1.x text |
-| **[Packages](Docs/tools/packages.md)** | reusable `.dsh` libraries under `DShader/Packages/@scope/name/`, imported as `import "@typedreammoon/dream-noise/Library/Noise.dsh";` |
-| **[Workspace](Docs/tools/workspace.md)** | the generated `DShader/DreamShader.code-workspace`, opened in VSCode from the editor toolbar |
+| **[Packages](Docs/tools/packages.md)** | reusable `.dsh` libraries under `DreamSource/Shader/Packages/@scope/name/`, imported as `import "@typedreammoon/dream-noise/Library/Noise.dsh";` |
+| **[Workspace](Docs/tools/workspace.md)** | the generated `DreamSource/Shader/DreamShader.code-workspace`, opened in VSCode from the editor toolbar |
 | **[Commandlet](Docs/tools/commandlet.md)** | `-run=DreamShader compile \| decompile` — headless generation for CI |
 
 ### Editor language extensions
@@ -213,8 +217,8 @@ editor keeps them in memory, reports every asset the run created or rewrote, so 
 exactly the ones it created.
 
 ```powershell
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/UI/M_Panel.dss
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/UI/M_Panel.dss -Force -CleanNew
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DreamSource/Shader/UI/M_Panel.dss
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DreamSource/Shader/UI/M_Panel.dss -Force -CleanNew
 ```
 
 Publish the skills into `.claude/skills/` once, and an agent working anywhere in the project loads

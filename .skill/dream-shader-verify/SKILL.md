@@ -1,6 +1,6 @@
 ---
 name: dream-shader-verify
-description: Check and compile DreamShader sources headlessly — one file or the whole DShader tree — without opening the Unreal editor, and read back every diagnostic with its file, line and code. Use when asked to verify, validate, check, build, compile, test or CI-gate .dss / .dsi / .dsp / .dsm / .dsf sources, or to find out whether a material still builds.
+description: Check and compile DreamShader sources headlessly — one file or the whole source directory (DreamSource/Shader) — without opening the Unreal editor, and read back every diagnostic with its file, line and code. Use when asked to verify, validate, check, build, compile, test or CI-gate .dss / .dsi / .dsp / .dsm / .dsf sources, or to find out whether a material still builds.
 ---
 
 # dream-shader-verify `<file>` | `-All`
@@ -38,9 +38,9 @@ Without the tool, use the driver as below.
 | `check -Shaders` | the asset **and its shaders**, for the project's shader formats | the assets, as `compile` does | for a `/// @custom` body or a `.dsp` with HLSL passes — the only thing that compiles that HLSL |
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/UI/M_Panel.dss
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/UI/M_Panel.dss -Force -CleanNew
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/Passes/CP_Outline.dsp -Shaders -CleanNew
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DreamSource/Shader/UI/M_Panel.dss
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DreamSource/Shader/UI/M_Panel.dss -Force -CleanNew
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DreamSource/Shader/Passes/CP_Outline.dsp -Shaders -CleanNew
 ```
 
 Exit `0` success, `1` failure — the commandlet's own codes. Run from anywhere inside the project: the driver
@@ -52,7 +52,7 @@ about what one file does, so batch: edit everything, then `check -All` once.
 | Argument | Effect |
 | :-- | :-- |
 | *(positional)* | the source — absolute, or relative to the working directory. `.dss .dsi .dsp .dsm .dsf`; a `.dsh` is checked through the files that include it |
-| `-All` | every source of every source root — the project's `DShader/` **and each enabled plugin's** — except `Packages/`. `compile` builds `.dsf` first, the rest in path order |
+| `-All` | every source of every source root — the project's `DreamSource/Shader/` **and each enabled plugin's** — except `Packages/`. `compile` builds `.dsf` first, the rest in path order |
 | `-Force` | `compile` / `check -Shaders`: rebuild even when the source hash is unchanged. Without it an unchanged file logs `Skipped … source hash is unchanged …` and proves nothing |
 | `-CleanNew` | delete the `.uasset` files this run created (they were not on disk before it), then prune the emptied folders |
 | `-DiagnosticsOut <file>` | `check`: the diagnostics as JSON as well |
@@ -64,9 +64,9 @@ about what one file does, so batch: edit everything, then `check -All` once.
 
 ```text
 dsc: compile  project=MyProject.uproject  engine=C:\Program Files\Epic Games\UE_5.8
-LogDreamShader: Display: Generated Material /Game/UI/M_Panel.M_Panel from …/DShader/UI/M_Panel.dss.
+LogDreamShader: Display: Generated Material /Game/UI/M_Panel.M_Panel from …/DreamSource/Shader/UI/M_Panel.dss.
 Warnings:
-…/DShader/UI/M_Panel.dss(13,20): DSH7233: A slider range ('@slider', …) is for a scalar parameter; this one is 'float3', which has no slider, so the range is ignored.
+…/DreamSource/Shader/UI/M_Panel.dss(13,20): DSH7233: A slider range ('@slider', …) is for a scalar parameter; this one is 'float3', which has no slider, so the range is ignored.
 
 Assets written to disk by this run:
   Content/UI/M_Panel.uasset  [NEW]
@@ -110,11 +110,11 @@ too; for those, a rewrite is expected.)
 
 ## Gotchas
 
-- **`-All` covers the plugins' sources too.** Every enabled plugin with a `DShader/` folder is a source root, so
+- **`-All` covers the plugins' sources too.** Every enabled plugin with a `DreamSource/Shader/` folder is a source root, so
   `compile -All` rebuilds its materials into its own `Content/` — files another repository owns. Compile single
   files while iterating; keep `-All` for `check`, or for a deliberate gate.
 - **A `.dsp` builds on UE 5.8+ only** (`DSH8300` below that). Besides the pipeline it writes a render target per
-  exported buffer, and an HLSL pass rewrites the project's `DShader/.dreampass/` registry and snapshots — source
+  exported buffer, and an HLSL pass rewrites the project's `DreamSource/Shader/.dreampass/` registry and snapshots — source
   files to commit, which the driver lists after the run.
 - **`check -Shaders` saves assets**, because 2.0 has no transient asset; the driver reports them like
   `compile`'s. It drives the cook-target shader compilers (a commandlet does not render), so its HLSL errors come
@@ -126,7 +126,7 @@ too; for those, a rewrite is expected.)
   included, is `DSH9110` and the command exits `1` without touching a file. The driver passes flags bare.
 - **The first bare token after `-run=DreamShader` is the verb**, unconditionally — `-run=DreamShader Source=X
   compile` runs a verb called `Source=X`.
-- **The editor bridge never runs inside a commandlet**: no `diagnostics.json`, no squiggles in VS Code. The log is
+- **The editor bridge never runs inside a commandlet**: no diagnostics in `shader.db`, no squiggles in VS Code. The log is
   where a headless run's diagnostics are — and the driver prints them, each report whole.
 - **Use PowerShell, not Git Bash**, for an asset path: Git Bash rewrites `/Game/X` into
   `C:/Program Files/Git/Game/X`.

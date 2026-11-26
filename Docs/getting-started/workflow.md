@@ -9,7 +9,7 @@ cook).
 
 ## The loop
 
-1. Edit a source under `DShader/` — a `.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf` or `.dsh`.
+1. Edit a source under `DreamSource/Shader/` — a `.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf` or `.dsh`.
 2. Fix what the editor extension reports locally first — syntax, unknown identifiers, bad imports.
 3. **Save.** The source directory watcher sees the change.
 4. A debounce timer waits *Save Debounce Seconds* — `0.25` by default, clamped to `[0.05, 10.0]` — so a burst of saves
@@ -149,7 +149,7 @@ provenance metadata fails the compile with `DSH8201`.
 Every diagnostic carries a `DSHnnnn` code and is reported at the line and column of the construct it is about:
 
 ```text
-I:/MyProject/DShader/Materials/M_Minimal.dss(8,24): DSH4200: 'Tnt' is not declared; did you mean 'Tint'? Names are case-sensitive.
+I:/MyProject/DreamSource/Shader/Materials/M_Minimal.dss(8,24): DSH4200: 'Tnt' is not declared; did you mean 'Tint'? Names are case-sensitive.
 ```
 
 | Where | What it shows |
@@ -164,7 +164,7 @@ A record raised inside a header points at the header, not at the file that impor
 ## Migrating an existing material
 
 Right-click a `UMaterial`, `UMaterialFunction` or material instance in the Content Browser and use *DreamShader ▸ Export
-.dss* / *Export .dsi* (*Export Legacy .dsm / .dsf* for 1.x text). The output lands under `DShader/Decompiled/` and opens
+.dss* / *Export .dsi* (*Export Legacy .dsm / .dsf* for 1.x text). The output lands under `DreamSource/Shader/Decompiled/` and opens
 automatically; what the decompiler could not state is listed at the top of the file, each with its code. Treat it as a
 first draft — sort out naming, helper layering and includes before adopting it as the source. See
 [Decompiler](../tools/decompiler.md).

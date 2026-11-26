@@ -23,14 +23,14 @@ pins. Without the tool, run the driver as below.
 **1 — Get the exact message.** A diagnostic is `file(line,col): DSHnnnn: message`:
 
 ```text
-C:/Project/DShader/UI/M_Panel.dss(7,16): DSH4200: 'Tin' is not declared in this scope.
+C:/Project/DreamSource/Shader/UI/M_Panel.dss(7,16): DSH4200: 'Tin' is not declared in this scope.
 ```
 
 If all you have is "it doesn't work", reproduce it — `check` writes nothing and reports every diagnostic of the
 file at once:
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/UI/M_Panel.dss
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DreamSource/Shader/UI/M_Panel.dss
 ```
 
 **2 — Open the code's page.** The leading digit is the stage; the page is
@@ -81,10 +81,10 @@ along.
 | :-- | :-- |
 | Output Log / `dsc.ps1` output | every message, success included. The only surface a headless run has |
 | Material Content Browser | per-file status and diagnostics, live from the editor |
-| `Saved/DreamShader/Bridge/diagnostics.json`, `diagnostics/` shards, `bridge.db` | what the VS Code and Rider extensions show: each record with its `code`, `severity` (`error`, `warning` or `info`), file, line and column. A failed compile files all its records, a successful one its warnings and notes *(since 2.1.0)* |
+| the `diagnostics` table of `Intermediate/DreamSource/shader.db` | what the VS Code and Rider extensions show: each record with its `code`, `severity` (`error`, `warning` or `info`), file, line and column. A failed compile files all its records, a successful one its warnings and notes *(since 2.1.0)* |
 
-**None of the bridge files are written by a commandlet**, so a headless run cannot be read from
-`diagnostics.json` — read the log. A message that names a `.dsh` line came from a file that includes it: a header
+**A commandlet writes no bridge diagnostics**, so a headless run cannot be read from
+`shader.db` — read the log. A message that names a `.dsh` line came from a file that includes it: a header
 is never compiled on its own.
 
 ## See also

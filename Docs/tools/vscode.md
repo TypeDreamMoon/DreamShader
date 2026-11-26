@@ -4,8 +4,9 @@ description: The language extensions, the generated DreamShader.code-workspace, 
 ---
 
 DreamShaderLang ships as **two independent products**: the Unreal plugin, and a language extension
-for your editor. They never call each other directly — they exchange files under
-`<Project>/Saved/DreamShader/Bridge/` and one loopback WebSocket. Knowing which side owns what saves
+for your editor. They never call each other directly — they exchange the SQLite database
+`<Project>/Intermediate/DreamSource/shader.db`, files under `<Project>/Intermediate/DreamSource/Shader/Bridge/`
+and one loopback WebSocket. Knowing which side owns what saves
 a lot of time when something does not work.
 
 | Side | Owns |
@@ -25,7 +26,7 @@ a lot of time when something does not work.
 | `.dsm` / `.dsh` / `.dsf` and `.dss` / `.dsi` / `.dsp` highlighting, completion, hovers | **extension** | fed by the manifests, the symbol index and the builtin catalog the plugin exports |
 | `DreamShader.code-workspace` | plugin | rewritten on every *Open Dream Shader Workspace* |
 | `dreamshader.package.json`, `dreamshader.lock.json`, install/update commands | **extension** | **no plugin C++ reads either file** — [Packages](packages.md) |
-| `DShader/Packages` creation, import resolution, auto-compile exclusion | plugin | [Packages](packages.md) |
+| `<SourceDirectory>/Packages` creation, import resolution, auto-compile exclusion | plugin | [Packages](packages.md) |
 
 ## The extensions
 
@@ -62,7 +63,7 @@ name — writes one file and launches an editor on it. (since 1.2.1)
 
 | Aspect | Value |
 | :-- | :-- |
-| Path | `<SourceDirectory>/DreamShader.code-workspace` — `<Project>/DShader/` by default |
+| Path | `<SourceDirectory>/DreamShader.code-workspace` — `<Project>/DreamSource/Shader/` by default, or the legacy `<Project>/DShader/` while only that exists ([DreamSource layout](../settings/project.md#dreamsource-layout)) |
 | Encoding | UTF-8 without BOM, pretty-printed by Unreal's JSON writer (tab indentation) |
 | Platform | **Windows only** — discovery uses Windows environment variables, a `;`-separated `PATH`, `cmd.exe` and `notepad.exe` |
 
@@ -77,7 +78,7 @@ The source directory is created if it does not exist. The file looks like this:
 		},
 		{
 			"name": "Plugin: MoonToon",
-			"path": "../Plugins/MoonToon/DShader"
+			"path": "../../Plugins/MoonToon/DreamSource/Shader"
 		}
 	],
 	"settings": {
@@ -94,7 +95,7 @@ The source directory is created if it does not exist. The file looks like this:
 ```
 
 One `folders` entry per source root: the project root is always first and always `"."` (the workspace
-file lives in it), then one entry per plugin that ships a `DShader` folder, named `Plugin: <Name>` and
+file lives in it), then one entry per plugin that ships a `DreamSource/Shader` (or legacy `DShader`) folder, named `Plugin: <Name>` and
 pointed at a path relative to the workspace file (an absolute one when there is no relative form — an
 engine plugin on another drive). Every key the writer emits follows; there are no others, and only the
 number of `folders` entries varies.
@@ -129,15 +130,15 @@ configuration in a *different* `.code-workspace` file, or in `<SourceDirectory>/
 
 | Step | Action | On failure |
 | :-- | :-- | :-- |
-| 1 | Re-export `material-expressions.json` | logged, the command continues |
-| 2 | Re-export `settings.json`, and `pass-keys.json` right after it (since 2.1.0) | logged, the command continues |
-| 3 | Re-export `substrate-builtins.json` | logged, the command continues |
+| 1 | Rewrite the `material-expressions` document of `shader.db` | logged, the command continues |
+| 2 | Rewrite the `settings` document, and `pass-keys` right after it (since 2.1.0) | logged, the command continues |
+| 3 | Rewrite the `substrate-builtins`, `preprocessor-defines` and `builtin-catalog` documents | logged, the command continues |
 | 4 | Write `DreamShader.code-workspace` | toast + warning, the command **aborts** |
 | 5 | Launch an editor on the workspace file | toast + warning |
 
-Steps 1–3 rewrite the same three manifests the bridge writes at editor startup, so an extension
+Steps 1–3 rewrite the same documents the bridge writes at editor startup, so an extension
 installed a minute ago sees current data without an editor restart. See
-[Bridge artifacts](bridge.md).
+[Bridge artifacts](bridge.md#documents).
 
 ### Launch fallback chain
 
@@ -215,40 +216,48 @@ Toast text and log text differ; both are listed. Runtime substitutions are writt
 
 ## What an extension consumes
 
-Every artifact an extension reads or writes lives under `<Project>/Saved/DreamShader/Bridge/`, plus
-the loopback WebSocket endpoint.
+An extension reads `<Project>/Intermediate/DreamSource/shader.db`, reads and writes files under
+`<Project>/Intermediate/DreamSource/Shader/Bridge/`, and talks to the loopback WebSocket endpoint. The
+full schemas are on [Editor bridge](bridge.md).
 
 | Artifact | Direction | Contents |
 | :-- | :-- | :-- |
-| `Requests/*.json` | extension → editor | recompile, clean, one-shot preview and `reveal-node` commands |
-| `diagnostics.json` | editor → extension | all current diagnostics, grouped by source file |
-| `diagnostics/index.json` + `diagnostics/<md5>.json` | editor → extension | the same data sharded per file, for incremental reads |
-| `bridge.db` | editor → extension | SQLite mirror of the diagnostics and the three manifests |
-| `material-expressions.json` | editor → extension | reflected `UMaterialExpression` catalogue for [`UE.Expression`](../builtins/ue-expression.md) completion (since 1.2.10) |
-| `settings.json` | editor → extension | `ShadingModel` / `BlendMode` / `MaterialDomain` alias tables |
-| `substrate-builtins.json` | editor → extension | [`Substrate.*`](../builtins/substrate.md) catalogue with snippets; `supported: false` below UE 5.4 |
-| `pass-keys.json` (since 2.1.0) | editor → extension | what a `.dsp` may say, for completion: injection points, pipeline / buffer / pass keys, value spellings, the project's pass layer names; `supported: false` below UE 5.8. No `bridge.db` table |
-| `dreamshader-builtin-catalog.json` (since 2.0.0) | editor → extension | the binder's own node catalog — the source of `UE.` / `Substrate.` completion; `dsc export-catalog` writes it too |
-| `../Index/<root>/<source>.index.json` (since 2.0.0) | editor → extension | each source's symbol index, refreshed after every compile, a failed one included |
-| `preview.json` + `Preview/*.png` | editor → extension | result manifest and image for a one-shot preview |
-| `status.json` | editor → extension | heartbeat and identity — **a missing file means "no editor is running"** (since 1.6.0) |
-| `Responses/<requestId>.json` | editor → extension | the answer to a request that carried a `requestId` (since 1.6.0) |
-| `owner.lock` | editor-internal | which editor owns this project's bridge (since 1.8.0) |
+| `Bridge/Requests/*.json` | extension → editor | recompile, clean, one-shot preview and `reveal-node` commands |
+| `shader.db` table `diagnostics` | editor → extension | all current diagnostics, one row per source file — [diagnostics](bridge.md#diagnostics) |
+| `shader.db` document `material-expressions` | editor → extension | reflected `UMaterialExpression` catalogue for [`UE.Expression`](../builtins/ue-expression.md) completion (since 1.2.10); also row by row in `material_expressions` |
+| `shader.db` document `settings` | editor → extension | `ShadingModel` / `BlendMode` / `MaterialDomain` alias tables; also row by row in `settings_mappings` |
+| `shader.db` document `substrate-builtins` | editor → extension | [`Substrate.*`](../builtins/substrate.md) catalogue with snippets; `supported: false` below UE 5.4; also row by row in `substrate_builtins` |
+| `shader.db` document `pass-keys` (since 2.1.0) | editor → extension | what a `.dsp` may say, for completion: injection points, pipeline / buffer / pass keys, value spellings, the project's pass layer names; `supported: false` below UE 5.8. No row table |
+| `shader.db` document `preprocessor-defines` | editor → extension | the define table `#if` reads |
+| `shader.db` document `builtin-catalog` (since 2.0.0) | editor → extension | the binder's own node catalog — the source of `UE.` / `Substrate.` completion; `dsc export-catalog` writes it too |
+| `shader.db` table `source_index` (since 2.0.0) | editor → extension | each source's [symbol index](bridge.md#symbol-index), refreshed after every compile, a failed one included |
+| `shader.db` document `preview` + `Shader/Preview/*.png` | editor → extension | result and image for a one-shot preview |
+| `Bridge/status.json` | editor → extension | heartbeat and identity — **a missing file means "no editor is running"** (since 1.6.0) |
+| `Bridge/Responses/<requestId>.json` | editor → extension | the answer to a request that carried a `requestId` (since 1.6.0) |
+| `Bridge/owner.lock` | editor-internal | which editor owns this project's bridge (since 1.8.0) |
 | `ws://127.0.0.1:17864` | bidirectional | streaming preview with orbit control and breakpoints |
 
 **Warning:**
 
-`bridge.db` is **write-only from the plugin's side** and is not durable state: it is deleted on bridge
-startup *and* on shutdown, and every writer replaces its whole table inside a transaction. Nothing in
-the plugin ever reads a row back. Treat it as a query-friendly mirror of the JSON, valid only while
-the editor is running — never as a place to store client state.
+`shader.db` is **written by the plugin and read by clients**; nothing in the plugin reads a diagnostics
+or document row back. The `diagnostics` table and the `preview` document are **emptied** when a bridge
+owner starts; shutdown leaves them, so the last diagnostics stay visible after the editor closes. The file
+itself is never deleted, so a language server may keep it open. Every writer replaces its rows inside a transaction. Treat it as editor output, never as a place to
+store client state.
+
+> [!NOTE]
+> Before the DreamSource layout these were JSON files under `Saved/DreamShader/Bridge/` (`diagnostics.json`,
+> `diagnostics/`, `material-expressions.json`, `settings.json`, `substrate-builtins.json`, `pass-keys.json`,
+> `dreamshader-builtin-catalog.json`, `preview.json`), the `bridge.db` mirror, and
+> `Saved/DreamShader/Index/`. The plugin writes none of them any more; an extension that knows the layout
+> falls back to them only when `shader.db` does not exist.
 
 ### Is the editor alive?
 
 (since 1.6.0)
 
-A client's only way to guess whether an editor was running used to be looking for `bridge.db` and
-hoping. The bridge now rewrites `status.json` every 2 s and **deletes it on shutdown** — so a missing
+A client's only way to guess whether an editor was running used to be looking for the old `bridge.db`
+and hoping. The bridge now rewrites `status.json` every 2 s and **deletes it on shutdown** — so a missing
 file means "not running", definitively, and a client can fall back immediately instead of waiting out
 a liveness window.
 
@@ -278,7 +287,7 @@ writing a request.
 
 | Aspect | Value |
 | :-- | :-- |
-| Directory | `<Project>/Saved/DreamShader/Bridge/Requests/` |
+| Directory | `<Project>/Intermediate/DreamSource/Shader/Bridge/Requests/` |
 | Discovery | `*.json`, files only, **non-recursive** |
 | Poll interval | `0.1 s` |
 | Consumption | every discovered file is **deleted** at the end of its loop iteration |
@@ -292,7 +301,7 @@ case-insensitively.
 | `recompile` | `scope: "all"` | rebuild the dependency graph and queue every source of every root — `.dsm`, `.dsf`, `.dss`, `.dsi`, `.dsp`, except a `.dsm` under a root's `Packages` — forced | immediately, as *queued* |
 | `recompile` | `scope: "file"`, `sourceFile` | queue one file into the debounce queue, forced | **when that compile finishes** |
 | `cleanGeneratedShaders` | — | delete the generated `*.ush` includes, then queue a full rescan | immediately |
-| `previewMaterial` | `sourceFile` | render one preview synchronously and write `preview.json`; `sourceFile` is a `.dss`, `.dsi` or `.dsm` | immediately, with the render result |
+| `previewMaterial` | `sourceFile` | render one preview synchronously and write the `preview` document of `shader.db`; `sourceFile` is a `.dss`, `.dsi` or `.dsm` | immediately, with the render result |
 | `reveal-node` (since 2.0.0) | `file`, `line` | find the node generated from that line, open its asset's Material Editor and select it | immediately, with the asset path and expression GUIDs |
 
 A request carrying a `requestId` is answered in `Responses/<requestId>.json` (since 1.6.0), with
@@ -338,9 +347,9 @@ delay, and only if it still exists on disk.
 
 ### Diagnostics the extension reads
 
-`diagnostics.json` has the shape
-`{ "version": 1, "updatedAtUtc": "…", "files": [ { "path": "…", "diagnostics": [ … ] } ] }`. Optional
-fields are omitted entirely when empty.
+Each row of the `diagnostics` table of `shader.db` holds one file's entry, `{ "path": "…", "diagnostics":
+[ … ] }`; the rows together give the shape `diagnostics.json` used to have,
+`{ "version": 1, "updatedAtUtc": "…", "files": [ … ] }`. Optional fields are omitted entirely when empty.
 
 | Field | Presence | Value |
 | :-- | :-- | :-- |
@@ -453,7 +462,7 @@ are on [Editor Tools](editor-integration.md).
 (since 2.0.0) `.dss` and `.dsi` files open as the language **DreamShader 2.0** (language id
 `dreamshader-dss`, extension 2.0.0), with a grammar of their own, snippets, folding on `#pragma region` and
 `#if`, and `///` that continues on Enter. `.dsp` files open as `dreamshader-dsp` (extension 2.1.0)
-(since 2.1.0), completed from `pass-keys.json`, with a `pipeline` section in their symbol index — the
+(since 2.1.0), completed from the `pass-keys` document, with a `pipeline` section in their symbol index — the
 language itself is on [Custom Pass (.dsp)](../language-v2/passes.md).
 
 The extension does not read 2.0 text for meaning. 2.0 has overloads, implicit conversions and a binder
@@ -462,8 +471,8 @@ exactly the places that matter. So the editor asks the compiler:
 
 | Feature | Answered from |
 | :-- | :-- |
-| Go to Definition · Find References · Hover · Outline · Signature Help · Rename | the **symbol index** the plugin writes after every compile: `Saved/DreamShader/Index/<root>/<file>.index.json` |
-| completion and hover for `UE.` and `Substrate.` — node names, pins, properties, the Substrate sugar arguments | the **builtin catalog** the plugin exports once the editor has loaded: `Saved/DreamShader/Bridge/dreamshader-builtin-catalog.json` |
+| Go to Definition · Find References · Hover · Outline · Signature Help · Rename | the **symbol index** the plugin writes after every compile: the `source_index` table of `Intermediate/DreamSource/shader.db` |
+| completion and hover for `UE.` and `Substrate.` — node names, pins, properties, the Substrate sugar arguments | the **builtin catalog** the plugin exports once the editor has loaded: the `builtin-catalog` document of `shader.db` |
 | `#include "` paths; `BL::` and the other header namespaces; the functions the included headers declare, with hover, definition and signature help, in a file not compiled yet (extension 2.2.0) | the **text of the headers**, 1.x and 2.0 alike; the index answers first where it has an answer |
 | diagnostics | the bridge, as for 1.x |
 
@@ -512,8 +521,8 @@ DreamShaderLang: Create DreamShader Noise Material
 ## VSCode settings
 
 Extension-declared, so the extension repository is authoritative. Keep the workspace pointed at the
-Unreal project root — or set `dreamshader.projectRoot` — so the extension can resolve `DShader`,
-`DShader/Packages` and `Saved/DreamShader/Bridge`.
+Unreal project root — or set `dreamshader.projectRoot` — so the extension can resolve the source
+directory (`DreamSource/Shader`, or the legacy `DShader`), its `Packages`, and `Intermediate/DreamSource`.
 
 | Setting | Default | Use |
 | :-- | :-- | :-- |
@@ -551,25 +560,24 @@ Unreal project root — or set `dreamshader.projectRoot` — so the extension ca
 Running *Tools ▸ DreamShader ▸ Open Dream Shader Workspace (VSCode)* on a default project touches:
 
 ```text
-<Project>/DShader/DreamShader.code-workspace                    rewritten
-<Project>/Saved/DreamShader/Bridge/material-expressions.json    rewritten
-<Project>/Saved/DreamShader/Bridge/settings.json                rewritten
-<Project>/Saved/DreamShader/Bridge/pass-keys.json               rewritten (since 2.1.0)
-<Project>/Saved/DreamShader/Bridge/substrate-builtins.json      rewritten
-<Project>/Saved/DreamShader/Bridge/bridge.db                    tables replaced
+<Project>/DreamSource/Shader/DreamShader.code-workspace          rewritten
+<Project>/Intermediate/DreamSource/shader.db                     documents material-expressions, settings,
+                                                                 pass-keys (since 2.1.0), substrate-builtins,
+                                                                 preprocessor-defines, builtin-catalog rewritten;
+                                                                 the three row tables replaced
 ```
 
 and then launches, for a `code.cmd` candidate with *Open In New Window* at its default:
 
 ```powershell
-%ComSpec% /C ""C:/Users/<user>/AppData/Local/Programs/Microsoft VS Code/bin/code.cmd"  "C:/Projects/MyGame/DShader/DreamShader.code-workspace""
+%ComSpec% /C ""C:/Users/<user>/AppData/Local/Programs/Microsoft VS Code/bin/code.cmd"  "C:/Projects/MyGame/DreamSource/Shader/DreamShader.code-workspace""
 ```
 
 Asking a running editor to recompile one file, without VSCode:
 
 ```powershell
-$req = @{ action = "recompile"; scope = "file"; sourceFile = "C:/Projects/MyGame/DShader/Materials/M_Sample.dsm" }
-$dir = "C:\Projects\MyGame\Saved\DreamShader\Bridge\Requests"
+$req = @{ action = "recompile"; scope = "file"; sourceFile = "C:/Projects/MyGame/DreamSource/Shader/Materials/M_Sample.dsm" }
+$dir = "C:\Projects\MyGame\Intermediate\DreamSource\Shader\Bridge\Requests"
 $tmp = Join-Path $env:TEMP ("ds-" + [guid]::NewGuid() + ".json")
 $req | ConvertTo-Json | Set-Content -Path $tmp -Encoding utf8
 Move-Item $tmp (Join-Path $dir ([IO.Path]::GetFileName($tmp)))

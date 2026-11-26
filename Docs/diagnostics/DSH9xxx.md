@@ -136,11 +136,12 @@ looks wrong.
 The symbol index could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:816`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:817`
 <!-- generated:end DSH9023 -->
 
 **Cause.** `index` could not create its output directory or write the index file. The default
-directory is `<Project>/Saved/DreamShader/Index`.
+is the `source_index` table of `<Project>/Intermediate/DreamSource/shader.db`; with `-Out=<dir>`, files under
+that directory.
 
 **Fix.** As DSH9022.
 
@@ -155,12 +156,12 @@ directory is `<Project>/Saved/DreamShader/Index`.
 The builtin catalog manifest could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1353`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1354`
 <!-- generated:end DSH9024 -->
 
-**Cause.** `export-catalog` could not create its directory or write the manifest. The default path is
-`<Project>/Saved/DreamShader/Bridge/dreamshader-builtin-catalog.json`, beside the other bridge
-manifests.
+**Cause.** `export-catalog` could not create its directory or write the manifest. Without `-Out` it
+is the `builtin-catalog` document of `<Project>/Intermediate/DreamSource/shader.db`, beside the other bridge
+manifests; with `-Out=<file>`, that file.
 
 **Fix.** As DSH9022. If the bridge is running, the directory certainly exists, so this points at a
 lock or at a read-only `Saved/`.
@@ -176,7 +177,7 @@ lock or at a read-only `Saved/`.
 The builtin catalog came back empty, so '{0}' describes no expression at all. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1367`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1368`
 <!-- generated:end DSH9025 -->
 
 **Cause.** The manifest was written and describes no expression at all. A language service that binds
@@ -489,7 +490,7 @@ platforms supports.
 %s: DSH9039: the DreamShader 2.0 pipeline failed without raising a diagnostic.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1398`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1399`
 <!-- generated:end DSH9039 -->
 
 **Cause.** Internal invariant. The 2.0 pipeline returned failure without putting a single error in
@@ -611,7 +612,7 @@ when formatted again. Nothing was written. This is a fault of the formatter, nev
 '{0}' could not be read, so it was not formatted.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:926`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:970`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:927`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:971`
 <!-- generated:end DSH9045 -->
 
 **Cause.** `dsc fmt` could not read a source, or could not write the formatted text back. A file
@@ -631,7 +632,7 @@ second.
 '{0}' is not in the formatter's layout; 'dsc fmt' would rewrite it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:960`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:961`
 <!-- generated:end DSH9046 -->
 
 **Cause.** `dsc fmt -Check` found a file that `fmt` would rewrite. `-Check` writes nothing and fails
@@ -650,7 +651,7 @@ the run, which is the form for CI.
 The list of generated assets could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1313`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1314`
 <!-- generated:end DSH9047 -->
 
 **Cause.** `dsc list-generated -Out` could not write the list. The message carries the file system's
@@ -670,7 +671,7 @@ reason.
 '-As={0}' is no list format; the four are Packages, Files, GitIgnore and Json.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1103`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1104`
 <!-- generated:end DSH9048 -->
 
 **Cause.** `dsc list-generated -As` (`-ListAs` in `dsc.ps1`) was given something other than the four
@@ -690,7 +691,7 @@ ignore block, `Json` for everything.
 {0} generated asset(s) lie outside the project directory -- an engine plugin's content -- and have no project-relative path; '-As=Packages' or '-As=Json' lists them.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1301`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1302`
 <!-- generated:end DSH9049 -->
 
 **Cause.** Some generated assets lie outside the project directory -- the content of a plugin
@@ -1999,7 +2000,7 @@ value.
 '{0}' is in a package's asset folder and no source builds it any more: its package was removed or stopped generating it. Delete it if nothing uses it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1216`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1217`
 <!-- generated:end DSH9111 -->
 
 **Cause.** `list-generated -All` found an asset under a package asset root (`/Game/DreamShaderPackages`, `/<Plugin>/DreamShaderPackages`) that no source builds any more: its package was removed, or the package stopped generating it (a function renamed, an annotation taken off). Packages build into these folders only, so the asset is a leftover. Nothing is deleted: a material may still use it.
@@ -2164,7 +2165,7 @@ pipelines no `.dsp` builds are freed — a slot whose recorded `.dsp` is still o
 registry files are rewritten from `Registry.json`.
 
 **Fix.** Nothing, when the project has no pipelines. If it has, the source roots do not reach their
-`.dsp` files: check the *Source Directory* project setting and the plugins' `DShader` folders.
+`.dsp` files: check the *Source Directory* project setting and the plugins' `DreamSource/Shader` (or legacy `DShader`) folders.
 
 ## DSH9208
 
