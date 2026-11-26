@@ -3633,7 +3633,7 @@ bool FDreamShaderSourceRootImportIsolationTest::RunTest(const FString& Parameter
 	using namespace UE::DreamShader::Editor::Private;
 	using namespace UE::DreamShader::Editor::Private::Tests;
 
-	// The DreamShader plugin ships no DShader folder, so creating one here manufactures a second
+	// The DreamShader plugin ships no DreamSource/Shader folder, so creating one here manufactures a second
 	// source root without depending on whatever plugins this project happens to have.
 	const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(TEXT("DreamShader"));
 	if (!TestTrue(TEXT("DreamShader plugin is discoverable."), Plugin.IsValid()))
@@ -3642,7 +3642,7 @@ bool FDreamShaderSourceRootImportIsolationTest::RunTest(const FString& Parameter
 	}
 
 	const FString PluginRootDirectory = UE::DreamShader::NormalizeSourceFilePath(
-		FPaths::Combine(Plugin->GetBaseDir(), TEXT("DShader")));
+		FPaths::Combine(Plugin->GetBaseDir(), UE::DreamShader::PluginSourceDirectory));
 	const bool bPluginRootPreexisted = IFileManager::Get().DirectoryExists(*PluginRootDirectory);
 
 	const FString Probe = TEXT("Namespace(Name = \"RootIsolationProbe\") { Function Pass(in float a, out float b) { b = a; } }\n");

@@ -3619,13 +3619,30 @@ namespace UE::DreamShader::Editor::Private::Tests
 
 		if (Expectation.bCheckGraphDump && !Expectation.bGraphPending)
 		{
-			const FString Actual = BuildDreamShaderCompiledGraphDumpText(Assets);
-			const bool bEqual = Actual.Equals(Expectation.GraphDump, ESearchCase::CaseSensitive);
+			// A Custom node's code names its source relative to the project (`// Begin DreamShader source: <dir>/...`), so
+			// the dump depends on where the project keeps its sources: DreamSource/Shader, or the legacy DShader the
+			// goldens were recorded under. Both spellings compare as one.
+			const auto NormalizeSourceDirectory = [](FString Text)
+			{
+				FString Relative = UE::DreamShader::GetSourceShaderDirectory();
+				FPaths::MakePathRelativeTo(Relative, *FPaths::ConvertRelativePathToFull(FPaths::ProjectDir()));
+				Relative.RemoveFromEnd(TEXT("/"));
+				const TCHAR* const Token = TEXT("DreamShader source: <SourceDirectory>/");
+				if (!Relative.IsEmpty())
+				{
+					Text.ReplaceInline(*FString::Printf(TEXT("DreamShader source: %s/"), *Relative), Token, ESearchCase::CaseSensitive);
+				}
+				Text.ReplaceInline(TEXT("DreamShader source: DShader/"), Token, ESearchCase::CaseSensitive);
+				return Text;
+			};
+			const FString Actual = NormalizeSourceDirectory(BuildDreamShaderCompiledGraphDumpText(Assets));
+			const FString Expected = NormalizeSourceDirectory(Expectation.GraphDump);
+			const bool bEqual = Actual.Equals(Expected, ESearchCase::CaseSensitive);
 			Test.TestTrue(FString::Printf(TEXT("[%s] the graph dump matches its golden"), *RelativeName), bEqual);
 			if (!bEqual)
 			{
 				Test.AddInfo(FString::Printf(
-					TEXT("[%s] %s"), *RelativeName, *DescribeDreamShaderTextDifference(Actual, Expectation.GraphDump)));
+					TEXT("[%s] %s"), *RelativeName, *DescribeDreamShaderTextDifference(Actual, Expected)));
 			}
 		}
 		else if (Expectation.bGraphPending)

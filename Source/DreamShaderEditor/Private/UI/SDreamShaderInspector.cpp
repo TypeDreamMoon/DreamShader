@@ -619,7 +619,7 @@ namespace UE::DreamShader::Editor::Private
 				const TWeakObjectPtr<UMaterial> WeakMaterial(Material);
 				Buttons->AddSlot()[ MakeActionButton(
 					LOCTEXT("ExportDssMaterialBtn", "Export .dss"),
-					LOCTEXT("ExportDssMaterialTip", "Decompile this material into a .dss source file under the project's DShader root."),
+					LOCTEXT("ExportDssMaterialTip", "Decompile this material into a .dss source file under the project's source directory (DreamSource/Shader)."),
 					[WeakMaterial]()
 					{
 						if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge()) { Bridge->ExportMaterialToDreamShaderFile(WeakMaterial); }
@@ -630,7 +630,7 @@ namespace UE::DreamShader::Editor::Private
 				const TWeakObjectPtr<UMaterialFunction> WeakFunction(Function);
 				Buttons->AddSlot()[ MakeActionButton(
 					LOCTEXT("ExportDssFunctionBtn", "Export .dss"),
-					LOCTEXT("ExportDssFunctionTip", "Decompile this material function into a .dss source file under the project's DShader root."),
+					LOCTEXT("ExportDssFunctionTip", "Decompile this material function into a .dss source file under the project's source directory (DreamSource/Shader)."),
 					[WeakFunction]()
 					{
 						if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge()) { Bridge->ExportMaterialFunctionToDreamShaderFile(WeakFunction); }

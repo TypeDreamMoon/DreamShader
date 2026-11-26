@@ -171,8 +171,8 @@ namespace UE::DreamShader::Editor::Private
 	class FDreamShaderPreviewRenderer
 	{
 	public:
+		/** `Intermediate/DreamSource/Shader/Preview`: the PNGs. The result itself is the `preview` document of shader.db. */
 		static FString GetPreviewDirectory();
-		static FString GetPreviewManifestPath();
 		// Interface-typed: ThinCustom (the default backend) generates a thin material instance, and
 		// the render pipeline below is interface-based, so instances and materials preview alike.
 		static bool ResolvePreviewMaterial(const FDreamShaderPreviewRequest& Request, FDreamShaderPreviewResult& OutResult, UMaterialInterface*& OutMaterial);

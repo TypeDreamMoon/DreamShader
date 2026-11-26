@@ -46,6 +46,7 @@
 
 // CompileDreamShaderSourceFile, which CompileDreamShaderLang2File is a spelling of.
 #include "DreamShaderCompilerServiceInternal.h"
+#include "DreamShaderDatabase.h"
 
 // `.dsi`: parent resolution through the product index, and the parameter schema's two producers.
 #include "DreamShaderInstanceSchema.h"
@@ -1512,12 +1513,8 @@ namespace UE::DreamShader::Editor::Compiler
 
 	// ------------------------------------------------------------------------------ symbol index
 
-	FString GetDreamShaderSymbolIndexFilePath(const FString& SourceFilePath, const FString& OutputDirectory)
+	void GetDreamShaderSymbolIndexKey(const FString& SourceFilePath, FString& OutRoot, FString& OutRelativePath)
 	{
-		const FString Directory = OutputDirectory.IsEmpty()
-			? FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader"), TEXT("Index")))
-			: OutputDirectory;
-
 		FString RootName = TEXT("External");
 		FString Relative = FPaths::GetCleanFilename(SourceFilePath);
 		if (const UE::DreamShader::FDreamShaderSourceRoot* Root = UE::DreamShader::FindSourceRootForFile(SourceFilePath))
@@ -1531,7 +1528,17 @@ namespace UE::DreamShader::Editor::Compiler
 				Relative = Candidate;
 			}
 		}
-		return FPaths::Combine(Directory, RootName, Relative + TEXT(".index.json"));
+		Relative.ReplaceInline(TEXT("\\"), TEXT("/"));
+		OutRoot = RootName;
+		OutRelativePath = Relative;
+	}
+
+	FString GetDreamShaderSymbolIndexFilePath(const FString& SourceFilePath, const FString& OutputDirectory)
+	{
+		FString Root;
+		FString Relative;
+		GetDreamShaderSymbolIndexKey(SourceFilePath, Root, Relative);
+		return FPaths::Combine(OutputDirectory, Root, Relative + TEXT(".index.json"));
 	}
 
 	bool WriteDreamShaderSymbolIndex(
@@ -1541,9 +1548,35 @@ namespace UE::DreamShader::Editor::Compiler
 		FString& OutIndexPath,
 		FString& OutError)
 	{
-		OutIndexPath = GetDreamShaderSymbolIndexFilePath(SourceFilePath, OutputDirectory);
 		const FString Json = UE::DreamShader::Lang::BuildDreamShaderSymbolIndexJson(Bound);
 
+		if (OutputDirectory.IsEmpty())
+		{
+			// The project's shader.db. Not from an automation run: its fixtures are not the project's sources, and a row
+			// for one would outlive the fixture.
+			if (GIsAutomationTesting)
+			{
+				return true;
+			}
+			FString Root;
+			FString Relative;
+			GetDreamShaderSymbolIndexKey(SourceFilePath, Root, Relative);
+			const FString DatabasePath = ::UE::DreamShader::GetShaderDatabaseFilePath();
+			OutIndexPath = FString::Printf(TEXT("%s (source_index %s:%s)"), *DatabasePath, *Root, *Relative);
+			// An unchanged index is not written: a commit wakes every reader watching the database.
+			if (FDreamShaderDatabase::ReadSourceIndex(DatabasePath, Root, Relative).Equals(Json, ESearchCase::CaseSensitive))
+			{
+				return true;
+			}
+			if (!FDreamShaderDatabase::WriteSourceIndex(DatabasePath, Root, Relative, Json))
+			{
+				OutError = FString::Printf(TEXT("could not write '%s'"), *OutIndexPath); /* I18N-EXEMPT: wrapped by the caller's coded diagnostic */
+				return false;
+			}
+			return true;
+		}
+
+		OutIndexPath = GetDreamShaderSymbolIndexFilePath(SourceFilePath, OutputDirectory);
 		FString Existing;
 		if (FFileHelper::LoadFileToString(Existing, *OutIndexPath) && Existing.Equals(Json, ESearchCase::CaseSensitive))
 		{

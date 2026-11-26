@@ -7,36 +7,40 @@
 
 #include "Workspace/DreamShaderWorkspaceService.h"
 
+#include "DreamShaderDatabase.h"
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 
 namespace UE::DreamShader::Editor::Compiler
 {
-	FString GetDreamShaderBuiltinCatalogManifestFilePath()
-	{
-		// Beside the other manifests rather than a second spelling of the directory: the bridge
-		// moves its manifest folder as one thing, and a path written out again here would be the
-		// one file left behind.
-		const FString ManifestDirectory =
-			FPaths::GetPath(Private::FDreamShaderWorkspaceService::GetMaterialExpressionManifestFilePath());
-		return FPaths::Combine(ManifestDirectory, TEXT("dreamshader-builtin-catalog.json"));
-	}
-
 	bool ExportDreamShaderBuiltinCatalogManifest(
 		const FString& OutputFilePath,
 		FString& OutWrittenPath,
 		FString& OutError)
 	{
 		OutError.Reset();
-		OutWrittenPath = OutputFilePath.IsEmpty()
-			? GetDreamShaderBuiltinCatalogManifestFilePath()
-			: FPaths::ConvertRelativePathToFull(OutputFilePath);
 
 		// Forced: the manifest is what an out-of-editor tool binds against, so writing a cached copy
 		// from before the last plugin mounted would publish an answer this process no longer gives.
 		InvalidateDreamShaderBuiltinCatalog();
 		const UE::DreamShader::IR::FBuiltinCatalog& Catalog = GetDreamShaderBuiltinCatalog();
+
+		if (OutputFilePath.IsEmpty())
+		{
+			// The builtin-catalog document beside the other manifests, in the bridge's database.
+			OutWrittenPath = Private::FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath();
+			if (!FDreamShaderDatabase::WriteDocument(
+				OutWrittenPath, FDreamShaderDatabase::DocumentBuiltinCatalog, UE::DreamShader::IR::SaveBuiltinCatalogToJson(Catalog)))
+			{
+				OutError = FString::Printf( /* I18N-EXEMPT: wrapped by the caller's coded diagnostic */
+					TEXT("could not write the builtin-catalog document of '%s'"),
+					*OutWrittenPath);
+				return false;
+			}
+			return true;
+		}
+		OutWrittenPath = FPaths::ConvertRelativePathToFull(OutputFilePath);
 
 		const FString Directory = FPaths::GetPath(OutWrittenPath);
 		if (!Directory.IsEmpty() && !IFileManager::Get().MakeDirectory(*Directory, true))

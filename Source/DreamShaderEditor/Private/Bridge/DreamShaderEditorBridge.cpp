@@ -374,15 +374,6 @@ namespace UE::DreamShader::Editor::Private
 		return FPaths::Combine(GetBridgeDirectory(), TEXT("status.json"));
 	}
 
-	FString FDreamShaderEditorBridge::GetDiagnosticsFilePath()
-	{
-		return FPaths::Combine(GetBridgeDirectory(), TEXT("diagnostics.json"));
-	}
-
-	FString FDreamShaderEditorBridge::GetDiagnosticsDirectory()
-	{
-		return FPaths::Combine(GetBridgeDirectory(), TEXT("diagnostics"));
-	}
 
 	FString FDreamShaderEditorBridge::GetSourceFileMetadata(UObject* Asset)
 	{
@@ -548,7 +539,8 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return;
 		}
-		FDreamShaderWorkspaceService::ResetBridgeDatabase();
+		// The database stays as it is: its diagnostics are the last thing this editor said, and an external editor keeps
+		// showing them after this one closes, as it did with diagnostics.json. The next owner's startup empties them.
 		IFileManager::Get().Delete(*GetStatusFilePath());
 	}
 
@@ -895,8 +887,9 @@ namespace UE::DreamShader::Editor::Private
 		}
 		FString WrittenPath;
 		FString WriteError;
+		// No path: the builtin-catalog document of shader.db, where the language service reads it.
 		if (!::UE::DreamShader::Editor::Compiler::ExportDreamShaderBuiltinCatalogManifest(
-			FPaths::Combine(GetBridgeDirectory(), TEXT("dreamshader-builtin-catalog.json")), WrittenPath, WriteError))
+			FString(), WrittenPath, WriteError))
 		{
 			UE_LOG(LogDreamShader, Warning, TEXT("DreamShader builtin catalog manifest was not written: %s."), *WriteError);
 		}
@@ -2573,7 +2566,7 @@ namespace UE::DreamShader::Editor::Private
 			Section.AddMenuEntry(
 				TEXT("DreamShader.CleanGeneratedShaders"),
 				LOCTEXT("DreamShaderCleanGeneratedShadersLabel", "Clean Generated Shaders"),
-				LOCTEXT("DreamShaderCleanGeneratedShadersTooltip", "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile."),
+				LOCTEXT("DreamShaderCleanGeneratedShadersTooltip", "Delete the generated shader directory (Intermediate/DreamSource/Shader/GeneratedShaders by default) and queue a full DreamShader recompile."),
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Delete")),
 				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::RequestCleanGeneratedShaders)));
 			Section.AddMenuEntry(
@@ -3906,8 +3899,6 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (bIsBridgeOwner)
 		{
-			DiagnosticsStore.WriteToFile(GetDiagnosticsFilePath());
-			DiagnosticsStore.WriteToDirectory(GetDiagnosticsDirectory());
 			DiagnosticsStore.WriteToDatabase(FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath());
 		}
 		// The commit point: every compile route ends here once its findings are in the store.

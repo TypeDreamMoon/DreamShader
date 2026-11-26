@@ -5,6 +5,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Preview/DreamShaderPreviewSession.h"
+#include "Workspace/DreamShaderWorkspaceService.h"
 #include "HAL/PlatformProcess.h"
 #include "Materials/Material.h"
 #include "RenderingThread.h"
@@ -13,19 +14,15 @@ namespace UE::DreamShader::Editor::Private::PreviewSessionTests
 {
 	using namespace UE::DreamShader::Editor::Private::Tests;
 
+	/** Sends the preview document to a database of its own, so a test never rewrites the project's. */
 	struct FScopedManifest
 	{
-		FString Path = FDreamShaderPreviewRenderer::GetPreviewManifestPath();
-		TArray<uint8> Contents;
-		bool bExisted = IFileManager::Get().FileExists(*Path);
-		FScopedManifest()
-		{
-			if (bExisted) { verify(FFileHelper::LoadFileToArray(Contents, *Path)); }
-		}
+		FString Directory = FPaths::ConvertRelativePathToFull(
+			FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShaderTests"), TEXT("PreviewBridge")));
+		TGuardValue<FString> Isolated{ FDreamShaderWorkspaceService::BridgeDirectoryForTesting, Directory };
 		~FScopedManifest()
 		{
-			if (bExisted) { FFileHelper::SaveArrayToFile(Contents, *Path); }
-			else { IFileManager::Get().Delete(*Path); }
+			IFileManager::Get().DeleteDirectory(*Directory, false, true);
 		}
 	};
 

@@ -402,7 +402,7 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderBrowserModel::RefreshAll()
 	{
-		// Creating <Plugin>/DShader is the first thing anyone does with plugin sources, and the root
+		// Creating <Plugin>/DreamSource/Shader is the first thing anyone does with plugin sources, and the root
 		// list is cached, so without this the folder stays invisible until the next editor start.
 		UE::DreamShader::RefreshSourceShaderRoots();
 

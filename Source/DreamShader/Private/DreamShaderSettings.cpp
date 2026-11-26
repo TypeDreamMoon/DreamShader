@@ -85,8 +85,14 @@ UDreamShaderSettings::UDreamShaderSettings()
 {
 	using namespace UE::DreamShader::Private;
 
-	SourceDirectory.Path = TEXT("DShader");
-	GeneratedShaderDirectory.Path = TEXT("Intermediate/DreamShader/GeneratedShaders");
+	// Empty: the source directory moved to UDreamShaderSourceSettings, and an empty legacy key is "not set".
+	SourceDirectory.Path = FString();
+	GeneratedShaderDirectory.Path = GetDefaultGeneratedShaderDirectory();
+}
+
+const TCHAR* UDreamShaderSettings::GetDefaultGeneratedShaderDirectory()
+{
+	return TEXT("Intermediate/DreamSource/Shader/GeneratedShaders");
 }
 
 void UDreamShaderSettings::PostInitProperties()

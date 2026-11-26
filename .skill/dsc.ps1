@@ -74,7 +74,7 @@
         project and its plugins before and after the run, and classified against git where
         the file is in a repository, so a throw-away probe asset is told apart from a tracked
         asset the run just overwrote,
-      * the Custom Pass registry files under `DShader/.dreampass` that the run changed,
+      * the Custom Pass registry files under `<source directory>/.dreampass` that the run changed,
       * `-CleanNew`, which deletes only new assets named in this commandlet's save manifest
         whose content still matches the recorded save fingerprint.
 
@@ -82,7 +82,7 @@
     manifest, cleanup is skipped and an otherwise successful run exits 1.
 
 .EXAMPLE
-    ./dsc.ps1 compile DShader/Materials/M_Foo.dsm -Force
+    ./dsc.ps1 compile DreamSource/Shader/Materials/M_Foo.dsm -Force
 
 .EXAMPLE
     ./dsc.ps1 compile -All
@@ -100,7 +100,7 @@
     ./dsc.ps1 decompile /Game/Materials/M_Steel -Format Legacy -Out Work/M_Steel.dsm
 
 .EXAMPLE
-    ./dsc.ps1 migrate DShader/Materials/M_Foo.dsm -Check
+    ./dsc.ps1 migrate DreamSource/Shader/Materials/M_Foo.dsm -Check
 
 .EXAMPLE
     ./dsc.ps1 migrate -All
@@ -115,13 +115,13 @@
     ./dsc.ps1 check -All
 
 .EXAMPLE
-    ./dsc.ps1 check DShader/Materials/M_Toon.dss -Shaders -Platform SM6,SM5 -Quality High
+    ./dsc.ps1 check DreamSource/Shader/Materials/M_Toon.dss -Shaders -Platform SM6,SM5 -Quality High
 
 .EXAMPLE
     ./dsc.ps1 export-catalog
 
 .EXAMPLE
-    ./dsc.ps1 dump-layout DShader/Materials/M_Toon.dss -Out Work/Layout
+    ./dsc.ps1 dump-layout DreamSource/Shader/Materials/M_Toon.dss -Out Work/Layout
 
 .EXAMPLE
     ./dsc.ps1 pass-registry
@@ -158,7 +158,8 @@ param(
     [string]$Command,
 
     # compile / dump-graph / check / dump-ir / index: path to a compilable source -- .dss, .dsi,
-    # .dsp, .dsm or .dsf (absolute, or relative to DShader/ then the project).
+    # .dsp, .dsm or .dsf (absolute, or relative to the source directory -- DreamSource/Shader, or the legacy
+    # DShader -- then the project).
     # migrate: a 1.x source, .dsm, .dsf or .dsh.
     # decompile: an object path such as /Game/Materials/M_Steel (a material instance writes a .dsi).
     [Parameter(Position = 1)]
@@ -199,10 +200,11 @@ param(
     # migrate: write the .dss files under this directory, mirroring the source tree, instead of
     # beside each source.
     # dump-graph: the root of the dump tree, instead of <Project>/Saved/DreamShader/GraphBaseline.
-    # dump-ir: instead of <Project>/Saved/DreamShader/IR. index: instead of …/Index.
+    # dump-ir: instead of <Project>/Saved/DreamShader/IR. index: files under this directory, instead of the
+    # source_index table of <Project>/Intermediate/DreamSource/shader.db.
     # fmt: write the formatted copies under this directory instead of over the sources.
     # list-generated: write the list to this file instead of to the log.
-    # export-catalog: the file, instead of <Project>/Saved/DreamShader/Bridge/dreamshader-builtin-catalog.json.
+    # export-catalog: the file, instead of the builtin-catalog document of <Project>/Intermediate/DreamSource/shader.db.
     [string]$Out,
 
     # check: after the graph is validated, build and SAVE the assets and compile their
@@ -420,11 +422,51 @@ function Resolve-OutPath {
 }
 
 function Resolve-SourceArg {
-    # An existing relative path is made absolute so the commandlet's own DShader-then-project resolution never
+    # An existing relative path is made absolute so the commandlet's own source-directory-then-project resolution never
     # has to guess.
     param([string]$Path)
     $resolved = if (Test-Path -LiteralPath $Path) { (Resolve-Path -LiteralPath $Path).Path } else { $Path }
     return ($resolved -replace '\\', '/')
+}
+
+function Get-ShaderSourceDirectory {
+    <#
+        The project's DreamShader source directory, by the rule the plugin applies
+        (UE::DreamShader::ResolveProjectSourceDirectory): the configured one when it exists, else the legacy
+        DShader/ when that exists, else the configured one. Configured = Config/DefaultDreamSource.ini
+        [/Script/DreamShader.DreamShaderSourceSettings] SourceDirectory unless left at DreamSource/Shader, then the
+        legacy DefaultEngine.ini [/Script/DreamShader.DreamShaderSettings] SourceDirectory unless it is DShader,
+        then DreamSource/Shader.
+    #>
+    param([string]$ProjectDir)
+
+    function Read-IniDirectory([string]$File, [string]$Section) {
+        if (-not (Test-Path -LiteralPath $File)) { return '' }
+        $inSection = $false
+        foreach ($line in Get-Content -LiteralPath $File) {
+            $trimmed = $line.Trim()
+            if ($trimmed.StartsWith('[')) { $inSection = ($trimmed -eq "[$Section]"); continue }
+            if ($inSection -and $trimmed -match '^SourceDirectory\s*=\s*(.*)$') {
+                $value = $Matches[1].Trim()
+                if ($value -match 'Path\s*=\s*"([^"]*)"') { $value = $Matches[1] }
+                return ($value.Trim().Trim('"') -replace '\\', '/').TrimEnd('/')
+            }
+        }
+        return ''
+    }
+    function Test-Usable([string]$Value) { return $Value -and -not [System.IO.Path]::IsPathRooted($Value) }
+
+    $default = 'DreamSource/Shader'
+    $configured = Read-IniDirectory (Join-Path $ProjectDir 'Config/DefaultDreamSource.ini') '/Script/DreamShader.DreamShaderSourceSettings'
+    if (-not (Test-Usable $configured) -or $configured -ieq $default) {
+        $legacyKey = Read-IniDirectory (Join-Path $ProjectDir 'Config/DefaultEngine.ini') '/Script/DreamShader.DreamShaderSettings'
+        $configured = if ((Test-Usable $legacyKey) -and $legacyKey -ine 'DShader') { $legacyKey } else { $default }
+    }
+    $configuredDir = Join-Path $ProjectDir $configured
+    $legacyDir = Join-Path $ProjectDir 'DShader'
+    if (Test-Path -LiteralPath $configuredDir -PathType Container) { return $configuredDir }
+    if (Test-Path -LiteralPath $legacyDir -PathType Container) { return $legacyDir }
+    return $configuredDir
 }
 
 function Get-ContentRoots {
@@ -838,8 +880,8 @@ $writesAssets = ($Command -eq 'compile') -or ($Command -eq 'check' -and $Shaders
 $touchesRegistry = $writesAssets -or ($Command -eq 'pass-registry' -and $Gc)
 $contentRoots = if ($writesAssets) { Get-ContentRoots -ProjectDir $projectDir } else { [ordered]@{} }
 $assetsBefore = if ($writesAssets) { Get-FileSnapshotOrNull -Directories @($contentRoots.Values) -Filter '*.uasset' -What 'the Content folders' } else { @{} }
-$registryDir = Join-Path $projectDir 'DShader/.dreampass'
-$registryBefore = if ($touchesRegistry) { Get-FileSnapshotOrNull -Directories @($registryDir) -What 'DShader/.dreampass' } else { @{} }
+$registryDir = Join-Path (Get-ShaderSourceDirectory -ProjectDir $projectDir) '.dreampass'
+$registryBefore = if ($touchesRegistry) { Get-FileSnapshotOrNull -Directories @($registryDir) -What '<source directory>/.dreampass' } else { @{} }
 
 $assetWrites = @{}
 $manifestValid = $false
@@ -944,7 +986,7 @@ elseif ($writesAssets) {
     }
 }
 
-$registryAfter = if ($touchesRegistry -and $null -ne $registryBefore) { Get-FileSnapshotOrNull -Directories @($registryDir) -What 'DShader/.dreampass' }
+$registryAfter = if ($touchesRegistry -and $null -ne $registryBefore) { Get-FileSnapshotOrNull -Directories @($registryDir) -What '<source directory>/.dreampass' }
 if ($touchesRegistry -and $null -ne $registryBefore -and $null -ne $registryAfter) {
     $registryDiff = Compare-FileSnapshot -Before $registryBefore -After $registryAfter
     $touched = @(

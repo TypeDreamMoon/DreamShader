@@ -1,6 +1,7 @@
 #include "DreamShaderModule.h"
 
 #include "DreamShaderSettings.h"
+#include "DreamShaderSourceSettings.h"
 
 #include "HAL/FileManager.h"
 #include "CoreGlobals.h"
@@ -73,19 +74,138 @@ namespace UE::DreamShader
 			return FString();
 		}
 
+		/** Trimmed, forward slashes, no trailing slash: the form two spellings of one setting are compared in. */
+		static FString CleanSettingPath(FString InPath)
+		{
+			InPath.TrimStartAndEndInline();
+			InPath.ReplaceInline(TEXT("\\"), TEXT("/"));
+			while (InPath.EndsWith(TEXT("/")))
+			{
+				InPath.LeftChopInline(1);
+			}
+			return InPath;
+		}
+
+		/**
+		 * `UDreamShaderSourceSettings::SourceDirectory`, as written. Before the UObject system is up (this module starts at
+		 * PostConfigInit) the ini file is read straight: the DreamSource config branch is not something GConfig is known
+		 * to hold that early, and the one file the settings object will load gives the same answer.
+		 */
+		static FString ReadNewSourceDirectorySetting()
+		{
+			if (CanReadSettingsObject())
+			{
+				return GetDefault<UDreamShaderSourceSettings>()->SourceDirectory.Path;
+			}
+
+			FConfigFile File;
+			File.Read(FPaths::Combine(FPaths::ProjectConfigDir(), TEXT("DefaultDreamSource.ini")));
+			FString Raw;
+			if (!File.GetString(TEXT("/Script/DreamShader.DreamShaderSourceSettings"), TEXT("SourceDirectory"), Raw))
+			{
+				return UDreamShaderSourceSettings::GetDefaultSourceDirectory();
+			}
+			// `(Path="DreamSource/Shader")` as FDirectoryPath writes it, or a bare string written by hand.
+			FString Inner;
+			return FParse::Value(*Raw, TEXT("Path="), Inner) ? Inner : Raw;
+		}
+
+		/**
+		 * The configured source directory, relative to the project: the new key unless it is left at its default, then a
+		 * custom value of the legacy `UDreamShaderSettings::SourceDirectory` key, then the default. An absolute or empty
+		 * value is not something the VSCode extension (or another machine) can reproduce, so it reads as the default.
+		 */
+		static FString ConfiguredRelativeSourceDirectory(bool& bOutFromLegacyKey)
+		{
+			bOutFromLegacyKey = false;
+			const FString Default = UDreamShaderSourceSettings::GetDefaultSourceDirectory();
+
+			const FString New = CleanSettingPath(ReadNewSourceDirectorySetting());
+			if (!New.IsEmpty() && FPaths::IsRelative(New) && !New.Equals(Default, ESearchCase::IgnoreCase))
+			{
+				return New;
+			}
+
+			const UDreamShaderSettings* Settings = CanReadSettingsObject() ? GetDefault<UDreamShaderSettings>() : nullptr;
+			const FString Legacy = CleanSettingPath(
+				Settings ? Settings->SourceDirectory.Path : ReadDirectorySettingFromConfig(TEXT("SourceDirectory")));
+			// The legacy key's own default was `DShader`, which every DefaultEngine.ini that ever saved the settings
+			// spells out: that is not a choice, and reading it as one would keep the project on DShader forever.
+			if (!Legacy.IsEmpty() && FPaths::IsRelative(Legacy) && !Legacy.Equals(LegacySourceDirectoryName, ESearchCase::IgnoreCase))
+			{
+				bOutFromLegacyKey = true;
+				return Legacy;
+			}
+			return Default;
+		}
+
+		struct FProjectSourceDirectoryMemo
+		{
+			FString ConfiguredRelative;
+			bool bFromLegacyKey = false;
+			FDreamShaderProjectSourceDirectory Resolved;
+			bool bInitialized = false;
+		};
+
+		static FProjectSourceDirectoryMemo ProjectSourceDirectoryMemo;
+
+		static FDreamShaderProjectSourceDirectory ResolveProjectSourceDirectoryUncached(const FString& InConfiguredRelative, bool bInFromLegacyKey)
+		{
+			FDreamShaderProjectSourceDirectory Out;
+			Out.ConfiguredDirectory = ResolveProjectDirectory(InConfiguredRelative, UDreamShaderSourceSettings::GetDefaultSourceDirectory());
+			Out.ConfiguredDirectory.RemoveFromEnd(TEXT("/"));
+			Out.LegacyDirectory = ResolveProjectDirectory(LegacySourceDirectoryName, LegacySourceDirectoryName);
+			Out.LegacyDirectory.RemoveFromEnd(TEXT("/"));
+			Out.bFromLegacyKey = bInFromLegacyKey;
+
+			const bool bConfiguredExists = IFileManager::Get().DirectoryExists(*Out.ConfiguredDirectory);
+			// A configured directory that IS `DShader` is not a legacy one: it is what was asked for.
+			const bool bSame = Out.ConfiguredDirectory.Equals(Out.LegacyDirectory, ESearchCase::IgnoreCase);
+			const bool bLegacyExists = !bSame && IFileManager::Get().DirectoryExists(*Out.LegacyDirectory);
+
+			if (bConfiguredExists)
+			{
+				Out.Directory = Out.ConfiguredDirectory;
+				Out.bLegacyIgnored = bLegacyExists;
+			}
+			else if (bLegacyExists)
+			{
+				Out.Directory = Out.LegacyDirectory;
+				Out.bUsingLegacy = true;
+			}
+			else
+			{
+				Out.Directory = Out.ConfiguredDirectory;
+			}
+			return Out;
+		}
+
+		/**
+		 * GeneratedShaderDirectory, where the legacy default (`Intermediate/DreamShader/GeneratedShaders`, which a saved
+		 * DefaultEngine.ini spells out) reads as the new one: only a value somebody chose is kept.
+		 */
+		static FString ConfiguredGeneratedShaderDirectory(const UDreamShaderSettings* Settings)
+		{
+			const FString Configured = CleanSettingPath(
+				Settings ? Settings->GeneratedShaderDirectory.Path : ReadDirectorySettingFromConfig(TEXT("GeneratedShaderDirectory")));
+			if (Configured.IsEmpty() || Configured.Equals(TEXT("Intermediate/DreamShader/GeneratedShaders"), ESearchCase::IgnoreCase))
+			{
+				return UDreamShaderSettings::GetDefaultGeneratedShaderDirectory();
+			}
+			return Configured;
+		}
+
 		static void RefreshConfiguredDirectories()
 		{
 			const UDreamShaderSettings* Settings = CanReadSettingsObject()
 				? GetDefault<UDreamShaderSettings>()
 				: nullptr;
 
-			ConfiguredDirectories.Source = ResolveProjectDirectory(
-				Settings ? Settings->SourceDirectory.Path : ReadDirectorySettingFromConfig(TEXT("SourceDirectory")),
-				TEXT("DShader"));
+			ConfiguredDirectories.Source = ResolveProjectSourceDirectory().Directory;
 			ConfiguredDirectories.Package = FPaths::Combine(ConfiguredDirectories.Source, TEXT("Packages"));
 			ConfiguredDirectories.Generated = ResolveProjectDirectory(
-				Settings ? Settings->GeneratedShaderDirectory.Path : ReadDirectorySettingFromConfig(TEXT("GeneratedShaderDirectory")),
-				TEXT("Intermediate/DreamShader/GeneratedShaders"));
+				ConfiguredGeneratedShaderDirectory(Settings),
+				UDreamShaderSettings::GetDefaultGeneratedShaderDirectory());
 			ConfiguredDirectories.bInitialized = true;
 		}
 
@@ -144,8 +264,16 @@ namespace UE::DreamShader
 
 			for (const TSharedRef<IPlugin>& Plugin : IPluginManager::Get().GetEnabledPlugins())
 			{
-				const FString CandidateDirectory = CanonicalizeRootDirectory(
-					FPaths::Combine(Plugin->GetBaseDir(), TEXT("DShader")));
+				// `<Plugin>/DreamSource/Shader`, else the legacy `<Plugin>/DShader`: a plugin has one root, never both.
+				FString CandidateDirectory = CanonicalizeRootDirectory(
+					FPaths::Combine(Plugin->GetBaseDir(), PluginSourceDirectory));
+				bool bLegacy = false;
+				if (!IFileManager::Get().DirectoryExists(*CandidateDirectory))
+				{
+					CandidateDirectory = CanonicalizeRootDirectory(
+						FPaths::Combine(Plugin->GetBaseDir(), LegacySourceDirectoryName));
+					bLegacy = true;
+				}
 				if (CandidateDirectory.IsEmpty() || !IFileManager::Get().DirectoryExists(*CandidateDirectory))
 				{
 					continue;
@@ -182,6 +310,7 @@ namespace UE::DreamShader
 				// are the project's to build: an engine or marketplace plugin's mount is refused by
 				// gate 3 (DSH8090), so a failure under this root must not abort a host project's cook.
 				PluginRoot.bIsProjectPlugin = IsProjectContentPlugin(*Plugin);
+				PluginRoot.bLegacy = bLegacy;
 			}
 		}
 
@@ -202,6 +331,80 @@ namespace UE::DreamShader
 			}
 
 			return SourceRootCache.Roots;
+		}
+	}
+
+	FDreamShaderProjectSourceDirectory ResolveProjectSourceDirectory()
+	{
+		using namespace Private;
+		bool bFromLegacyKey = false;
+		const FString ConfiguredRelative = ConfiguredRelativeSourceDirectory(bFromLegacyKey);
+		FProjectSourceDirectoryMemo& Memo = ProjectSourceDirectoryMemo;
+		if (!Memo.bInitialized
+			|| Memo.bFromLegacyKey != bFromLegacyKey
+			|| !Memo.ConfiguredRelative.Equals(ConfiguredRelative, ESearchCase::IgnoreCase))
+		{
+			Memo.ConfiguredRelative = ConfiguredRelative;
+			Memo.bFromLegacyKey = bFromLegacyKey;
+			Memo.Resolved = ResolveProjectSourceDirectoryUncached(ConfiguredRelative, bFromLegacyKey);
+			Memo.bInitialized = true;
+		}
+		return Memo.Resolved;
+	}
+
+	FString GetDreamSourceIntermediateDirectory()
+	{
+		FString Directory = NormalizeSourceFilePath(FPaths::Combine(FPaths::ProjectIntermediateDir(), TEXT("DreamSource")));
+		Directory.RemoveFromEnd(TEXT("/"));
+		return Directory;
+	}
+
+	FString GetShaderIntermediateDirectory()
+	{
+		return FPaths::Combine(GetDreamSourceIntermediateDirectory(), TEXT("Shader"));
+	}
+
+	FString GetShaderDatabaseFilePath()
+	{
+		return FPaths::Combine(GetDreamSourceIntermediateDirectory(), TEXT("shader.db"));
+	}
+
+	void LogDeprecatedSourceDirectoriesOnce()
+	{
+		static TSet<FString> Logged;
+		const FDreamShaderProjectSourceDirectory Project = ResolveProjectSourceDirectory();
+		if (Project.bFromLegacyKey && !Logged.Contains(TEXT("<legacy key>")))
+		{
+			Logged.Add(TEXT("<legacy key>"));
+			UE_LOG(LogDreamShader, Warning,
+				TEXT("DreamShader: the source directory is set in DefaultEngine.ini ([/Script/DreamShader.DreamShaderSettings] SourceDirectory). ")
+				TEXT("Set it in Project Settings > Dream Source > Shader (Config/DefaultDreamSource.ini) instead; the old key is read until then."));
+		}
+		if (Project.bUsingLegacy && !Logged.Contains(Project.LegacyDirectory))
+		{
+			Logged.Add(Project.LegacyDirectory);
+			UE_LOG(LogDreamShader, Warning,
+				TEXT("DreamShader: '%s' is deprecated. Move it to '%s' -- Dream sources are managed together under DreamSource/. ")
+				TEXT("It is still read until then."),
+				*Project.LegacyDirectory, *Project.ConfiguredDirectory);
+		}
+		if (Project.bLegacyIgnored && !Logged.Contains(Project.LegacyDirectory))
+		{
+			Logged.Add(Project.LegacyDirectory);
+			UE_LOG(LogDreamShader, Warning,
+				TEXT("DreamShader: '%s' is ignored because '%s' exists. Merge what it still holds into '%s' and delete it."),
+				*Project.LegacyDirectory, *Project.ConfiguredDirectory, *Project.ConfiguredDirectory);
+		}
+		for (const FDreamShaderSourceRoot& Root : GetSourceShaderRoots())
+		{
+			if (Root.bLegacy && !Logged.Contains(Root.Directory))
+			{
+				Logged.Add(Root.Directory);
+				UE_LOG(LogDreamShader, Warning,
+					TEXT("DreamShader: plugin %s keeps its sources in the deprecated '%s'. Move them to '%s'."),
+					*Root.PluginName, *Root.Directory,
+					*FPaths::Combine(FPaths::GetPath(Root.Directory), PluginSourceDirectory));
+			}
 		}
 	}
 

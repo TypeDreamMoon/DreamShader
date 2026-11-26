@@ -11,6 +11,7 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Misc/SecureHash.h"
+#include "DreamShaderDatabase.h"
 #include "SQLiteDatabase.h"
 #include "SQLitePreparedStatement.h"
 #include "Serialization/JsonSerializer.h"
@@ -195,126 +196,53 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
-	void FDreamShaderDiagnosticsStore::WriteToFile(const FString& OutputFilePath) const
+	bool FDreamShaderDiagnosticsStore::WriteToDatabase(const FString& DatabaseFilePath) const
 	{
-		TSharedRef<FJsonObject> RootObject = MakeShared<FJsonObject>();
-		RootObject->SetNumberField(TEXT("version"), 1);
-		RootObject->SetStringField(TEXT("updatedAtUtc"), FDateTime::UtcNow().ToIso8601());
-
-		TArray<TSharedPtr<FJsonValue>> FileEntries;
-		for (const TPair<FString, TArray<FDreamShaderDiagnosticRecord>>& Pair : DiagnosticsByFile)
+		// The whole table, every time, in one transaction: it holds this session's findings and nothing else, and one
+		// commit is what keeps a reader from ever seeing half of it. A reader rebuilds the old diagnostics.json envelope
+		// from the rows -- files = every row's json, updatedAtUtc = meta diagnostics_updated_utc.
+		FDreamShaderDatabase Database;
+		if (!Database.Open(DatabaseFilePath))
 		{
-			FileEntries.Add(MakeShared<FJsonValueObject>(BuildDiagnosticsFileObject(Pair.Key, Pair.Value)));
+			return false;
 		}
-
-		RootObject->SetArrayField(TEXT("files"), FileEntries);
-
-		FString OutputText;
-		const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputText);
-		FJsonSerializer::Serialize(RootObject, Writer);
-		FFileHelper::SaveStringToFile(OutputText, *OutputFilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
-	}
-
-	void FDreamShaderDiagnosticsStore::WriteToDirectory(const FString& OutputDirectory) const
-	{
-		IFileManager::Get().MakeDirectory(*OutputDirectory, true);
-
-		TSet<FString> ActiveFileKeys;
-		TArray<TSharedPtr<FJsonValue>> FileIndexValues;
-		for (const TPair<FString, TArray<FDreamShaderDiagnosticRecord>>& Pair : DiagnosticsByFile)
+		if (!Database.Begin())
 		{
-			const FString FileKey = MakeStableFileKey(Pair.Key);
-			ActiveFileKeys.Add(FileKey);
-
-			TSharedRef<FJsonObject> FileObject = BuildDiagnosticsFileObject(Pair.Key, Pair.Value);
-			FString FileText;
-			SerializeJsonObject(FileObject, FileText);
-			FFileHelper::SaveStringToFile(
-				FileText,
-				*FPaths::Combine(OutputDirectory, FileKey + TEXT(".json")),
-				FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
-
-			TSharedRef<FJsonObject> IndexObject = MakeShared<FJsonObject>();
-			IndexObject->SetStringField(TEXT("path"), Pair.Key);
-			IndexObject->SetStringField(TEXT("file"), FileKey + TEXT(".json"));
-			IndexObject->SetNumberField(TEXT("count"), Pair.Value.Num());
-			FileIndexValues.Add(MakeShared<FJsonValueObject>(IndexObject));
+			UE_LOG(LogDreamShader, Warning, TEXT("DreamShader: %s"), *Database.DescribeError(TEXT("BEGIN")));
+			return false;
 		}
-
-		TArray<FString> ExistingFiles;
-		IFileManager::Get().FindFiles(ExistingFiles, *FPaths::Combine(OutputDirectory, TEXT("*.json")), true, false);
-		for (const FString& ExistingFile : ExistingFiles)
-		{
-			const FString BaseName = FPaths::GetBaseFilename(ExistingFile);
-			if (!BaseName.Equals(TEXT("index"), ESearchCase::IgnoreCase) && !ActiveFileKeys.Contains(BaseName))
-			{
-				IFileManager::Get().Delete(*FPaths::Combine(OutputDirectory, ExistingFile), false, true, true);
-			}
-		}
-
-		TSharedRef<FJsonObject> RootObject = MakeShared<FJsonObject>();
-		RootObject->SetNumberField(TEXT("version"), 1);
-		RootObject->SetStringField(TEXT("updatedAtUtc"), FDateTime::UtcNow().ToIso8601());
-		RootObject->SetArrayField(TEXT("files"), FileIndexValues);
-
-		FString IndexText;
-		SerializeJsonObject(RootObject, IndexText);
-		FFileHelper::SaveStringToFile(
-			IndexText,
-			*FPaths::Combine(OutputDirectory, TEXT("index.json")),
-			FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
-	}
-
-	void FDreamShaderDiagnosticsStore::WriteToDatabase(const FString& DatabaseFilePath) const
-	{
-		IFileManager::Get().MakeDirectory(*FPaths::GetPath(DatabaseFilePath), true);
-
-		FSQLiteDatabase Database;
-		if (!Database.Open(*DatabaseFilePath, ESQLiteDatabaseOpenMode::ReadWriteCreate))
-		{
-			UE_LOG(LogDreamShader, Warning, TEXT("Failed to open DreamShader bridge database for diagnostics: %s"), *DatabaseFilePath);
-			return;
-		}
-
-		Database.Execute(TEXT("PRAGMA journal_mode=WAL;"));
-		Database.Execute(TEXT("PRAGMA synchronous=NORMAL;"));
-		Database.Execute(TEXT("CREATE TABLE IF NOT EXISTS diagnostics(path TEXT PRIMARY KEY, json TEXT NOT NULL, updated_at_utc TEXT NOT NULL);"));
-		Database.Execute(TEXT("CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);"));
-		Database.Execute(TEXT("BEGIN TRANSACTION;"));
-		Database.Execute(TEXT("DELETE FROM diagnostics;"));
 
 		const FString UpdatedAtUtc = FDateTime::UtcNow().ToIso8601();
+		bool bOk = Database.Get().Execute(TEXT("DELETE FROM diagnostics;"));
 		{
 			FSQLitePreparedStatement Statement(
-				Database,
+				Database.Get(),
 				TEXT("INSERT OR REPLACE INTO diagnostics(path, json, updated_at_utc) VALUES(?1, ?2, ?3);"));
-			if (Statement.IsValid())
+			bOk = bOk && Statement.IsValid();
+			for (const TPair<FString, TArray<FDreamShaderDiagnosticRecord>>& Pair : DiagnosticsByFile)
 			{
-				for (const TPair<FString, TArray<FDreamShaderDiagnosticRecord>>& Pair : DiagnosticsByFile)
+				if (!bOk)
 				{
-					FString JsonText;
-					SerializeJsonObject(BuildDiagnosticsFileObject(Pair.Key, Pair.Value), JsonText);
-					Statement.SetBindingValueByIndex(1, Pair.Key);
-					Statement.SetBindingValueByIndex(2, JsonText);
-					Statement.SetBindingValueByIndex(3, UpdatedAtUtc);
-					BindAndExecute(Statement);
+					break;
 				}
+				FString JsonText;
+				SerializeJsonObject(BuildDiagnosticsFileObject(Pair.Key, Pair.Value), JsonText);
+				Statement.Reset();
+				Statement.ClearBindings();
+				bOk = Statement.SetBindingValueByIndex(1, Pair.Key)
+					&& Statement.SetBindingValueByIndex(2, JsonText)
+					&& Statement.SetBindingValueByIndex(3, UpdatedAtUtc)
+					&& Statement.Step() == ESQLitePreparedStatementStepResult::Done;
 			}
 		}
-
+		if (!bOk || !Database.Bump(TEXT("diagnostics")) || !Database.Commit())
 		{
-			FSQLitePreparedStatement MetaStatement(
-				Database,
-				TEXT("INSERT OR REPLACE INTO meta(key, value) VALUES('diagnostics.updatedAt', ?1);"));
-			if (MetaStatement.IsValid())
-			{
-				MetaStatement.SetBindingValueByIndex(1, UpdatedAtUtc);
-				BindAndExecute(MetaStatement);
-			}
+			UE_LOG(LogDreamShader, Warning, TEXT("DreamShader: %s; the diagnostics external editors show are now stale."),
+				*Database.DescribeError(TEXT("writing diagnostics")));
+			Database.Rollback();
+			return false;
 		}
-
-		Database.Execute(TEXT("COMMIT;"));
-		Database.Close();
+		return true;
 	}
 
 	bool FDreamShaderDiagnosticsStore::TryParseErrorLocation(

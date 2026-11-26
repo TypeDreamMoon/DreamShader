@@ -293,19 +293,23 @@ namespace UE::DreamShader::Editor::Compiler
 	// ------------------------------------------------------------------------------ symbol index
 
 	/**
-	 * `<OutputDirectory>/<root>/<source path relative to that root>.index.json`, where the symbol index of a source
-	 * lives. An empty OutputDirectory is the default, `<Project>/Saved/DreamShader/Index`. The root
-	 * folder is what keeps two source roots that each hold a `Materials/M_Foo.dss` apart; a file under no root goes
-	 * under `External` by its file name.
+	 * The key a source's symbol index is stored under: the root's display name (`Project`, a plugin's name, or
+	 * `External` for a file under no root, keyed by its file name) and the path relative to that root, forward slashes.
+	 * The root is what keeps two source roots that each hold a `Materials/M_Foo.dss` apart.
 	 *
 	 * One rule for both writers -- `dsc index` and the compiler service -- so that a language service reads one place
 	 * whoever compiled last.
 	 */
-	DREAMSHADERCOMPILER_API FString GetDreamShaderSymbolIndexFilePath(const FString& SourceFilePath, const FString& OutputDirectory = FString());
+	DREAMSHADERCOMPILER_API void GetDreamShaderSymbolIndexKey(const FString& SourceFilePath, FString& OutRoot, FString& OutRelativePath);
+
+	/** `<OutputDirectory>/<root>/<relative path>.index.json`: where `index -Out=<dir>` writes a source's index. */
+	DREAMSHADERCOMPILER_API FString GetDreamShaderSymbolIndexFilePath(const FString& SourceFilePath, const FString& OutputDirectory);
 
 	/**
-	 * Writes BuildDreamShaderSymbolIndexJson(Bound) there. A file that already holds that text is left alone, so an
-	 * unchanged compile does not wake whoever watches the folder. False, with OutError, when it could not be written.
+	 * Writes BuildDreamShaderSymbolIndexJson(Bound): with an empty OutputDirectory into the project's shader.db
+	 * (`source_index`, skipped during an automation run), otherwise to the file above. An index that already holds that
+	 * text is left alone, so an unchanged compile does not wake whoever watches. False, with OutError, when it could not
+	 * be written; OutIndexPath names where it went.
 	 */
 	DREAMSHADERCOMPILER_API bool WriteDreamShaderSymbolIndex(
 		const FString& SourceFilePath,

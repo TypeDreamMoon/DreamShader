@@ -94,8 +94,6 @@ namespace UE::DreamShader::Editor::Private
 		static FString GetRequestDirectory();
 		static FString GetResponseDirectory();
 		static FString GetStatusFilePath();
-		static FString GetDiagnosticsFilePath();
-		static FString GetDiagnosticsDirectory();
 		static FString GetOwnerLockFilePath();
 
 		/**
@@ -154,7 +152,7 @@ namespace UE::DreamShader::Editor::Private
 		 */
 		void QueueFullScan(bool bForce = false);
 		void HandlePostEngineInit();
-		/** `Saved/DreamShader/Bridge/dreamshader-builtin-catalog.json`, written once every module is loaded and when the workspace is opened. */
+		/** The `builtin-catalog` document of shader.db, written once every module is loaded and when the workspace is opened. */
 		void ExportBuiltinCatalogManifest();
 		void HandleSettingsPropertyChanged(UObject* Object, struct FPropertyChangedEvent& Event);
 		/** Compile every project source file. Never forces -- see the definition for why. */
