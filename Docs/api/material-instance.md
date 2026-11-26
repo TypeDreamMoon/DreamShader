@@ -187,7 +187,7 @@ Details-panel view of a generated instance:
 ```text
 Parent                 MB_DreamThinBase_M_Emissive
 DreamShader
-  Source File Path     I:/Project/DShader/Materials/M_Emissive.dsm
+  Source File Path     I:/Project/DreamSource/Shader/Materials/M_Emissive.dsm
   Source Hash          9f2c41ab
 ```
 

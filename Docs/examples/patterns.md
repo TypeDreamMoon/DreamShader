@@ -11,7 +11,7 @@ run from the smallest thing that produces an asset to the constructs that need a
 | :-- | :-- |
 | Applies to | DreamShaderLang 1.x (`.dsm`, `.dsf`, `.dsh`), built by the 2.0 compiler through its legacy front end (since 2.0.0); the `.dss` forms are [DreamShaderLang 2.0](../language-v2/index.md) |
 | Engines | UE 5.3 – 5.8; anything version-gated is marked inline |
-| Assumed source root | `<Project>/DShader` — the `SourceDirectory` [project setting](../settings/project.md) |
+| Assumed source root | `<Project>/DreamSource/Shader` — the source directory [project setting](../settings/project.md#dreamsource-layout) |
 | Generated output | a `Graph`-backend material and every material function, layer and blend: saved on each successful build. A `ThinCustom` material — the default backend — stays Ephemeral, in memory, until it is materialized; see [In-memory Materials](../generation/ephemeral.md) |
 
 The path in each leading comment is where the file is assumed to live; `import` and `#include` paths resolve against
@@ -37,7 +37,7 @@ This page is about *shapes*. For complete materials that do something, see
 The smallest file that produces an asset: one parameter, one binding, one assignment.
 
 ```c
-// DShader/Materials/M_Minimal.dsm
+// DreamSource/Shader/Materials/M_Minimal.dsm
 Shader(Name="Materials/M_Minimal")
 {
     Properties = {
@@ -82,7 +82,7 @@ class       UDreamShaderMaterialInstance over a hidden base UMaterial (the defau
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Minimal.dss
+// DreamSource/Shader/Materials/M_Minimal.dss
 #pragma material(Domain = UI, ShadingModel = Unlit)
 
 uniform float3 Tint = float3(1.0, 0.2, 0.2);
@@ -101,7 +101,7 @@ write to a member of `m`.
 Every parameter family in one file, with a `Group("…")` scope, `[ … ]` metadata and the `Slider(min, max)` shorthand.
 
 ```c
-// DShader/Materials/M_Params.dsm
+// DreamSource/Shader/Materials/M_Params.dsm
 Shader(Name="Materials/M_Params")
 {
     Properties = {
@@ -169,7 +169,7 @@ dropped with the warning `DSH5254`.
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Params.dss
+// DreamSource/Shader/Materials/M_Params.dss
 #pragma material(Domain = Surface, ShadingModel = DefaultLit, BlendMode = Opaque)
 
 /// @group Surface   @sort 0    @slider 0 1
@@ -237,7 +237,7 @@ declarations — no asset block (`DSH2249`). It generates no asset. It is parsed
 names of every file that imports it (since 2.0.0) (1.x pasted its text into the importing file).
 
 ```c
-// DShader/Shared/Common.dsh
+// DreamSource/Shader/Shared/Common.dsh
 Namespace(Name="Common")
 {
     Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
@@ -262,7 +262,7 @@ Function SplitChannels(in vec4 src, out vec3 rgb, out float alpha) {
 Importing it:
 
 ```c
-// DShader/Materials/M_Tinted.dsm
+// DreamSource/Shader/Materials/M_Tinted.dsm
 import "Shared/Common.dsh";
 
 Shader(Name="Materials/M_Tinted")
@@ -289,7 +289,7 @@ Shader(Name="Materials/M_Tinted")
 - `import "Shared/Common"` is equivalent: when the specifier carries **no extension at all**, `.dsh` is appended. Only
   a `.dsh` can be imported (since 2.0.0): a `.dsf` or `.dsm` path is `DSH2252`.
 - A relative specifier is tried against the importing file's own directory, then its source root's directory
-  (`DShader`), then that root's `Packages` — never another root's. A candidate that resolves outside its root is
+  (`DreamSource/Shader`), then that root's `Packages` — never another root's. A candidate that resolves outside its root is
   skipped. See [Imports and namespaces](../language/import.md#resolution).
 - (since 2.0.0) `import` is read as a token at file scope: the `;` is optional, `'single quotes'` work in a 1.x
   file, and an `import` inside a `/* … */` comment is commented out (1.x processed it). Keep each `import` on a line of
@@ -309,7 +309,7 @@ Shader(Name="Materials/M_Tinted")
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Tinted.dss
+// DreamSource/Shader/Materials/M_Tinted.dss
 #include "Shared/Common.dsh"
 
 #pragma material(Domain = Surface, ShadingModel = Unlit)
@@ -330,7 +330,7 @@ it is declared under, `Common_ApplyTint`, and an `out` argument is a variable de
 spelling — a `.dsm` imports this one too:
 
 ```hlsl
-// DShader/Shared/Common.dsh
+// DreamSource/Shader/Shared/Common.dsh
 /// @custom
 /// @name Common::ApplyTint
 void Common_ApplyTint(float3 color, float3 tint, out float3 result)
@@ -368,7 +368,7 @@ A function's value is its return value, or its first `out`. The statement form p
 output; its trailing arguments name the variables that receive the results.
 
 ```c
-// DShader/Materials/M_Calls.dsm
+// DreamSource/Shader/Materials/M_Calls.dsm
 import "Shared/Common.dsh";
 
 Shader(Name="Materials/M_Calls")
@@ -427,7 +427,7 @@ Shader(Name="Materials/M_Calls")
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Calls.dss
+// DreamSource/Shader/Materials/M_Calls.dss
 #include "Shared/Common.dsh"
 
 #pragma material(Domain = Surface, ShadingModel = Unlit, BlendMode = Translucent)
@@ -464,7 +464,7 @@ by its short name (`Sine`, `CameraVectorWS`), or one of the 1.x aliases the cata
 (since 2.0.0).
 
 ```c
-// DShader/Materials/M_UEBuiltins.dsm
+// DreamSource/Shader/Materials/M_UEBuiltins.dsm
 Shader(Name="Materials/M_UEBuiltins")
 {
     Settings = {
@@ -519,7 +519,7 @@ an argument order, and is `DSH5220` elsewhere.
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_UEBuiltins.dss
+// DreamSource/Shader/Materials/M_UEBuiltins.dss
 #pragma material(Domain = UI, ShadingModel = Unlit)
 
 export void M_UEBuiltins(inout material m)
@@ -546,7 +546,7 @@ file reaches the generated function as it reaches any existing asset: through a 
 A material in the same `.dsm` as the function calls it by name.
 
 ```c
-// DShader/Functions/F_Tint.dsf
+// DreamSource/Shader/Functions/F_Tint.dsf
 ShaderFunction(Name="Functions/F_Tint")
 {
     Inputs = {
@@ -576,7 +576,7 @@ ShaderFunction(Name="Functions/F_Tint")
 Calling it from a material:
 
 ```c
-// DShader/Materials/M_UsesTint.dsm
+// DreamSource/Shader/Materials/M_UsesTint.dsm
 VirtualFunction(Name="F_Tint")
 {
     Options = { Asset = Path(Game, "Functions/F_Tint"); }
@@ -633,7 +633,7 @@ Shader(Name="Materials/M_UsesTint")
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Functions/F_Tint.dss
+// DreamSource/Shader/Functions/F_Tint.dss
 /// @desc Tint helper
 /// @library Examples
 /// @param Strength  Preview strength
@@ -644,7 +644,7 @@ export void F_Tint(float3 InColor, float Strength = 1.0, out float3 OutColor)
 ```
 
 ```hlsl
-// DShader/Materials/M_UsesTint.dss
+// DreamSource/Shader/Materials/M_UsesTint.dss
 /// @asset /Game/Functions/F_Tint
 extern void F_Tint(float3 InColor, float Strength = 1.0, out float3 OutColor);
 
@@ -670,7 +670,7 @@ These generate native `UMaterialFunctionMaterialLayer` and `UMaterialFunctionMat
 (since 1.3.0), and their interfaces are fixed by signature rules.
 
 ```c
-// DShader/Layers/L_SimpleSurface.dsf
+// DreamSource/Shader/Layers/L_SimpleSurface.dsf
 ShaderLayer(Name="Layers/L_SimpleSurface")
 {
     Properties = {
@@ -734,7 +734,7 @@ the warning `DSH2251`.
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Layers/L_SimpleSurface.dss
+// DreamSource/Shader/Layers/L_SimpleSurface.dss
 /// @group Layer
 uniform float4 LayerColor = float4(0.8, 0.2, 0.1, 1.0);
 /// @group Layer   @slider 0 1
@@ -765,7 +765,7 @@ A `VirtualFunction` generates nothing. It declares the interface of a `UMaterial
 `Graph` blocks can call it with type checking.
 
 ```c
-// DShader/VirtualFunctions/BufferWriter.dsh
+// DreamSource/Shader/VirtualFunctions/BufferWriter.dsh
 VirtualFunction(Name="BufferWriter")
 {
     Options = {
@@ -785,7 +785,7 @@ VirtualFunction(Name="BufferWriter")
 ```
 
 ```c
-// DShader/Materials/M_Buffered.dsm
+// DreamSource/Shader/Materials/M_Buffered.dsm
 import "VirtualFunctions/BufferWriter.dsh";
 
 Shader(Name="Materials/M_Buffered")
@@ -809,7 +809,7 @@ Shader(Name="Materials/M_Buffered")
 
 This example references `/Game/MaterialFunctions/F_BufferWriter`, a project asset. Substitute a path that exists in
 your project, or let the editor write the declaration for you: the **CreateVirtualFunction** entry of a
-`UMaterialFunction`'s context menu writes a matching `.dsh` under `DShader/VirtualFunctions`, and **Create extern
+`UMaterialFunction`'s context menu writes a matching `.dsh` under `DreamSource/Shader/VirtualFunctions`, and **Create extern
 Prototype (2.0)** writes the `extern` form a `.dss` includes. See [Editor tools](../tools/editor-integration.md).
 
 - The asset may come from `Options = { Asset = … }` or from the header attribute
@@ -826,14 +826,14 @@ Prototype (2.0)** writes the `extern` form a `.dss` includes. See [Editor tools]
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/VirtualFunctions/BufferWriter.dsh
+// DreamSource/Shader/VirtualFunctions/BufferWriter.dsh
 /// @asset /Game/MaterialFunctions/F_BufferWriter
 /// @desc Existing material function declared for Graph calls.
 extern float3 BufferWriter(float3 Color, float Alpha = 1.0);
 ```
 
 ```hlsl
-// DShader/Materials/M_Buffered.dss
+// DreamSource/Shader/Materials/M_Buffered.dss
 #include "VirtualFunctions/BufferWriter.dsh"
 
 #pragma material(Domain = Surface, ShadingModel = Unlit)
@@ -856,7 +856,7 @@ A `GraphFunction` body is HLSL like a `Function`, but every `UE.*` call inside i
 and wired into the generated Custom node as an extra input pin.
 
 ```c
-// DShader/Shared/Wind.dsh
+// DreamSource/Shader/Shared/Wind.dsh
 GraphFunction WindPulse(in float2 uv, out float pulse) {
     float t = UE.Time();
     pulse = sin(uv.x * 8.0 + t);
@@ -864,7 +864,7 @@ GraphFunction WindPulse(in float2 uv, out float pulse) {
 ```
 
 ```c
-// DShader/Materials/M_Wind.dsm
+// DreamSource/Shader/Materials/M_Wind.dsm
 import "Shared/Wind.dsh";
 
 Shader(Name="Materials/M_Wind")
@@ -914,7 +914,7 @@ return pulse;
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Wind.dss
+// DreamSource/Shader/Materials/M_Wind.dss
 #pragma material(Domain = Surface, ShadingModel = Unlit)
 
 /// @custom
@@ -942,7 +942,7 @@ it is lifted into an input of the Custom node the same way.
 inside a `Graph` block; each region becomes a comment box in the generated graph.
 
 ```c
-// DShader/Materials/M_Laid.dsm
+// DreamSource/Shader/Materials/M_Laid.dsm
 Shader(Name="Materials/M_Laid")
 {
     Properties = {
@@ -1014,7 +1014,7 @@ asset edited by hand since it was generated is not rebuilt at all (`DSH8207`); s
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Laid.dss
+// DreamSource/Shader/Materials/M_Laid.dss
 #pragma material(Domain = Surface, ShadingModel = DefaultLit, BlendMode = Opaque)
 
 /// @group Surface   @sort 10
@@ -1048,11 +1048,11 @@ export void M_Laid(inout material m)
 
 ## Importing from a package
 
-A package is a directory under `DShader/Packages`. Its headers are imported exactly like project files, because
-`DShader/Packages` is the third resolution root.
+A package is a directory under `DreamSource/Shader/Packages`. Its headers are imported exactly like project files, because
+`DreamSource/Shader/Packages` is the third resolution root.
 
 ```text
-<Project>/DShader/
+<Project>/DreamSource/Shader/
   Materials/
     M_Noisy.dsm
   Packages/
@@ -1063,7 +1063,7 @@ A package is a directory under `DShader/Packages`. Its headers are imported exac
 ```
 
 ```c
-// DShader/Materials/M_Noisy.dsm
+// DreamSource/Shader/Materials/M_Noisy.dsm
 import "@typedreammoon/dream-noise/Library/Noise.dsh";
 ```
 
@@ -1072,9 +1072,9 @@ tried against each root in turn:
 
 ```text
 specifier   @typedreammoon/dream-noise/Library/Noise.dsh
-candidate 1 <Project>/DShader/Materials/@typedreammoon/dream-noise/Library/Noise.dsh   missing
-candidate 2 <Project>/DShader/@typedreammoon/dream-noise/Library/Noise.dsh             missing
-candidate 3 <Project>/DShader/Packages/@typedreammoon/dream-noise/Library/Noise.dsh    resolved
+candidate 1 <Project>/DreamSource/Shader/Materials/@typedreammoon/dream-noise/Library/Noise.dsh   missing
+candidate 2 <Project>/DreamSource/Shader/@typedreammoon/dream-noise/Library/Noise.dsh             missing
+candidate 3 <Project>/DreamSource/Shader/Packages/@typedreammoon/dream-noise/Library/Noise.dsh    resolved
 ```
 
 The extension may be dropped here too — `import "@typedreammoon/dream-noise/Library/Noise";` is the same import. A

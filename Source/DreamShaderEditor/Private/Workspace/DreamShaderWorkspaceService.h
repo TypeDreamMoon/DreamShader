@@ -19,14 +19,11 @@ namespace UE::DreamShader::Editor::Private
 		/** Isolates persistence tests from the running project's bridge files. Empty restores the project directory. */
 		static FString BridgeDirectoryForTesting;
 #endif
-		static FString GetMaterialExpressionManifestFilePath();
-		static FString GetDreamShaderSettingsManifestFilePath();
-		static FString GetSubstrateBuiltinsManifestFilePath();
-		static FString GetPreprocessorDefinesManifestFilePath();
-		static FString GetPassKeysManifestFilePath();
+		/** `Intermediate/DreamSource/shader.db` (or `<BridgeDirectoryForTesting>/shader.db`). Every manifest below is a `documents` row in it. */
 		static FString GetBridgeDatabaseFilePath();
+		/** Empties what a new session starts without (FDreamShaderDatabase::ResetSession). */
 		static void ResetBridgeDatabase();
-		/** settings.json, and pass-keys.json with it: the layer names it lists are a project setting too. */
+		/** The settings document, and the pass-keys one with it: the layer names it lists are a project setting too. */
 		static void ExportDreamShaderSettingsManifest();
 		static void ExportMaterialExpressionManifest();
 		static void ExportSubstrateBuiltinsManifest();

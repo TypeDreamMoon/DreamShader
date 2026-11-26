@@ -52,9 +52,8 @@ namespace UE::DreamShader::Editor::Private
 			const FString& SourceFilePath,
 			EDreamShaderDiagnosticsProducer Producer,
 			const FString& Scope = FString()) const;
-		void WriteToFile(const FString& OutputFilePath) const;
-		void WriteToDirectory(const FString& OutputDirectory) const;
-		void WriteToDatabase(const FString& DatabaseFilePath) const;
+		/** Replaces the `diagnostics` table of shader.db (FDreamShaderDatabase) with this store's files. False, logged, on failure. */
+		bool WriteToDatabase(const FString& DatabaseFilePath) const;
 
 		static bool TryParseErrorLocation(const FString& Line, FDreamShaderDiagnosticLocation& OutLocation);
 		static TArray<FDreamShaderDiagnosticRecord> BuildGenerateErrorDiagnostics(

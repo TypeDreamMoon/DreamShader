@@ -74,7 +74,7 @@ Runtime substitutions are shown as `{Placeholder}` throughout this page.
 
 | Aspect | Value |
 | :-- | :-- |
-| Directory | `<SourceDirectory>/VirtualFunctions/` — `DShader/VirtualFunctions/` by default |
+| Directory | `<SourceDirectory>/VirtualFunctions/` — `DreamSource/Shader/VirtualFunctions/` by default |
 | Preferred file name | `<sanitized MaterialFunction name>.dsh` |
 | On collision | `<sanitized name>_<crc32 of the asset's object path>.dsh`, the CRC printed as eight lowercase hex digits |
 | Encoding | UTF-8 without BOM |
@@ -263,7 +263,7 @@ startup** across every writable source in the project.
 
 Every message below is recorded with stage `virtualFunctionSync`, code `virtual-function-sync`,
 source `DreamShader VirtualFunction`, and severity `error` — the only severity the sync produces.
-They reach `diagnostics.json`, the sharded `diagnostics/` directory and `bridge.db`.
+They reach the `diagnostics` table of `shader.db`.
 
 | Message | Cause |
 | :-- | :-- |
@@ -304,7 +304,7 @@ files that produced diagnostics have them set.
 
 Right-click `/Game/Functions/MF_Weathering` (a `UMaterialFunction` with one scalar and one texture
 input, and one output) ▸ *DreamShader* ▸ **CreateVirtualFunction**. The editor writes
-`<Project>/DShader/VirtualFunctions/MF_Weathering.dsh` and opens it:
+`<Project>/DreamSource/Shader/VirtualFunctions/MF_Weathering.dsh` and opens it:
 
 ```c
 VirtualFunction(Name="MF_Weathering")

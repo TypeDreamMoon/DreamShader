@@ -194,7 +194,7 @@ The editor-level tests all use the same scaffolding.
 | Helper | Behaviour |
 | :-- | :-- |
 | `MakeUniqueTestAssetName(Prefix)` | `<Prefix>_<GUID digits>` — no two runs collide. |
-| `GetAutomationSourceDirectory()` | `<SourceDirectory>/Tests/Automation`, i.e. `DShader/Tests/Automation` by default. |
+| `GetAutomationSourceDirectory()` | `<SourceDirectory>/Tests/Automation`, i.e. `DreamSource/Shader/Tests/Automation` by default. |
 | `WriteAutomationSourceFile(...)` | Writes the test's `.dsm` / `.dsf` there as UTF-8 without BOM. Failure message: `Failed to write DreamShader automation source file '{Path}'.` |
 | `MakeAutomationObjectPath(Name)` | `/Game/DreamShaderTests/Automation/<Name>.<Name>` |
 | `FScopedDreamShaderAutomationArtifacts` | RAII cleanup: deletes every registered asset with `ObjectTools::DeleteObjectsUnchecked`, then every registered source file. |
@@ -214,7 +214,7 @@ Every declaration, by translation unit.
 
 ### `DreamShaderAutomationTests.cpp` — 30 declarations
 
-Unless the notes say otherwise, each of these writes a source file into `DShader/Tests/Automation`,
+Unless the notes say otherwise, each of these writes a source file into `<SourceDirectory>/Tests/Automation`,
 generates from it, asserts against the generated asset, and deletes both on the way out.
 
 | Test | Macro | Notes |
@@ -362,7 +362,7 @@ Parity cases — ThinCustom and Graph twins of the same body, differing only in 
 
 ## The corpus
 
-`Tests/Corpus` lives under the **plugin**, not under the project's `DShader` tree, so it travels with
+`Tests/Corpus` lives under the **plugin**, not under the project's source directory, so it travels with
 the plugin and is never picked up by ordinary source discovery.
 [`Tests/Corpus/README.md`](../../Tests/Corpus/README.md) is the reference for the tree, every golden
 schema and every runner; this section is the map.

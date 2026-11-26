@@ -11,7 +11,7 @@ it is called out next to the code rather than left for you to find.
 | :-- | :-- |
 | Applies to | DreamShaderLang 1.x (`.dsm`), built by the 2.0 compiler through its legacy front end (since 2.0.0); the `.dss` forms are [DreamShaderLang 2.0](../language-v2/index.md) |
 | Engines | UE 5.3 – 5.8; the Substrate recipe needs (since UE 5.4) |
-| Assumed source root | `<Project>/DShader` |
+| Assumed source root | `<Project>/DreamSource/Shader` |
 | Generated output | a `Graph`-backend material is saved on every build; a `ThinCustom` (default) material stays in memory — see [In-memory Materials](../generation/ephemeral.md) |
 
 A `.dss` and the `.dsm` of the same name build the same asset path; keep one of the two. Diagnostics are cited by code;
@@ -24,7 +24,7 @@ how to read one is on [Diagnostics](../diagnostics/index.md). For the language c
 with positional arguments.
 
 ```c
-// DShader/Materials/M_Pulse.dsm
+// DreamSource/Shader/Materials/M_Pulse.dsm
 Shader(Name="Materials/M_Pulse")
 {
     Properties = {
@@ -59,7 +59,7 @@ Shader(Name="Materials/M_Pulse")
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Pulse.dss
+// DreamSource/Shader/Materials/M_Pulse.dss
 #pragma material(Domain = UI, ShadingModel = Unlit)
 
 uniform float3 Tint = float3(1.0, 0.4, 0.1);
@@ -77,7 +77,7 @@ export void M_Pulse(inout material m)
 ## Panning UVs
 
 ```c
-// DShader/Materials/M_Panned.dsm
+// DreamSource/Shader/Materials/M_Panned.dsm
 Shader(Name="Materials/M_Panned")
 {
     Properties = {
@@ -115,7 +115,7 @@ the node and take constants only: `SpeedX = PanSpeed` is `DSH4373`. A misspelt a
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Panned.dss
+// DreamSource/Shader/Materials/M_Panned.dss
 #pragma material(Domain = UI, ShadingModel = Unlit)
 
 /// @default /Engine/EngineResources/WhiteSquareTexture
@@ -141,7 +141,7 @@ a `StaticSwitch` on a static bool — selects between them at run time. The cond
 branch must be braced.
 
 ```c
-// DShader/Materials/M_Branch.dsm
+// DreamSource/Shader/Materials/M_Branch.dsm
 Shader(Name="Materials/M_Branch")
 {
     Properties = {
@@ -203,7 +203,7 @@ of these operators.
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Branch.dss
+// DreamSource/Shader/Materials/M_Branch.dss
 #pragma material(Domain = Surface, ShadingModel = Unlit, BlendMode = Opaque)
 
 /// @group Surface
@@ -243,7 +243,7 @@ A `StaticSwitchParameter` is not a run-time branch — it produces separate perm
 written as a **call**.
 
 ```c
-// DShader/Materials/M_Variant.dsm
+// DreamSource/Shader/Materials/M_Variant.dsm
 Shader(Name="Materials/M_Variant")
 {
     Properties = {
@@ -281,7 +281,7 @@ parameter is not a value. See [StaticSwitchParameter](../graph/calls.md#staticsw
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Variant.dss
+// DreamSource/Shader/Materials/M_Variant.dss
 #pragma material(Domain = Surface, ShadingModel = DefaultLit, BlendMode = Opaque)
 
 /// @group Surface
@@ -310,7 +310,7 @@ is a real static switch parameter.
 ## A translucent UI material
 
 ```c
-// DShader/Materials/M_UI_Glass.dsm
+// DreamSource/Shader/Materials/M_UI_Glass.dsm
 Shader(Name="Materials/M_UI_Glass")
 {
     Properties = {
@@ -345,7 +345,7 @@ mean anything. Every accepted spelling is on [Enum values](../settings/material-
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_UI_Glass.dss
+// DreamSource/Shader/Materials/M_UI_Glass.dss
 #pragma material(Domain = UI, ShadingModel = Unlit, BlendMode = Translucent)
 
 uniform float3 Tint = float3(1.0, 1.0, 1.0);
@@ -362,7 +362,7 @@ export void M_UI_Glass(inout material m)
 ## A Surface PBR skeleton
 
 ```c
-// DShader/Materials/M_Surface.dsm
+// DreamSource/Shader/Materials/M_Surface.dsm
 Shader(Name="Materials/M_Surface")
 {
     Properties = {
@@ -404,7 +404,7 @@ Output *variables* and binding *targets* live in separate namespaces, but naming
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Surface.dss
+// DreamSource/Shader/Materials/M_Surface.dss
 #pragma material(Domain = Surface, ShadingModel = DefaultLit, BlendMode = Opaque)
 
 /// @group Surface
@@ -430,7 +430,7 @@ written by name; where the value is used, the writes become one `SetMaterialAttr
 chained one per write).
 
 ```c
-// DShader/Materials/M_Attrs.dsm
+// DreamSource/Shader/Materials/M_Attrs.dsm
 Shader(Name="Materials/M_Attrs")
 {
     Properties = {
@@ -478,7 +478,7 @@ it is `DSH3252`, and as an input of a `Function` `DSH6210`.
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Attrs.dss
+// DreamSource/Shader/Materials/M_Attrs.dss
 #pragma material(Domain = Surface, ShadingModel = DefaultLit, BlendMode = Opaque)
 
 uniform float3 BaseTint = float3(0.6, 0.8, 1.0);
@@ -503,7 +503,7 @@ made. A member is read back only after it is written (`DSH4370` otherwise).
 `Substrate.*` builds Substrate nodes; `Base.FrontMaterial` is the binding that consumes them.
 
 ```c
-// DShader/Materials/M_Substrate.dsm
+// DreamSource/Shader/Materials/M_Substrate.dsm
 Shader(Name="Materials/M_Substrate")
 {
     Properties = {
@@ -540,7 +540,7 @@ Shader(Name="Materials/M_Substrate")
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Substrate.dss
+// DreamSource/Shader/Materials/M_Substrate.dss
 uniform float3 Color = float3(0.1, 0.6, 1.0);
 
 export void M_Substrate(inout material m)
@@ -552,7 +552,7 @@ export void M_Substrate(inout material m)
 ## Driving a material from a parameter collection
 
 ```c
-// DShader/Materials/M_Wind.dsm
+// DreamSource/Shader/Materials/M_Wind.dsm
 Shader(Name="Materials/M_Wind")
 {
     Properties = {
@@ -593,7 +593,7 @@ Shader(Name="Materials/M_Wind")
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Wind.dss
+// DreamSource/Shader/Materials/M_Wind.dss
 #pragma material(Domain = Surface, ShadingModel = Unlit)
 
 uniform float3 Tint = float3(0.4, 0.7, 0.3);
@@ -614,7 +614,7 @@ With two or more `out` parameters, the statement call form gets every result; th
 variables that receive them.
 
 ```c
-// DShader/Materials/M_Brightness.dsm
+// DreamSource/Shader/Materials/M_Brightness.dsm
 Function SplitBrightness(in vec3 color, out vec3 normalized, out float brightness) {
     brightness = max(max(color.r, color.g), color.b);
     normalized = color / max(brightness, 0.0001);
@@ -651,7 +651,7 @@ Shader(Name="Materials/M_Brightness")
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Brightness.dss
+// DreamSource/Shader/Materials/M_Brightness.dss
 #pragma material(Domain = UI, ShadingModel = Unlit)
 
 uniform float3 Tint = float3(1.0, 0.5, 0.25);
@@ -678,7 +678,7 @@ first.
 ## Settings tour: glass with an explicit backend
 
 ```c
-// DShader/Materials/M_Glass.dsm
+// DreamSource/Shader/Materials/M_Glass.dsm
 Shader(Name="Materials/M_Glass")
 {
     Properties = {
@@ -736,7 +736,7 @@ Shader(Name="Materials/M_Glass")
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_Glass.dss
+// DreamSource/Shader/Materials/M_Glass.dss
 #pragma material(Domain = Surface, ShadingModel = DefaultLit, BlendMode = Translucent)
 #pragma material(TwoSided = true, Wireframe = false, Backend = Graph)
 
@@ -761,7 +761,7 @@ expressions reached through [`UE.<ClassName>`](../builtins/ue-expression.md); `R
 `Outputs` through `Expression( … ).Pin[i]`.
 
 ```c
-// DShader/Materials/M_RVTSurface.dsm
+// DreamSource/Shader/Materials/M_RVTSurface.dsm
 Shader(Name="Materials/M_RVTSurface", Root="Game")
 {
     Properties = {
@@ -839,7 +839,7 @@ in your project.
 ### Written as a `.dss`
 
 ```hlsl
-// DShader/Materials/M_RVTSurface.dss
+// DreamSource/Shader/Materials/M_RVTSurface.dss
 #pragma material(Backend = Graph, Domain = Surface, ShadingModel = DefaultLit, BlendMode = Opaque)
 
 uniform float3 Fallback = float3(0.5, 0.5, 0.5);
@@ -862,7 +862,7 @@ custom-output node is a statement of the entry; `Pin[i] = …` connects input `i
 
 ## Running these files
 
-1. Save them under `<Project>/DShader`, or wherever `SourceDirectory` points.
+1. Save them under `<Project>/DreamSource/Shader`, or wherever the source directory setting points.
 2. With *Auto Compile On Save* enabled — the default — the editor compiles a source 0.25 s after it is saved (*Save
    Debounce Seconds*). A `Graph`-backend material and every material function, layer and blend are saved to disk by each
    successful build. A `ThinCustom` material — the default backend — is built Ephemeral, in memory, until a cook, an
@@ -872,7 +872,7 @@ custom-output node is a statement of the entry; `Pin[i] = …` connects input `i
 ```powershell
 & "<Engine>/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" `
   "<Project>/MyProject.uproject" `
-  -run=DreamShader compile -Source="<Project>/DShader/Materials/M_Minimal.dsm" -Force `
+  -run=DreamShader compile -Source="<Project>/DreamSource/Shader/Materials/M_Minimal.dsm" -Force `
   -unattended -nopause -nosplash -stdout -log
 ```
 

@@ -3,7 +3,9 @@
 > [DreamShader](../index.md) » [Settings](index.md) » **Project settings**
 
 The project-wide configuration object: seventeen properties under *Project Settings ▸ DreamPlugin ▸
-Dream Shader*, persisted to the project's `DefaultEngine.ini`.
+Dream Shader*, persisted to the project's `DefaultEngine.ini` — and, since the
+[DreamSource layout](#dreamsource-layout), the source directory under *Project Settings ▸ Dream Source ▸
+Shader*, persisted to `DefaultDreamSource.ini`.
 
 | | |
 | :-- | :-- |
@@ -34,9 +36,9 @@ Every configurable property, grouped by the category it appears under in the pan
 | Mappings | Shading Model Mappings | `ShadingModelMappings` | `TMap<FString, EMaterialShadingModel>` | *empty* | Extra or overriding spellings for the `ShadingModel` setting value. Scanned before the built-in table. |
 | Mappings | Blend Mode Mappings | `BlendModeMappings` | `TMap<FString, EBlendMode>` | *empty* | Extra or overriding spellings for `BlendMode` / `RenderType`. |
 | Mappings | Material Domain Mappings | `MaterialDomainMappings` | `TMap<FString, EMaterialDomain>` | *empty* | Extra or overriding spellings for `MaterialDomain` / `Domain`. |
-| Paths | Source Directory | `SourceDirectory` | `FDirectoryPath` | `DShader` | Root scanned for `.dsm` / `.dsf` / `.dsh` sources. Empty falls back to `DShader`; a relative path resolves against the project directory. `<Source>/Packages` is derived from it. |
-| Paths | Generated Shader Directory | `GeneratedShaderDirectory` | `FDirectoryPath` | `Intermediate/DreamShader/GeneratedShaders` | Where the generated `.ush` include is written and the virtual shader directory is mapped. Empty falls back to the default. |
-| Paths | **Scan Plugin Source Directories** | `bScanPluginSourceDirectories` | `bool` | `true` | When on, every enabled plugin that has a `DShader` folder contributes a source root of its own. Off leaves the project's *Source Directory* as the only root. |
+| Paths | Source Directory (Deprecated) | `SourceDirectory` | `FDirectoryPath` | *empty* | **Deprecated** — set *Dream Source ▸ Shader ▸ Source Directory* instead. Still read while that one is left at its default, unless it holds the old default `DShader`; see [DreamSource layout](#dreamsource-layout). |
+| Paths | Generated Shader Directory | `GeneratedShaderDirectory` | `FDirectoryPath` | `Intermediate/DreamSource/Shader/GeneratedShaders` | Where the generated `.ush` include is written and the virtual shader directory is mapped. Must stay under `Intermediate/`. Empty — or the pre-DreamSource default `Intermediate/DreamShader/GeneratedShaders` — falls back to the default. |
+| Paths | **Scan Plugin Source Directories** | `bScanPluginSourceDirectories` | `bool` | `true` | When on, every enabled plugin that has a `DreamSource/Shader` folder (or a legacy `DShader` folder) contributes a source root of its own. Off leaves the project's source directory as the only root. |
 | Compiler | **Preprocessor Defines** *(since 1.9.0)* | `PreprocessorDefines` | `TMap<FString, FString>` | *empty* | Names visible to [`#if`](../language/preprocessor.md) in every source the project compiles. Keys are **case-sensitive**; an empty value is a bare marker, true to `#if` and to `defined()`. A key beginning with `DS_` is dropped with a warning — that prefix is reserved for the builtins. Editing the map rebuilds the sources that read a changed name. |
 | Compiler | **Default Compiler Backend** | `DefaultBackend` | `EDreamShaderDefaultBackend` | `ThinCustom` | Backend for a source file that does not set `Settings = { Backend = … }`. Changing it rebuilds every source whose build key it changes; one it does not affect is skipped. |
 | Compiler | **Graph Layout Style** *(since 2.0.0)* | `GraphLayoutStyle` | `EDreamShaderGraphLayoutStyle` | `Blocks` | What lays a generated graph out: one of the three layouts that read the compiler's IR — `Blocks` (a page of boxes in source order, named reroutes between them; the default), `SourceBands` (one band per source statement) and `Layered` (the whole graph in layers) — or `Classic`, the 1.x layout. See [Graph layout](../generation/graph-layout.md#layout-styles); `dsc dump-layout` draws the three IR styles without building anything. Not part of the build key: a layout moves nodes, not what they compute. A source is therefore re-laid when it is next **rebuilt** -- an unchanged one is skipped as usual, so *Recompile* it (or `compile -Force`) to see an existing graph in the new style. |
@@ -68,8 +70,8 @@ Full behaviour, including how a per-file `Backend` setting overrides this, is on
 
 *Scan Plugin Source Directories*:
 
-> When enabled, every enabled plugin that ships a DShader folder contributes its own source root, so
-> a plugin can carry the .dsm/.dsf/.dsh files that build its materials. Plugin roots are discovered
+> When enabled, every enabled plugin that ships a DreamSource/Shader folder (or the deprecated DShader)
+> contributes its own source root, so a plugin can carry the .dss/.dsf/.dsh files that build its materials. Plugin roots are discovered
 > and compiled but never rewritten by the editor -- only the project's own source directory is
 > writable. Imports never cross roots: a file resolves its imports against its own root and that
 > root's Packages folder.
@@ -145,7 +147,7 @@ The complete built-in tables are on [Material enums](material-enums.md).
 | :-- | :-- |
 | `bShowEphemeralMaterials` | *Tools ▸ DreamShader ▸ Show Ephemeral Materials*, and the Project page of the [Material Content Browser](../tools/material-browser.md). Both write the ini and re-broadcast asset creation/removal for every memory-only instance. |
 | `DefaultBackend`, the three mapping maps, `PreprocessorDefines` | Changing one in the panel rebuilds the project's sources at once and logs `DreamShader setting '{Setting}' changed; regenerating all source files.` Each of them is part of the build key, so a source the change does not affect is skipped. A notification follows when persisted generated assets shadow the result. |
-| `SourceDirectory`, `GeneratedShaderDirectory` | Consumed by the module's directory helpers; see [Generated HLSL](../generation/generated-hlsl.md) and [Packages](../tools/packages.md). |
+| `SourceDirectory`, `GeneratedShaderDirectory` | Consumed by the module's directory helpers; see [DreamSource layout](#dreamsource-layout), [Generated HLSL](../generation/generated-hlsl.md) and [Packages](../tools/packages.md). |
 | `bSyncSourceReferencesOnAssetRename` | Read on every asset rename by the [asset rename sync service](../tools/asset-rename-sync.md), and again when the coalesced batch is flushed. There is no menu entry for it. |
 | `PreprocessorDefines` | One of five tiers that make up the define table a compile sees, and the lowest-precedence one that a person edits. C++ registration and providers outrank it, and `-Define=` on the [commandlet](../tools/commandlet.md) outranks those; only the builtin `DS_` names outrank everything. See [Preprocessor ▸ Where defines come from](../language/preprocessor.md#where-defines-come-from). |
 
@@ -170,12 +172,12 @@ The complete built-in tables are on [Material enums](material-enums.md).
 
 ## Example
 
-`<Project>/Config/DefaultEngine.ini`, showing every scalar property at its default value:
+`<Project>/Config/DefaultEngine.ini`, showing every scalar property at its default value (the deprecated
+`SourceDirectory` is left out — its default is empty):
 
 ```ini
 [/Script/DreamShader.DreamShaderSettings]
-SourceDirectory=(Path="DShader")
-GeneratedShaderDirectory=(Path="Intermediate/DreamShader/GeneratedShaders")
+GeneratedShaderDirectory=(Path="Intermediate/DreamSource/Shader/GeneratedShaders")
 DefaultBackend=ThinCustom
 bShowEphemeralMaterials=False
 bAutoCompileOnSave=True
@@ -195,6 +197,80 @@ the `+Key=((…))` form:
 ```ini
 +PreprocessorDefines=(("MOONTOON_LEGACY_TOON", "1"))
 ```
+
+## DreamSource layout
+
+Every Dream plugin keeps its text sources under one project folder, `DreamSource/`, and the data it
+rebuilds by itself under `Intermediate/DreamSource/`. For DreamShader that means:
+
+| What | Path | Before the DreamSource layout |
+| :-- | :-- | :-- |
+| Project sources | `<Project>/DreamSource/Shader/` (configurable) | `<Project>/DShader/` |
+| `Packages/`, `.dreampass/`, `dreamshader.lock.json`, `DreamShader.code-workspace` | inside the project source directory | inside `DShader/` |
+| A plugin's sources | `<Plugin>/DreamSource/Shader/` (not configurable) | `<Plugin>/DShader/` |
+| Generated `.ush` includes | `<Project>/Intermediate/DreamSource/Shader/GeneratedShaders/` | `<Project>/Intermediate/DreamShader/GeneratedShaders/` |
+| Diagnostics, manifests, symbol index for editor extensions | `<Project>/Intermediate/DreamSource/shader.db` ([Bridge](../tools/bridge.md#shaderdb)) | `Saved/DreamShader/Bridge/*.json`, `bridge.db`, `Saved/DreamShader/Index/` |
+| Bridge request files, `status.json`, `owner.lock` | `<Project>/Intermediate/DreamSource/Shader/Bridge/` | `<Project>/Saved/DreamShader/Bridge/` |
+| One-shot preview PNGs | `<Project>/Intermediate/DreamSource/Shader/Preview/` | `<Project>/Saved/DreamShader/Bridge/Preview/` |
+
+`Saved/DreamShader/` keeps the output of explicit commands — migration backups (`Migrated/`),
+`dump-graph`, `dump-ir` and `dump-layout` trees, package installs — which the layout does not move.
+
+### The setting
+
+*Project Settings ▸ Dream Source ▸ Shader ▸ Source Directory* — `UDreamShaderSourceSettings`, in
+`Config/DefaultDreamSource.ini` ([API](../api/settings.md#udreamshadersourcesettings)):
+
+```ini
+[/Script/DreamShader.DreamShaderSourceSettings]
+SourceDirectory=(Path="DreamSource/Shader")
+```
+
+The path is relative to the project directory; an empty or absolute value reads as the default. A
+change takes effect **after an editor restart** — the Custom Pass shader directory mapping
+(`/DreamPassUser`) and the source watchers are made at startup.
+
+### Which directory is used
+
+The **configured** directory is the `DefaultDreamSource.ini` value unless it is left at
+`DreamSource/Shader`; then the deprecated `DefaultEngine.ini` key
+`[/Script/DreamShader.DreamShaderSettings] SourceDirectory`, unless that is empty, absolute or the old
+default `DShader` (every `DefaultEngine.ini` that ever saved the settings spells `DShader` out, so it is
+not read as a choice); then `DreamSource/Shader`. Then:
+
+| Configured directory exists | `<Project>/DShader` exists | Used | Logged |
+| :-- | :-- | :-- | :-- |
+| yes | no | the configured one | — |
+| yes | yes | the configured one; `DShader` is **ignored** | warning: merge what `DShader` still holds, then delete it |
+| no | yes | `DShader` (legacy) | warning: deprecated, move it |
+| no | no | the configured one, created at startup | — |
+
+The answer is decided once per configured value, so a directory that appears mid-session does not
+move the project's sources. A value read from the deprecated key is logged too. A plugin uses
+`<Plugin>/DreamSource/Shader` when it exists and otherwise a `<Plugin>/DShader`, which is logged as
+deprecated; a plugin never has both roots.
+
+### Migrating from `DShader`
+
+While the project still uses `DShader/`, or ignores one beside the new folder, the editor that owns the
+[bridge](../tools/bridge.md#one-editor-owns-the-bridge) shows a notification once the engine has
+loaded — not in a commandlet, an automation run or an unattended editor. The Output Log says the same
+in every process.
+
+| Button | Effect |
+| :-- | :-- |
+| **Migrate** *(only when `DShader` is in use)* | Moves `DShader/` to the configured directory (copy-then-delete when a move fails), rebases the relative `folders` paths of `DreamShader.code-workspace`, and deletes `Saved/DreamShader/Bridge/`, `Saved/DreamShader/Index/` and `Intermediate/DreamShader/` (the last one kept when *Generated Shader Directory* still points inside it). Refuses when the configured directory already exists — merge by hand. Ends with a **Restart Now** / **Later** notification: the new folder is used after a restart. Close VS Code windows that have files in `DShader/` open first. |
+| **Don't show again** | Sets `[DreamSource] bHideShaderMigrationNotice=True` in this machine's `EditorPerProjectUserSettings.ini`. The Output Log still says it. |
+| **Later** | Closes the notification until the next start. |
+
+To migrate by hand: close the editor, move `DShader/` to `DreamSource/Shader/` (with `git mv` to keep
+history), update the plugin's own `DShader/` folders the same way, and delete `Saved/DreamShader/Bridge/`,
+`Saved/DreamShader/Index/` and `Intermediate/DreamShader/`. See also
+[Source control](../generation/source-control.md).
+
+The [VS Code extension](../tools/vscode.md) (2.3.0+) does the same from the command palette:
+**DreamShader: Migrate to DreamSource**. It refuses while the Unreal editor is running or when the
+target already exists.
 
 ## DreamShader Custom Pass
 
@@ -232,5 +308,6 @@ bEnabled=True
 - [Material Content Browser](../tools/material-browser.md) — the Project page and the instance factory
 - [Decompiler](../tools/decompiler.md) — the layout-export toggle
 - [Workspace](../tools/workspace.md) — VSCode launch and the exported settings manifest
+- [Bridge](../tools/bridge.md#shaderdb) — `shader.db`, which replaced the bridge's JSON files
 - [Asset rename sync](../tools/asset-rename-sync.md) — what *Sync Source References On Asset Rename* switches on
 - [Editor integration](../tools/editor-integration.md) — the Tools menu entries

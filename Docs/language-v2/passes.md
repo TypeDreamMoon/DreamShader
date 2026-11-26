@@ -16,7 +16,7 @@ screen-space effect, a compute shader that writes a data texture.
 | Since | `2.1.0` |
 
 ```hlsl
-// DShader/Passes/CP_Highlight.dsp — selected objects get an orange outline, also behind walls
+// DreamSource/Shader/Passes/CP_Highlight.dsp — selected objects get an orange outline, also behind walls
 #pragma pipeline(Order = 100)
 
 /// @group Look

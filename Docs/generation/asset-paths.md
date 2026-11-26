@@ -70,15 +70,15 @@ Dispatch is on the **first** segment, compared case-insensitively.
 #### The plugin source root default
 
 The table above is the **project root's** answer. A source file that lives under a plugin source
-root — `<Plugin>/DShader`, see [Source files](../language/source-files.md#source-roots) — defaults
+root — `<Plugin>/DreamSource/Shader`, see [Source files](../language/source-files.md#source-roots) — defaults
 instead to that plugin's mount point, exactly as if it had written `Root="Plugin.<PluginName>"`.
 
 | Source file | `Root` | `Name` | Package |
 | :-- | :-- | :-- | :-- |
-| `<Project>/DShader/M.dsm` | *(omitted)* | `M_Flat` | `/Game/M_Flat` |
-| `Plugins/MoonToon/DShader/M.dsm` | *(omitted)* | `M_Flat` | `/MoonToon/M_Flat` |
-| `Plugins/MoonToon/DShader/M.dsm` | `"/"` | `M_Flat` | `/Game/M_Flat` |
-| `Plugins/MoonToon/DShader/M.dsm` | `Game/Legacy` | `M_Flat` | `/Game/Legacy/M_Flat` |
+| `<Project>/DreamSource/Shader/M.dsm` | *(omitted)* | `M_Flat` | `/Game/M_Flat` |
+| `Plugins/MoonToon/DreamSource/Shader/M.dsm` | *(omitted)* | `M_Flat` | `/MoonToon/M_Flat` |
+| `Plugins/MoonToon/DreamSource/Shader/M.dsm` | `"/"` | `M_Flat` | `/Game/M_Flat` |
+| `Plugins/MoonToon/DreamSource/Shader/M.dsm` | `Game/Legacy` | `M_Flat` | `/Game/Legacy/M_Flat` |
 
 Only an **absent or whitespace-only** `Root` is defaulted, so `Root="/"` (or any explicit spelling)
 is how a plugin-root file opts back into `/Game`. The default is applied per block: a file may leave
@@ -99,10 +99,10 @@ does not apply to it:
 
 | Source file | `Root` | `Name` / export | Package |
 | :-- | :-- | :-- | :-- |
-| `DShader/Packages/@scope/lib/Assets/MF_A.dss` | *(omitted)* | `MF_A` | `/Game/DreamShaderPackages/scope/lib/MF_A` |
-| `DShader/Packages/@scope/lib/Assets/Noise/MF_B.dss` | *(omitted)* | `MF_B` | `/Game/DreamShaderPackages/scope/lib/Noise/MF_B` |
-| `DShader/Packages/lib/Assets/MF_C.dsf` | *(omitted)* | `MF_C` | `/Game/DreamShaderPackages/lib/MF_C` |
-| `Plugins/MoonToon/DShader/Packages/lib/Assets/MF_D.dss` | *(omitted)* | `MF_D` | `/MoonToon/DreamShaderPackages/lib/MF_D` |
+| `DreamSource/Shader/Packages/@scope/lib/Assets/MF_A.dss` | *(omitted)* | `MF_A` | `/Game/DreamShaderPackages/scope/lib/MF_A` |
+| `DreamSource/Shader/Packages/@scope/lib/Assets/Noise/MF_B.dss` | *(omitted)* | `MF_B` | `/Game/DreamShaderPackages/scope/lib/Noise/MF_B` |
+| `DreamSource/Shader/Packages/lib/Assets/MF_C.dsf` | *(omitted)* | `MF_C` | `/Game/DreamShaderPackages/lib/MF_C` |
+| `Plugins/MoonToon/DreamSource/Shader/Packages/lib/Assets/MF_D.dss` | *(omitted)* | `MF_D` | `/MoonToon/DreamShaderPackages/lib/MF_D` |
 
 A 2.0 source adds its folder under `Assets`, as a project source adds its folder under the source root;
 a 1.x `Name=` says every folder it wants. An explicit `Root` still wins. See
@@ -242,9 +242,9 @@ render target of every exported buffer lands in the pipeline's folder, named
 
 | Source file | Pipeline | Render target of an exported buffer `Mask` |
 | :-- | :-- | :-- |
-| `<Project>/DShader/Passes/CP_Highlight.dsp` | `/Game/Passes/CP_Highlight` | `/Game/Passes/CP_Highlight_Mask` |
-| `<Project>/DShader/CP_Wind.dsp` | `/Game/CP_Wind` | `/Game/CP_Wind_Mask` |
-| `Plugins/MoonToon/DShader/Passes/CP_Toon.dsp` | `/MoonToon/Passes/CP_Toon` | `/MoonToon/Passes/CP_Toon_Mask` |
+| `<Project>/DreamSource/Shader/Passes/CP_Highlight.dsp` | `/Game/Passes/CP_Highlight` | `/Game/Passes/CP_Highlight_Mask` |
+| `<Project>/DreamSource/Shader/CP_Wind.dsp` | `/Game/CP_Wind` | `/Game/CP_Wind_Mask` |
+| `Plugins/MoonToon/DreamSource/Shader/Passes/CP_Toon.dsp` | `/MoonToon/Passes/CP_Toon` | `/MoonToon/Passes/CP_Toon_Mask` |
 
 | At the path | Refused when |
 | :-- | :-- |

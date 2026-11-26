@@ -58,7 +58,8 @@ suppressed in commandlet runs.
 | `UMaterialFunctionMaterialLayer` | `<SourceDirectory>/Decompiled/Layers/` | `.dsf` |
 | `UMaterialFunctionMaterialLayerBlend` | `<SourceDirectory>/Decompiled/LayerBlends/` | `.dsf` |
 
-`<SourceDirectory>` is the *Source Directory* project setting, `DShader` by default. The layer and
+`<SourceDirectory>` is the project's source directory, `DreamSource/Shader` by default (see
+[DreamSource layout](../settings/project.md#dreamsource-layout)). The layer and
 layer-blend directories are separate from `Functions`, and the class test is ordered blend-first, so
 a layer blend never lands in `Layers`.
 
@@ -67,7 +68,7 @@ directory per package segment:
 
 ```text
 /Game/Materials/Metal/M_Steel
-  →  <Project>/DShader/Decompiled/Materials/Game/Materials/Metal/M_Steel.dsm
+  →  <Project>/DreamSource/Shader/Decompiled/Materials/Game/Materials/Metal/M_Steel.dsm
 ```
 
 | Rule | Detail |
@@ -390,7 +391,7 @@ Export `/Game/Materials/M_Steel` headlessly, then inspect the result:
 
 ```text
 DreamShader decompiled '/Game/Materials/M_Steel.M_Steel' to
-'I:/Project/DShader/Decompiled/Materials/Game/Materials/M_Steel.dsm' (legacy).
+'I:/Project/DreamSource/Shader/Decompiled/Materials/Game/Materials/M_Steel.dsm' (legacy).
 ```
 
 The written file:
@@ -435,9 +436,9 @@ Shader(Name="Decompiled/Materials/Game/Materials/M_Steel")
 ## The 2.0 decompiler
 
 ```powershell
-./dsc.ps1 decompile /Game/Materials/M_Steel                  # writes DShader/Decompiled/.../M_Steel.dss
+./dsc.ps1 decompile /Game/Materials/M_Steel                  # writes DreamSource/Shader/Decompiled/.../M_Steel.dss
 ./dsc.ps1 decompile /Game/Materials/MI_Steel_Worn            # a material instance: MI_Steel_Worn.dsi
-./dsc.ps1 decompile -SourceFile DShader/Functions/Lib.dss    # every asset that source builds, in one file
+./dsc.ps1 decompile -SourceFile DreamSource/Shader/Functions/Lib.dss    # every asset that source builds, in one file
 ./dsc.ps1 decompile /Game/Materials/M_Steel -Format Legacy   # the 1.x text described above
 ```
 
@@ -504,8 +505,8 @@ printer writes that payload as a `.dsp`: `#pragma pipeline`, the uniforms, the b
 the asset's order, with every key left out that would read back as the default.
 
 ```powershell
-./dsc.ps1 decompile /Game/Passes/CP_Highlight                # DShader/Decompiled/Pipelines/Game/Passes/CP_Highlight.dsp
-./dsc.ps1 decompile -SourceFile DShader/Passes/CP_Highlight.dsp
+./dsc.ps1 decompile /Game/Passes/CP_Highlight                # DreamSource/Shader/Decompiled/Pipelines/Game/Passes/CP_Highlight.dsp
+./dsc.ps1 decompile -SourceFile DreamSource/Shader/Passes/CP_Highlight.dsp
 ./dsc.ps1 decompile /Game/Passes/CP_Highlight -Out Work/CP_Highlight.dsp
 ```
 

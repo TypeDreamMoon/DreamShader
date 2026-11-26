@@ -171,7 +171,7 @@ screen-space effects, compute shaders writing data textures.
 | [Decompiler](tools/decompiler.md) | Export existing materials, instances and Custom Pass pipelines to source |
 | [VirtualFunction tools](tools/virtual-function-tools.md) | Declare and sync existing functions |
 | [Workspace and editor extensions](tools/workspace.md) | VSCode workspace, VSCode and Rider plugins |
-| [Packages](tools/packages.md) | `DShader/Packages` shared libraries |
+| [Packages](tools/packages.md) | `DreamSource/Shader/Packages` shared libraries |
 | [Commandlet](tools/commandlet.md) | Headless compile and decompile |
 | [Editor bridge](tools/bridge.md) | Request files, WebSocket protocol, artifacts |
 | [AI agents](tools/ai-agents.md) | Agent guide, skills, MCP server, the authoring loop |

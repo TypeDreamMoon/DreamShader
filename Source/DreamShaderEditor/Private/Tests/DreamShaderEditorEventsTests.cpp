@@ -4,6 +4,9 @@
 // per-source notice, and the bridge's compile route that feeds the diagnostics store -- including who
 // owns what that store holds.
 
+#include "DreamShaderDatabase.h"
+#include "SQLiteDatabase.h"
+#include "SQLitePreparedStatement.h"
 #include "Tests/DreamShaderTestCommon.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -409,7 +412,7 @@ bool FDreamShaderDiagnosticsProducersTest::RunTest(const FString& Parameters)
 	using namespace UE::DreamShader::Editor::Private::Tests;
 	using EProducer = EDreamShaderDiagnosticsProducer;
 
-	const FString Directory = FPaths::Combine(FPaths::ProjectDir(), TEXT("DShader/StoreTest"));
+	const FString Directory = FPaths::Combine(UE::DreamShader::GetSourceShaderDirectory(), TEXT("StoreTest"));
 	const FString First = UE::DreamShader::NormalizeSourceFilePath(FPaths::Combine(Directory, TEXT("A.dss")));
 	const FString Second = UE::DreamShader::NormalizeSourceFilePath(FPaths::Combine(Directory, TEXT("B.dss")));
 	const FString Header = UE::DreamShader::NormalizeSourceFilePath(FPaths::Combine(Directory, TEXT("Shared.dsh")));
@@ -609,20 +612,46 @@ bool FDreamShaderBridgeOwnershipFilesTest::RunTest(const FString& Parameters)
 		TestTrue(FString::Printf(TEXT("follower preserved %s"), *File.Key), Bytes && *Bytes == File.Value);
 	}
 
+	// Every `json` of the diagnostics table, joined: what diagnostics.json used to hold.
+	auto ReadDiagnostics = []()
+	{
+		FString Joined;
+		FSQLiteDatabase Database;
+		if (Database.Open(*FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath(), ESQLiteDatabaseOpenMode::ReadOnly))
+		{
+			{
+				FSQLitePreparedStatement Statement(Database, TEXT("SELECT json FROM diagnostics;"));
+				while (Statement.IsValid() && Statement.Step() == ESQLitePreparedStatementStepResult::Row)
+				{
+					FString Json;
+					Statement.GetColumnValueByIndex(0, Json);
+					Joined += Json;
+				}
+			}
+			Database.Close();
+		}
+		return Joined;
+	};
+	const FString DatabasePath = FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath();
+
 	FAccess::Release(Owner);
 	TestTrue(TEXT("the follower acquires ownership after release"), FAccess::Acquire(Follower));
-	FString Diagnostics;
-	TestTrue(TEXT("takeover publishes diagnostics"), FFileHelper::LoadFileToString(Diagnostics, *FPaths::Combine(Directory, TEXT("diagnostics.json"))));
+	const FString Diagnostics = ReadDiagnostics();
 	TestTrue(TEXT("takeover publishes the new owner's local diagnostics"), Diagnostics.Contains(TEXT("follower diagnostic")));
 	TestFalse(TEXT("takeover retires the old owner's diagnostics"), Diagnostics.Contains(TEXT("owner diagnostic")));
 	TestTrue(TEXT("takeover publishes status"), IFileManager::Get().FileExists(*FPaths::Combine(Directory, TEXT("status.json"))));
-	TestTrue(TEXT("takeover publishes manifests"), IFileManager::Get().FileExists(*FDreamShaderWorkspaceService::GetMaterialExpressionManifestFilePath()));
-	TestTrue(TEXT("takeover after engine init publishes the builtin catalog"), IFileManager::Get().FileExists(*FPaths::Combine(Directory, TEXT("dreamshader-builtin-catalog.json"))));
+	TestFalse(TEXT("takeover publishes manifests"),
+		FDreamShaderDatabase::ReadDocument(DatabasePath, FDreamShaderDatabase::DocumentMaterialExpressions).IsEmpty());
+	TestFalse(TEXT("takeover after engine init publishes the builtin catalog"),
+		FDreamShaderDatabase::ReadDocument(DatabasePath, FDreamShaderDatabase::DocumentBuiltinCatalog).IsEmpty());
+	TestFalse(TEXT("no manifest is written as a json file any more"),
+		IFileManager::Get().FileExists(*FPaths::Combine(Directory, TEXT("material-expressions.json"))));
 	TestFalse(TEXT("takeover retires responses from the prior session"), IFileManager::Get().FileExists(*FPaths::Combine(Directory, TEXT("Responses/owner-response.json"))));
 	FAccess::Clear(Follower);
 	FAccess::Release(Follower);
 	TestFalse(TEXT("owner shutdown removes status"), IFileManager::Get().FileExists(*FPaths::Combine(Directory, TEXT("status.json"))));
-	TestFalse(TEXT("owner shutdown removes the shared database"), IFileManager::Get().FileExists(*FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath()));
+	// Kept, like diagnostics.json was: an external editor goes on showing the last verdict after this one closes.
+	TestTrue(TEXT("owner shutdown leaves the last diagnostics for external editors"), ReadDiagnostics().Contains(TEXT("follower diagnostic")));
 	return true;
 }
 

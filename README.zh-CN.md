@@ -49,7 +49,7 @@
 </table>
 
 > [!TIP]
-> 把所有源文件——`.dss`、`.dsi`、`.dsp`、`.dsh`、`.dsm`、`.dsf`——纳入版本管理；用到 Custom Pass 时，`DShader/.dreampass/`
+> 把所有源文件——`.dss`、`.dsi`、`.dsp`、`.dsh`、`.dsm`、`.dsf`——纳入版本管理；用到 Custom Pass 时，`DreamSource/Shader/.dreampass/`
 > 里的快照也要提交。生成的 Unreal 资产随时可以从源文件重建，不需要提交。
 
 > [!NOTE]
@@ -103,19 +103,22 @@ Cook 时会自动落盘，也可以在 Material Content Browser 里手动把某�
 
    ```text
    MyProject/
-   ├─ DShader/
-   │  ├─ Materials/   *.dsm   材质实现
-   │  ├─ Functions/   *.dsf   可复用的材质函数资产
-   │  ├─ Shared/      *.dsh   头文件：Function、GraphFunction、Namespace、VirtualFunction
-   │  └─ Packages/           已安装的共享库
+   ├─ DreamSource/
+   │  └─ Shader/
+   │     ├─ Materials/   *.dsm   材质实现
+   │     ├─ Functions/   *.dsf   可复用的材质函数资产
+   │     ├─ Shared/      *.dsh   头文件：Function、GraphFunction、Namespace、VirtualFunction
+   │     └─ Packages/           已安装的共享库
    └─ Plugins/
       └─ DreamShader/
    ```
 
 3. 保存。*Auto Compile On Save* 默认开启，源文件会在短暂 debounce 后被解析并生成资产。
 
-配置位于 *Project Settings ▸ DreamPlugin ▸ Dream Shader*，每一项及其默认值见
-[项目设置](Docs/settings/project.md)。完整上手流程见[快速上手](Docs/getting-started.md)。
+配置位于 *Project Settings ▸ DreamPlugin ▸ Dream Shader*，源文件目录位于
+*Project Settings ▸ Dream Source ▸ Shader*，每一项及其默认值见
+[项目设置](Docs/settings/project.md)。源文件仍在 `DShader/` 的项目照常工作，编辑器会提示迁移——见
+[DreamSource 布局](Docs/settings/project.md#dreamsource-layout)。完整上手流程见[快速上手](Docs/getting-started.md)。
 
 ## 能生成什么
 
@@ -168,8 +171,8 @@ Cook 时会自动落盘，也可以在 Material Content Browser 里手动把某�
 | :-- | :-- |
 | **[Material Content Browser](Docs/tools/material-browser.md)** | *Tools ▸ DreamShader*。源文件和工程材质在同一个页签里：逐文件编译状态、每条诊断都能跳到行、手改检测配 Revert / Adopt / Detach、导入与被引用关系、继承链、可拖拽的实时预览、一键建实例、新建文件模板。跟着监视器走，永远不过期 |
 | **[反编译器](Docs/tools/decompiler.md)** | 右键 `Material`、`Material Function` 或材质实例 ▸ *DreamShader ▸ Export .dss* / *Export .dsi*（`dsc decompile` 还能导出 Custom Pass 管线）。2.0 文本落盘前会重新解析一遍，无法表达的内容会在文件开头逐条列出；*Export Legacy .dsm / .dsf* 写出 1.x 文本 |
-| **[Package](Docs/tools/packages.md)** | 安装在 `DShader/Packages/@scope/name/` 下的可复用 `.dsh` 库，用 `import "@typedreammoon/dream-noise/Library/Noise.dsh";` 引入 |
-| **[Workspace](Docs/tools/workspace.md)** | 生成的 `DShader/DreamShader.code-workspace`，可从编辑器工具栏用 VSCode 打开 |
+| **[Package](Docs/tools/packages.md)** | 安装在 `DreamSource/Shader/Packages/@scope/name/` 下的可复用 `.dsh` 库，用 `import "@typedreammoon/dream-noise/Library/Noise.dsh";` 引入 |
+| **[Workspace](Docs/tools/workspace.md)** | 生成的 `DreamSource/Shader/DreamShader.code-workspace`，可从编辑器工具栏用 VSCode 打开 |
 | **[Commandlet](Docs/tools/commandlet.md)** | `-run=DreamShader compile \| decompile`——供 CI 使用的无头生成 |
 
 ### 编辑器语言扩展
@@ -199,8 +202,8 @@ DreamShaderLang 是文本格式，编码 agent 本来就能写——前提是它
 `.uasset`，而编辑器里是内存生成——它会列出本次运行新建和改写的每个资产，`-CleanNew` 只删除本次新建的那些。
 
 ```powershell
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/UI/M_Panel.dss
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/UI/M_Panel.dss -Force -CleanNew
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DreamSource/Shader/UI/M_Panel.dss
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DreamSource/Shader/UI/M_Panel.dss -Force -CleanNew
 ```
 
 把技能发布到 `.claude/skills/`，之后 agent 在项目任意位置都能按名字加载：

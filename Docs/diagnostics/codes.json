@@ -4369,7 +4369,7 @@
       "stage": "Properties, parameters and settings",
       "title": "'{0}' asks to generate '{1}', and only a package's header generates material functions; this file is not in one, so nothing is generated. Write an 'export' function (or a 1.x ShaderFunction) to make a material function of your own.",
       "meaning": "A function carries `@generate` -- a 2.0 `/// @generate` or a 1.x `Generate =` header -- in a file that is not in a package. Only a package's header generates material functions ([Packages ▸ Asset headers](../tools/packages.md#asset-headers)); anywhere else the annotation does nothing.",
-      "fix": "To make a material function of the project's own, write an `export` function in a `.dss` (or a 1.x `ShaderFunction` in a `.dsf`). If the header is meant to be a package's, install it under `DShader/Packages`.",
+      "fix": "To make a material function of the project's own, write an `export` function in a `.dss` (or a 1.x `ShaderFunction` in a `.dsf`). If the header is meant to be a package's, install it under `DreamSource/Shader/Packages`.",
       "doc": "https://shader.toolchain.64hz.cn/en/docs/plugin/diagnostics/dsh7xxx/#dsh7234"
     },
     {
@@ -6195,7 +6195,7 @@
       "severity": "error",
       "stage": "Asset generation and saving",
       "title": "'{0}' could not be read.",
-      "meaning": "The compiler could not open the `.dss` it was asked to compile. The path was normalised first, so the message shows the absolute path it actually tried. Usual causes: the file was deleted or renamed between the watcher noticing it and the compile starting, a `-Source=` that named a file that does not exist (the commandlet resolves a relative path against `DShader/` and then against the project directory, and falls back to the literal text when neither exists), or a file locked by another process.",
+      "meaning": "The compiler could not open the `.dss` it was asked to compile. The path was normalised first, so the message shows the absolute path it actually tried. Usual causes: the file was deleted or renamed between the watcher noticing it and the compile starting, a `-Source=` that named a file that does not exist (the commandlet resolves a relative path against `DreamSource/Shader/` and then against the project directory, and falls back to the literal text when neither exists), or a file locked by another process.",
       "fix": "Check the path in the message. If it looks right, check that the file is there and readable; on Windows a text editor holding an exclusive lock is enough to cause this.",
       "doc": "https://shader.toolchain.64hz.cn/en/docs/plugin/diagnostics/dsh8xxx/#dsh8290"
     },
@@ -6213,7 +6213,7 @@
       "severity": "error",
       "stage": "Asset generation and saving",
       "title": "'{0}', included from '{1}', could not be resolved: {2}.",
-      "meaning": "An `#include` (or `import`) named a file that no source root contains. The resolution rules, in order: an absolute path that exists is itself; a specifier starting with `/` is root-anchored and is tried against the including file's own root first and then every other root, `DShader/` before `DShader/Packages/`; anything else goes through the 1.x import rules — the root qualifier (`Plugin.MoonToon:Shared/Common.dsh`), then the including file's own directory, then its root, then its Packages tree. A specifier with no extension gains `.dsh`.\n\nAn unqualified include never leaves the including file's root. That is deliberate: two plugins that ship the same relative path cannot shadow one another, and enabling or disabling a plugin cannot silently change what another root's include means.",
+      "meaning": "An `#include` (or `import`) named a file that no source root contains. The resolution rules, in order: an absolute path that exists is itself; a specifier starting with `/` is root-anchored and is tried against the including file's own root first and then every other root, `DreamSource/Shader/` before `DreamSource/Shader/Packages/`; anything else goes through the 1.x import rules — the root qualifier (`Plugin.MoonToon:Shared/Common.dsh`), then the including file's own directory, then its root, then its Packages tree. A specifier with no extension gains `.dsh`.\n\nAn unqualified include never leaves the including file's root. That is deliberate: two plugins that ship the same relative path cannot shadow one another, and enabling or disabling a plugin cannot silently change what another root's include means.",
       "fix": "Check the spelling and the extension. To reach another root, qualify it — `#include \"Plugin.MoonToon:Shared/Common.dsh\"`. To anchor at the root rather than beside the including file, start the path with `/`.",
       "doc": "https://shader.toolchain.64hz.cn/en/docs/plugin/diagnostics/dsh8xxx/#dsh8292"
     },
@@ -6223,7 +6223,7 @@
       "stage": "Asset generation and saving",
       "title": "'{0}', included from '{1}', resolved but could not be read.",
       "meaning": "The include resolved to a real path, and opening it failed. Unlike DSH8292 the file was found, so this is a permissions or locking problem rather than a spelling one.",
-      "fix": "Check that the file is readable. A `.dsh` under a plugin's `DShader/` that was shipped read-only is still readable; a file open exclusively in another tool is not.",
+      "fix": "Check that the file is readable. A `.dsh` under a plugin's `DreamSource/Shader/` that was shipped read-only is still readable; a file open exclusively in another tool is not.",
       "doc": "https://shader.toolchain.64hz.cn/en/docs/plugin/diagnostics/dsh8xxx/#dsh8293"
     },
     {
@@ -6420,7 +6420,7 @@
       "severity": "error",
       "stage": "Asset generation and saving",
       "title": "The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose every slot it records; fix the file, or run 'dsc pass-registry -Rebuild'.",
-      "meaning": "Every `.dsp` compile reads the project's slot registry, `<DShader>/.dreampass/Registry.json` — to give its HLSL passes their slots and to free the slots of passes it dropped — and the file exists but cannot be used: it cannot be opened, it is not valid JSON (a merge conflict left in it is the usual reason), or an entry has no slot number, pipeline or pass. Writing over it would lose every slot it records, so nothing was written.",
+      "meaning": "Every `.dsp` compile reads the project's slot registry, `<SourceDirectory>/.dreampass/Registry.json` — to give its HLSL passes their slots and to free the slots of passes it dropped — and the file exists but cannot be used: it cannot be opened, it is not valid JSON (a merge conflict left in it is the usual reason), or an entry has no slot number, pipeline or pass. Writing over it would lose every slot it records, so nothing was written.",
       "fix": "Take either side of the conflict and compile the `.dsp` files again — never merge the JSON by hand — or run `./dsc.ps1 pass-registry -Rebuild`, which moves the file aside and gives every HLSL pass a slot again ([`pass-registry`](../tools/commandlet.md#pass-registry)).",
       "doc": "https://shader.toolchain.64hz.cn/en/docs/plugin/diagnostics/dsh8xxx/#dsh8315"
     },
@@ -6672,7 +6672,7 @@
       "severity": "error",
       "stage": "Tools, sync and internal invariants",
       "title": "The symbol index could not be written: {0}.",
-      "meaning": "`index` could not create its output directory or write the index file. The default directory is `<Project>/Saved/DreamShader/Index`.",
+      "meaning": "`index` could not create its output directory or write the index file. The default is the `source_index` table of `<Project>/Intermediate/DreamSource/shader.db`; with `-Out=<dir>`, files under that directory.",
       "fix": "As DSH9022.",
       "doc": "https://shader.toolchain.64hz.cn/en/docs/plugin/diagnostics/dsh9xxx/#dsh9023"
     },
@@ -6681,7 +6681,7 @@
       "severity": "error",
       "stage": "Tools, sync and internal invariants",
       "title": "The builtin catalog manifest could not be written: {0}.",
-      "meaning": "`export-catalog` could not create its directory or write the manifest. The default path is `<Project>/Saved/DreamShader/Bridge/dreamshader-builtin-catalog.json`, beside the other bridge manifests.",
+      "meaning": "`export-catalog` could not create its directory or write the manifest. Without `-Out` it is the `builtin-catalog` document of `<Project>/Intermediate/DreamSource/shader.db`, beside the other bridge manifests; with `-Out=<file>`, that file.",
       "fix": "As DSH9022. If the bridge is running, the directory certainly exists, so this points at a lock or at a read-only `Saved/`.",
       "doc": "https://shader.toolchain.64hz.cn/en/docs/plugin/diagnostics/dsh9xxx/#dsh9024"
     },
@@ -7519,7 +7519,7 @@
       "stage": "Tools, sync and internal invariants",
       "title": "No .dsp under the source roots; the registry is rewritten from Registry.json as it stands.",
       "meaning": "Informational. `pass-registry -Rebuild` found no `.dsp` under the source roots (`Packages` folders excluded), so there was nothing to compile. The rest of the rebuild still runs: the slots of pipelines no `.dsp` builds are freed — a slot whose recorded `.dsp` is still on disk is kept — and the registry files are rewritten from `Registry.json`.",
-      "fix": "Nothing, when the project has no pipelines. If it has, the source roots do not reach their `.dsp` files: check the *Source Directory* project setting and the plugins' `DShader` folders.",
+      "fix": "Nothing, when the project has no pipelines. If it has, the source roots do not reach their `.dsp` files: check the *Source Directory* project setting and the plugins' `DreamSource/Shader` (or legacy `DShader`) folders.",
       "doc": "https://shader.toolchain.64hz.cn/en/docs/plugin/diagnostics/dsh9xxx/#dsh9206"
     },
     {

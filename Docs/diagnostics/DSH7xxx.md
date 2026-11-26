@@ -1210,7 +1210,7 @@ in a range, one scalar per channel, or a scalar that scales the colour.
 
 **Cause.** A function carries `@generate` -- a 2.0 `/// @generate` or a 1.x `Generate =` header -- in a file that is not in a package. Only a package's header generates material functions ([Packages ▸ Asset headers](../tools/packages.md#asset-headers)); anywhere else the annotation does nothing.
 
-**Fix.** To make a material function of the project's own, write an `export` function in a `.dss` (or a 1.x `ShaderFunction` in a `.dsf`). If the header is meant to be a package's, install it under `DShader/Packages`.
+**Fix.** To make a material function of the project's own, write an `export` function in a `.dss` (or a 1.x `ShaderFunction` in a `.dsf`). If the header is meant to be a package's, install it under `DreamSource/Shader/Packages`.
 
 ## DSH7235
 
@@ -1241,7 +1241,7 @@ in a range, one scalar per channel, or a scalar that scales the colour.
 A 'disable_warning' or 'disable_error' list names no code, and disables nothing; write the codes after it, such as 'DSH7224'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:741`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:742`
 <!-- generated:end DSH7236 -->
 
 **Cause.** A `disable_warning` or `disable_error` list *(after 2.1.2)* holds a word that is not a diagnostic code (`DSH` and four digits), or no code at all. The word is ignored; a list never means "everything". See [Disabling diagnostics](../language-v2/disable-diagnostics.md).

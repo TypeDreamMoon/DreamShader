@@ -940,7 +940,7 @@ rebuilding '%s' from '%s' dropped %d parameter override(s) the rebuilt material 
 '{0}' does not resolve to a valid asset path. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1287`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1336`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1287`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1337`
 <!-- generated:end DSH8200 -->
 
 **Cause.** The product's asset name, or the `/// @name /Game/...` path override, does not resolve
@@ -2014,7 +2014,7 @@ collection.
 The parent source '{0}' failed to compile, so this instance has no parent to build against. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1126`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:534`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:561`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:591`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:620`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1127`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:535`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:562`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:591`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:620`
 <!-- generated:end DSH8260 -->
 
 **Cause.** The parent of a `.dsi` cannot be used. It is built by a DreamShader source that does not
@@ -2072,7 +2072,7 @@ instance of that name.
 '{0}' is its own ancestor: following Parent from it comes back to it ({1}).
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:486`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:602`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:650`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:487`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:602`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:650`
 <!-- generated:end DSH8263 -->
 
 **Cause.** An instance is its own ancestor: `Parent` names the instance itself, by path or by name,
@@ -2091,7 +2091,7 @@ or following `Parent` from it leads back to it (the message lists the chain).
 '{0}' was missing or older than its source, so '{1}' was compiled first.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:596`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:597`
 <!-- generated:end DSH8264 -->
 
 **Cause.** The parent's asset was missing or older than its source when the instance was compiled,
@@ -2110,7 +2110,7 @@ so the parent was compiled first.
 The Parent chain above '{0}' is more than {1} instances deep; a chain that long is almost always a mistake in a Parent key.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:494`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:495`
 <!-- generated:end DSH8265 -->
 
 **Cause.** The chain of `Parent` keys above this instance is deeper than the compiler follows. Real
@@ -2240,7 +2240,7 @@ follows.
 '{0}' was left alone: '{1}' marks it NoGeneration, and only a compile that names the file builds it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1186`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1187`
 <!-- generated:end DSH8277 -->
 
 **Cause.** Not a problem: a compile that did not name the source left a [NoGeneration](../generation/no-generation.md) asset as it is on disk, even if the source has changed since it was built. Its result line says `Skipped`.
@@ -2258,7 +2258,7 @@ follows.
 '{0}' has never been built: '{1}' marks it NoGeneration, so only a compile that names the file builds it, and none has. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1194`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1195`
 <!-- generated:end DSH8278 -->
 
 **Cause.** A [NoGeneration](../generation/no-generation.md) asset has never been built: only a compile that names its source builds it, and none has. Nothing was written for it; whatever uses it fails until it exists ([`DSH8279`](#dsh8279)).
@@ -2276,7 +2276,7 @@ follows.
 The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is nothing to build this instance against. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1216`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:575`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:473`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1217`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:576`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:473`
 <!-- generated:end DSH8279 -->
 
 **Cause.** Something needs an asset a [NoGeneration](../generation/no-generation.md) source builds, and the asset does not exist: an export of the same file calls it, a `.dsi` names it as its `Parent`, a `.dsp` pass names it as its `Material`, or a `.dss` reads the buffers of the pipeline. A NoGeneration source is never compiled first on anyone's behalf.
@@ -2294,13 +2294,13 @@ The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never
 '{0}' could not be read.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:702`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:703`
 <!-- generated:end DSH8290 -->
 
 **Cause.** The compiler could not open the `.dss` it was asked to compile. The path was normalised
 first, so the message shows the absolute path it actually tried. Usual causes: the file was deleted
 or renamed between the watcher noticing it and the compile starting, a `-Source=` that named a file
-that does not exist (the commandlet resolves a relative path against `DShader/` and then against the
+that does not exist (the commandlet resolves a relative path against `DreamSource/Shader/` and then against the
 project directory, and falls back to the literal text when neither exists), or a file locked by
 another process.
 
@@ -2318,7 +2318,7 @@ on Windows a text editor holding an exclusive lock is enough to cause this.
 '{0}' failed conditional compilation: {1}: {2}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:758`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:228`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp:315`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:759`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:228`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPackageAssets.cpp:315`
 <!-- generated:end DSH8291 -->
 
 **Cause.** The conditional-compilation preprocessor refused the file. The message carries the
@@ -2350,7 +2350,7 @@ file that tests it, or the define belongs in the project settings table.
 **Cause.** An `#include` (or `import`) named a file that no source root contains. The resolution
 rules, in order: an absolute path that exists is itself; a specifier starting with `/` is
 root-anchored and is tried against the including file's own root first and then every other root,
-`DShader/` before `DShader/Packages/`; anything else goes through the 1.x import rules — the root
+`DreamSource/Shader/` before `DreamSource/Shader/Packages/`; anything else goes through the 1.x import rules — the root
 qualifier (`Plugin.MoonToon:Shared/Common.dsh`), then the including file's own directory, then its
 root, then its Packages tree. A specifier with no extension gains `.dsh`.
 
@@ -2379,7 +2379,7 @@ including file, start the path with `/`.
 **Cause.** The include resolved to a real path, and opening it failed. Unlike DSH8292 the file was
 found, so this is a permissions or locking problem rather than a spelling one.
 
-**Fix.** Check that the file is readable. A `.dsh` under a plugin's `DShader/` that was shipped
+**Fix.** Check that the file is readable. A `.dsh` under a plugin's `DreamSource/Shader/` that was shipped
 read-only is still readable; a file open exclusively in another tool is not.
 
 ## DSH8294
@@ -2435,7 +2435,7 @@ with a different grammar, and an include of one would be parsed as 2.0 text and 
 '{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it, unless it is a package's asset header.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:645`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:646`
 <!-- generated:end DSH8296 -->
 
 **Cause.** The pipeline was handed a file it does not build on its own: a `.dsh` header, or a file
@@ -2457,7 +2457,7 @@ through the legacy front end — is built by the same pipeline.
 The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:875`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:876`
 <!-- generated:end DSH8297 -->
 
 **Cause.** The builtin expression catalog — every `UE.*` node, its pins, its properties and the
@@ -2485,7 +2485,7 @@ cached copy and `InvalidateDreamShaderBuiltinCatalog`.
 Building '{0}' was cancelled; the asset is as it was before this compile.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:316`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1182`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:684`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:316`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1182`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:685`
 <!-- generated:end DSH8298 -->
 
 **Cause.** The user pressed Cancel on the compile's progress dialog. Nothing was written: the emit
@@ -2506,7 +2506,7 @@ engine's own queue and is not cancelled by this.
 The exported functions {0} call one another in a cycle, so there is no order in which they can be built; an exported function may call another only in one direction.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1146`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1147`
 <!-- generated:end DSH8299 -->
 
 **Cause.** Two or more exported functions of one file call one another, directly or through others.
@@ -2869,7 +2869,7 @@ The Custom Pass slot registry cannot be read: {0}. Nothing was written, because 
 **Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1028`
 <!-- generated:end DSH8315 -->
 
-**Cause.** Every `.dsp` compile reads the project's slot registry, `<DShader>/.dreampass/Registry.json` —
+**Cause.** Every `.dsp` compile reads the project's slot registry, `<SourceDirectory>/.dreampass/Registry.json` —
 to give its HLSL passes their slots and to free the slots of passes it dropped — and the file exists but
 cannot be used: it cannot be opened, it is not valid JSON (a merge conflict left in it is the usual
 reason), or an entry has no slot number, pipeline or pass. Writing over it would lose every slot it

@@ -279,7 +279,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString Directory = UE::DreamShader::NormalizeSourceFilePath(Request.Directory);
 		if (Directory.IsEmpty() || !IsUnderWritableRoot(Directory))
 		{
-			OutError = LOCTEXT("NewSourceReadOnly", "Choose a folder under the project's DShader root. A plugin's sources are read-only.").ToString();
+			OutError = LOCTEXT("NewSourceReadOnly", "Choose a folder under the project's source directory (DreamSource/Shader). A plugin's sources are read-only.").ToString();
 			return false;
 		}
 		const FString FilePath = UE::DreamShader::NormalizeSourceFilePath(

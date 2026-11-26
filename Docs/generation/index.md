@@ -248,7 +248,7 @@ Generation also looks for that pair while it emits a `Custom` node's code and wa
 ## Example
 
 ```c
-// DShader/Materials/M_Emissive.dsm
+// DreamSource/Shader/Materials/M_Emissive.dsm
 import "Common.dsh";
 
 ShaderFunction(Name="Functions/F_Tint")

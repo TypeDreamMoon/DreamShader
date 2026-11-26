@@ -9,7 +9,7 @@ once or as a stream of frames.
 | :-- | :-- |
 | Implemented in | the `DreamShaderEditor` module |
 | Accepts | a source that builds a material or a material instance: `.dss`, `.dsi` or `.dsm` *(`.dss` and `.dsi` since 2.0.0)* |
-| Produces | streamed frames over the WebSocket; PNG files under `<Project>/Saved/DreamShader/Bridge/Preview/` plus a `preview.json` manifest on the file/`png` paths |
+| Produces | streamed frames over the WebSocket; PNG files under `<Project>/Intermediate/DreamSource/Shader/Preview/` plus a `preview` result document in `shader.db` on the file/`png` paths |
 | Transports | bridge request files (one-shot) · WebSocket on `127.0.0.1:17864` (one-shot or streaming) |
 | Streaming since | `1.5.0`; raw RGBA8 frames and Graph breakpoints since `1.7.0` |
 
@@ -53,7 +53,7 @@ see [Bridge » Message types](bridge.md#message-types).
 | Readback | file/PNG: synchronous; WebSocket raw: asynchronous GPU readback | asynchronous — enqueues a GPU readback and polls it on a later tick |
 | Waits for shader compilation | yes; WebSocket raw waits across ticks without blocking the editor | no |
 | Camera control | request-file path: **no** — orbit fields are not read. WebSocket path: yes | yes, through `previewControl` |
-| Result | file/PNG: one PNG plus `preview.json`; WebSocket raw: exactly one RGBA8 frame | one raw RGBA8 frame per tick over the socket (`encoding: "raw"`), or the legacy `preview.json` + tagged PNG pair (`encoding: "png"`) |
+| Result | file/PNG: one PNG plus the `preview` document; WebSocket raw: exactly one RGBA8 frame | one raw RGBA8 frame per tick over the socket (`encoding: "raw"`), or the legacy `preview` document + tagged PNG pair (`encoding: "png"`) |
 | Tick rate | the 0.1 s bridge ticker | every frame |
 
 > [!NOTE]
@@ -105,7 +105,7 @@ falls back to the sphere.
 
 > [!WARNING]
 > An unknown mesh name is **accepted silently** and renders a sphere. There is no diagnostic. Check
-> the `mesh` field echoed back in `preview.json` or in the `previewResult` reply to see what was
+> the `mesh` field echoed back in the `preview` document or in the `previewResult` reply to see what was
 > actually used.
 
 The shape and the two orbit angles are written onto the **material asset's own** scene thumbnail info
@@ -165,14 +165,14 @@ a material instance.
 
 | Path | Contents |
 | :-- | :-- |
-| `<Project>/Saved/DreamShader/Bridge/Preview/` | rendered PNGs |
-| `<Project>/Saved/DreamShader/Bridge/preview.json` | the result manifest |
+| `<Project>/Intermediate/DreamSource/Shader/Preview/` | rendered PNGs |
+| the `preview` document of `<Project>/Intermediate/DreamSource/shader.db` | the result manifest — `preview.json` before the [DreamSource layout](../settings/project.md#dreamsource-layout); see [Bridge](bridge.md#preview) |
 
 The PNG file name is `<sanitized source stem>-<crc32 of the project-relative path>.png`, with the
 CRC printed as eight lowercase hex digits. A source whose stem sanitizes to nothing produces
 `DreamShaderPreview-<crc32>.png`.
 
-`preview.json` fields:
+`preview` document fields:
 
 | Field | Notes |
 | :-- | :-- |
@@ -299,13 +299,13 @@ message is `Invalid DreamShader preview request JSON.`
 ## Example
 
 A one-shot render driven by a bridge request file. Drop this into
-`<Project>/Saved/DreamShader/Bridge/Requests/` as any `.json` name; the poller processes and then
+`<Project>/Intermediate/DreamSource/Shader/Bridge/Requests/` as any `.json` name; the poller processes and then
 deletes it.
 
 ```json
 {
   "action": "previewMaterial",
-  "sourceFile": "I:/Project/DShader/Materials/M_Emissive.dsm",
+  "sourceFile": "I:/Project/DreamSource/Shader/Materials/M_Emissive.dsm",
   "mesh": "shaderball",
   "width": 512,
   "height": 512,
@@ -313,16 +313,16 @@ deletes it.
 }
 ```
 
-Resulting `<Project>/Saved/DreamShader/Bridge/preview.json`:
+Resulting `preview` document of `<Project>/Intermediate/DreamSource/shader.db`:
 
 ```json
 {
   "version": 1,
   "requestId": "preview-1",
   "status": "ready",
-  "sourceFile": "I:/Project/DShader/Materials/M_Emissive.dsm",
+  "sourceFile": "I:/Project/DreamSource/Shader/Materials/M_Emissive.dsm",
   "assetPath": "/Game/Materials/M_Emissive.M_Emissive",
-  "imagePath": "I:/Project/Saved/DreamShader/Bridge/Preview/M_Emissive-1a2b3c4d.png",
+  "imagePath": "I:/Project/Intermediate/DreamSource/Shader/Preview/M_Emissive-1a2b3c4d.png",
   "mesh": "shaderball",
   "message": "Rendered preview for /Game/Materials/M_Emissive.M_Emissive.",
   "updatedAtUtc": "2026-08-02T09:14:07Z"

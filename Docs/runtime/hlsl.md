@@ -12,7 +12,7 @@ into the engine.
 | Header | `/Plugin/DreamShader/Pass/DreamPass.ush` — included for you; including it again is harmless |
 | Shader types | `FDreamPassCS` (compute) and `FDreamPassPS` (pixel), one permutation per **slot** |
 | Slots | 32 compute, 16 pixel (`DREAMSHADER_PASS_COMPUTE_SLOTS`, `DREAMSHADER_PASS_PIXEL_SLOTS`, overridable from a Target.cs with `GlobalDefinitions`) |
-| Snapshots | `<DShader>/.dreampass/` — **commit it** with your sources |
+| Snapshots | `<SourceDirectory>/.dreampass/` — **commit it** with your sources |
 
 ## Where the code is
 
@@ -232,7 +232,7 @@ pass is given a **slot** — a permutation of `FDreamPassCS` or `FDreamPassPS` �
    the slot — so a helper no pass calls yet is not checked, as in a `.usf`.
 2. **A snapshot** of the code — the `.usf` and every file it includes by a relative path, or, for code in the
    `.dsp`, the file's block with the other passes' entries blanked out, the pass's own code after it, and every
-   file they include by a path relative to the `.dsp` — is written into `<DShader>/.dreampass/Slots/<C|P><NN>/`,
+   file they include by a path relative to the `.dsp` — is written into `<SourceDirectory>/.dreampass/Slots/<C|P><NN>/`,
    and the registry (`RegistryCompute.ush`, `RegistryPixel.ush`) maps the slot onto it. `Registry.json` records
    which pass has which slot.
 3. **The two shader types are recompiled** in the editor, and the pass runs on the next frame.

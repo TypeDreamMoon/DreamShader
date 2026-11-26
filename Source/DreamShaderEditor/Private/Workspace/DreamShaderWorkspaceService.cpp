@@ -24,6 +24,7 @@
 #include "Misc/Paths.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
+#include "DreamShaderDatabase.h"
 #include "SQLiteDatabase.h"
 #include "SQLitePreparedStatement.h"
 #include "UObject/UObjectIterator.h"
@@ -477,139 +478,98 @@ namespace UE::DreamShader::Editor::Private
 			return MappingValues;
 		}
 
-		bool OpenBridgeDatabase(FSQLiteDatabase& Database)
+		/**
+		 * Replaces one row table of shader.db in one transaction and bumps its part (the table's name). InBind binds one
+		 * entry. Logged on failure, never fatal: the editor works without the database, only the tools reading it go stale.
+		 */
+		template <typename EntryType>
+		void ReplaceBridgeDatabaseTable(
+			const TCHAR* InTable,
+			const TCHAR* InInsertSql,
+			const TArray<EntryType>& InEntries,
+			TFunctionRef<bool(FSQLitePreparedStatement&, const EntryType&)> InBind)
 		{
-			const FString DatabasePath = FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath();
-			IFileManager::Get().MakeDirectory(*FPaths::GetPath(DatabasePath), true);
-			if (!Database.Open(*DatabasePath, ESQLiteDatabaseOpenMode::ReadWriteCreate))
+			FDreamShaderDatabase Database;
+			if (!Database.Open(FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath()) || !Database.Begin())
 			{
-				UE_LOG(LogDreamShader, Warning, TEXT("Failed to open DreamShader bridge database: %s"), *DatabasePath);
-				return false;
+				return;
 			}
-
-			Database.Execute(TEXT("PRAGMA journal_mode=WAL;"));
-			Database.Execute(TEXT("PRAGMA synchronous=NORMAL;"));
-			Database.Execute(TEXT("CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);"));
-			Database.Execute(TEXT("CREATE TABLE IF NOT EXISTS settings_mappings(kind TEXT NOT NULL, alias TEXT NOT NULL, normalized_alias TEXT NOT NULL, value INTEGER NOT NULL, name TEXT, display_name TEXT, source TEXT NOT NULL, PRIMARY KEY(kind, normalized_alias));"));
-			Database.Execute(TEXT("CREATE TABLE IF NOT EXISTS material_expressions(name TEXT PRIMARY KEY, class_name TEXT NOT NULL, path_name TEXT NOT NULL, default_output_type TEXT NOT NULL, json TEXT NOT NULL);"));
-			Database.Execute(TEXT("CREATE TABLE IF NOT EXISTS substrate_builtins(name TEXT PRIMARY KEY, qualified_name TEXT NOT NULL, class_name TEXT NOT NULL, output_type TEXT NOT NULL, is_substrate_output INTEGER NOT NULL, detail TEXT, example TEXT, snippet TEXT, json TEXT NOT NULL);"));
-			Database.Execute(TEXT("CREATE TABLE IF NOT EXISTS diagnostics(path TEXT PRIMARY KEY, json TEXT NOT NULL, updated_at_utc TEXT NOT NULL);"));
-			Database.Execute(TEXT("CREATE INDEX IF NOT EXISTS idx_settings_mappings_kind_alias ON settings_mappings(kind, alias);"));
-			return true;
-		}
-
-		void SetBridgeDatabaseMeta(FSQLiteDatabase& Database, const TCHAR* Key, const FString& Value)
-		{
-			FSQLitePreparedStatement Statement(Database, TEXT("INSERT OR REPLACE INTO meta(key, value) VALUES(?1, ?2);"));
-			if (Statement.IsValid())
+			bool bOk = Database.Get().Execute(*FString::Printf(TEXT("DELETE FROM %s;"), InTable));
 			{
-				Statement.SetBindingValueByIndex(1, Key);
-				Statement.SetBindingValueByIndex(2, Value);
-				BindAndExecute(Statement);
+				FSQLitePreparedStatement Statement(Database.Get(), InInsertSql);
+				bOk = bOk && Statement.IsValid();
+				for (const EntryType& Entry : InEntries)
+				{
+					if (!bOk)
+					{
+						break;
+					}
+					Statement.Reset();
+					Statement.ClearBindings();
+					bOk = InBind(Statement, Entry) && Statement.Step() == ESQLitePreparedStatementStepResult::Done;
+				}
+			}
+			if (!bOk || !Database.Bump(InTable) || !Database.Commit())
+			{
+				UE_LOG(LogDreamShader, Warning, TEXT("DreamShader: %s; external tools now read stale data."),
+					*Database.DescribeError(*FString::Printf(TEXT("writing %s"), InTable)));
+				Database.Rollback();
 			}
 		}
 
 		void WriteSettingsMappingsToBridgeDatabase(const TArray<FDreamShaderBridgeMappingEntry>& Entries)
 		{
-			FSQLiteDatabase Database;
-			if (!OpenBridgeDatabase(Database))
-			{
-				return;
-			}
-
-			Database.Execute(TEXT("BEGIN TRANSACTION;"));
-			Database.Execute(TEXT("DELETE FROM settings_mappings;"));
-			{
-				FSQLitePreparedStatement Statement(
-					Database,
-					TEXT("INSERT OR REPLACE INTO settings_mappings(kind, alias, normalized_alias, value, name, display_name, source) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7);"));
-				if (Statement.IsValid())
+			ReplaceBridgeDatabaseTable<FDreamShaderBridgeMappingEntry>(
+				TEXT("settings_mappings"),
+				TEXT("INSERT OR REPLACE INTO settings_mappings(kind, alias, normalized_alias, value, name, display_name, source) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7);"),
+				Entries,
+				[](FSQLitePreparedStatement& Statement, const FDreamShaderBridgeMappingEntry& Entry)
 				{
-					for (const FDreamShaderBridgeMappingEntry& Entry : Entries)
-					{
-						Statement.SetBindingValueByIndex(1, Entry.Kind);
-						Statement.SetBindingValueByIndex(2, Entry.Alias);
-						Statement.SetBindingValueByIndex(3, UDreamShaderSettings::NormalizeMappingKey(Entry.Alias));
-						Statement.SetBindingValueByIndex(4, Entry.Value);
-						Statement.SetBindingValueByIndex(5, Entry.Name);
-						Statement.SetBindingValueByIndex(6, Entry.DisplayName);
-						Statement.SetBindingValueByIndex(7, Entry.Source);
-						BindAndExecute(Statement);
-					}
-				}
-			}
-			SetBridgeDatabaseMeta(Database, TEXT("settings.generatedAt"), FDateTime::UtcNow().ToIso8601());
-			Database.Execute(TEXT("COMMIT;"));
-			Database.Close();
+					return Statement.SetBindingValueByIndex(1, Entry.Kind)
+						&& Statement.SetBindingValueByIndex(2, Entry.Alias)
+						&& Statement.SetBindingValueByIndex(3, UDreamShaderSettings::NormalizeMappingKey(Entry.Alias))
+						&& Statement.SetBindingValueByIndex(4, static_cast<int64>(Entry.Value))
+						&& Statement.SetBindingValueByIndex(5, Entry.Name)
+						&& Statement.SetBindingValueByIndex(6, Entry.DisplayName)
+						&& Statement.SetBindingValueByIndex(7, Entry.Source);
+				});
 		}
 
 		void WriteMaterialExpressionsToBridgeDatabase(
 			const TArray<FDreamShaderBridgeMaterialExpressionEntry>& Entries)
 		{
-			FSQLiteDatabase Database;
-			if (!OpenBridgeDatabase(Database))
-			{
-				return;
-			}
-
-			Database.Execute(TEXT("BEGIN TRANSACTION;"));
-			Database.Execute(TEXT("DELETE FROM material_expressions;"));
-			{
-				FSQLitePreparedStatement Statement(
-					Database,
-					TEXT("INSERT OR REPLACE INTO material_expressions(name, class_name, path_name, default_output_type, json) VALUES(?1, ?2, ?3, ?4, ?5);"));
-				if (Statement.IsValid())
+			ReplaceBridgeDatabaseTable<FDreamShaderBridgeMaterialExpressionEntry>(
+				TEXT("material_expressions"),
+				TEXT("INSERT OR REPLACE INTO material_expressions(name, class_name, path_name, default_output_type, json) VALUES(?1, ?2, ?3, ?4, ?5);"),
+				Entries,
+				[](FSQLitePreparedStatement& Statement, const FDreamShaderBridgeMaterialExpressionEntry& Entry)
 				{
-					for (const FDreamShaderBridgeMaterialExpressionEntry& Entry : Entries)
-					{
-						Statement.SetBindingValueByIndex(1, Entry.Name);
-						Statement.SetBindingValueByIndex(2, Entry.ClassName);
-						Statement.SetBindingValueByIndex(3, Entry.PathName);
-						Statement.SetBindingValueByIndex(4, Entry.DefaultOutputType);
-						Statement.SetBindingValueByIndex(5, Entry.JsonText);
-						BindAndExecute(Statement);
-					}
-				}
-			}
-			SetBridgeDatabaseMeta(Database, TEXT("materialExpressions.generatedAt"), FDateTime::UtcNow().ToIso8601());
-			Database.Execute(TEXT("COMMIT;"));
-			Database.Close();
+					return Statement.SetBindingValueByIndex(1, Entry.Name)
+						&& Statement.SetBindingValueByIndex(2, Entry.ClassName)
+						&& Statement.SetBindingValueByIndex(3, Entry.PathName)
+						&& Statement.SetBindingValueByIndex(4, Entry.DefaultOutputType)
+						&& Statement.SetBindingValueByIndex(5, Entry.JsonText);
+				});
 		}
 
 		void WriteSubstrateBuiltinsToBridgeDatabase(const TArray<FDreamShaderBridgeSubstrateBuiltinEntry>& Entries)
 		{
-			FSQLiteDatabase Database;
-			if (!OpenBridgeDatabase(Database))
-			{
-				return;
-			}
-
-			Database.Execute(TEXT("BEGIN TRANSACTION;"));
-			Database.Execute(TEXT("DELETE FROM substrate_builtins;"));
-			{
-				FSQLitePreparedStatement Statement(
-					Database,
-					TEXT("INSERT OR REPLACE INTO substrate_builtins(name, qualified_name, class_name, output_type, is_substrate_output, detail, example, snippet, json) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9);"));
-				if (Statement.IsValid())
+			ReplaceBridgeDatabaseTable<FDreamShaderBridgeSubstrateBuiltinEntry>(
+				TEXT("substrate_builtins"),
+				TEXT("INSERT OR REPLACE INTO substrate_builtins(name, qualified_name, class_name, output_type, is_substrate_output, detail, example, snippet, json) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9);"),
+				Entries,
+				[](FSQLitePreparedStatement& Statement, const FDreamShaderBridgeSubstrateBuiltinEntry& Entry)
 				{
-					for (const FDreamShaderBridgeSubstrateBuiltinEntry& Entry : Entries)
-					{
-						Statement.SetBindingValueByIndex(1, Entry.Name);
-						Statement.SetBindingValueByIndex(2, Entry.QualifiedName);
-						Statement.SetBindingValueByIndex(3, Entry.ClassName);
-						Statement.SetBindingValueByIndex(4, Entry.OutputType);
-						Statement.SetBindingValueByIndex(5, Entry.bIsSubstrateOutput ? 1 : 0);
-						Statement.SetBindingValueByIndex(6, Entry.Detail);
-						Statement.SetBindingValueByIndex(7, Entry.Example);
-						Statement.SetBindingValueByIndex(8, Entry.Snippet);
-						Statement.SetBindingValueByIndex(9, Entry.JsonText);
-						BindAndExecute(Statement);
-					}
-				}
-			}
-			SetBridgeDatabaseMeta(Database, TEXT("substrateBuiltins.generatedAt"), FDateTime::UtcNow().ToIso8601());
-			Database.Execute(TEXT("COMMIT;"));
-			Database.Close();
+					return Statement.SetBindingValueByIndex(1, Entry.Name)
+						&& Statement.SetBindingValueByIndex(2, Entry.QualifiedName)
+						&& Statement.SetBindingValueByIndex(3, Entry.ClassName)
+						&& Statement.SetBindingValueByIndex(4, Entry.OutputType)
+						&& Statement.SetBindingValueByIndex(5, Entry.bIsSubstrateOutput ? 1 : 0)
+						&& Statement.SetBindingValueByIndex(6, Entry.Detail)
+						&& Statement.SetBindingValueByIndex(7, Entry.Example)
+						&& Statement.SetBindingValueByIndex(8, Entry.Snippet)
+						&& Statement.SetBindingValueByIndex(9, Entry.JsonText);
+				});
 		}
 
 		void AddExistingFileCandidate(TArray<FString>& OutCandidates, const FString& Candidate)
@@ -1084,37 +1044,19 @@ namespace UE::DreamShader::Editor::Private
 			return BridgeDirectoryForTesting;
 		}
 #endif
-		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge"));
-	}
-
-	FString FDreamShaderWorkspaceService::GetMaterialExpressionManifestFilePath()
-	{
-		return FPaths::Combine(GetBridgeDirectory(), TEXT("material-expressions.json"));
-	}
-
-	FString FDreamShaderWorkspaceService::GetDreamShaderSettingsManifestFilePath()
-	{
-		return FPaths::Combine(GetBridgeDirectory(), TEXT("settings.json"));
-	}
-
-	FString FDreamShaderWorkspaceService::GetSubstrateBuiltinsManifestFilePath()
-	{
-		return FPaths::Combine(GetBridgeDirectory(), TEXT("substrate-builtins.json"));
-	}
-
-	FString FDreamShaderWorkspaceService::GetPreprocessorDefinesManifestFilePath()
-	{
-		return FPaths::Combine(GetBridgeDirectory(), TEXT("preprocessor-defines.json"));
-	}
-
-	FString FDreamShaderWorkspaceService::GetPassKeysManifestFilePath()
-	{
-		return FPaths::Combine(GetBridgeDirectory(), TEXT("pass-keys.json"));
+		return FPaths::Combine(::UE::DreamShader::GetShaderIntermediateDirectory(), TEXT("Bridge"));
 	}
 
 	FString FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath()
 	{
-		return FPaths::Combine(GetBridgeDirectory(), TEXT("bridge.db"));
+#if WITH_DEV_AUTOMATION_TESTS
+		// Beside the isolated request files, so a test that redirects the bridge never touches the project's database.
+		if (!BridgeDirectoryForTesting.IsEmpty())
+		{
+			return FPaths::Combine(BridgeDirectoryForTesting, TEXT("shader.db"));
+		}
+#endif
+		return ::UE::DreamShader::GetShaderDatabaseFilePath();
 	}
 
 	void FDreamShaderWorkspaceService::ResetBridgeDatabase()
@@ -1123,14 +1065,8 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return;
 		}
-		const FString DatabasePath = GetBridgeDatabaseFilePath();
-		IFileManager::Get().Delete(*DatabasePath, false, true, true);
-		IFileManager::Get().Delete(*(DatabasePath + TEXT("-wal")), false, true, true);
-		IFileManager::Get().Delete(*(DatabasePath + TEXT("-shm")), false, true, true);
-		IFileManager::Get().DeleteDirectory(
-			*FPaths::Combine(FPaths::GetPath(DatabasePath), TEXT("diagnostics")),
-			false,
-			true);
+		// Emptied, not deleted: a language server may hold the file open, and on Windows that makes a delete fail.
+		FDreamShaderDatabase::ResetSession(GetBridgeDatabaseFilePath());
 	}
 
 	void FDreamShaderWorkspaceService::ExportSubstrateBuiltinsManifest()
@@ -1139,7 +1075,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return;
 		}
-		const FString ManifestPath = GetSubstrateBuiltinsManifestFilePath();
+		const FString ManifestPath = GetBridgeDatabaseFilePath();
 		IFileManager::Get().MakeDirectory(*FPaths::GetPath(ManifestPath), true);
 
 		TArray<TSharedPtr<FJsonValue>> BuiltinValues;
@@ -1198,7 +1134,7 @@ namespace UE::DreamShader::Editor::Private
 		const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&ManifestText);
 		FJsonSerializer::Serialize(RootObject, Writer);
 
-		if (FFileHelper::SaveStringToFile(ManifestText, *ManifestPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+		if (FDreamShaderDatabase::WriteDocument(ManifestPath, FDreamShaderDatabase::DocumentSubstrateBuiltins, ManifestText))
 		{
 			UE_LOG(LogDreamShader, Display, TEXT("Wrote DreamShader Substrate builtin manifest: %s"), *ManifestPath);
 		}
@@ -1216,7 +1152,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return;
 		}
-		const FString ManifestPath = GetPreprocessorDefinesManifestFilePath();
+		const FString ManifestPath = GetBridgeDatabaseFilePath();
 		IFileManager::Get().MakeDirectory(*FPaths::GetPath(ManifestPath), true);
 
 		// -----------------------------------------------------------------------------------------
@@ -1315,7 +1251,7 @@ namespace UE::DreamShader::Editor::Private
 		const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&ManifestText);
 		FJsonSerializer::Serialize(RootObject, Writer);
 
-		if (FFileHelper::SaveStringToFile(ManifestText, *ManifestPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+		if (FDreamShaderDatabase::WriteDocument(ManifestPath, FDreamShaderDatabase::DocumentPreprocessorDefines, ManifestText))
 		{
 			UE_LOG(LogDreamShader, Display, TEXT("Wrote DreamShader preprocessor define manifest: %s"), *ManifestPath);
 		}
@@ -1331,7 +1267,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return;
 		}
-		const FString ManifestPath = GetDreamShaderSettingsManifestFilePath();
+		const FString ManifestPath = GetBridgeDatabaseFilePath();
 		IFileManager::Get().MakeDirectory(*FPaths::GetPath(ManifestPath), true);
 
 		const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
@@ -1416,7 +1352,7 @@ namespace UE::DreamShader::Editor::Private
 		const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&ManifestText);
 		FJsonSerializer::Serialize(RootObject, Writer);
 
-		if (FFileHelper::SaveStringToFile(ManifestText, *ManifestPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+		if (FDreamShaderDatabase::WriteDocument(ManifestPath, FDreamShaderDatabase::DocumentSettings, ManifestText))
 		{
 			UE_LOG(LogDreamShader, Display, TEXT("Wrote DreamShader settings manifest: %s"), *ManifestPath);
 		}
@@ -1577,7 +1513,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 		namespace PassSpelling = UE::DreamShader::Editor::Private::PassSpelling;
 
-		const FString ManifestPath = GetPassKeysManifestFilePath();
+		const FString ManifestPath = GetBridgeDatabaseFilePath();
 		IFileManager::Get().MakeDirectory(*FPaths::GetPath(ManifestPath), true);
 
 		TSharedRef<FJsonObject> RootObject = MakeShared<FJsonObject>();
@@ -1686,7 +1622,7 @@ namespace UE::DreamShader::Editor::Private
 		const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&ManifestText);
 		FJsonSerializer::Serialize(RootObject, Writer);
 
-		if (FFileHelper::SaveStringToFile(ManifestText, *ManifestPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+		if (FDreamShaderDatabase::WriteDocument(ManifestPath, FDreamShaderDatabase::DocumentPassKeys, ManifestText))
 		{
 			UE_LOG(LogDreamShader, Display, TEXT("Wrote DreamShader pass keys manifest: %s"), *ManifestPath);
 		}
@@ -1732,7 +1668,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return;
 		}
-		const FString ManifestPath = GetMaterialExpressionManifestFilePath();
+		const FString ManifestPath = GetBridgeDatabaseFilePath();
 		IFileManager::Get().MakeDirectory(*FPaths::GetPath(ManifestPath), true);
 
 		TArray<TSharedPtr<FJsonValue>> ExpressionValues;
@@ -1876,7 +1812,7 @@ namespace UE::DreamShader::Editor::Private
 		const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&ManifestText);
 		FJsonSerializer::Serialize(RootObject, Writer);
 
-		if (FFileHelper::SaveStringToFile(ManifestText, *ManifestPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+		if (FDreamShaderDatabase::WriteDocument(ManifestPath, FDreamShaderDatabase::DocumentMaterialExpressions, ManifestText))
 		{
 			UE_LOG(LogDreamShader, Display, TEXT("Wrote DreamShader MaterialExpression manifest: %s"), *ManifestPath);
 		}

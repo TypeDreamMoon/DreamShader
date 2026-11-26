@@ -34,11 +34,11 @@ Without the tool, use the driver as below.
 | a render pass — an outline, a blur, a screen effect, a compute shader writing a texture | a `.dsp` and the `.dss` materials its passes use. **UE 5.8+ only** | [`reference/dsp.md`](../reference/dsp.md) |
 | a change in a project whose sources are `.dsm` / `.dsf` | match the project: a `.dsm` / `.dsf` — or offer [`dream-shader-migrate`](../dream-shader-migrate/SKILL.md) first | [`reference/legacy.md`](../reference/legacy.md) |
 
-New work is `.dss`. Look at what the project already has (`DShader/**`) before choosing: mirror its folders,
+New work is `.dss`. Look at what the project already has (`DreamSource/Shader/**`) before choosing: mirror its folders,
 naming (`M_`, `MF_`, `MI_`, `CP_`) and the doc-tag style of its parameters.
 
-**2 — Decide the details, then write the file** under the project's `DShader/` tree. A `.dss` builds its asset
-where the file is: `DShader/UI/M_Panel.dss` → `/Game/UI/M_Panel`, named after its `export` function.
+**2 — Decide the details, then write the file** under the project's `DreamSource/Shader/` tree. A `.dss` builds its asset
+where the file is: `DreamSource/Shader/UI/M_Panel.dss` → `/Game/UI/M_Panel`, named after its `export` function.
 
 | Question | Answer it with |
 | :-- | :-- |
@@ -54,7 +54,7 @@ without reading the source — and `@slider min max` on scalars with a sensible 
 **3 — Check it.** Fast, writes nothing, reports every diagnostic of the file at once:
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/UI/M_ScanlinePanel.dss
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DreamSource/Shader/UI/M_ScanlinePanel.dss
 ```
 
 Fix everything it reports, then check again. An unfamiliar code →
@@ -64,7 +64,7 @@ Fix everything it reports, then check again. An unfamiliar code →
 **4 — Build it.** `check` stops before the shader compiler; `compile` builds the asset:
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/UI/M_ScanlinePanel.dss -Force -CleanNew
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DreamSource/Shader/UI/M_ScanlinePanel.dss -Force -CleanNew
 ```
 
 Exit `0` and a `Generated …` line mean it built. `-CleanNew` deletes the `.uasset` the run created — keep it on:
@@ -83,7 +83,7 @@ user should look at in the editor (a material's look cannot be checked headlessl
 *"A UI scanline panel with a scrolling glow band and an adjustable tint"*:
 
 ```hlsl
-// DShader/UI/M_ScanlinePanel.dss -- scanlines and a glow band that scrolls down the panel
+// DreamSource/Shader/UI/M_ScanlinePanel.dss -- scanlines and a glow band that scrolls down the panel
 #pragma material(Domain = UI, BlendMode = Translucent, ShadingModel = Unlit)
 
 /// @group Scanline|Style   @sort 10   @desc Base panel colour; alpha scales the opacity
@@ -112,7 +112,7 @@ export void M_ScanlinePanel(inout material m)
 ```
 
 ```text
-LogDreamShader: Display: Generated Material /Game/UI/M_ScanlinePanel.M_ScanlinePanel from …/DShader/UI/M_ScanlinePanel.dss.
+LogDreamShader: Display: Generated Material /Game/UI/M_ScanlinePanel.M_ScanlinePanel from …/DreamSource/Shader/UI/M_ScanlinePanel.dss.
 
 Assets written to disk by this run:
   Content/UI/M_ScanlinePanel.uasset  [NEW]
@@ -124,7 +124,7 @@ dsc: OK (exit 0)
 A red variant is a `.dsi` beside it, overriding only what differs:
 
 ```hlsl
-// DShader/UI/MI_ScanlinePanel_Red.dsi
+// DreamSource/Shader/UI/MI_ScanlinePanel_Red.dsi
 #pragma instance(Parent = "M_ScanlinePanel")
 
 uniform float4 Tint = float4(1.0, 0.25, 0.2, 1.0);

@@ -203,12 +203,12 @@ module names them, so they are private.
 
 ## Plugin dependencies
 
-`DreamShader.uplugin` enables exactly two other plugins. Both are used only by `DreamShaderEditor`.
+`DreamShader.uplugin` enables exactly two other plugins. Both are used only by the editor modules: `WebSocketNetworking` by `DreamShaderEditor`, `SQLiteCore` by `DreamShaderEditor` and `DreamShaderCompiler`.
 
 | Plugin | Enabled | Where it is actually used |
 | :-- | :-- | :-- |
 | `WebSocketNetworking` | yes | One place: the live-preview WebSocket server. The editor bridge loads `IWebSocketNetworkingModule` by name, starts a server on port **17864**, and streams preview frames as raw binary WebSocket frames carrying a `[4-byte length][1-byte type tag][payload]` envelope. See [Editor bridge](../tools/bridge.md). |
-| `SQLiteCore` | yes | Two translation units, one file: `<Project>/Saved/DreamShader/Bridge/bridge.db`. The workspace service creates the schema and writes the settings-alias, material-expression and Substrate-builtin tables; the diagnostics store writes the `diagnostics` table. The database is a **cache for the VSCode and Rider language extensions** — nothing in the plugin reads it back. See [Workspace](../tools/workspace.md). |
+| `SQLiteCore` | yes | One file: `<Project>/Intermediate/DreamSource/shader.db`, through `FDreamShaderDatabase` in `DreamShaderCompiler` (which links `SQLiteCore` too). The workspace service writes the settings-alias, material-expression and Substrate-builtin tables and the manifest documents; the diagnostics store writes the `diagnostics` table; the compiler service and `dsc index` write `source_index`. The database is **output for the VSCode and Rider language extensions** — nothing in the plugin reads a row back for its own work. See [Bridge](../tools/bridge.md#shaderdb). |
 
 ## Pages
 
@@ -312,5 +312,5 @@ resolved at bind time, by the resolver the host hands the binder.
 - [Generation](../generation/index.md) — what an emitted asset looks like
 - [Commandlet](../tools/commandlet.md) — `-run=DreamShader`, the headless entry point
 - [Editor bridge](../tools/bridge.md) — the WebSocket server and request-file protocol
-- [Workspace](../tools/workspace.md) — the `bridge.db` cache and the exported manifests
+- [Workspace](../tools/workspace.md) — the `shader.db` documents it exports
 - [Contributing](../contributing/index.md) — building the plugin from source

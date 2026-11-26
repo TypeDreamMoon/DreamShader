@@ -1,4 +1,6 @@
 #include "Preview/DreamShaderPreviewRenderer.h"
+#include "DreamShaderDatabase.h"
+#include "Workspace/DreamShaderWorkspaceService.h"
 #include "DreamShaderDiagnostic.h"
 
 #include "DreamShaderCompilerInterface.h"
@@ -636,12 +638,7 @@ namespace UE::DreamShader::Editor::Private
 
 	FString FDreamShaderPreviewRenderer::GetPreviewDirectory()
 	{
-		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader"), TEXT("Bridge"), TEXT("Preview"));
-	}
-
-	FString FDreamShaderPreviewRenderer::GetPreviewManifestPath()
-	{
-		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader"), TEXT("Bridge"), TEXT("preview.json"));
+		return FPaths::Combine(::UE::DreamShader::GetShaderIntermediateDirectory(), TEXT("Preview"));
 	}
 
 	bool FDreamShaderPreviewRenderer::ResolvePreviewMaterial(const FDreamShaderPreviewRequest& Request, FDreamShaderPreviewResult& OutResult, UMaterialInterface*& OutMaterial)
@@ -771,8 +768,9 @@ namespace UE::DreamShader::Editor::Private
 		const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputText);
 		if (FJsonSerializer::Serialize(RootObject, Writer))
 		{
-			IFileManager::Get().MakeDirectory(*FPaths::GetPath(GetPreviewManifestPath()), true);
-			FFileHelper::SaveStringToFile(OutputText, *GetPreviewManifestPath());
+			// The preview document of the bridge's database: what preview.json held, verbatim.
+			FDreamShaderDatabase::WriteDocument(
+				FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath(), FDreamShaderDatabase::DocumentPreview, OutputText);
 		}
 	}
 }

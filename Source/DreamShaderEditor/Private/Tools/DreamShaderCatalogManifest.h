@@ -4,7 +4,7 @@
 //
 // The manifest is the SAME data as the process-wide catalog (DreamShaderBuiltinCatalog.h, in the
 // compiler module) as JSON, written beside the other bridge manifests
-// (`<Project>/Saved/DreamShader/Bridge/`). It exists so the language service and the tools can bind
+// (the `builtin-catalog` document of `<Project>/Intermediate/DreamSource/shader.db`). It exists so the language service and the tools can bind
 // `UE.*` without an editor: LoadBuiltinCatalogFromJson on that file must produce what reflection
 // produced here, and the round trip through SaveBuiltinCatalogToJson is what lets that be tested.
 //
@@ -22,17 +22,12 @@
 namespace UE::DreamShader::Editor::Compiler
 {
 	/**
-	 * `<Project>/Saved/DreamShader/Bridge/dreamshader-builtin-catalog.json` -- the directory the
-	 * other manifests live in, taken from FDreamShaderWorkspaceService::GetMaterialExpressionManifestFilePath
-	 * rather than spelled again, so moving that directory moves this file with it.
-	 */
-	FString GetDreamShaderBuiltinCatalogManifestFilePath();
-
-	/**
-	 * Writes the catalog manifest, creating its directory.
+	 * Writes the catalog manifest.
 	 *
-	 * @param OutputFilePath  Empty for the default path above.
-	 * @param OutWrittenPath  The path actually written.
+	 * @param OutputFilePath  Empty for the `builtin-catalog` document of the bridge's database
+	 *                        (FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath); a path writes that file,
+	 *                        creating its directory.
+	 * @param OutWrittenPath  The file actually written (the database, for an empty OutputFilePath).
 	 * @param OutError        Plain text on failure; the caller owns the DSHnnnn code.
 	 */
 	bool ExportDreamShaderBuiltinCatalogManifest(

@@ -84,7 +84,7 @@ namespace UE::DreamShader::Editor::MCP
 			{
 				OutRefusal = FResult::MakeRefused(TEXT("file-not-found"),
 					FString::Printf(TEXT("There is no file '%s'."), *Argument), // I18N-EXEMPT: wire text
-					TEXT("Pass a path relative to the project root, such as DShader/Materials/M_Rock.dss."));
+					TEXT("Pass a path relative to the project root, such as DreamSource/Shader/Materials/M_Rock.dss."));
 				return false;
 			}
 			return true;

@@ -1,4 +1,4 @@
-// DShader/CheatSheet/M_CheatSheetPanel.dss -- a translucent UI panel: a soft vertical gradient and a scrolling band
+// DreamSource/Shader/CheatSheet/M_CheatSheetPanel.dss -- a translucent UI panel: a soft vertical gradient and a scrolling band
 #pragma material(Domain = UI, BlendMode = Translucent, ShadingModel = Unlit)
 
 /// @group Panel   @sort 10   @desc Base colour; alpha scales the opacity

@@ -72,7 +72,7 @@ namespace UE::DreamShader::Editor::Compiler
 			return Value;
 		}
 
-		/** A relative `-Source` is tried under the project's DShader tree first, then the project. */
+		/** A relative `-Source` is tried under the project's source directory (DreamSource/Shader) first, then the project. */
 		FString ResolveSourcePath(const FString& InPath)
 		{
 			const FString Path = Private::NormalizeCommandletValue(InPath);
@@ -289,7 +289,7 @@ namespace UE::DreamShader::Editor::Compiler
 				return true;
 			}
 
-			// A bare positional argument, so `dsc check DShader/Materials/M_Foo.dss` works. Tokens[0] is
+			// A bare positional argument, so `dsc check DreamSource/Shader/Materials/M_Foo.dss` works. Tokens[0] is
 			// the verb itself, so the scan starts at 1.
 			for (int32 Index = 1; Index < Tokens.Num(); ++Index)
 			{
@@ -333,7 +333,7 @@ namespace UE::DreamShader::Editor::Compiler
 	const TCHAR* GetDreamShaderLang2CommandletUsage()
 	{
 		return TEXT(
-			"  -run=DreamShader check { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Shaders]\n"
+			"  -run=DreamShader check { -Source=\"C:/Project/DreamSource/Shader/File.dss\" | -All } [-Shaders]\n"
 			"                         [-Platform=SM6,SM5] [-Quality=High] [-Timeout=120] [-DiagnosticsOut=<file>]\n"
 			"  -run=DreamShader dump-ir { -Source=... | -All } [-Out=<dir>] [-Json]\n"
 			"  -run=DreamShader dump-layout { -Source=... | -All } [-Style=Blocks|SourceBands|Layered|All] [-Out=<dir>] [-Json]\n"
@@ -772,8 +772,9 @@ namespace UE::DreamShader::Editor::Compiler
 		}
 
 		const FString OutParam = GetOutParam(Tokens, Switches, Params);
+		// No -Out: the project's shader.db, where a language service reads it. -Out: files, for a person or CI.
 		const FString OutputDirectory = OutParam.IsEmpty()
-			? DefaultOutputDirectory(TEXT("Index"))
+			? FString()
 			: FPaths::ConvertRelativePathToFull(OutParam);
 
 		int32 WrittenCount = 0;
@@ -829,7 +830,7 @@ namespace UE::DreamShader::Editor::Compiler
 			TEXT("DreamShader index: %d index file(s) from %d source(s) to %s."),
 			WrittenCount,
 			SourceFiles.Num(),
-			*OutputDirectory));
+			OutputDirectory.IsEmpty() ? *::UE::DreamShader::GetShaderDatabaseFilePath() : *OutputDirectory));
 
 		return bAllSucceeded;
 	}

@@ -1,6 +1,6 @@
 ---
 name: dream-shader-migrate
-description: Rewrite DreamShaderLang 1.x sources (.dsm / .dsf / .dsh) as 2.0 .dss with dsc migrate, which proves each rewrite builds the same graph before it writes anything. Use when asked to migrate, upgrade, port or convert 1.x DreamShader sources, a .dsm or .dsf file, or a whole DShader tree to the 2.0 language.
+description: Rewrite DreamShaderLang 1.x sources (.dsm / .dsf / .dsh) as 2.0 .dss with dsc migrate, which proves each rewrite builds the same graph before it writes anything. Use when asked to migrate, upgrade, port or convert 1.x DreamShader sources, a .dsm or .dsf file, or a whole source directory to the 2.0 language.
 ---
 
 # dream-shader-migrate `<file>` | `-All` | `-Root <name>`
@@ -22,13 +22,13 @@ source, so a `check` of the `.dsm` lists them — the legacy-rule codes `DSH5275
 infos — without writing anything:
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/Materials/M_Foo.dsm
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DreamSource/Shader/Materials/M_Foo.dsm
 ```
 
 **2 — Prove the rewrite, write nothing.**
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 migrate DShader/Materials/M_Foo.dsm -Check
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 migrate DreamSource/Shader/Materials/M_Foo.dsm -Check
 ```
 
 For a whole tree, `migrate -All -Check` (every 1.x source under the project's own roots, `Packages/` excluded —
@@ -50,7 +50,7 @@ to do.
 **4 — Migrate.**
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 migrate DShader/Materials/M_Foo.dsm
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 migrate DreamSource/Shader/Materials/M_Foo.dsm
 ```
 
 This writes `M_Foo.dss` beside the old file and moves `M_Foo.dsm` to
@@ -62,7 +62,7 @@ mirroring the tree, and leaves the 1.x files where they are: the way to look at 
 **5 — Check the result.**
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/Materials/M_Foo.dss
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DreamSource/Shader/Materials/M_Foo.dss
 ```
 
 `check` builds no asset, which is what you want here: the `.dss` names the same asset the `.dsm` did, so a

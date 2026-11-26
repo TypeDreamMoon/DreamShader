@@ -1,4 +1,4 @@
-// DShader/CheatSheet/MF_CheatSheetTiling.dss -- a material function: tiled UV plus the cell index
+// DreamSource/Shader/CheatSheet/MF_CheatSheetTiling.dss -- a material function: tiled UV plus the cell index
 /// @library CheatSheet|UV
 /// @param UV       The coordinates to tile.
 /// @param Scale    Tiles per UV unit.

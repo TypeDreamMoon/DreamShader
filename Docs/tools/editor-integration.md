@@ -22,10 +22,10 @@ editor is shutting down.
 | Entry name | Label | Tooltip | Icon | Effect | Reference |
 | :-- | :-- | :-- | :-- | :-- | :-- |
 | `DreamShader.RecompileAll` | **Recompile DSM** | "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. Asks first." | `Icons.Refresh` | After a Yes/No confirmation, rebuilds the dependency graph and queues every source of every root — `.dsm`, `.dsf`, `.dss`, `.dsi` and `.dsp`, despite the label — **forced** past the build-key skip | [below](#recompile-dsm) |
-| `DreamShader.CleanGeneratedShaders` | **Clean Generated Shaders** | "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile." | `Icons.Delete` | Deletes every `*.ush` under the generated-shader directory, then queues a full **forced** scan so every file is regenerated | [below](#clean-generated-shaders) |
+| `DreamShader.CleanGeneratedShaders` | **Clean Generated Shaders** | "Delete the generated shader directory (Intermediate/DreamSource/Shader/GeneratedShaders by default) and queue a full DreamShader recompile." | `Icons.Delete` | Deletes every `*.ush` under the generated-shader directory, then queues a full **forced** scan so every file is regenerated | [below](#clean-generated-shaders) |
 | `DreamShader.MakeEphemeral` | **Make Ephemeral** | "Delete the packages of Materialized ThinCustom products so they go back to being Ephemeral. Shows a confirmation with the full list; source files are untouched and the products are rebuilt in memory. Graph materials and material functions are not listed -- they have no Ephemeral state." | `Icons.Delete` | Deletes the on-disk packages of ThinCustom products carrying DreamShader provenance metadata, through the standard editor delete flow | [below](#make-ephemeral) |
 | `DreamShader.ToggleShowEphemeralMaterials` | **Show Ephemeral Materials** | "Show Ephemeral ThinCustom/Instance-backend DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. Graph-backend materials are plain UMaterials with no Ephemeral state, so this toggle does not affect them. While shown, an explicit Save on one would materialize it to disk (the shadow warning and Make Ephemeral cover recovery)." | *(none)* | Toggle button. Flips `bShowEphemeralMaterials` and writes it to `DefaultEngine.ini` | [below](#show-ephemeral-materials) |
-| `DreamShader.OpenWorkspace` | **Open Dream Shader Workspace (VSCode)** *(since 1.2.1)* | "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable." | `Icons.OpenInExternalEditor` | Re-exports the three bridge manifests, rewrites `DShader/DreamShader.code-workspace`, then launches it | [Workspace](workspace.md) |
+| `DreamShader.OpenWorkspace` | **Open Dream Shader Workspace (VSCode)** *(since 1.2.1)* | "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable." | `Icons.OpenInExternalEditor` | Rewrites the bridge documents in `shader.db`, rewrites `<SourceDirectory>/DreamShader.code-workspace`, then launches it | [Workspace](workspace.md) |
 | `OpenMaterialContentBrowser` | **Material Content Browser** *(since 1.5.0)* | "Open the DreamShader Material Content Browser." | `ClassIcon.Material` | Invokes the `DreamShaderMaterialBrowser` nomad tab | [Material Content Browser](material-browser.md) |
 
 > [!NOTE]
@@ -331,9 +331,10 @@ runs the same command on the same global setting, toast included.
 
 ### Open Dream Shader Workspace (VSCode)
 
-Runs in this order: re-export `material-expressions.json`, `settings.json`,
-`substrate-builtins.json`, `preprocessor-defines.json` and the builtin node catalog
-(`dreamshader-builtin-catalog.json`); rewrite `DShader/DreamShader.code-workspace`; then launch it
+Runs in this order: rewrite the `material-expressions`, `settings` (with `pass-keys`),
+`substrate-builtins`, `preprocessor-defines` and `builtin-catalog` documents of
+`Intermediate/DreamSource/shader.db` ([Bridge](bridge.md#documents)); rewrite
+`<SourceDirectory>/DreamShader.code-workspace`; then launch it
 through a three-step fallback chain — VSCode, the OS default editor, Notepad. See
 [Workspace](workspace.md) for the discovery order and the exact file contents.
 
@@ -356,12 +357,12 @@ accepted spelling. When present, `StartupModule` returns before creating anythin
 
 | Disabled | Still active |
 | :-- | :-- |
-| The editor bridge — file watcher and auto-compile-on-save, the debounce queue, the diagnostics store and all three of its sinks, `bridge.db`, the request-file poller, the VirtualFunction startup sync, the Ephemeral generation of all sources at post-engine-init, the settings watcher | The runtime modules — `DreamShaderLang` (both front ends, the binder, the IR), `DreamShader` (settings object, `UDreamShaderMaterialInstance`, the compile interface) and `DreamShaderPass` — and the `DreamShaderCompiler` editor module that the compile interface reaches |
+| The editor bridge — file watcher and auto-compile-on-save, the debounce queue, the diagnostics store and its `shader.db` table, the request-file poller, the VirtualFunction startup sync, the Ephemeral generation of all sources at post-engine-init, the settings watcher | The runtime modules — `DreamShaderLang` (both front ends, the binder, the IR), `DreamShader` (settings object, `UDreamShaderMaterialInstance`, the compile interface) and `DreamShaderPass` — and the `DreamShaderCompiler` editor module that the compile interface reaches |
 | The preview WebSocket server on port `17864`, and the whole preview renderer | The `-run=DreamShader` [commandlet](commandlet.md), which never uses the bridge |
 | Every menu, toolbar and context-menu entry on this page, and the [node context menu](#material-editor-node-context-menu) | Assets already generated and saved on disk |
 | The `.usf` / `.ush` watches of the Custom Pass shader files | The [pass pipeline details panel](#pass-pipeline-details-panel) *(since 2.1.0)* |
 | The Material Content Browser tab registration — the tab cannot be opened at all | |
-| The exported manifests and the builtin catalog, and `DreamShader.code-workspace` regeneration | |
+| The exported `shader.db` documents and the builtin catalog, and `DreamShader.code-workspace` regeneration | |
 | The asset-rename sync service | |
 
 A commandlet run reaches the same state by a different route: the module returns early whenever

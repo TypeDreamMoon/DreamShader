@@ -85,15 +85,27 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category="Mappings")
 	TMap<FString, TEnumAsByte<EMaterialDomain>> MaterialDomainMappings;
 
-	UPROPERTY(Config, EditAnywhere, Category="Paths", meta=(RelativeToGameDir))
+	/**
+	 * Deprecated: the source directory is set in Project Settings > Dream Source > Shader
+	 * (UDreamShaderSourceSettings, Config/DefaultDreamSource.ini). Still read when that one is left at its default and
+	 * this holds anything but the old default `DShader`; see UE::DreamShader::ResolveProjectSourceDirectory.
+	 */
+	UPROPERTY(Config, EditAnywhere, Category="Paths",
+		meta=(RelativeToGameDir, DisplayName="Source Directory (Deprecated)",
+			ToolTip="Deprecated. Set the source directory in Project Settings > Dream Source > Shader instead (Config/DefaultDreamSource.ini). This one is still read while that one is left at its default, unless it holds the old default DShader."))
 	FDirectoryPath SourceDirectory;
 
-	UPROPERTY(Config, EditAnywhere, Category="Paths", meta=(RelativeToGameDir))
+	UPROPERTY(Config, EditAnywhere, Category="Paths",
+		meta=(RelativeToGameDir,
+			ToolTip="Where generated .ush files go. Must stay under Intermediate/. Default Intermediate/DreamSource/Shader/GeneratedShaders; the pre-DreamSource default Intermediate/DreamShader/GeneratedShaders reads as the new one."))
 	FDirectoryPath GeneratedShaderDirectory;
+
+	/** `Intermediate/DreamSource/Shader/GeneratedShaders`. */
+	static const TCHAR* GetDefaultGeneratedShaderDirectory();
 
 	UPROPERTY(Config, EditAnywhere, Category="Paths",
 		meta=(DisplayName="Scan Plugin Source Directories",
-			ToolTip="When enabled, every enabled plugin that ships a DShader folder contributes its own source root, so a plugin can carry the .dsm/.dsf/.dsh files that build its materials. Plugin roots are discovered and compiled but never rewritten by the editor -- only the project's own source directory is writable. Imports never cross roots: a file resolves its imports against its own root and that root's Packages folder."))
+			ToolTip="When enabled, every enabled plugin that ships a DreamSource/Shader folder (or the deprecated DShader) contributes its own source root, so a plugin can carry the .dss/.dsf/.dsh files that build its materials. Plugin roots are discovered and compiled but never rewritten by the editor -- only the project's own source directory is writable. Imports never cross roots: a file resolves its imports against its own root and that root's Packages folder."))
 	bool bScanPluginSourceDirectories = true;
 
 	// The single compiler knob. ThinCustom products are Ephemeral by default in the editor (source

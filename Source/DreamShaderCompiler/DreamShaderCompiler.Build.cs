@@ -45,6 +45,7 @@ public class DreamShaderCompiler : ModuleRules
 				"Projects",
 				"RenderCore",
 				"RHI",
+				"SQLiteCore",
 				"TargetPlatform",
 				"UnrealEd"
 			});

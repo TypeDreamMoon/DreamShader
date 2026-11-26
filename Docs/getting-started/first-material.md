@@ -10,7 +10,7 @@ files can keep writing 1.x syntax, and the same compiler builds both.
 ## Create the file
 
 ```text
-<Project>/DShader/Materials/M_DreamPulse.dss
+<Project>/DreamSource/Shader/Materials/M_DreamPulse.dss
 ```
 
 ```hlsl
@@ -53,7 +53,7 @@ The asset lands under `/Game` at the file's folder relative to the source root, 
 ## The same material in 1.x syntax
 
 ```c
-// <Project>/DShader/Materials/M_DreamPulse.dsm
+// <Project>/DreamSource/Shader/Materials/M_DreamPulse.dsm
 Shader(Name="Materials/M_DreamPulse")
 {
     Properties = {

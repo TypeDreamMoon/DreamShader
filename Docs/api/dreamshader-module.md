@@ -37,7 +37,27 @@ namespace UE::DreamShader
         bool bIsProjectRoot = false;
         bool bIsProjectPlugin = false; // true when the plugin is one this project generates into
         bool bWritable = false;     // true for the project root only
+        bool bLegacy = false;       // a legacy DShader folder, read because DreamSource/Shader does not exist
     };
+
+    inline constexpr const TCHAR* LegacySourceDirectoryName = TEXT("DShader");
+    inline constexpr const TCHAR* PluginSourceDirectory = TEXT("DreamSource/Shader");
+
+    struct FDreamShaderProjectSourceDirectory
+    {
+        FString Directory;            // the directory in use
+        FString ConfiguredDirectory;  // <Project>/<configured value>
+        FString LegacyDirectory;      // <Project>/DShader
+        bool bUsingLegacy = false;
+        bool bLegacyIgnored = false;
+        bool bFromLegacyKey = false;
+    };
+
+    DREAMSHADER_API FDreamShaderProjectSourceDirectory ResolveProjectSourceDirectory();
+    DREAMSHADER_API FString GetDreamSourceIntermediateDirectory();
+    DREAMSHADER_API FString GetShaderIntermediateDirectory();
+    DREAMSHADER_API FString GetShaderDatabaseFilePath();
+    DREAMSHADER_API void LogDeprecatedSourceDirectoriesOnce();
 
     DREAMSHADER_API const TArray<FDreamShaderSourceRoot>& GetSourceShaderRoots();
     DREAMSHADER_API const FDreamShaderSourceRoot* FindSourceRootForFile(const FString& InPath);
@@ -99,16 +119,16 @@ FString GetGeneratedShaderVirtualDirectory();
 
 | Function | Returns | Value when the setting is unset |
 | :-- | :-- | :-- |
-| `GetSourceShaderDirectory()` | The absolute, normalized **project** source root — `UDreamShaderSettings::SourceDirectory.Path` resolved against the project directory. The target of every editor-side write; plugin roots are under [Source roots](#source-roots) | `<Project>/DShader` |
-| `GetPackageShaderDirectory()` | `<source root>/Packages` of the project root, always derived from `GetSourceShaderDirectory()`; there is no separate setting | `<Project>/DShader/Packages` |
-| `GetGeneratedShaderDirectory()` | The real directory currently registered for the virtual mount `/DreamShaderGenerated`; **only when no such mapping exists** does it fall back to the configured `GeneratedShaderDirectory` | `<Project>/Intermediate/DreamShader/GeneratedShaders` |
+| `GetSourceShaderDirectory()` | The absolute, normalized **project** source root — `ResolveProjectSourceDirectory().Directory` ([below](#project-source-directory)). The target of every editor-side write; plugin roots are under [Source roots](#source-roots) | `<Project>/DreamSource/Shader`, or `<Project>/DShader` while only that exists |
+| `GetPackageShaderDirectory()` | `<source root>/Packages` of the project root, always derived from `GetSourceShaderDirectory()`; there is no separate setting | `<Project>/DreamSource/Shader/Packages` |
+| `GetGeneratedShaderDirectory()` | The real directory currently registered for the virtual mount `/DreamShaderGenerated`; **only when no such mapping exists** does it fall back to the configured `GeneratedShaderDirectory` | `<Project>/Intermediate/DreamSource/Shader/GeneratedShaders` |
 | `GetGeneratedShaderVirtualDirectory()` | The compile-time constant `TEXT("/DreamShaderGenerated")` | n/a |
 
-Resolution of a configured path, in order:
+Resolution of the configured generated-shader path, in order:
 
 | Step | Rule |
 | :-- | :-- |
-| 1 | Trim the configured path. If it is empty, substitute the hard-coded default. |
+| 1 | Trim the configured path. If it is empty, or the pre-DreamSource default `Intermediate/DreamShader/GeneratedShaders`, substitute the default `Intermediate/DreamSource/Shader/GeneratedShaders`. |
 | 2 | If the result is relative, combine it with `FPaths::ProjectDir()`. |
 | 3 | `FPaths::NormalizeFilename`, then `FPaths::MakeStandardFilename`. |
 
@@ -117,10 +137,35 @@ initialized **or** when the settings object is currently readable — that is,
 `UObjectInitialized() && !GExitPurge && !IsEngineExitRequested()`. Once the UObject system is live
 this condition is always true, so the settings are re-read on **every** call and a mid-session change
 in Project Settings takes effect immediately. Before UObjects exist, and during exit purge, the
-getters do not touch `GetDefault<UDreamShaderSettings>()`: they read `SourceDirectory` and
-`GeneratedShaderDirectory` straight from `[/Script/DreamShader.DreamShaderSettings]` in the engine
-ini — the values the settings object will load — and fall back to the defaults when a key is absent.
-The module starts at `PostConfigInit`, before the settings object can exist, which is why.
+getters do not touch the settings objects: they read `SourceDirectory` straight from
+`Config/DefaultDreamSource.ini` and the legacy `SourceDirectory` and `GeneratedShaderDirectory` from
+`[/Script/DreamShader.DreamShaderSettings]` in the engine ini — the values the settings objects will
+load — and fall back to the defaults when a key is absent. The module starts at `PostConfigInit`,
+before the settings objects can exist, which is why. The source directory itself is re-decided only
+when its configured value changes ([below](#project-source-directory)).
+
+### Project source directory
+
+*(DreamSource layout)*
+
+```cpp
+FDreamShaderProjectSourceDirectory ResolveProjectSourceDirectory();
+FString GetDreamSourceIntermediateDirectory();
+FString GetShaderIntermediateDirectory();
+FString GetShaderDatabaseFilePath();
+void LogDeprecatedSourceDirectoriesOnce();
+```
+
+| Function | Returns |
+| :-- | :-- |
+| `ResolveProjectSourceDirectory()` | The project's source directory and what it was chosen from. The configured value is `UDreamShaderSourceSettings::SourceDirectory` unless it is left at `DreamSource/Shader` (or is empty or absolute); then the legacy `UDreamShaderSettings::SourceDirectory` key unless it is empty, absolute or `DShader` (`bFromLegacyKey`); then `DreamSource/Shader`. `Directory` is the configured directory when it exists (`bLegacyIgnored` when `<Project>/DShader` exists too), else `<Project>/DShader` when that exists (`bUsingLegacy`), else the configured one. Memoized per configured value, so a directory that appears mid-session does not move the sources |
+| `GetDreamSourceIntermediateDirectory()` | `<Project>/Intermediate/DreamSource` — where every Dream plugin keeps the data it rebuilds by itself |
+| `GetShaderIntermediateDirectory()` | `<Project>/Intermediate/DreamSource/Shader` — the bridge's request files and preview images |
+| `GetShaderDatabaseFilePath()` | `<Project>/Intermediate/DreamSource/shader.db` — see [Bridge](../tools/bridge.md#shaderdb) |
+| `LogDeprecatedSourceDirectoriesOnce()` | Logs a `LogDreamShader` warning, once per process and directory, for the legacy key, a legacy `DShader` in use or ignored, and every plugin root read from a legacy `DShader` folder |
+
+`LegacySourceDirectoryName` (`DShader`) and `PluginSourceDirectory` (`DreamSource/Shader`) are the two
+folder names. The user-facing rule is on [DreamSource layout](../settings/project.md#dreamsource-layout).
 
 > [!WARNING]
 > `GetGeneratedShaderDirectory()` is not simply the *Generated Shader Directory* setting.
@@ -152,7 +197,7 @@ resolution: a file's imports resolve against its own root and that root's `Packa
 
 | Function | Behaviour |
 | :-- | :-- |
-| `GetSourceShaderRoots()` | The project root first, then — when *Scan Plugin Source Directories* is on — one root per enabled plugin that has a `DShader` folder. A plugin root that overlaps an earlier root (one contains the other) is dropped with a `LogDreamShader` warning. Cached; rebuilt when the project source directory or the scan toggle changes. The reference is invalidated by the next rebuild, so use it on the game thread and do not keep it |
+| `GetSourceShaderRoots()` | The project root first, then — when *Scan Plugin Source Directories* is on — one root per enabled plugin that has a `DreamSource/Shader` folder, or else a legacy `DShader` folder (`bLegacy`; never both). A plugin root that overlaps an earlier root (one contains the other) is dropped with a `LogDreamShader` warning. Cached; rebuilt when the project source directory or the scan toggle changes. The reference is invalidated by the next rebuild, so use it on the game thread and do not keep it |
 | `FindSourceRootForFile(InPath)` | The root that contains `InPath`, or `nullptr` when it is under none |
 | `IsWritableSourceFilePath(InPath)` | `false` for a file under a plugin root; `true` under the project root **and** for a path under no root (an ad-hoc source named explicitly, such as a commandlet `-Source`) |
 | `IsProjectContentPlugin(InPlugin)` | `true` when the plugin is a project plugin (`EPluginType::Project`) whose base directory is under `<Project>/Plugins` — the same question gate 3 asks of a `Plugin.<Name>` root. `false` for an engine or marketplace plugin, whose mount no host project may generate into |
@@ -287,8 +332,8 @@ registered. It performs five side effects in order.
 
 | # | Action | Notes |
 | :-- | :-- | :-- |
-| 1 | Create `GetSourceShaderDirectory()` as a directory tree | `<Project>/DShader` by default |
-| 2 | Create `GetPackageShaderDirectory()` as a directory tree | `<Project>/DShader/Packages` by default |
+| 1 | Create `GetSourceShaderDirectory()` as a directory tree | `<Project>/DreamSource/Shader` by default; nothing new when the legacy `DShader` is in use |
+| 2 | Create `GetPackageShaderDirectory()` as a directory tree | `<Project>/DreamSource/Shader/Packages` by default |
 | 3 | Create the **configured** generated-shader directory as a directory tree | uses the configured path, not `GetGeneratedShaderDirectory()` |
 | 4 | If `/DreamShaderGenerated` is absent from `AllShaderSourceDirectoryMappings()`, map it to the configured generated-shader directory | never re-points an existing mapping |
 | 5 | If the `DreamShader` plugin is found through `IPluginManager` and `/Plugin/DreamShader` is absent from the mappings, map it to `<PluginBaseDir>/Shaders` | never re-points an existing mapping |
@@ -353,7 +398,7 @@ void CollectProjectSources(TArray<FString>& OutFiles)
 Typical output with default settings:
 
 ```text
-LogDreamShader: Found 3 DreamShader source(s) under I:/Project/DShader
+LogDreamShader: Found 3 DreamShader source(s) under I:/Project/DreamSource/Shader
 ```
 
 A compile writes no helper include *(since 2.0.0)*: an HLSL function becomes the code of a Custom
@@ -374,6 +419,6 @@ node, with the HLSL functions it calls embedded in that code. The `/DreamShaderG
   this module
 - [Project settings](../settings/project.md) — the two directory settings from the user's side
 - [Generated HLSL](../generation/generated-hlsl.md) — what `/DreamShaderGenerated` receives
-- [Packages](../tools/packages.md) — the `DShader/Packages` directory
+- [Packages](../tools/packages.md) — the `<SourceDirectory>/Packages` directory
 - [Source files](../language/source-files.md) — what the three extensions may contain
 - [`DreamShaderBuiltins.ush`](../builtins/hlsl-library.md) — the header mounted at `/Plugin/DreamShader`

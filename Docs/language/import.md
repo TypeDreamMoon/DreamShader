@@ -93,7 +93,7 @@ disk wins.
 
 | Directory | Default | Project setting |
 | :-- | :-- | :-- |
-| Source | `<Project>/DShader` | *Source Directory* |
+| Source | `<Project>/DreamSource/Shader` | *Source Directory* |
 | Packages | `<Source>/Packages` | derived; not separately configurable |
 
 The containment comparison is case-insensitive on every platform. Whether a candidate is then found
@@ -105,8 +105,8 @@ A path that resolves nowhere is [`DSH8292`](../diagnostics/DSH8xxx.md#dsh8292), 
 ### Roots
 
 Candidates 2 and 3 belong to the **owning root** of the importing file — the source root the file
-sits under. A relative specifier never leaves it: a `.dsm` under `Plugins/MoonToon/DShader` cannot
-reach `<Project>/DShader` by writing `Shared/Common.dsh`, and vice versa.
+sits under. A relative specifier never leaves it: a `.dsm` under `Plugins/MoonToon/DreamSource/Shader` cannot
+reach `<Project>/DreamSource/Shader` by writing `Shared/Common.dsh`, and vice versa.
 
 The rule exists so that adding a plugin cannot change what an existing import means. Were the
 project root a global fallback, two plugins shipping `Shared/Common.dsh` would resolve by scan order,
@@ -135,11 +135,11 @@ so a file of the same name in the own root wins — or by copying it into this r
 The containment check is what stops a relative specifier from climbing out of the tree. `..` segments
 are resolved before the check, so:
 
-- from a file directly under `DShader`, `import "../Secret.dsh"` resolves above the source directory
+- from a file directly under `DreamSource/Shader`, `import "../Secret.dsh"` resolves above the source directory
   and candidate 1 is skipped; candidates 2 and 3 collapse the same `..` and land outside their own
   roots, so they are skipped by the same check;
-- from a file under `DShader/Packages/@scope/pkg/`, `..` may traverse anywhere inside
-  `DShader/Packages`, because that is the containment root chosen for it;
+- from a file under `DreamSource/Shader/Packages/@scope/pkg/`, `..` may traverse anywhere inside
+  `DreamSource/Shader/Packages`, because that is the containment root chosen for it;
 - for a source file under no root's source or packages directory, the containment root is its own
   directory, so no `..` specifier can resolve through candidate 1 at all.
 
@@ -147,12 +147,12 @@ are resolved before the check, so:
 
 `@scope/name/…` is **not** a distinct path syntax. `@` is an ordinary directory-name character, and a
 specifier such as `"@typedreammoon/dream-noise/Library/Noise.dsh"` resolves through candidate 3
-simply because `DShader/Packages/@typedreammoon/dream-noise/Library/Noise.dsh` exists on disk. There
+simply because `DreamSource/Shader/Packages/@typedreammoon/dream-noise/Library/Noise.dsh` exists on disk. There
 is no scope registry, no version resolution and no special-cased root.
 
 > [!NOTE]
 > Candidates 1 and 2 are still tried first. A file named
-> `@typedreammoon/dream-noise/Library/Noise.dsh` next to the importing file, or under `DShader`
+> `@typedreammoon/dream-noise/Library/Noise.dsh` next to the importing file, or under `DreamSource/Shader`
 > itself, shadows the package copy.
 
 See [Packages](../tools/packages.md) for the directory layout this convention assumes.
@@ -204,7 +204,7 @@ offset into the assembled text and were unreliable inside sections; that mechani
 ## Example
 
 ```text
-<Project>/DShader/
+<Project>/DreamSource/Shader/
 ├── Materials/
 │   └── M_Water.dsm
 ├── Shared/
@@ -217,7 +217,7 @@ offset into the assembled text and were unreliable inside sections; that mechani
 ```
 
 ```c
-// DShader/Shared/Common.dsh
+// DreamSource/Shader/Shared/Common.dsh
 Namespace(Name="Common")
 {
     Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
@@ -227,9 +227,9 @@ Namespace(Name="Common")
 ```
 
 ```c
-// DShader/Materials/M_Water.dsm
-import "Shared/Common";                                   // -> DShader/Shared/Common.dsh
-import '@typedreammoon/dream-noise/Library/Noise.dsh';    // -> DShader/Packages/@typedreammoon/...
+// DreamSource/Shader/Materials/M_Water.dsm
+import "Shared/Common";                                   // -> DreamSource/Shader/Shared/Common.dsh
+import '@typedreammoon/dream-noise/Library/Noise.dsh';    // -> DreamSource/Shader/Packages/@typedreammoon/...
 
 Shader(Name="Materials/M_Water")
 {
@@ -246,12 +246,12 @@ Shader(Name="Materials/M_Water")
 ```
 
 The first path has no extension, so `.dsh` is appended; candidate 1 does not exist beside
-`M_Water.dsm`, so candidate 2 finds it under `DShader`. The second is found only by candidate 3.
+`M_Water.dsm`, so candidate 2 finds it under `DreamSource/Shader`. The second is found only by candidate 3.
 Both directives omit or include the `;` freely.
 
 Each header is preprocessed and parsed on its own; `Common::ApplyTint` and whatever `Noise.dsh`
 declares are then names of `M_Water.dsm`, and a diagnostic inside `Common.dsh` is reported at
-`DShader/Shared/Common.dsh(<line>,<column>)`.
+`DreamSource/Shader/Shared/Common.dsh(<line>,<column>)`.
 
 The `.dss` spelling of the same two lines:
 
@@ -266,8 +266,8 @@ The `.dss` spelling of the same two lines:
 - [Lexical elements](lexical.md) — strings and comments
 - [Namespace](namespace.md) — the usual reason to import a header
 - [Function](function.md) · [GraphFunction](graph-function.md) — what a `.dsh` may declare
-- [VirtualFunction](virtual-function.md) — declarations written to `DShader/VirtualFunctions`
-- [Packages](../tools/packages.md) — `DShader/Packages` and the `@scope/name` layout
+- [VirtualFunction](virtual-function.md) — declarations written to `DreamSource/Shader/VirtualFunctions`
+- [Packages](../tools/packages.md) — `DreamSource/Shader/Packages` and the `@scope/name` layout
 - [Preprocessor](preprocessor.md) — `#if`, which runs on each file before it is parsed
 - [Project settings](../settings/project.md) — *Source Directory*, which moves all three search roots
 - [Diagnostics](../diagnostics/README.md) — every code

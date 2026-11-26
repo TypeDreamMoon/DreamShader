@@ -26,7 +26,7 @@
 
     Tests/Corpus/Compile/CheatSheet/*.dss
         Every fenced block of the expanded page whose first line names a source file,
-        `// DShader/<path>.dss`, is also written here. DreamShader.Compiler2.Corpus.CheatSheet.* compiles
+        `// DreamSource/Shader/<path>.dss` (or the legacy `// DShader/<path>.dss`), is also written here. DreamShader.Compiler2.Corpus.CheatSheet.* compiles
         each one, and a fixture with no golden asserts that the compile succeeds -- so an example on the
         cheat sheet that stops building fails the suite.
 
@@ -56,7 +56,7 @@ $siteRoot = 'https://shader.toolchain.64hz.cn/en/docs/'
 # Where the documentation site publishes each diagnostics page (docs-sync/config.json of the site
 # repository). The site's validator checks every `doc` link of the published JSON against its routes.
 $pageRoute = { param($pageName) 'plugin/diagnostics/' + [System.IO.Path]::GetFileNameWithoutExtension($pageName).ToLowerInvariant() }
-$fixtureHeader = '^//\s*(DShader/\S+\.dss)\b'
+$fixtureHeader = '^//\s*((?:DreamSource/Shader|DShader)/\S+\.dss)\b'
 $fixtureDir = 'Tests/Corpus/Compile/CheatSheet'
 $fixtureExtension = '.dss'
 # A fixture is the block as printed; DreamShader's corpus runner places it under a scratch package itself.

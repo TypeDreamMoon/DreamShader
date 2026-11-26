@@ -178,7 +178,7 @@ matter.
   the plugin itself gates are `Strata` / `Substrate`, which it registers only on UE 5.4 and newer.
 - Values carrying `Hidden` metadata are filtered out only in builds that keep editor-only data.
   Material generation is editor-only, so this is the configuration that applies in practice.
-- `Saved/DreamShader/Bridge/settings.json` exports these tables for editor completion. It
+- The `settings` document of `Intermediate/DreamSource/shader.db` exports these tables for editor completion. It
   de-duplicates by normalized alias, so it shows `"Default Lit"` but not `"DefaultLit"`. **Both still
   compile** — the manifest is a completion surface, not the acceptance set. See
   [Workspace](../tools/workspace.md) and [Bridge](../tools/bridge.md).
@@ -242,5 +242,5 @@ BlendMode      = BLEND_AlphaComposite
 - [Substrate builtins](../builtins/substrate.md) — the UE 5.4+ Substrate surface
 - [Output bindings](../language/output-bindings.md) — `Base.FrontMaterial` and the forced Substrate model
 - [Decompiler](../tools/decompiler.md) — the canonical spellings written back out
-- [Workspace](../tools/workspace.md) — the exported `settings.json` completion manifest
+- [Workspace](../tools/workspace.md) — the exported `settings` completion document
 - [Diagnostics index](../diagnostics/index.md) — every code

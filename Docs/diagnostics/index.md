@@ -14,7 +14,7 @@ message raised under it, the places that raise it, a cause and a fix.
 | Log category | `LogDreamShader` |
 | Wire form | `<file>(<line>,<column>): DSHnnnn: <message>`, English whatever the editor's language |
 | Severity | `error`, `warning` or `info` — a compile's records keep their own *(since 2.1.0)*; the few records a compile does not explain are `error` |
-| Bridge artifacts | `<Project>/Saved/DreamShader/Bridge/diagnostics.json`, `.../Bridge/diagnostics/`, `.../Bridge/bridge.db` |
+| Bridge artifact | the `diagnostics` table of `<Project>/Intermediate/DreamSource/shader.db` (before the [DreamSource layout](../settings/project.md#dreamsource-layout): `Saved/DreamShader/Bridge/diagnostics.json`, `diagnostics/` and `bridge.db`) |
 
 > [!NOTE]
 > **Through 1.9.x** most messages had no code: the 1.x parser coded its own, the 1.x generator's ~560
@@ -28,14 +28,13 @@ message raised under it, the places that raise it, a cause and a fix.
 | :-- | :-- | :-- |
 | **Output Log** | the compile's report under `LogDreamShader`: at `Error` on failure — every record as a wire line, errors first, then warnings, then notes — and at `Display` on success — the `Generated …` / `Skipped …` lines, then a `Warnings:` block | plugin |
 | **[Material Content Browser](../tools/material-browser.md)** | each source's records, read from the bridge's diagnostics store in memory; the first error is shown on the source's row | plugin |
-| **`Bridge/diagnostics.json`** | `{ version, updatedAtUtc, files[] }`, one entry per file | plugin |
-| **`Bridge/diagnostics/`** | one `<md5-of-normalized-path>.json` shard per file plus `index.json`; stale shards are deleted on every write | plugin |
-| **`Bridge/bridge.db`** | SQLite table `diagnostics(path, json, updated_at_utc)`, replaced wholesale in one transaction | plugin |
+| **`shader.db` `diagnostics`** | SQLite table `diagnostics(path, json, updated_at_utc)`, one row per file, replaced wholesale in one transaction — see [Bridge](../tools/bridge.md#diagnostics) | plugin |
 | **`-DiagnosticsOut=<file>`** | one commandlet run's diagnostics as JSON (schema `dreamshader-diagnostics`) — see [Commandlet](../tools/commandlet.md) | plugin |
-| **VSCode / Rider extension squiggles** | rendered from the three bridge artifacts above | **extension side**, not the plugin |
+| **VSCode / Rider extension squiggles** | rendered from the `diagnostics` table above | **extension side**, not the plugin |
 
-All three bridge sinks are written together on every diagnostics update, so they never disagree. The
-Output Log is a separate path and is the only surface that shows *success* lines.
+The table is rewritten on every diagnostics update and emptied when the next bridge owner starts; it is
+left as it is when the editor closes, so an extension keeps showing the last verdict. The Output Log is
+a separate path and is the only surface that shows *success* lines.
 
 Diagnostics are owned by the source and the **run** that produced them. There are three kinds of run:
 the compile of a source, the shader compile of one material it generated, and the startup
@@ -53,7 +52,7 @@ source within each, so the first error of a file is its compile's. See [Bridge](
 
 > [!NOTE]
 > The bridge never runs inside a commandlet. `-run=DreamShader`, `-run=Cook` and any other commandlet
-> process writes no `diagnostics.json`, no shards and no `bridge.db` rows; the messages exist only in
+> process writes no `diagnostics` rows to `shader.db`; the messages exist only in
 > the log (and in a `-DiagnosticsOut` file). The bridge is also suppressed by
 > `-NoDreamShaderEditorBridge`. See [Commandlet](../tools/commandlet.md).
 
@@ -73,7 +72,7 @@ store. A client tolerates a missing or unknown severity by treating it as an err
 A diagnostic is printed MSVC-style, with its code:
 
 ```text
-I:/Project/DShader/Materials/M_Sample.dsm(8,19): DSH4200: 'Tin' is not declared in this scope.
+I:/Project/DreamSource/Shader/Materials/M_Sample.dsm(8,19): DSH4200: 'Tin' is not declared in this scope.
 ```
 
 | Diagnostic | Where its position comes from |
@@ -227,7 +226,7 @@ log lines; they are not stored.
 | `DreamShader failed to build VirtualFunction call: {Detail}` | the call snippet could not be produced | see the inner message | [VirtualFunction tools](../tools/virtual-function-tools.md) |
 | `DreamShader failed to build VirtualFunction reference: {Detail}` | the reference snippet could not be produced | see the inner message | [VirtualFunction tools](../tools/virtual-function-tools.md) |
 | `DreamShader failed to build VirtualFunction: {Detail}` | the declaration text could not be produced | see the inner message | [VirtualFunction tools](../tools/virtual-function-tools.md) |
-| `DreamShader failed to create directory: {Dir}` | `DShader/VirtualFunctions` could not be created | check permissions | [VirtualFunction tools](../tools/virtual-function-tools.md) |
+| `DreamShader failed to create directory: {Dir}` | `DreamSource/Shader/VirtualFunctions` could not be created | check permissions | [VirtualFunction tools](../tools/virtual-function-tools.md) |
 | `DreamShader failed to update VirtualFunction source file '{File}'.` | the refreshed declaration could not be written back; reported at line 1, column 1 | check file locks and source control | [VirtualFunction tools](../tools/virtual-function-tools.md) |
 | `DreamShader failed to write VirtualFunction file: {File}` | the new `.dsh` could not be written | check permissions | [VirtualFunction tools](../tools/virtual-function-tools.md) |
 | `Expected exactly one VirtualFunction block.` | a re-parsed declaration region yielded zero or several blocks | keep one `VirtualFunction` per declaration region | [VirtualFunction](../language/virtual-function.md) |
@@ -252,7 +251,8 @@ Lines that are not a compile's records and never enter the store.
 
 | Message | Meaning |
 | :-- | :-- |
-| `Failed to open DreamShader bridge database for diagnostics: {Path}` | `bridge.db` could not be opened; the JSON sinks are still written |
+| `DreamShader could not open '{Path}': {Error}` | `shader.db` could not be opened; nothing is written to it |
+| `DreamShader: '{Path}': {What} failed: {Error}; the diagnostics external editors show are now stale.` | a write to the `diagnostics` table failed and was rolled back; the in-memory store, the Output Log and the Material Content Browser are unaffected |
 | `'{ObjectPath}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run Tools > DreamShader > Make Ephemeral to make it Ephemeral again.` | a compile landed on a ThinCustom product that has a file behind it; storage decides, so it was rebuilt and saved |
 | `Skipping automatic layout for large DreamShader graph ({Count} nodes). Existing generated positions will be used.` | logged at `Display`; the 1.x `Classic` layout skips a large graph |
 
@@ -264,7 +264,7 @@ The commandlet's own run lines, its usage banner and its exit codes are on
 A typo inside a `Graph` block, as it reaches each surface.
 
 ```c
-// DShader/Materials/M_Sample.dsm
+// DreamSource/Shader/Materials/M_Sample.dsm
 Shader(Name="Materials/M_Sample")
 {
     Properties = { vec3 Tint = vec3(1.0, 0.4, 0.1); }
@@ -279,10 +279,10 @@ Shader(Name="Materials/M_Sample")
 Output Log:
 
 ```text
-LogDreamShader: Error: I:/Project/DShader/Materials/M_Sample.dsm(8,19): DSH4200: 'Tin' is not declared in this scope.
+LogDreamShader: Error: I:/Project/DreamSource/Shader/Materials/M_Sample.dsm(8,19): DSH4200: 'Tin' is not declared in this scope.
 ```
 
-`Saved/DreamShader/Bridge/diagnostics.json`:
+The rows of the `diagnostics` table, assembled the way `diagnostics.json` used to hold them:
 
 ```json
 {
@@ -290,11 +290,11 @@ LogDreamShader: Error: I:/Project/DShader/Materials/M_Sample.dsm(8,19): DSH4200:
   "updatedAtUtc": "2026-10-04T11:04:22Z",
   "files": [
     {
-      "path": "I:/Project/DShader/Materials/M_Sample.dsm",
+      "path": "I:/Project/DreamSource/Shader/Materials/M_Sample.dsm",
       "diagnostics": [
         {
           "message": "'Tin' is not declared in this scope.",
-          "detail": "I:/Project/DShader/Materials/M_Sample.dsm(8,19): DSH4200: 'Tin' is not declared in this scope.",
+          "detail": "I:/Project/DreamSource/Shader/Materials/M_Sample.dsm(8,19): DSH4200: 'Tin' is not declared in this scope.",
           "stage": "bind",
           "code": "DSH4200",
           "line": 8,
@@ -308,8 +308,8 @@ LogDreamShader: Error: I:/Project/DShader/Materials/M_Sample.dsm(8,19): DSH4200:
 }
 ```
 
-The same record is written to `Bridge/diagnostics/<md5>.json` and to the `diagnostics` table of
-`Bridge/bridge.db`, and appears on the source's row in the Material Content Browser. `stage` follows
+The `files[]` entry is the `json` of the file's row in the `diagnostics` table of `shader.db`, and the
+record appears on the source's row in the Material Content Browser. `stage` follows
 from the code's range: `preprocess`, `parse`, `bind`, `ir`, `generate` or `tools`.
 
 ## See also

@@ -7,6 +7,7 @@
 #include "SourceFiles/DreamShaderBatchCompile.h"
 #include "DreamShaderSourceFileUtils.h"
 #include "UI/DreamShaderMaterialBrowser.h"
+#include "Workspace/DreamShaderSourceMigration.h"
 
 #include "AssetRegistry/IAssetRegistry.h"
 #include "CoreGlobals.h"
@@ -15,6 +16,7 @@
 #include "Misc/CommandLine.h"
 #include "Misc/CoreDelegates.h"
 #include "Misc/Paths.h"
+#include "Misc/ScopeExit.h"
 #include "Modules/ModuleManager.h"
 #include "Templates/SharedPointer.h"
 #include "UObject/ObjectSaveContext.h"
@@ -51,6 +53,13 @@ class FDreamShaderEditorModule : public IModuleInterface
 public:
 	virtual void StartupModule() override
 	{
+		// Every process logs a deprecated source directory once; only the bridge owner below offers to migrate it.
+		bool bOfferMigration = false;
+		ON_SCOPE_EXIT
+		{
+			UE::DreamShader::Editor::Private::FDreamShaderSourceMigration::Register(bOfferMigration);
+		};
+
 		if (IsRunningCommandlet())
 		{
 			if (IsCookCommandlet() && !IsCookWorkerProcess())
@@ -86,6 +95,7 @@ public:
 		Bridge = MakeShared<UE::DreamShader::Editor::Private::FDreamShaderEditorBridge, ESPMode::ThreadSafe>();
 		GDreamShaderEditorBridge = Bridge;
 		Bridge->Startup();
+		bOfferMigration = Bridge->IsBridgeOwner();
 
 		UE::DreamShader::Editor::Private::FDreamShaderMaterialBrowser::Register();
 
@@ -103,6 +113,8 @@ public:
 
 	virtual void ShutdownModule() override
 	{
+		UE::DreamShader::Editor::Private::FDreamShaderSourceMigration::Unregister();
+
 		// First: the endpoint's jobs and routes reach the bridge, which goes below.
 		UE::DreamShader::Editor::MCP::ShutdownDreamShaderMCP();
 

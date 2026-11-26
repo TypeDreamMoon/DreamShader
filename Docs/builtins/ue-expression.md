@@ -352,8 +352,8 @@ of any `UE.` call: a local at the head of each `Graph` body that reads the prope
   `UE.Expression(Class = "VertexColor").rgb`. See
   [Swizzle](../graph/swizzle.md#swizzling-a-call-result).
 - `dsc export-catalog` writes out every class with its pins, properties, aliases and outputs — the
-  practical way to discover argument names. The editor also exports a manifest to
-  `Saved/DreamShader/Bridge/material-expressions.json`; see [Bridge](../tools/bridge.md).
+  practical way to discover argument names. The editor also exports a manifest, the
+  `material-expressions` document of `Intermediate/DreamSource/shader.db`; see [Bridge](../tools/bridge.md#documents).
 
 ## Diagnostics
 

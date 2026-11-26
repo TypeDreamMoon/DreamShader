@@ -119,7 +119,8 @@ module *can* register a replacement — there is no chaining and no arbitration,
 | Header | What it declares |
 | :-- | :-- |
 | `DreamShaderCompilerService.h` | `FDreamShaderCompilerService` — the one implementation of `IDreamShaderCompiler`; `OnDreamShaderSourceGenerated`; `IsMemoryOnlyMaterial` / `MaterializeDreamShaderMaterial`; `GetDreamShaderLastCompileDiagnostics` |
-| `DreamShaderCompilePipeline.h` | `IsDreamShaderLang2Source`, `CompileDreamShaderLang2File`, `RunDreamShaderLang2Pipeline` with its options and result, `ResolveDreamShaderSourceProducts`, `ResolveDreamShaderProductDestination`, `ResolveDreamShaderLegacyTextureTypes` |
+| `DreamShaderCompilePipeline.h` | `IsDreamShaderLang2Source`, `CompileDreamShaderLang2File`, `RunDreamShaderLang2Pipeline` with its options and result, `ResolveDreamShaderSourceProducts`, `ResolveDreamShaderProductDestination`, `ResolveDreamShaderLegacyTextureTypes`; `GetDreamShaderSymbolIndexKey` — the `(root, path)` a source's [symbol index](../tools/bridge.md#symbol-index) is stored under, one rule for `dsc index` and the compiler service |
+| `DreamShaderDatabase.h` | `FDreamShaderDatabase` — `Intermediate/DreamSource/shader.db`, the SQLite file tools outside the editor read: open-write-close helpers, `WriteDocument` / `ReadDocument`, `WriteSourceIndex` / `ReadSourceIndex`, `ResetSession`, and the `Document*` names. Schema on [Bridge](../tools/bridge.md#shaderdb) |
 | `DreamShaderIREmitter.h` | `FIREmitContext`, `EmitDreamShaderIRProduct` — one finished `IR::FIRProduct` in, one saved asset out; the source-span and decompile-hint writers |
 | `DreamShaderBuiltinCatalog.h` | `GetDreamShaderBuiltinCatalog`, `InvalidateDreamShaderBuiltinCatalog`, `BuildBuiltinCatalogFromReflection` — the `IR::FBuiltinCatalog` the binder and the emitter share |
 | `DreamShaderProductIndex.h` | `FDreamShaderProductIndex` — which source builds which asset, over the `.dss`, `.dsi` and `.dsp` files of every root; `ResolveInstanceParent`, `CollectInstanceDependents`, `FindInstanceParentSourceFile` for `.dsi` files; *(since 2.1.0)* the `.dsp` edges: `CollectPipelineDependents` (the `.dsp` sources to rebuild after a material source), `CollectPassBufferDependents` (the `.dss` sources that read a pipeline's buffers), `FindPipelineMaterialSourceFiles` and `FindPassBufferPipelineSourceFiles` (the dependency sort's two edges), and on the index `FindPipelines`, `FindPipelinesUsingSource`, `FindPassBufferReadersOfSource`. A `.dsp` record carries its `MaterialReferences` and `ShaderFiles`, a `.dss` record its `PassPipelineReferences` |
@@ -200,7 +201,7 @@ only. Everything is in `UE::DreamShader::Editor::Compiler`.
 | `FindDreamShaderPipelinesUsingShaderFile(ShaderFile, OutPipelineSourceFiles)` | the `.dsp` sources one of whose HLSL passes compiles from that file |
 | `CollectDreamShaderPipelineShaderDirectories(OutDirectories)` | every directory holding a file some `.dsp` compiles from — what the bridge watches |
 
-The registry itself — the files under `<DShader>/.dreampass/`, how a slot is planned, pre-checked and
+The registry itself — the files under `<SourceDirectory>/.dreampass/`, how a slot is planned, pre-checked and
 committed — is private to the module; its paths and slot counts are public in the runtime module
 ([`DreamShaderPassModule.h`](pass-module.md#the-hlsl-slot-registry)).
 
@@ -214,7 +215,7 @@ committed — is private to the module; its paths and slot counts are public in 
 - The calls are **synchronous**. There is no async variant, no future, and no completion callback
   other than `OnDreamShaderSourceGenerated`.
 - *(Since 2.1.0)* A `.dsp` compile writes outside its package as well: the HLSL slot registry and its
-  snapshots under `<DShader>/.dreampass/`. In an editor that renders it then recompiles the slot shaders
+  snapshots under `<SourceDirectory>/.dreampass/`. In an editor that renders it then recompiles the slot shaders
   synchronously; a commandlet does not.
 
 ## Result messages
@@ -287,8 +288,8 @@ void CompileOne(const FString& InPath)
 A typical successful message for a `.dss` that exports one function and one material:
 
 ```text
-Generated MaterialFunction /Game/FX/MF_Tint.MF_Tint from I:/Project/DShader/FX/Glow.dss.
-Generated Material /Game/FX/M_Glow.M_Glow from I:/Project/DShader/FX/Glow.dss.
+Generated MaterialFunction /Game/FX/MF_Tint.MF_Tint from I:/Project/DreamSource/Shader/FX/Glow.dss.
+Generated Material /Game/FX/M_Glow.M_Glow from I:/Project/DreamSource/Shader/FX/Glow.dss.
 ```
 
 Running the front half only, the way `dsc check` does:

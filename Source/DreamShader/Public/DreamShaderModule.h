@@ -12,7 +12,8 @@ namespace UE::DreamShader
 {
 	/**
 	 * One directory tree that DreamShader source files are discovered under. The project always
-	 * contributes a root; every enabled plugin that ships a `DShader` folder contributes one more.
+	 * contributes a root; every enabled plugin that ships a `DreamSource/Shader` folder (or the legacy
+	 * `DShader`) contributes one more.
 	 *
 	 * A root is the unit of import resolution: an import specifier is only ever resolved against the
 	 * bases of the root that owns the importing file, never against another root's. Cross-root
@@ -50,9 +51,56 @@ namespace UE::DreamShader
 		 * compiled, but a plugin ships its sources as-is and the editor must not rewrite them.
 		 */
 		bool bWritable = false;
+
+		/** Whether this root is a legacy `DShader` folder, read because the `DreamSource/Shader` one does not exist. */
+		bool bLegacy = false;
 	};
 
-	/** The project root first, then one root per enabled plugin that has a `DShader` folder. */
+	/** The legacy name of a source directory, project or plugin: `DShader`. Still read; see ResolveProjectSourceDirectory. */
+	inline constexpr const TCHAR* LegacySourceDirectoryName = TEXT("DShader");
+
+	/** Where a plugin keeps its sources, relative to the plugin: `DreamSource/Shader`. Not configurable. */
+	inline constexpr const TCHAR* PluginSourceDirectory = TEXT("DreamSource/Shader");
+
+	/** The answer ResolveProjectSourceDirectory gives, with what it was chosen from. Absolute, normalized, no trailing slash. */
+	struct FDreamShaderProjectSourceDirectory
+	{
+		/** The directory in use: Configured when it exists, else Legacy when that exists, else Configured (to be created). */
+		FString Directory;
+		/** `<Project>/<UDreamShaderSourceSettings::SourceDirectory>`, or the legacy key's value when only that is set. */
+		FString ConfiguredDirectory;
+		/** `<Project>/DShader`. */
+		FString LegacyDirectory;
+		/** Directory is the legacy one, because the configured one does not exist. */
+		bool bUsingLegacy = false;
+		/** Both exist; the legacy one is not read. */
+		bool bLegacyIgnored = false;
+		/** The configured directory came from the legacy `UDreamShaderSettings::SourceDirectory` key in DefaultEngine.ini. */
+		bool bFromLegacyKey = false;
+	};
+
+	/**
+	 * The project's source directory (Plan/DreamSource/dreamsource-layout-spec.md, section 12): the configured one
+	 * (`DreamSource/Shader` unless DefaultDreamSource.ini says otherwise) when it exists, else the legacy `DShader/`
+	 * when that exists, else the configured one. Decided once per configured value, so a directory that appears later
+	 * does not move the project's sources mid-session -- the Custom Pass shader mapping and the watchers were made for
+	 * the first answer.
+	 */
+	DREAMSHADER_API FDreamShaderProjectSourceDirectory ResolveProjectSourceDirectory();
+
+	/** `<Project>/Intermediate/DreamSource`, where every Dream plugin keeps the data it rebuilds by itself. */
+	DREAMSHADER_API FString GetDreamSourceIntermediateDirectory();
+
+	/** `<Project>/Intermediate/DreamSource/Shader`: the bridge's request files, preview images and generated shaders. */
+	DREAMSHADER_API FString GetShaderIntermediateDirectory();
+
+	/** `<Project>/Intermediate/DreamSource/shader.db`. */
+	DREAMSHADER_API FString GetShaderDatabaseFilePath();
+
+	/** Logs, once per process and directory, every source root still read from a legacy `DShader` folder. */
+	DREAMSHADER_API void LogDeprecatedSourceDirectoriesOnce();
+
+	/** The project root first, then one root per enabled plugin that has a `DreamSource/Shader` (or `DShader`) folder. */
 	DREAMSHADER_API const TArray<FDreamShaderSourceRoot>& GetSourceShaderRoots();
 
 	/** The root owning `InPath`, or null when the path is outside every root. */

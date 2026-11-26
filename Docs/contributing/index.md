@@ -157,10 +157,10 @@ The shaders these passes compile live in the plugin's `Shaders/Pass/`, mounted a
 | :-- | :-- |
 | `Public/` | The twenty exported headers — the compiler service (`DreamShaderCompilerService.h`, the one implementation of `IDreamShaderCompiler`, whose interface lives in `DreamShader`), the compile pipeline, the IR emitter, the builtin catalog and the asset layer. See [Compiler module](../api/compiler-module.md#public-headers). |
 | `Private/DreamShaderCompilerService.cpp`, `DreamShaderCompilerModule.cpp` | The service — every compile route ends there — and the module, which registers it. |
-| `Private/Pipeline/` | The compile pipeline: preprocess, front end by extension, bind, lower, validate, emit; the build key; `#include` resolution; the 1.x texture-default class check (`DSH1043` / `DSH1044`); diagnostics in their wire form. |
+| `Private/Pipeline/` | The compile pipeline: preprocess, front end by extension, bind, lower, validate, emit; the build key; `#include` resolution; the 1.x texture-default class check (`DSH1043` / `DSH1044`); diagnostics in their wire form; `FDreamShaderDatabase`, the `shader.db` writer. |
 | `Private/Emitter/` | The IR emitter — IR to `UMaterial` / `UMaterialFunction` / instance nodes — and the builtin catalog reflected from the running engine. |
 | `Private/Assets/` | Package and asset creation, `Root=` and `Path(...)` resolution with the plugin-mount checks, the source metadata and output digest, the rollback of a failed rebuild, instance schemas and ThinCustom parameter overrides. |
-| `Private/Reflection/` | Applying material settings, parsing setting values, writing reflected literal properties, and the reflected class surface behind `material-expressions.json`. |
+| `Private/Reflection/` | Applying material settings, parsing setting values, writing reflected literal properties, and the reflected class surface behind the `material-expressions` document. |
 | `Private/Layout/` | Graph layout: the IR styles applied to the built graph, and the `Classic` 1.x layout. |
 | `Private/Sources/` | Source discovery, the dependency graph between sources and headers, and the product index. |
 | `Private/Preview/` | The (line, name) probe table a breakpoint preview reads. |
@@ -197,16 +197,16 @@ Everything is under `Private/`; nothing is exported.
 | `Commandlet/` | `UDreamShaderCommandlet` and the `compile` / `decompile` / `dump-graph` runners plus the shared argument helpers; `DreamShaderMigrate.{h,cpp}`, the `migrate` verb *(2.0)*. See [Commandlet](../tools/commandlet.md). *(since 2.1.0)* `DreamShaderPassRegistryCommandlet.{h,cpp}`: the [`pass-registry`](../tools/commandlet.md#pass-registry) verb — the listing, `-Gc` and `-Rebuild`. |
 | `Tools/` *(2.0)* | The other 2.0 verbs (`check`, `dump-ir`, `dump-layout`, `index`, `export-catalog`, `fmt`, `list-generated`), the HLSL shader check of `check -Shaders`, the decompile request helpers and the catalog manifest. |
 | `Decompiler/` | The 2.0 decompiler (`DreamShaderIRDecompiler`, `DreamShaderGraphImport`, `DreamShaderInstanceDecompiler`): graph → IR → `.dss` / `.dsi`; the 1.x `.dsm` / `.dsf` export (`DreamShaderGraphDecompiler*`) kept behind `-Format=Legacy`; the decompile service. See [Decompiler](../tools/decompiler.md). *(since 2.1.0)* `DreamShaderPipelineDecompiler.{h,cpp}`: a `UDreamPassPipeline` read back into the payload a `.dsp` binds to — for `dsc decompile`, which prints it and checks the text by parsing and binding it again, and for Adopt, which splices the payload into the existing `.dsp`. |
-| `Diagnostics/` | `FDreamShaderDiagnosticsStore`: error-location parsing, `diagnostics.json`, the per-file `diagnostics/` tree and the SQLite `diagnostics` table. |
+| `Diagnostics/` | `FDreamShaderDiagnosticsStore`: error-location parsing and the `diagnostics` table of `shader.db`. |
 | `Navigation/` | Node ↔ source-line navigation over the `DreamShader.SourceSpans` metadata a compile stamps. |
 | `Provenance/` | *Revert to Source*, *Adopt Into Source* and *Detach* — see [Divergence](../generation/divergence.md). |
-| `Pass/` *(since 2.1.0)* | `FDreamPassPipelineCustomization` — the [details panel of a `UDreamPassPipeline`](../tools/editor-integration.md#pass-pipeline-details-panel), registered on every engine the asset types build on — and `DreamPassSpellings`, the `.dsp` spelling of every DreamShaderPass enumeration the decompiler, the graph dump, the details panel and `pass-keys.json` write. |
+| `Pass/` *(since 2.1.0)* | `FDreamPassPipelineCustomization` — the [details panel of a `UDreamPassPipeline`](../tools/editor-integration.md#pass-pipeline-details-panel), registered on every engine the asset types build on — and `DreamPassSpellings`, the `.dsp` spelling of every DreamShaderPass enumeration the decompiler, the graph dump, the details panel and the `pass-keys` document write. |
 | `Preview/` | `FDreamShaderPreviewRenderer`: thumbnail scene, render targets, orbit and mesh handling, PNG encoding, blocking and async readback; the streaming session and the breakpoint probe. See [Preview](../tools/preview.md). |
 | `SourceFiles/` | The [asset rename sync](../tools/asset-rename-sync.md) service. Source discovery itself moved to `DreamShaderCompiler/Private/Sources/` in 2.0. |
 | `Tests/` | The automation suite and the corpus runners. See [Testing](testing.md). |
 | `UI/` | The [Material Content Browser](../tools/material-browser.md) tab — navigation, the Sources and Assets views, the inspector and its live preview, *New* source, the instance factory and the generated-asset path helpers. |
 | `VirtualFunction/` | `VirtualFunction` declaration authoring and the startup sync service. See [VirtualFunction tools](../tools/virtual-function-tools.md). |
-| `Workspace/` | `FDreamShaderWorkspaceService`: the `.code-workspace` writer, the three bridge manifests, `bridge.db`, and the external-editor launch helpers. See [Workspace](../tools/workspace.md). |
+| `Workspace/` | `FDreamShaderWorkspaceService`: the `.code-workspace` writer, the bridge manifests in `shader.db`, and the external-editor launch helpers. See [Workspace](../tools/workspace.md). `FDreamShaderSourceMigration`: the `DShader` → `DreamSource/Shader` notification and move — see [DreamSource layout](../settings/project.md#dreamsource-layout). |
 
 ### Inside `MaterialAssetGeneration/`
 
@@ -307,8 +307,8 @@ The complete list of currently gated behaviour is on [Version compatibility](../
 
 ## Localization
 
-Editor-facing text is `LOCTEXT`/`NSLOCTEXT`. The wire format is not: `diagnostics.json`,
-`diagnostics/*.json`, `bridge.db`, `preview.json` and the preview WebSocket are parsed by the VSCode
+Editor-facing text is `LOCTEXT`/`NSLOCTEXT`. The wire format is not: the rows and documents of
+`shader.db`, the bridge's request and response files and the preview WebSocket are parsed by the VSCode
 and Rider extensions and must read the same in every editor culture.
 
 The rule that keeps both true:
@@ -402,7 +402,7 @@ The same five module names appear in a normal project build under
 - [Compiler module](../api/compiler-module.md) — `IDreamShaderCompiler`, the supported extension point
 - [Version compatibility](../api/version-compat.md) — the compat macros and every gated behaviour
 - [Commandlet](../tools/commandlet.md) — `-run=DreamShader`, the headless entry point
-- [Editor bridge](../tools/bridge.md) — request files, `bridge.db`, the preview WebSocket
+- [Editor bridge](../tools/bridge.md) — request files, `shader.db`, the preview WebSocket
 - [Generation pipeline](../generation/index.md) — what a compile does, end to end
 - [Project settings](../settings/project.md) — `UDreamShaderSettings`, including the source directory
 </content>

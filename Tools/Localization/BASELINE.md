@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-2159
+2170
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -1699,7 +1699,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderEditorBridge | DreamShaderAdoptTweaksUnavailableTooltip | Only a .dss source under a writable root takes tweaks as uniform defaults; use Extract Tweaks to .dsi instead. |
 | DreamShaderEditorBridge | DreamShaderAdoptUnresolved | '{0}' could not be resolved to the assets it builds, so nothing was adopted. |
 | DreamShaderEditorBridge | DreamShaderCleanGeneratedShadersLabel | Clean Generated Shaders |
-| DreamShaderEditorBridge | DreamShaderCleanGeneratedShadersTooltip | Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile. |
+| DreamShaderEditorBridge | DreamShaderCleanGeneratedShadersTooltip | Delete the generated shader directory (Intermediate/DreamSource/Shader/GeneratedShaders by default) and queue a full DreamShader recompile. |
 | DreamShaderEditorBridge | DreamShaderCopyVirtualFunctionCallLabel | CopyVirtualFunctionCall |
 | DreamShaderEditorBridge | DreamShaderCopyVirtualFunctionCallNoAsset | DreamShader could not find the selected Material Function. |
 | DreamShaderEditorBridge | DreamShaderCopyVirtualFunctionCallTooltip | Copy a DreamShader Graph call example for this VirtualFunction. |
@@ -1954,9 +1954,9 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | ExportDsiBtn | Export .dsi |
 | DreamShaderMaterialBrowser | ExportDsiTip | Decompile this material instance into a .dsi source file: its parent, its instance settings and every parameter that differs from the parent. |
 | DreamShaderMaterialBrowser | ExportDssFunctionBtn | Export .dss |
-| DreamShaderMaterialBrowser | ExportDssFunctionTip | Decompile this material function into a .dss source file under the project's DShader root. |
+| DreamShaderMaterialBrowser | ExportDssFunctionTip | Decompile this material function into a .dss source file under the project's source directory (DreamSource/Shader). |
 | DreamShaderMaterialBrowser | ExportDssMaterialBtn | Export .dss |
-| DreamShaderMaterialBrowser | ExportDssMaterialTip | Decompile this material into a .dss source file under the project's DShader root. |
+| DreamShaderMaterialBrowser | ExportDssMaterialTip | Decompile this material into a .dss source file under the project's source directory (DreamSource/Shader). |
 | DreamShaderMaterialBrowser | ExtractTweaksBtn | Extract Tweaks to .dsi |
 | DreamShaderMaterialBrowser | ExtractTweaksTip | Write this instance's parameter overrides into a new .dsi whose parent is this material, compile it, and clear the overrides from this instance. |
 | DreamShaderMaterialBrowser | FactoryAssetExists | An asset already exists at {0}. |
@@ -2051,7 +2051,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | NewSourceParentLabel | Parent |
 | DreamShaderMaterialBrowser | NewSourcePickFolder | Choose a source folder |
 | DreamShaderMaterialBrowser | NewSourcePipelineHint | The file is written from the plugin's template and compiled by the watcher on save. Its pipeline lands at the folder's /Game path, and runs where something activates it: the global pipelines of Project Settings > DreamShader Custom Pass, or a Dream Pass Volume. |
-| DreamShaderMaterialBrowser | NewSourceReadOnly | Choose a folder under the project's DShader root. A plugin's sources are read-only. |
+| DreamShaderMaterialBrowser | NewSourceReadOnly | Choose a folder under the project's source directory (DreamSource/Shader). A plugin's sources are read-only. |
 | DreamShaderMaterialBrowser | NewSourceWriteFailed | Could not write '{0}'. |
 | DreamShaderMaterialBrowser | NoChildrenAnywhere | No child instances. |
 | DreamShaderMaterialBrowser | NoParent | No parent material was provided. |
@@ -2160,6 +2160,17 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | ViewSectionGlobal | Content Browser |
 | DreamShaderMaterialBrowser | ViewSectionLayout | Sources list |
 | DreamShaderMaterialBrowser | ViewSectionSort | Sort by |
+| DreamShaderSourceMigration | DontShowAgain | Don't show again |
+| DreamShaderSourceMigration | DontShowAgainTip | Stop showing this notice on this machine. The Output Log still says it. |
+| DreamShaderSourceMigration | Later | Later |
+| DreamShaderSourceMigration | LegacyIgnored | DreamShader: '{0}' is ignored because '{1}' exists.\nMerge what it still holds into '{1}', then delete it. |
+| DreamShaderSourceMigration | Migrate | Migrate |
+| DreamShaderSourceMigration | Migrated | DreamShader: sources moved to '{0}'.\nRestart the editor to use the new place. |
+| DreamShaderSourceMigration | MigrateFailed | DreamShader: could not migrate: {0} |
+| DreamShaderSourceMigration | MigrateTip | Move the folder now, then restart the editor. Close VS Code windows that have files in it open first. |
+| DreamShaderSourceMigration | RestartLater | Later |
+| DreamShaderSourceMigration | RestartNow | Restart Now |
+| DreamShaderSourceMigration | UsingLegacy | DreamShader: '{0}' is deprecated.\nMove it to '{1}' -- Dream sources are managed together under DreamSource/.\nIt keeps working until then. |
 | DreamShaderTests | WireUtils.Float | value {0} |
 | DreamShaderTests | WireUtils.Inner | inner {0} |
 | DreamShaderTests | WireUtils.Ordered | Unsupported swizzle {0} at line {1}. |

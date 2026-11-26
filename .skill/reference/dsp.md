@@ -17,14 +17,14 @@ use materials, which are ordinary [`.dss`](dss.md) files.
 | Builds | one `UDreamPassPipeline`, named after the file, where a `.dss` in that folder puts its product; plus a `UTextureRenderTarget2D` per buffer with `Export = true` |
 | Engine | **UE 5.8 and later.** Below that a `.dsp` parses, formats and binds, and compiling it is `DSH8300` |
 | Runs when | activated — Project Settings, an `ADreamPassVolume`, a `UDreamPassComponent`, Blueprint / C++. A compiled pipeline nobody activates draws nothing |
-| Writes besides the asset | `<DShader>/.dreampass/` — the HLSL slot registry and snapshots. **Source files: commit them** |
+| Writes besides the asset | `<SourceDirectory>/.dreampass/` — the HLSL slot registry and snapshots. **Source files: commit them** |
 
 ---
 
 ## 1. The shape of a file
 
 ```hlsl
-// DShader/Passes/CP_Highlight.dsp
+// DreamSource/Shader/Passes/CP_Highlight.dsp
 #pragma pipeline(Order = 100)
 
 /// @group Look
@@ -152,7 +152,7 @@ source root, compiled first when it is missing or stale — or an object path.
 ## 5. Checking it
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check -Shaders DShader/Passes/CP_Highlight.dsp
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check -Shaders DreamSource/Shader/Passes/CP_Highlight.dsp
 ```
 
 `check` binds the pipeline against its materials and HLSL files and writes no asset; **`-Shaders` also

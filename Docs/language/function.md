@@ -408,7 +408,7 @@ The complete cross-stage list lives in the [diagnostics index](../diagnostics/in
 ## Example
 
 ```c
-// DShader/Lib/Color.dsh
+// DreamSource/Shader/Lib/Color.dsh
 
 Function float Luma(in vec3 color)
 {
@@ -463,11 +463,11 @@ Shader(Name="Materials/M_Tinted")
 Each call is a Custom node. The `Luma` node's code — note the body's own `return`:
 
 ```hlsl
-// Begin DreamShader source: DShader/Lib/Color.dsh
+// Begin DreamShader source: DreamSource/Shader/Lib/Color.dsh
 // DreamShader custom: Luma line 4
 
     return dot(color, float3(0.299, 0.587, 0.114));
-// End DreamShader source: DShader/Lib/Color.dsh
+// End DreamShader source: DreamSource/Shader/Lib/Color.dsh
 ```
 
 The `SampleTinted` node: pins `tex`, `uv`, `tint`; output `rgb` (`Float3`) and the additional output
@@ -476,13 +476,13 @@ declares beside `tex`:
 
 ```hlsl
 float3 rgb = (float3)0;
-// Begin DreamShader source: DShader/Lib/Color.dsh
+// Begin DreamShader source: DreamSource/Shader/Lib/Color.dsh
 // DreamShader custom: SampleTinted line 14
 
     float4 texel = Texture2DSample(tex, texSampler, uv);
     rgb   = texel.rgb * tint;
     alpha = texel.a;
-// End DreamShader source: DShader/Lib/Color.dsh
+// End DreamShader source: DreamSource/Shader/Lib/Color.dsh
 return rgb;
 ```
 
